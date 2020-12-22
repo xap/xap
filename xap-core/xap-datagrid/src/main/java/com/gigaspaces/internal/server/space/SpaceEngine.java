@@ -3672,7 +3672,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         final IServerTypeDesc serverTypeDesc = _typeManager.getServerTypeDesc(template.getClassName());
         if (template.isChangeById() && !serverTypeDesc.getTypeName().equals(template.getServerTypeDesc().getTypeName()))
             return null;  //in-place-update by id no inheritance
-        if(skipBroadcastTable(context, template, serverTypeDesc))
+        if(serverTypeDesc.getTypeDesc().isBroadcast() && skipBroadcastTable(context, template))
             return null;
         IScanListIterator<IEntryCacheInfo> toScan = template.isServerIterator() ? getOrCreateScanListIteratorFromServerIterator(context, typeDesc, template, serverTypeDesc) : _cacheManager.getMatchingMemoryEntriesForScanning(context, typeDesc, template, serverTypeDesc);
 
@@ -4113,7 +4113,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         final IServerTypeDesc serverTypeDesc = _typeManager.getServerTypeDesc(template.getClassName());
         if (template.isChangeById() && !serverTypeDesc.getTypeName().equals(template.getServerTypeDesc().getTypeName()))
             return;  //in-place-update by id no inheritance
-        if(skipBroadcastTable(context, template, entryTypeDesc))
+        if(entryTypeDesc.getTypeDesc().isBroadcast() && skipBroadcastTable(context, template))
             return;
         IScanListIterator<IEntryCacheInfo> toScan = template.isServerIterator() ? getOrCreateScanListIteratorFromServerIterator(context, entryTypeDesc, template, serverTypeDesc) : _cacheManager.getMatchingMemoryEntriesForScanning(context, entryTypeDesc, template, serverTypeDesc);
         if (toScan == null)
@@ -4136,28 +4136,32 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     }
     /*
     Determine if engine should skip any operation in context of broadcast tables
-    returns true only if the following conditions are met:
-    1. Entry is broadcast table
-    2. Cluster is partitioned
-    3. Partition is not leader (id !=0)
-    4. Operation is from clustered proxy (not task) and not server iterator
-    5. Operation is not of kind take
+    returns false if one the following conditions is met:
+    1. Operation is clear
+    2. Operation is from collocated proxy and not server iterator
+    3. Cluster is not partitioned
+    4. Operation is in leader partition
+    Returns true if:
+    1. Operation is take (take operation deletes only partitioned entries)
+    2. None of the false conditions is met
      */
     public boolean skipBroadcastTable(Context context,
-                                      ITemplateHolder template,
-                                      IServerTypeDesc entryTypeDesc){
-        if(!entryTypeDesc.getTypeDesc().isBroadcast())
-            return false;
+                                      ITemplateHolder template){
+        if(template != null){
+            if(template.isClear()) {
+                return false;
+            }
+            if(template.isTakeOperation()) {
+                return true;
+            }
+            if(!context.isFromClustered() && !template.isServerIterator()) {
+                return false;
+            }
+        }
         if(!getClusterInfo().isPartitioned())
             return false;
         if(getPartitionIdZeroBased() == 0)
             return false;
-        if(template != null){
-            if(!context.isFromClustered() && !template.isServerIterator())
-                return false;
-            if(template.isTakeOperation())
-                return false;
-        }
         return true;
     }
 
