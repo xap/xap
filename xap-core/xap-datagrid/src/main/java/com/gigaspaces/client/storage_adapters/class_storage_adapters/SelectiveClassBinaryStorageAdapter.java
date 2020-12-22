@@ -66,7 +66,7 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
                 if (positions[i] == -1){
                     obj[i] = null;
                 } else {
-                    obj[i] = IOUtils.getIClassSerializer(typeDescriptor.getFixedProperty(i).getType()).read(in);
+                    obj[i] = IOUtils.getIClassSerializer(((TypeDesc)typeDescriptor).getSerializedProperties()[i].getType()).read(in);
                 }
             }
             return obj;
