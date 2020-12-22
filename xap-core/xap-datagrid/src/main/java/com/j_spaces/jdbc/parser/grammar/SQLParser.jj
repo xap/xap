@@ -647,7 +647,7 @@ void selectColumn(SelectQuery query):
      	|<ASTERISK>  { selectC = new SelectColumn("*");  }
      	| <UID> { selectC = new SelectColumn("UID");   }
  	    | value = <STRING_LITERAL> selectC = getSelectColumn(query) { selectC.setValue(value.image); }
- 	    | LOOKAHEAD(2) <INTEGER_LITERAL> ([< AS >] t = id() { alias = t.image; })? { selectC = new SelectColumn("1", alias); }
+ 	    | LOOKAHEAD(2) <INTEGER_LITERAL> ([< AS >] t = id() { alias = t.image; })? { selectC = new SelectColumn("1", alias); query.setSelectOne(true); }
  	    )
      	{  if ( selectC != null) {
   	   	     query.addColumn(selectC);
@@ -923,7 +923,7 @@ Object classNameOrSelect():
 {
    clsName = className() { return clsName; }
    |
-   "(" fromQuery = selectSql() ")"
+   ["("] fromQuery = selectSql() [")"]
    { return fromQuery; }
 }
 
