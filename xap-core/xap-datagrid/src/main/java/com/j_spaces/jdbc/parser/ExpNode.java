@@ -264,7 +264,7 @@ public abstract class ExpNode
         } else if (isJoined()) {
             QueryTableData rightTable = ((ColumnNode) getRightChild()).getColumnData()
                     .getColumnTableData();
-            if (rightTable.equals(tableData) && tableData.getJoinType() == Join.JoinType.LEFT) {
+            if (rightTable.equals(tableData)) {
                 tableData.joinLeft(this);
             }
         }

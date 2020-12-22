@@ -49,7 +49,7 @@ public class QueryTableData implements Serializable {
     private final String _tableName;
     private final String _tableAlias;
     // the sequential index of the table in the "from" clause
-    private final int _tableIndex;
+    private int _tableIndex;
 
     // the space type descriptor for this table/class
     private ITypeDesc _typeDesc;
@@ -92,6 +92,11 @@ public class QueryTableData implements Serializable {
 
     public int getTableIndex() {
         return _tableIndex;
+    }
+
+    public QueryTableData setTableIndexUnsafe(int _tableIndex) {
+        this._tableIndex = _tableIndex;
+        return this;
     }
 
     public ITypeDesc getTypeDesc() {
@@ -281,7 +286,13 @@ public class QueryTableData implements Serializable {
             if ((!leftTable.isJoined()) && !leftTable.references(this)) {
                 setJoinTable(leftTable);
 
-                leftTable.setJoinCondition(exp);
+                ExpNode newExp = exp.newInstance();
+                newExp.setLeftChild(exp.getRightChild());
+                newExp.setRightChild(exp.getLeftChild());
+
+
+
+                leftTable.setJoinCondition(newExp);
 
                 leftTable.setJoined(true);
 
@@ -327,6 +338,7 @@ public class QueryTableData implements Serializable {
         List<String> output = new LinkedList<>();
         IQueryResultSet<IEntryPacket> tableEntries;
         if (subQuery != null) {
+            output.add("Table: " + this.getTableName() + " (subquery)");
             tableEntries = executeSubQuery(space, txn, false);
         } else {
             QueryTemplatePacket template = getTemplate(query.getQueryResultType());

@@ -90,8 +90,8 @@ public class SelectQuery extends AbstractDMLQuery {
     private boolean allowedToUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.allowCollocatedJoin", "true"));
     private boolean flattenResults;
 
-    private boolean forceUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.forceCollocatedJoin", "true"));
-    public static final boolean pushDownPredicatesToSpace = true;//Boolean.parseBoolean(System.getProperty("pushDownToSpace", "true"));
+    private static final boolean forceUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.forceCollocatedJoin", "true"));
+    public static final boolean pushDownPredicatesToSpace = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.pushDownToSpace", "true"));
 
     private int limit;
 
@@ -792,7 +792,10 @@ public class SelectQuery extends AbstractDMLQuery {
         query.setProjectionTemplate(this.getProjectionTemplate());
         query.setContainsSubQueries(this.containsSubQueries());
         query.isSelectAll = this.isSelectAll;
-
+        query.joins = this.joins;
+        query.limit = this.limit;
+        query.allowedToUseCollocatedJoin = this.allowedToUseCollocatedJoin;
+        query.flattenResults = this.flattenResults;
 
         int numOfColumns = 0;
         for (SelectColumn col : this.getQueryColumns()) {
@@ -836,10 +839,21 @@ public class SelectQuery extends AbstractDMLQuery {
         super.buildTemplates();
     }
 
-    public IQueryResultSet<IEntryPacket> filterByRownumWithReturn(IQueryResultSet<IEntryPacket> entries, int limit) {
+    public IQueryResultSet<IEntryPacket> filterByRownumWithReturn(IQueryResultSet<IEntryPacket> entries, int limit) throws SQLException {
         if (limit == 0) {
             if (getJoins() != null && getJoins().size() == 1 && getJoins().get(0).getSubQuery() != null && ((SelectQuery) getJoins().get(0).getSubQuery()).getLimit() != 0) {
                 return filterByRownumWithReturn(entries, ((SelectQuery) getJoins().get(0).getSubQuery()).getLimit());
+            } else if (getJoins() != null && getJoins().size() > 1) {
+                //If a subquery in the join has limit and we have more than one JOIN then throw an error
+                for (Join join : getJoins()) {
+                    if (join.getSubQuery() != null && ((SelectQuery) join.getSubQuery()).getLimit() != 0) {
+                        throw new SQLException("Unsupported join query - detected more than one join with LIMIT keyword");
+                    }
+                }
+
+                // if subqueries in the join does not have limit then filter by rownum
+                super.filterByRownum(entries);
+                return entries;
             } else {
                 super.filterByRownum(entries);
                 return entries;
@@ -849,12 +863,6 @@ public class SelectQuery extends AbstractDMLQuery {
 
             LinkedList<IEntryPacket> linkedList = new LinkedList<>(entries);
             return entries.newResultSet(linkedList.subList(0, limit));
-//            Iterator<IEntryPacket> iter = entries.iterator();
-//            for (int i = 1; iter.hasNext(); i++) {
-//                iter.next();
-//                if (i > limit)
-//                    iter.remove();
-//            }
         }
     }
 

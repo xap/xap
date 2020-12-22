@@ -98,7 +98,7 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
     private boolean _ifExists;
     private Object _routing;
     private boolean _dirtyState = false;
-    public IQueryExecutor _executor;
+    protected IQueryExecutor _executor;
     private int _minEntriesToWaitFor;
 
 
@@ -698,5 +698,9 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
 
     public void setExplainPlan(ExplainPlan _explainPlan) {
         this._explainPlan = _explainPlan;
+    }
+
+    public IQueryExecutor getExecutor() {
+        return _executor;
     }
 }
