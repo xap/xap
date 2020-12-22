@@ -264,4 +264,8 @@ public class SystemLocations {
     public Path tools(String subpath) {
         return tools.resolve(subpath);
     }
+
+    public Path tools(String subpath, String ... more) {
+        return tools.resolve(Paths.get(subpath, more));
+    }
 }
