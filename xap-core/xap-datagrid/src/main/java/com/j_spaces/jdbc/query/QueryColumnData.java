@@ -294,7 +294,7 @@ public class QueryColumnData implements Serializable {
                     throw new SQLException("Ambiguous column name [" + columnName + "]");
 
                 setColumnTableData(tableData);
-                setColumnIndexInTable(c);
+                setColumnIndexInTableUnsafe(c);
 
                 return true;
             }
@@ -306,7 +306,7 @@ public class QueryColumnData implements Serializable {
         this._columnTable = columnTable;
     }
 
-    private void setColumnIndexInTable(int columnIndex) {
+    public void setColumnIndexInTableUnsafe(int columnIndex) {
         this._columnIndex = columnIndex;
     }
 }

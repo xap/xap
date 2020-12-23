@@ -110,6 +110,7 @@ public interface IQueryExecutor extends Serializable {
      *
      * @return the results according to the group by clause
      */
+    public IQueryResultSet<IEntryPacket> groupByAndKeepOrder(IQueryResultSet<IEntryPacket> entries, List<SelectColumn> groupColumns, List<OrderColumn> orderColumns, int limit) throws SQLException;
     public IQueryResultSet<IEntryPacket> groupBy(IQueryResultSet<IEntryPacket> entries, List<SelectColumn> groupColumns) throws SQLException;
 
     /**

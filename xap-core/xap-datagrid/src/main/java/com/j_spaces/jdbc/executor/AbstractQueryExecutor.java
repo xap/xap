@@ -285,6 +285,70 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
      *
      * @return IQuery result set
      */
+    public IQueryResultSet<IEntryPacket> groupByAndKeepOrder(IQueryResultSet<IEntryPacket> entries, List<SelectColumn> groupColumns, List<OrderColumn> orderColumns, int limit) throws SQLException {
+        IQueryResultSet<IEntryPacket> currGroup = null;
+        IEntryPacket currRow = null, prevRow = null;
+        int rc;
+
+        Comparator comparator = getGroupByComparator(entries, groupColumns);
+        Collections.sort((List<IEntryPacket>) entries, comparator);
+
+        Iterator<IEntryPacket> iter = entries.iterator();
+        List<IQueryResultSet<IEntryPacket>> groupList = new ArrayList<IQueryResultSet<IEntryPacket>>();
+        for (int i = 0; i < entries.size(); i++) {
+            prevRow = currRow;
+            currRow = iter.next();
+            rc = comparator.compare(prevRow, currRow);
+
+            if (rc != 0) {
+                currGroup = entries.newResultSet();
+                groupList.add(currGroup);
+                currGroup.add(currRow);
+            } else {
+                currGroup.add(currRow);
+            }
+        }
+
+        groupList.sort((o1, o2) -> {
+            int rc1 = 0;
+            IEntryPacket oo1 = o1.iterator().next();
+            IEntryPacket oo2 = o2.iterator().next();
+
+            for (int i = 0; i < orderColumns.size(); i++) {
+                OrderColumn orderCol = orderColumns.get(i);
+
+                Comparable c1 = (Comparable) orderCol.getFieldValue(oo1);
+                Comparable c2 = (Comparable) orderCol.getFieldValue(oo2);
+
+                if (c1 == c2)
+                    continue;
+
+                if (c1 == null)
+                    return -1;
+
+                if (c2 == null)
+                    return 1;
+
+                rc1 = c1.compareTo(c2);
+                if (rc1 != 0)
+                    return orderCol.isDesc() ? -rc1 : rc1;
+
+            }
+
+            return rc1;
+        });
+
+        groupList = groupList.subList(0, limit);
+
+        IQueryResultSet<IEntryPacket> groupByResult = query.isConvertResultToArray() ? new ProjectedResultSet() : new ArrayListResult();
+        for (Iterator<IQueryResultSet<IEntryPacket>> iterator = groupList.iterator(); iterator.hasNext(); ) {
+            IQueryResultSet<IEntryPacket> group = iterator.next();
+            groupByResult.addAll(group);
+        }
+        return groupByResult;
+
+    }
+
     public IQueryResultSet<IEntryPacket> groupBy(IQueryResultSet<IEntryPacket> entries, List<SelectColumn> groupColumns) throws SQLException {
         IQueryResultSet<IEntryPacket> currGroup = null;
         IEntryPacket currRow = null, prevRow = null;

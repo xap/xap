@@ -34,7 +34,12 @@ public class OrderColumn extends SelectColumn {
     @Override
     public Object getFieldValue(IEntryPacket entry) {
         if (getProjectedIndex() != -1) {
-            return entry.getFieldValue(getProjectedIndex());
+            if (entry instanceof JoinedEntry) {
+                JoinedEntry joinedEntry = ((JoinedEntry) entry);
+                return joinedEntry.getEntry(this.getColumnTableData().getTableIndex()).getFieldValue(this.getProjectedIndex());
+            } else {
+                return entry.getFieldValue(getProjectedIndex());
+            }
         } else {
             return super.getFieldValue(entry);
         }

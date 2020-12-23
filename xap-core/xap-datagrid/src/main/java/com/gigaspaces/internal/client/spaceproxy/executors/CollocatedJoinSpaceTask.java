@@ -4,10 +4,9 @@ import com.gigaspaces.async.AsyncResult;
 import com.gigaspaces.internal.space.requests.CollocatedJoinSpaceRequestInfo;
 import com.gigaspaces.internal.space.requests.SpaceRequestInfo;
 import com.gigaspaces.internal.space.responses.CollocatedJoinSpaceResponseInfo;
-import com.j_spaces.jdbc.AbstractDMLQuery;
-import com.j_spaces.jdbc.Join;
-import com.j_spaces.jdbc.OrderColumn;
-import com.j_spaces.jdbc.SelectQuery;
+import com.gigaspaces.internal.transport.IEntryPacket;
+import com.j_spaces.jdbc.*;
+import com.j_spaces.jdbc.query.IQueryResultSet;
 import com.j_spaces.jdbc.query.JoinedQueryResult;
 import net.jini.core.transaction.Transaction;
 
@@ -61,8 +60,37 @@ public class CollocatedJoinSpaceTask extends SystemDistributedTask<CollocatedJoi
             res.addAll(asyncResult.getResult().getResult());
         }
 
-        applyOrderByIfNeeded(res);
+//        applyOrderByIfNeeded(res);
+        res = applyLimitIfNeeded(res);
         return new CollocatedJoinSpaceResponseInfo(res);
+    }
+
+    private JoinedQueryResult applyLimitIfNeeded(JoinedQueryResult res) throws SQLException {
+        SelectQuery query = ((SelectQuery) _collocatedJoinSpaceRequestInfo.getQuery());
+        if (query.getJoins() == null) return res;
+        for (Join join : query.getJoins()) {
+            if (join.getSubQuery() != null && ((SelectQuery) join.getSubQuery()).getLimit() != 0) {
+                SelectQuery subQuery = ((SelectQuery) join.getSubQuery());
+                for (SelectColumn groupByColumn : subQuery.getGroupColumn()) {
+                    groupByColumn.getColumnTableData().setTableIndexUnsafe(1);
+                    for (SelectColumn queryColumn : subQuery.getQueryColumns()) {
+                        if (groupByColumn.getName().equals(queryColumn.getName()) || (queryColumn.hasAlias() && groupByColumn.getName().equals(queryColumn.getAlias()))) {
+                            groupByColumn.setProjectedIndex(queryColumn.getProjectedIndex());
+                            groupByColumn.getColumnData().setColumnIndexInTableUnsafe(queryColumn.getProjectedIndex());
+                        }
+                    }
+                }
+                for (SelectColumn queryColumn : subQuery.getQueryColumns()) {
+                    queryColumn.getColumnData().setColumnIndexInTableUnsafe(queryColumn.getProjectedIndex());
+                }
+                for (OrderColumn orderColumn : subQuery.getOrderColumns()) {
+                    orderColumn.getColumnTableData().setTableIndexUnsafe(1); //the table is now the second one = 1
+                }
+                IQueryResultSet<IEntryPacket> res2 = subQuery.getExecutor().groupByAndKeepOrder(res, subQuery.getGroupColumn(), subQuery.getOrderColumns(), subQuery.getLimit());
+                res = new JoinedQueryResult(res2);
+            }
+        }
+        return res;
     }
 
     private void applyOrderByIfNeeded(JoinedQueryResult res) throws SQLException {
