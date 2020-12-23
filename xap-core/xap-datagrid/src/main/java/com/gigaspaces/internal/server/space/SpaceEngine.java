@@ -3757,7 +3757,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         } else {
             entry = pEntry.getEntryHolder(_cacheManager, context);
         }
-
+        if(entry.getServerTypeDesc().getTypeDesc().isBroadcast() && skipBroadcastTable(context, template))
+            return null;
         if (scnFilter != 0 && entry.getSCN() < scnFilter)
             return null;
         if (entry.isExpired(leaseFilter) && disqualifyExpiredEntry(entry) && template.isReadOperation()) {
