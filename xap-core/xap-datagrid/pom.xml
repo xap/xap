@@ -180,6 +180,58 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M5</version>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.4.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <outputFile>xap-jdbc-client.jar</outputFile>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <filters>
+                        <filter>
+                            <artifact>org.jboss.jbossts:jbossjta</artifact>
+                            <excludes>
+                                <exclude>log4j.properties</exclude>
+                            </excludes>
+                        </filter>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                                <exclude>java.policy</exclude>
+                            </excludes>
+                        </filter>
+<!--                        <filter>-->
+<!--                            <artifact>org.apache.calcite:calcite-core</artifact>-->
+<!--                            <excludes>-->
+<!--                                <exclude>META-INF/services/java.sql.Driver</exclude>-->
+<!--                            </excludes>-->
+<!--                        </filter>-->
+<!--                        <filter>-->
+<!--                            <artifact>org.apache.calcite.avatica:avatica-core</artifact>-->
+<!--                            <excludes>-->
+<!--                                <exclude>META-INF/services/java.sql.Driver</exclude>-->
+<!--                            </excludes>-->
+<!--                        </filter>-->
+<!--                        <filter>-->
+<!--                            <artifact>org.hsqldb:hsqldb</artifact>-->
+<!--                            <excludes>-->
+<!--                                <exclude>META-INF/services/java.sql.Driver</exclude>-->
+<!--                            </excludes>-->
+<!--                        </filter>-->
+                    </filters>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

@@ -159,7 +159,7 @@ public class SelectQuery extends AbstractDMLQuery {
             resultValues[0][0] = "1";
             final ResultEntry resultEntry = new ResultEntry(
                     new String[]{"1"},
-                    new String[]{"11"},
+                    new String[]{"COL"},
                     new String[]{SYSTABLES},
                     resultValues);
             packet.setResultEntry(resultEntry);
