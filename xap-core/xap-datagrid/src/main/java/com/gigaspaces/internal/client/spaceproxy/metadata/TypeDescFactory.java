@@ -74,7 +74,9 @@ public class TypeDescFactory {
 
     public ITypeDesc createPojoTypeDesc(Class<?> type, String codeBase, ITypeDesc superTypeDesc) {
         SpaceTypeInfo typeInfo = SpaceTypeInfoRepository.getTypeInfo(type);
-
+        if(typeInfo.getSpaceClassStorageAdapter() != null && typeInfo.isBlobstoreEnabled() && isBlobStoreCachePolicy()){
+            throw new SpaceMetadataException("Cannot set ClassBinaryStorageAdapter for types that are blob store enabled");
+        }
         // calculate the storage type for properties without storage type (or DEFAULT).
         StorageType defaultStorageType = typeInfo.getStorageType();
         if (defaultStorageType == StorageType.DEFAULT)
@@ -119,6 +121,11 @@ public class TypeDescFactory {
                     + "If you use Externalizable for other purposes which are not serializing it into a space you can turn off this logger. The side effect of externalizable when it comes to serializing object to a space will be ignored in future version");
 
         return typeDesc;
+    }
+
+    public boolean isBlobStoreCachePolicy() {
+        Object cachePolicy = _spaceProxy.getProxySettings().getCustomProperties().get("space-config.engine.cache_policy");
+        return cachePolicy != null && cachePolicy.equals("3");
     }
 
     private static boolean shouldWarnExternalizable(SpaceTypeInfo typeInfo) {
