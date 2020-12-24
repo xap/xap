@@ -772,6 +772,7 @@ void function(SelectQuery query):
 {Token token = null;
  SelectColumn selectC = null;
  String alias = null;
+ Token token2 = null;
  }
 {
 	(<SUM> { selectC = new SelectColumn(); selectC.setSum(true);selectC.setFunctionName(SqlConstants.SUM); query.setAggFunction(true); }
@@ -784,17 +785,55 @@ void function(SelectQuery query):
 	
 	<OPENPAREN>
 		(<ASTERISK> {selectC.setName("*"); query.addColumn(selectC);}
-		| (token = id()) { 
-			
+		| (token = id()) {
     	    String id = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token.image : token.image.toUpperCase();
 
 			selectC.setName(id);
-			query.addColumn(selectC); })	
+			query.addColumn(selectC); }
+	    | selectC = createSums() {
+	        selectC = selectC;
+            selectC.setSum(true);
+            selectC.setFunctionName(SqlConstants.SUM);
+            query.addColumn(selectC);
+	    }
+
+			)
 	<CLOSEPAREN>
 
 	// Optional Column-Alias
 	([< AS >] token = id() { selectC.setAlias(token.image); }	)?
 			
+}
+
+SumColumn createSums():
+{
+    Object param;
+    Token token1=null, token2=null, operator;
+    SumColumn sumCol;
+    SumColumn other;
+}
+{
+    ( LOOKAHEAD(4) <OPENPAREN> token1 = id() (operator = <PLUS> | operator = <MINUS>) token2 = id() <CLOSEPAREN> {
+        String id1 = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token1.image : token1.image.toUpperCase();
+        String id2 = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token2.image : token2.image.toUpperCase();
+        sumCol = new SumColumn(id1, id2, operator.image);
+         }
+    | LOOKAHEAD(4)<OPENPAREN> token1 = id() (operator = <PLUS> | operator = <MINUS>) other = createSums() <CLOSEPAREN> {
+        String id3 = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token1.image : token1.image.toUpperCase();
+        sumCol = new SumColumn(id3, other, operator.image);
+    }
+    | LOOKAHEAD(4) <OPENPAREN> other = createSums() (operator = <PLUS> | operator = <MINUS>) (token1 = id() | token2 = <INTEGER_LITERAL>) <CLOSEPAREN> {
+        if (token2 != null) {
+            Integer num = getInteger(token2);
+            sumCol = new SumColumn(other, num, operator.image);
+        } else {
+            String id4 = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token1.image : token1.image.toUpperCase();
+            sumCol = new SumColumn(other, id4, operator.image);
+        }
+
+    }
+    )
+     { return sumCol; }
 }
 /*
 

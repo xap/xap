@@ -32,6 +32,8 @@ public abstract class MutableNumber implements Externalizable {
 
     public abstract void add(Number x);
 
+    public abstract void remove(Number x);
+
     public abstract Number calcDivision(long count);
 
     public static MutableNumber fromClass(Class<?> type, boolean widest) {

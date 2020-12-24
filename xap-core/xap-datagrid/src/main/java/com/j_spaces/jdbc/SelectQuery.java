@@ -1071,6 +1071,7 @@ public class SelectQuery extends AbstractDMLQuery {
         for (int i = 0; i < getQueryColumns().size(); i++) {
             SelectColumn sc = getQueryColumns().get(i);
 
+            if (sc instanceof ValueSelectColumn) continue;
             sc.createColumnData(this);
 
 
@@ -1136,7 +1137,7 @@ public class SelectQuery extends AbstractDMLQuery {
                     while (iter.hasNext()) {
                         SelectColumn col = iter.next();
 
-                        if (col.getColumnData().getColumnName() != null && col.getColumnData().getColumnName().equals(info.getFixedProperty(c).getName())) {
+                        if ((!(col instanceof SumColumn)) && col.getColumnData().getColumnName() != null && col.getColumnData().getColumnName().equals(info.getFixedProperty(c).getName())) {
                             found = true;
                             break;
                         }

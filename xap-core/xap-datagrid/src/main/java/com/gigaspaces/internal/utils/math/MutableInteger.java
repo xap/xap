@@ -43,6 +43,12 @@ public class MutableInteger extends MutableNumber {
     }
 
     @Override
+    public void remove(Number x) {
+        if (x != null)
+            value -= x.intValue();
+    }
+
+    @Override
     public Number calcDivision(long count) {
         return (double) value / count;
     }
