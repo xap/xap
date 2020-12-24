@@ -17,27 +17,27 @@ import java.util.Map;
  * @author Yechiel, Yael, Niv
  * @since 15.8
  */
-public class ViewHybridEntryData implements IEntryData {
-    private static Logger logger = LoggerFactory.getLogger(ViewHybridEntryData.class);
+public class ViewPropertiesEntryData implements IEntryData {
+    private static Logger logger = LoggerFactory.getLogger(ViewPropertiesEntryData.class);
     protected IEntryData entry;
     protected Map<String, Object> dynamicProperties;
-    HybridPayload hybridPayload;
+    PropertiesHandler propertiesHandler;
 
     public void view(IEntryData entryData) {
         this.entry = entryData;
         this.dynamicProperties = entryData.getDynamicProperties();
-        this.hybridPayload = new HybridPayload(getEntryTypeDesc().getTypeDesc(),
+        this.propertiesHandler = new PropertiesHandler(getEntryTypeDesc().getTypeDesc(),
                 ((HybridEntryData) entryData).getNonSerializedProperties(),
                 ((HybridEntryData) entryData).getPackedSerializedProperties());
     }
 
-    public void view(IEntryData entryData, HybridPayload hybridPayload) {
-        this.hybridPayload = hybridPayload;
+    public void view(IEntryData entryData, PropertiesHandler propertiesHandler) {
+        this.propertiesHandler = propertiesHandler;
         this.dynamicProperties = entryData.getDynamicProperties();
     }
 
-    public HybridPayload getHybridPayload() {
-        return hybridPayload;
+    public PropertiesHandler getPropertiesHandler() {
+        return propertiesHandler;
     }
 
     @Override
@@ -47,12 +47,12 @@ public class ViewHybridEntryData implements IEntryData {
 
     @Override
     public Object[] getFixedPropertiesValues() {
-        return this.hybridPayload.getFixedProperties(getEntryTypeDesc().getTypeDesc());
+        return this.propertiesHandler.getFixedProperties(getEntryTypeDesc().getTypeDesc());
     }
 
     @Override
     public Object getFixedPropertyValue(int position) {
-        return this.hybridPayload.getFixedProperty(getEntryTypeDesc().getTypeDesc(), position);
+        return this.propertiesHandler.getFixedProperty(getEntryTypeDesc().getTypeDesc(), position);
     }
 
     @Override

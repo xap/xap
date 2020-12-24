@@ -133,7 +133,7 @@ public class EntryHolderFactory {
         if (entryDataType == EntryDataType.FLAT) {
             ClassBinaryStorageAdapter adapter = (entryTypeDesc.getTypeDesc()).getClassBinaryStorageAdapter();
             if (adapter != null) {
-                return new HybridEntryData(entryPacket.getHybridPayload(), entryPacket.getDynamicProperties(),
+                return new HybridEntryData(entryPacket.getPropertiesHandler(), entryPacket.getDynamicProperties(),
                         entryTypeDesc, version, lease, entryXtnInfo);
             } else {
                 return new FlatEntryData(entryPacket.getFieldValues(), entryPacket.getDynamicProperties(),

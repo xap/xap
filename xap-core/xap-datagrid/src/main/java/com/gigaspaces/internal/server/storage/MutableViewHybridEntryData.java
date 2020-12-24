@@ -5,26 +5,26 @@ import com.j_spaces.core.server.transaction.EntryXtnInfo;
 import java.util.Arrays;
 import java.util.Map;
 
-public class MutableViewHybridEntryData extends ViewHybridEntryData implements ITransactionalEntryData {
+public class MutableViewHybridEntryData extends ViewPropertiesEntryData implements ITransactionalEntryData {
 
-    public void view(ITransactionalEntryData entryData, ViewHybridEntryData viewEntryData) {
+    public void view(ITransactionalEntryData entryData, ViewPropertiesEntryData viewEntryData) {
         this.entry = entryData;
         this.dynamicProperties = entryData.getDynamicProperties();
-        this.hybridPayload = viewEntryData.getHybridPayload().clone();
+        this.propertiesHandler = viewEntryData.getPropertiesHandler().clone();
     }
 
     public void view(ITransactionalEntryData entryData) {
         this.entry = entryData;
         this.dynamicProperties = entryData.getDynamicProperties();
         HybridEntryData hybridBinaryEntryData = (HybridEntryData) entryData;
-        this.hybridPayload = new HybridPayload(getEntryTypeDesc().getTypeDesc(),
+        this.propertiesHandler = new PropertiesHandler(getEntryTypeDesc().getTypeDesc(),
                 Arrays.copyOf(hybridBinaryEntryData.getNonSerializedProperties(), hybridBinaryEntryData.getNonSerializedProperties().length),
                 Arrays.copyOf(hybridBinaryEntryData.getPackedSerializedProperties(), hybridBinaryEntryData.getPackedSerializedProperties().length));
     }
 
     @Override
     public void setFixedPropertyValue(int index, Object value) {
-        hybridPayload.setFixedProperty(entry.getEntryTypeDesc().getTypeDesc(), index, value);
+        propertiesHandler.setFixedProperty(entry.getEntryTypeDesc().getTypeDesc(), index, value);
     }
 
     @Override
@@ -58,6 +58,6 @@ public class MutableViewHybridEntryData extends ViewHybridEntryData implements I
     }
 
     public boolean isDeserialized() {
-        return hybridPayload.isUnpacked();
+        return propertiesHandler.isUnpacked();
     }
 }

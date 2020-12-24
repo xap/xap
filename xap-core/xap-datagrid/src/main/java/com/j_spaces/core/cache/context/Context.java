@@ -238,7 +238,7 @@ public class Context {
     private IndexMetricsContext indexMetricsContext;
     private boolean _backupOnly;
 
-    private ViewHybridEntryData viewEntryData;
+    private ViewPropertiesEntryData viewEntryData;
 
     private boolean _fromClustered;
 
@@ -1207,7 +1207,7 @@ public class Context {
     }
 
     private void copyFieldsArray(IEntryPacket entryPacket) {
-        entryPacket.getHybridPayload().copyFieldsArray();
+        entryPacket.getPropertiesHandler().copyFieldsArray();
     }
 
     public void setSyncHybridOperationDetails(SyncHybridOperationDetails[] syncHybridOperationsDetails) {
@@ -1260,9 +1260,9 @@ public class Context {
     }
 
     public IEntryData getViewEntryData(IEntryData entryData) {
-        if (entryData instanceof IBinaryEntryData) {
+        if (entryData.isHybrid()) {
             if (viewEntryData == null) {
-                viewEntryData = new ViewHybridEntryData();
+                viewEntryData = new ViewPropertiesEntryData();
             }
 
             if (viewEntryData.isViewOf(entryData)) {
@@ -1276,12 +1276,12 @@ public class Context {
         }
     }
 
-    public ViewHybridEntryData getViewEntryData() {
+    public ViewPropertiesEntryData getViewEntryData() {
         return viewEntryData;
     }
 
     public IEntryData getCacheViewEntryDataIfNeeded(IEntryData entryData) {
-        if ((entryData instanceof IBinaryEntryData)
+        if ((entryData.isHybrid())
                 && viewEntryData != null && viewEntryData.isViewOf(entryData)) {
             return viewEntryData;
         }
@@ -1289,11 +1289,11 @@ public class Context {
     }
 
     public void cacheViewEntryDataIfNeeded(IEntryData entryData, IEntryPacket packet) {
-        if (entryData instanceof IBinaryEntryData) {
+        if (entryData.isHybrid()) {
             if (viewEntryData == null) {
-                viewEntryData = new ViewHybridEntryData();
+                viewEntryData = new ViewPropertiesEntryData();
             }
-            viewEntryData.view(entryData, packet.getHybridPayload());
+            viewEntryData.view(entryData, packet.getPropertiesHandler());
         }
     }
 

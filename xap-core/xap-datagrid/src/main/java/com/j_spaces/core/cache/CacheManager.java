@@ -1543,8 +1543,8 @@ public class CacheManager extends AbstractCacheManager
         if(udata instanceof HybridEntryData) {
             IEntryData cachedView = context.getCacheViewEntryDataIfNeeded(edata);
             MutableViewHybridEntryData mutableViewEntryData = new MutableViewHybridEntryData();
-            if (cachedView instanceof ViewHybridEntryData) {
-                mutableViewEntryData.view(udata, (ViewHybridEntryData) cachedView);
+            if (cachedView instanceof ViewPropertiesEntryData) {
+                mutableViewEntryData.view(udata, (ViewPropertiesEntryData) cachedView);
             } else {
                 mutableViewEntryData.view(udata);
             }
@@ -1553,8 +1553,8 @@ public class CacheManager extends AbstractCacheManager
             if (mutableViewEntryData.isDeserialized()){
                 udata.setFixedPropertyValues(mutableViewEntryData.getFixedPropertiesValues());
             } else {
-                ((HybridEntryData) udata).setFixedPropertyValues(mutableViewEntryData.getHybridPayload().getNonSerializedProperties(),
-                        mutableViewEntryData.getHybridPayload().getPackedSerializedProperties());
+                ((HybridEntryData) udata).setFixedPropertyValues(mutableViewEntryData.getPropertiesHandler().getNonSerializedProperties(),
+                        mutableViewEntryData.getPropertiesHandler().getPackedSerializedProperties());
             }
 
         } else {

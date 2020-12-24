@@ -44,21 +44,21 @@ public class HybridEntryData implements IBinaryEntryData {
 
 
     public HybridEntryData(Object[] fixedProperties, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version, long expirationTime, EntryXtnInfo entryXtnInfo) {
-        this(new HybridPayload(entryTypeDesc.getTypeDesc(), fixedProperties), dynamicProperties, entryTypeDesc, version, expirationTime, entryXtnInfo);
+        this(new PropertiesHandler(entryTypeDesc.getTypeDesc(), fixedProperties), dynamicProperties, entryTypeDesc, version, expirationTime, entryXtnInfo);
     }
 
-    public HybridEntryData(HybridPayload hybridPayload, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version,
+    public HybridEntryData(PropertiesHandler propertiesHandler, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version,
                            long expirationTime, EntryXtnInfo entryXtnInfo) {
         this._entryTypeDesc = entryTypeDesc;
         this._versionID = version;
         this._expirationTime = expirationTime;
         this._entryTxnInfo = entryXtnInfo;
         this._dynamicProperties = dynamicProperties;
-        this.nonSerializedProperties = hybridPayload.getNonSerializedProperties();
-        if(hybridPayload.isDirty()){
-            this.serializedProperties = HybridPayload.serializeFields(entryTypeDesc.getTypeDesc(), hybridPayload.getUnpackedSerializedProperties());
+        this.nonSerializedProperties = propertiesHandler.getNonSerializedProperties();
+        if(propertiesHandler.isDirty()){
+            this.serializedProperties = PropertiesHandler.serializeFields(entryTypeDesc.getTypeDesc(), propertiesHandler.getUnpackedSerializedProperties());
         }else {
-            this.serializedProperties = hybridPayload.getPackedSerializedProperties();
+            this.serializedProperties = propertiesHandler.getPackedSerializedProperties();
         }
     }
 
@@ -68,7 +68,7 @@ public class HybridEntryData implements IBinaryEntryData {
         byte[] packeSerializedProperties = shallowCloneData ? Arrays.copyOf(this.serializedProperties, this.serializedProperties.length) : serializedProperties;
         Object[] nonSerializeData = shallowCloneData ? Arrays.copyOf(this.nonSerializedProperties, this.nonSerializedProperties.length) : nonSerializedProperties;
         Map<String, Object> dynamicProperties = shallowCloneData && _dynamicProperties != null ? new HashMap<>(_dynamicProperties) : _dynamicProperties;
-        return new HybridEntryData(new HybridPayload(getEntryTypeDesc().getTypeDesc()
+        return new HybridEntryData(new PropertiesHandler(getEntryTypeDesc().getTypeDesc()
                 , nonSerializeData, packeSerializedProperties), dynamicProperties, this._entryTypeDesc, newVersion, newExpiration, newEntryXtnInfo);
     }
 
@@ -76,7 +76,7 @@ public class HybridEntryData implements IBinaryEntryData {
     public ITransactionalEntryData createCopy(IEntryData newEntryData, long newExpirationTime) {
         if (newEntryData instanceof HybridEntryData) {
             HybridEntryData data = (HybridEntryData) newEntryData;
-            return new HybridEntryData(new HybridPayload(newEntryData.getEntryTypeDesc().getTypeDesc(),
+            return new HybridEntryData(new PropertiesHandler(newEntryData.getEntryTypeDesc().getTypeDesc(),
                     data.getNonSerializedProperties(), data.getPackedSerializedProperties()),
                     newEntryData.getDynamicProperties(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
                     copyTxnInfo(false, false));
@@ -156,7 +156,7 @@ public class HybridEntryData implements IBinaryEntryData {
         if (values.length != getNumOfFixedProperties()) {
             throw new IllegalArgumentException("Cannot substitute fixed property values with array of different size!");
         }
-        HybridPayload payload = new HybridPayload(getEntryTypeDesc().getTypeDesc(), values);
+        PropertiesHandler payload = new PropertiesHandler(getEntryTypeDesc().getTypeDesc(), values);
         nonSerializedProperties = payload.getNonSerializedProperties();
         serializedProperties = payload.getPackedSerializedProperties();
     }
@@ -222,5 +222,10 @@ public class HybridEntryData implements IBinaryEntryData {
             _dynamicProperties = new DocumentProperties();
 
         _dynamicProperties.put(propertyName, value);
+    }
+
+    @Override
+    public boolean isHybrid() {
+        return true;
     }
 }

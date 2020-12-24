@@ -7,7 +7,7 @@ import com.gigaspaces.internal.metadata.PropertyInfo;
 import java.io.*;
 import java.util.Arrays;
 
-public class HybridPayload implements Externalizable {
+public class PropertiesHandler implements Externalizable {
     private static final Object[] EMPTY_OBJECTS_ARRAY = new Object[0];
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
     private Object[] unpackedSerializedProperties;
@@ -16,14 +16,14 @@ public class HybridPayload implements Externalizable {
     private boolean dirty;
     private boolean unpacked;
 
-    public HybridPayload() {
+    public PropertiesHandler() {
         this.unpackedSerializedProperties = EMPTY_OBJECTS_ARRAY;
         this.nonSerializedProperties = EMPTY_OBJECTS_ARRAY;
         this.packedSerializedProperties = EMPTY_BYTE_ARRAY;
         this.unpacked = true;
     }
 
-    public HybridPayload(ITypeDesc typeDesc, Object[] nonSerializedProperties, byte[] packedSerializedProperties) {
+    public PropertiesHandler(ITypeDesc typeDesc, Object[] nonSerializedProperties, byte[] packedSerializedProperties) {
         this.nonSerializedProperties = nonSerializedProperties;
         this.unpackedSerializedProperties = new Object[typeDesc.getSerializedProperties().length];
         this.packedSerializedProperties = packedSerializedProperties;
@@ -31,7 +31,7 @@ public class HybridPayload implements Externalizable {
         this.dirty = false;
     }
 
-    public HybridPayload(Object[] unpackedSerializedProperties, Object[] nonSerializedProperties, byte[] packedSerializedProperties, boolean unpacked, boolean dirty) {
+    public PropertiesHandler(Object[] unpackedSerializedProperties, Object[] nonSerializedProperties, byte[] packedSerializedProperties, boolean unpacked, boolean dirty) {
         this.unpackedSerializedProperties = unpackedSerializedProperties;
         this.nonSerializedProperties = nonSerializedProperties;
         this.packedSerializedProperties = packedSerializedProperties;
@@ -41,7 +41,7 @@ public class HybridPayload implements Externalizable {
 
 
     //wrap an object array with HybridBinaryData
-    public HybridPayload(ITypeDesc typeDesc, Object[] values) {
+    public PropertiesHandler(ITypeDesc typeDesc, Object[] values) {
         splitProperties(typeDesc, values);
         this.packedSerializedProperties = typeDesc.getClassBinaryStorageAdapter() != null ?
                 serializeFields(typeDesc, this.unpackedSerializedProperties) : EMPTY_BYTE_ARRAY;
@@ -56,7 +56,7 @@ public class HybridPayload implements Externalizable {
             }
             return typeDesc.getClassBinaryStorageAdapter().toBinary(typeDesc, fieldsValues);
         } catch (IOException e) {
-            throw new UncheckedIOException("com.gigaspaces.internal.server.storage.HybridPayload.serializeFields failed", e);
+            throw new UncheckedIOException(PropertiesHandler.class.getSimpleName()+": failed to serialized fields "+Arrays.toString(fieldsValues), e);
         }
     }
 
@@ -109,11 +109,11 @@ public class HybridPayload implements Externalizable {
         }
     }
 
-    public HybridPayload clone() {
+    public PropertiesHandler clone() {
         Object[] serializedProps = this.unpackedSerializedProperties == null ? null : Arrays.copyOf(this.unpackedSerializedProperties, this.unpackedSerializedProperties.length);
         Object[] nonSerializedProps = this.nonSerializedProperties == null ? null : Arrays.copyOf(this.nonSerializedProperties, this.nonSerializedProperties.length);
         byte[] packedBinaryProps = this.packedSerializedProperties == null ? null : Arrays.copyOf(this.packedSerializedProperties, this.packedSerializedProperties.length);
-        return new HybridPayload(serializedProps, nonSerializedProps, packedBinaryProps, this.unpacked, this.dirty);
+        return new PropertiesHandler(serializedProps, nonSerializedProps, packedBinaryProps, this.unpacked, this.dirty);
     }
 
     @Override

@@ -25,7 +25,7 @@ import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.query.ICustomQuery;
-import com.gigaspaces.internal.server.storage.HybridPayload;
+import com.gigaspaces.internal.server.storage.PropertiesHandler;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.core.EntrySerializationException;
 
@@ -51,7 +51,7 @@ public class EntryPacket extends AbstractEntryPacket {
     private static final long serialVersionUID = 2L;
 
     protected String _typeName;
-    private HybridPayload hybridPayload;
+    private PropertiesHandler propertiesHandler;
     private Map<String, Object> _dynamicProperties;
     private String _uid;
     private int _version;
@@ -74,16 +74,16 @@ public class EntryPacket extends AbstractEntryPacket {
      * Default constructor required by {@link java.io.Externalizable}.
      */
     public EntryPacket() {
-        this.hybridPayload = new HybridPayload();
+        this.propertiesHandler = new PropertiesHandler();
     }
 
     public EntryPacket(ITypeDesc typeDesc, EntryType entryType, Object[] fixedProperties, Map<String, Object> dynamicProperties,
                        String uid, int version, long timeToLive, boolean isTransient) {
-        this(typeDesc, entryType, dynamicProperties, uid, version, timeToLive, isTransient, new HybridPayload(typeDesc, fixedProperties));
+        this(typeDesc, entryType, dynamicProperties, uid, version, timeToLive, isTransient, new PropertiesHandler(typeDesc, fixedProperties));
     }
 
     public EntryPacket(ITypeDesc typeDesc, EntryType entryType, Map<String, Object> dynamicProperties,
-                       String uid, int version, long timeToLive, boolean isTransient, HybridPayload hybridPayload) {
+                       String uid, int version, long timeToLive, boolean isTransient, PropertiesHandler propertiesHandler) {
         super(typeDesc, entryType);
         _typeName = typeDesc.getTypeName();
         _dynamicProperties = dynamicProperties;
@@ -93,18 +93,18 @@ public class EntryPacket extends AbstractEntryPacket {
         _transient = isTransient;
         _noWriteLease = false;
         _fifo = false;
-        this.hybridPayload = hybridPayload;
+        this.propertiesHandler = propertiesHandler;
 
     }
 
     protected EntryPacket(ITypeDesc typeDesc, Object[] values) {
-        this(typeDesc, new HybridPayload(typeDesc, values));
+        this(typeDesc, new PropertiesHandler(typeDesc, values));
     }
 
-    protected EntryPacket(ITypeDesc typeDesc, HybridPayload hybridPayload) {
+    protected EntryPacket(ITypeDesc typeDesc, PropertiesHandler propertiesHandler) {
         super(typeDesc, typeDesc.getObjectType());
         this._typeName = typeDesc.getTypeName();
-        this.hybridPayload = hybridPayload;
+        this.propertiesHandler = propertiesHandler;
     }
 
     /**
@@ -116,7 +116,7 @@ public class EntryPacket extends AbstractEntryPacket {
     @Override
     public IEntryPacket clone() {
         IEntryPacket packet = super.clone();
-        packet.setHybridPayload(hybridPayload.clone());
+        packet.setPropertiesHandler(propertiesHandler.clone());
         return packet;
     }
 
@@ -161,20 +161,20 @@ public class EntryPacket extends AbstractEntryPacket {
     }
 
     public Object[] getFieldValues() {
-        return hybridPayload.getFixedProperties(getTypeDescriptor());
+        return propertiesHandler.getFixedProperties(getTypeDescriptor());
     }
 
     public void setFieldsValues(Object[] values) {
         if(getTypeDescriptor() == null && getTypeName() == null){
-            hybridPayload.setFixedProperties(values);
+            propertiesHandler.setFixedProperties(values);
         } else {
-            hybridPayload.setFixedProperties(getTypeDescriptor(), values);
+            propertiesHandler.setFixedProperties(getTypeDescriptor(), values);
         }
     }
 
     public Object getFieldValue(int index) {
         try {
-            return this.hybridPayload.getFixedProperty(this.getTypeDescriptor(), index);
+            return this.propertiesHandler.getFixedProperty(this.getTypeDescriptor(), index);
         } catch (Exception e) {
             throw new IllegalStateException("The field values array was not properly set", e);
         }
@@ -183,9 +183,9 @@ public class EntryPacket extends AbstractEntryPacket {
     public void setFieldValue(int index, Object value) {
         try {
             if(getTypeDescriptor() == null && getTypeName() == null){
-                hybridPayload.setFixedProperty(index, value);
+                propertiesHandler.setFixedProperty(index, value);
             } else {
-                this.hybridPayload.setFixedProperty(_typeDesc, index, value);
+                this.propertiesHandler.setFixedProperty(_typeDesc, index, value);
             }
         } catch (Exception e) {
             throw new IllegalStateException("The field values array was not properly set", e);
@@ -254,7 +254,7 @@ public class EntryPacket extends AbstractEntryPacket {
             flags |= FLAG_TIME_TO_LIVE;
         if (_multipleUIDs != null)
             flags |= FLAG_MULTIPLE_UIDS;
-        if (hybridPayload != null)
+        if (propertiesHandler != null)
             flags |= FLAG_FIELDS_VALUES;
         if (_fifo)
             flags |= FLAG_FIFO;
@@ -310,12 +310,12 @@ public class EntryPacket extends AbstractEntryPacket {
                 out.writeLong(_timeToLive);
             if (_multipleUIDs != null)
                 IOUtils.writeStringArray(out, _multipleUIDs);
-            if (hybridPayload != null) {
+            if (propertiesHandler != null) {
                 if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
-                    IOUtils.writeObject(out, hybridPayload);
+                    IOUtils.writeObject(out, propertiesHandler);
                 } else {
                     try {
-                        IOUtils.writeObjectArrayCompressed(out, hybridPayload.getFixedProperties(_typeDesc));
+                        IOUtils.writeObjectArrayCompressed(out, propertiesHandler.getFixedProperties(_typeDesc));
                     } catch (IOArrayException e) {
                         throw createPropertySerializationException(e, true);
                     }
@@ -364,10 +364,10 @@ public class EntryPacket extends AbstractEntryPacket {
 
             if ((flags & FLAG_FIELDS_VALUES) != 0) {
                 if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
-                    hybridPayload = IOUtils.readObject(in);
+                    propertiesHandler = IOUtils.readObject(in);
                 } else {
                     try {
-                        hybridPayload = new HybridPayload(_typeDesc, IOUtils.readObjectArrayCompressed(in));
+                        propertiesHandler = new PropertiesHandler(_typeDesc, IOUtils.readObjectArrayCompressed(in));
                     } catch (IOArrayException e) {
                         throw createPropertySerializationException(e, false);
                     }
@@ -418,16 +418,16 @@ public class EntryPacket extends AbstractEntryPacket {
 
     @Override
     public boolean allNullFieldValues() {
-        return hybridPayload.allNulls();
+        return propertiesHandler.allNulls();
     }
 
     @Override
-    public HybridPayload getHybridPayload() {
-        return hybridPayload;
+    public PropertiesHandler getPropertiesHandler() {
+        return propertiesHandler;
     }
 
     @Override
-    public void setHybridPayload(HybridPayload hybridBinaryData) {
-        this.hybridPayload = hybridBinaryData;
+    public void setPropertiesHandler(PropertiesHandler hybridBinaryData) {
+        this.propertiesHandler = hybridBinaryData;
     }
 }
