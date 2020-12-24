@@ -144,7 +144,7 @@ public class QueryColumnData implements Serializable {
     }
 
     private static boolean isUidColumn(String columnName) {
-        return UID_COLUMN.equalsIgnoreCase(columnName) || columnName.equals("1");
+        return UID_COLUMN.equalsIgnoreCase(columnName);
     }
 
     private static String initColumnName(String columnPath) {

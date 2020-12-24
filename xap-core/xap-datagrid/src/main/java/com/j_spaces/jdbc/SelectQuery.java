@@ -154,18 +154,6 @@ public class SelectQuery extends AbstractDMLQuery {
     public ResponsePacket executeOnSpace(ISpaceProxy space, Transaction txn) throws SQLException {
         IQueryResultSet<IEntryPacket> entries = null;
         ResponsePacket packet = new ResponsePacket();
-        if (getQueryColumns().size() == 1 && getQueryColumns().get(0).getName().equals("1")) {
-            final String[][] resultValues = new String[1][1];
-            resultValues[0][0] = "1";
-            final ResultEntry resultEntry = new ResultEntry(
-                    new String[]{"1"},
-                    new String[]{"COL"},
-                    new String[]{SYSTABLES},
-                    resultValues);
-            packet.setResultEntry(resultEntry);
-            return packet;
-        }
-
         try {
             if (getSecurityInterceptor() != null) {
                 SpaceContext spaceContext = getSession().getConnectionContext().getSpaceContext();
@@ -857,9 +845,7 @@ public class SelectQuery extends AbstractDMLQuery {
         if (getTablesNames().contains(SYSTABLES)) {
             return;
         }
-        if (getQueryColumns().size() == 1 && getQueryColumns().get(0).getName().equals("1")) {
-            return;
-        }
+
         applyJoinsIfNeeded();
 
         super.validateQuery(space);
