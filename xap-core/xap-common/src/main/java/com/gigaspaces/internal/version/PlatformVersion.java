@@ -20,6 +20,7 @@ import com.gigaspaces.start.ProductType;
 import com.gigaspaces.start.SystemLocations;
 
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Properties;
 import java.util.logging.ErrorManager;
 
@@ -45,7 +46,7 @@ public class PlatformVersion {
     public PlatformVersion(Properties properties) {
         this.id = properties.getProperty("gs.build-name");
         this.version = extractPrefix(id, "-");
-        this.productType = isInsightEdge() ? ProductType.InsightEdge : ProductType.XAP;
+        this.productType = isInsightEdgeAnalytics() ? ProductType.InsightEdge : ProductType.XAP;
         this.officialVersion = "GigaSpaces " + productType + " " + id;
         this.tag = properties.getProperty("gs.git-tag");
         this.shas = extractPropertiesByPrefix(properties, "gs.git-sha.");
@@ -74,8 +75,8 @@ public class PlatformVersion {
         return id.startsWith(prefix) ? id.replace(prefix, "").split("-") : new String[] {"", "0"};
     }
 
-    private static boolean isInsightEdge() {
-        return SystemLocations.singleton().home("insightedge").toFile().exists();
+    public static boolean isInsightEdgeAnalytics() {
+        return Files.exists(SystemLocations.singleton().home("insightedge"));
     }
 
     private static String initRevision(String tag, Properties shas) {

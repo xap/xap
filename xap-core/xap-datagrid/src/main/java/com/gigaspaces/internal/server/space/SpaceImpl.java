@@ -3909,7 +3909,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 String blobstoreRocksDBAllowDuplicateUIDs = spaceConfigReader.getSpaceProperty(Engine.ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS, Engine.ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS_DEFAULT);
                 if (!blobstoreRocksDBAllowDuplicateUIDs.equals(Engine.ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS_DEFAULT)){
                     isDuplicateUIDsAllowed = blobstoreRocksDBAllowDuplicateUIDs;
-                } else if (PlatformVersion.getInstance().getProductType().equals(ProductType.InsightEdge)) {
+                } else if (PlatformVersion.isInsightEdgeAnalytics()) {
                     isDuplicateUIDsAllowed = "true";
                 }
             }
