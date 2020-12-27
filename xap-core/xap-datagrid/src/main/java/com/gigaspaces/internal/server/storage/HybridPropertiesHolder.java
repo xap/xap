@@ -7,7 +7,7 @@ import com.gigaspaces.internal.metadata.PropertyInfo;
 import java.io.*;
 import java.util.Arrays;
 
-public class PropertiesHandler implements Externalizable {
+public class HybridPropertiesHolder implements PropertiesHolder {
     private static final Object[] EMPTY_OBJECTS_ARRAY = new Object[0];
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
     private Object[] unpackedSerializedProperties;
@@ -16,22 +16,20 @@ public class PropertiesHandler implements Externalizable {
     private boolean dirty;
     private boolean unpacked;
 
-    public PropertiesHandler() {
+    public HybridPropertiesHolder() {
         this.unpackedSerializedProperties = EMPTY_OBJECTS_ARRAY;
         this.nonSerializedProperties = EMPTY_OBJECTS_ARRAY;
         this.packedSerializedProperties = EMPTY_BYTE_ARRAY;
         this.unpacked = true;
     }
 
-    public PropertiesHandler(ITypeDesc typeDesc, Object[] nonSerializedProperties, byte[] packedSerializedProperties) {
+    public HybridPropertiesHolder(ITypeDesc typeDesc, Object[] nonSerializedProperties, byte[] packedSerializedProperties) {
         this.nonSerializedProperties = nonSerializedProperties;
         this.unpackedSerializedProperties = new Object[typeDesc.getSerializedProperties().length];
         this.packedSerializedProperties = packedSerializedProperties;
-        this.unpacked = false;
-        this.dirty = false;
     }
 
-    public PropertiesHandler(Object[] unpackedSerializedProperties, Object[] nonSerializedProperties, byte[] packedSerializedProperties, boolean unpacked, boolean dirty) {
+    public HybridPropertiesHolder(Object[] unpackedSerializedProperties, Object[] nonSerializedProperties, byte[] packedSerializedProperties, boolean unpacked, boolean dirty) {
         this.unpackedSerializedProperties = unpackedSerializedProperties;
         this.nonSerializedProperties = nonSerializedProperties;
         this.packedSerializedProperties = packedSerializedProperties;
@@ -39,12 +37,9 @@ public class PropertiesHandler implements Externalizable {
         this.dirty = dirty;
     }
 
-
-    //wrap an object array with HybridBinaryData
-    public PropertiesHandler(ITypeDesc typeDesc, Object[] values) {
+    public HybridPropertiesHolder(ITypeDesc typeDesc, Object[] values) {
         splitProperties(typeDesc, values);
-        this.packedSerializedProperties = typeDesc.getClassBinaryStorageAdapter() != null ?
-                serializeFields(typeDesc, this.unpackedSerializedProperties) : EMPTY_BYTE_ARRAY;
+        this.packedSerializedProperties = serializeFields(typeDesc, this.unpackedSerializedProperties);
         this.unpacked = true;
         this.dirty = false;
     }
@@ -56,21 +51,13 @@ public class PropertiesHandler implements Externalizable {
             }
             return typeDesc.getClassBinaryStorageAdapter().toBinary(typeDesc, fieldsValues);
         } catch (IOException e) {
-            throw new UncheckedIOException(PropertiesHandler.class.getSimpleName()+": failed to serialized fields "+Arrays.toString(fieldsValues), e);
+            throw new UncheckedIOException(HybridPropertiesHolder.class.getSimpleName() + ": failed to serialized fields " + Arrays.toString(fieldsValues), e);
         }
     }
 
     public Object[] getFixedProperties(ITypeDesc typeDesc) {
-        if (unpacked && this.nonSerializedProperties.length == 0 && this.unpackedSerializedProperties.length == 0) {
-            return this.nonSerializedProperties;
-        }
-
-        if (!unpacked && this.packedSerializedProperties.length > 0) {
+        if (!unpacked && this.packedSerializedProperties.length != 0) {
             unpackSerializedProperties(typeDesc);
-        }
-
-        if (unpackedSerializedProperties.length == 0) {
-            return this.nonSerializedProperties;
         }
 
         Object[] fields = new Object[typeDesc.getProperties().length];
@@ -109,11 +96,12 @@ public class PropertiesHandler implements Externalizable {
         }
     }
 
-    public PropertiesHandler clone() {
-        Object[] serializedProps = this.unpackedSerializedProperties == null ? null : Arrays.copyOf(this.unpackedSerializedProperties, this.unpackedSerializedProperties.length);
-        Object[] nonSerializedProps = this.nonSerializedProperties == null ? null : Arrays.copyOf(this.nonSerializedProperties, this.nonSerializedProperties.length);
-        byte[] packedBinaryProps = this.packedSerializedProperties == null ? null : Arrays.copyOf(this.packedSerializedProperties, this.packedSerializedProperties.length);
-        return new PropertiesHandler(serializedProps, nonSerializedProps, packedBinaryProps, this.unpacked, this.dirty);
+    @Override
+    public HybridPropertiesHolder clone() {
+        Object[] serializedProps = unpackedSerializedProperties.length == 0 ? unpackedSerializedProperties : Arrays.copyOf(unpackedSerializedProperties, unpackedSerializedProperties.length);
+        Object[] nonSerializedProps = nonSerializedProperties.length == 0 ? nonSerializedProperties : Arrays.copyOf(nonSerializedProperties, nonSerializedProperties.length);
+        byte[] packedBinaryProps = packedSerializedProperties.length == 0 ? packedSerializedProperties : Arrays.copyOf(packedSerializedProperties, packedSerializedProperties.length);
+        return new HybridPropertiesHolder(serializedProps, nonSerializedProps, packedBinaryProps, this.unpacked, this.dirty);
     }
 
     @Override
@@ -127,7 +115,7 @@ public class PropertiesHandler implements Externalizable {
             IOUtils.writeObjectArrayCompressed(out, nonSerializedProperties);
             IOUtils.writeInt(out, unpackedSerializedProperties.length);
             out.writeInt(packedSerializedProperties.length);
-            if (packedSerializedProperties.length > 0) {
+            if (packedSerializedProperties.length != 0) {
                 out.write(packedSerializedProperties);
             }
         }
@@ -150,7 +138,7 @@ public class PropertiesHandler implements Externalizable {
                 unpackedSerializedProperties = new Object[unpackedSize];
             }
             int packedSize = in.readInt();
-            if(packedSize == 0){
+            if (packedSize == 0) {
                 packedSerializedProperties = EMPTY_BYTE_ARRAY;
             } else {
                 packedSerializedProperties = new byte[packedSize];
@@ -187,21 +175,23 @@ public class PropertiesHandler implements Externalizable {
                 '}';
     }
 
+    @Override
     public boolean allNulls() {
-        return (this.unpackedSerializedProperties == null || this.unpackedSerializedProperties.length == 0)
-                && (this.packedSerializedProperties == null || this.packedSerializedProperties.length == 0)
-                && (this.nonSerializedProperties == null || this.nonSerializedProperties.length == 0);
+        return this.unpackedSerializedProperties.length == 0
+                && this.packedSerializedProperties.length == 0
+                && this.nonSerializedProperties.length == 0;
     }
 
+    @Override
     public void copyFieldsArray() {
         Object[] src = nonSerializedProperties;
         Object[] target;
-        if (src.length > 0) {
+        if (src.length != 0) {
             target = new Object[src.length];
             System.arraycopy(src, 0, target, 0, src.length);
             this.nonSerializedProperties = target;
         }
-        if (unpacked && unpackedSerializedProperties.length > 0) {
+        if (unpacked && unpackedSerializedProperties.length != 0) {
             src = unpackedSerializedProperties;
             target = new Object[src.length];
             System.arraycopy(src, 0, target, 0, src.length);
@@ -209,12 +199,14 @@ public class PropertiesHandler implements Externalizable {
         }
     }
 
+    @Override
     public void setFixedProperties(ITypeDesc typeDescriptor, Object[] values) {
         splitProperties(typeDescriptor, values);
         this.unpacked = true;
         this.dirty = true;
     }
 
+    @Override
     public void setFixedProperty(ITypeDesc typeDesc, int position, Object value) {
         if (typeDesc.isSerializedProperty(position)) {
             if (!unpacked) {
@@ -236,7 +228,7 @@ public class PropertiesHandler implements Externalizable {
 
         this.nonSerializedProperties = new Object[typeDesc.getNonSerializedProperties().length];
         this.unpackedSerializedProperties = new Object[typeDesc.getSerializedProperties().length];
-        if (values != null && values.length > 0) {
+        if (values != null && values.length != 0) {
             int nonSerializedFieldsIndex = 0;
             int serializedFieldsIndex = 0;
             for (PropertyInfo property : typeDesc.getProperties()) {
@@ -251,6 +243,7 @@ public class PropertiesHandler implements Externalizable {
         }
     }
 
+    @Override
     public void setFixedProperties(Object[] values) {
         this.nonSerializedProperties = values;
         this.unpackedSerializedProperties = EMPTY_OBJECTS_ARRAY;
@@ -258,6 +251,7 @@ public class PropertiesHandler implements Externalizable {
         this.dirty = true;
     }
 
+    @Override
     public void setFixedProperty(int position, Object value) {
         this.nonSerializedProperties[position] = value;
     }

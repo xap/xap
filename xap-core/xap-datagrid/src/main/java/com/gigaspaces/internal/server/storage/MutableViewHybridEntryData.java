@@ -10,21 +10,21 @@ public class MutableViewHybridEntryData extends ViewPropertiesEntryData implemen
     public void view(ITransactionalEntryData entryData, ViewPropertiesEntryData viewEntryData) {
         this.entry = entryData;
         this.dynamicProperties = entryData.getDynamicProperties();
-        this.propertiesHandler = viewEntryData.getPropertiesHandler().clone();
+        this.propertiesHolder = viewEntryData.getPropertiesHolder().clone();
     }
 
     public void view(ITransactionalEntryData entryData) {
         this.entry = entryData;
         this.dynamicProperties = entryData.getDynamicProperties();
         HybridEntryData hybridBinaryEntryData = (HybridEntryData) entryData;
-        this.propertiesHandler = new PropertiesHandler(getEntryTypeDesc().getTypeDesc(),
+        this.propertiesHolder = new HybridPropertiesHolder(getEntryTypeDesc().getTypeDesc(),
                 Arrays.copyOf(hybridBinaryEntryData.getNonSerializedProperties(), hybridBinaryEntryData.getNonSerializedProperties().length),
                 Arrays.copyOf(hybridBinaryEntryData.getPackedSerializedProperties(), hybridBinaryEntryData.getPackedSerializedProperties().length));
     }
 
     @Override
     public void setFixedPropertyValue(int index, Object value) {
-        propertiesHandler.setFixedProperty(entry.getEntryTypeDesc().getTypeDesc(), index, value);
+        propertiesHolder.setFixedProperty(entry.getEntryTypeDesc().getTypeDesc(), index, value);
     }
 
     @Override
@@ -58,6 +58,6 @@ public class MutableViewHybridEntryData extends ViewPropertiesEntryData implemen
     }
 
     public boolean isDeserialized() {
-        return propertiesHandler.isUnpacked();
+        return propertiesHolder.isUnpacked();
     }
 }

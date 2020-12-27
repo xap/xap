@@ -28,8 +28,9 @@ import com.gigaspaces.internal.cluster.node.impl.packets.data.ReplicationPacketD
 import com.gigaspaces.internal.cluster.node.impl.view.EntryPacketServerEntryAdapter;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
-import com.gigaspaces.internal.server.storage.PropertiesHandler;
+import com.gigaspaces.internal.server.storage.PropertiesHolder;
 import com.gigaspaces.internal.server.storage.IEntryData;
+import com.gigaspaces.internal.server.storage.PropertiesHolderFactory;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
@@ -211,26 +212,26 @@ public class UpdateReplicationPacketData
         if (!hasPreviousEntryDataBeenSerialzed)
             return;
 
-        PropertiesHandler previousPropertiesHandler = deserializePreviousPropertiesHandler(in);
+        PropertiesHolder previousHolder = deserializePreviousPropertiesHolder(in);
 
         DynamicPropertiesDeserializationData data = deserializePreviousDynamicProperties(in);
         Map<String, Object> previousDynamicProperties = data._serializedPreviousDynamicProperties;
         boolean previousDynamicPropertiesExisted = data._previousDynamicPropertiesExisted;
-        createPreviousEntryDataPost158(previousPropertiesHandler, previousDynamicProperties, previousDynamicPropertiesExisted);
+        createPreviousEntryDataPost158(previousHolder, previousDynamicProperties, previousDynamicPropertiesExisted);
     }
 
-    private PropertiesHandler deserializePreviousPropertiesHandler(ObjectInput in) throws IOException, ClassNotFoundException {
+    private PropertiesHolder deserializePreviousPropertiesHolder(ObjectInput in) throws IOException, ClassNotFoundException {
         boolean isSerialized = in.readBoolean();
         if(isSerialized){
-            return (PropertiesHandler) in.readObject();
+            return (PropertiesHolder) in.readObject();
         }
         return null;
     }
 
-    private void createPreviousEntryDataPost158(PropertiesHandler previousPropertiesHandler, Map<String, Object> previousDynamicProperties, boolean previousDynamicPropertiesExisted) {
+    private void createPreviousEntryDataPost158(PropertiesHolder previousHolder, Map<String, Object> previousDynamicProperties, boolean previousDynamicPropertiesExisted) {
         _previousEntryPacket = getEntryPacket().clone();
-        if (previousPropertiesHandler != null)
-            _previousEntryPacket.setPropertiesHandler(previousPropertiesHandler);
+        if (previousHolder != null)
+            _previousEntryPacket.setPropertiesHolder(previousHolder);
 
         if (previousDynamicProperties != null)
             _previousEntryPacket.setDynamicProperties(previousDynamicProperties);
@@ -418,14 +419,14 @@ public class UpdateReplicationPacketData
         // flag to indicate whether the previousEntryData was written
         if (_previousEntryData != null) {
             out.writeBoolean(true);
-            serializedPreviousPropertiesHandler(out);
+            serializedPreviousPropertiesHolder(out);
             serializePreviousDynamicProperties(out);
         } else {
             out.writeBoolean(false);
         }
     }
 
-    private void serializedPreviousPropertiesHandler(ObjectOutput out) throws IOException {
+    private void serializedPreviousPropertiesHolder(ObjectOutput out) throws IOException {
         Object[] serializedPrevious = null;
 
         Object[] current = getEntryPacket().getFieldValues();
@@ -451,7 +452,7 @@ public class UpdateReplicationPacketData
         out.writeBoolean(serialize);
 
         if (serialize) {
-            PropertiesHandler payload = new PropertiesHandler(_previousEntryData.getSpaceTypeDescriptor(), serializedPrevious);
+            PropertiesHolder payload = PropertiesHolderFactory.create(_previousEntryData.getSpaceTypeDescriptor(), serializedPrevious);
             out.writeObject(payload);
         }
     }

@@ -18,11 +18,7 @@ package com.gigaspaces.internal.transport;
 
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.document.DocumentObjectConverterInternal;
-import com.gigaspaces.internal.metadata.EntryType;
-import com.gigaspaces.internal.metadata.ExternalEntryIntrospector;
-import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.metadata.ITypeIntrospector;
-import com.gigaspaces.internal.metadata.PropertyInfo;
+import com.gigaspaces.internal.metadata.*;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.utils.ObjectUtils;
 import com.gigaspaces.metadata.SpaceMetadataException;
@@ -69,13 +65,13 @@ public class EntryPacketFactory {
         return new EntryPacket(typeDesc, entryType, dynamicProperties, uid,
                 introspector.getVersion(entry),
                 introspector.getTimeToLive(entry),
-                introspector.isTransient(entry), new PropertiesHandler(typeDesc, fixedProperties));
+                introspector.isTransient(entry), PropertiesHolderFactory.create(typeDesc, fixedProperties));
     }
 
     public static IEntryPacket createFullPacket(IEntryData entryData, OperationID operationID, String uid, boolean isTransient, QueryResultTypeInternal queryResultType) {
         final long timeToLive = entryData.getTimeToLive(true);
         IEntryPacket entryPacket = createInternal(null /*template*/, isTransient, entryData, uid, timeToLive, queryResultType,
-                false, getPropertiesHandler(null, entryData));
+                false, getPropertiesHolder(null, entryData));
         entryPacket.setOperationID(operationID);
         return entryPacket;
     }
@@ -84,7 +80,7 @@ public class EntryPacketFactory {
         final IEntryData entryData = entryHolder.getEntryData();
         final long timeToLive = entryData.getTimeToLive(true);
         IEntryPacket entryPacket = create(null /*template*/, entryHolder.isTransient(), entryData, entryHolder.getUID(), timeToLive,
-                true, getPropertiesHandler(null, entryData));
+                true, getPropertiesHolder(null, entryData));
 
         entryPacket.setOperationID(operationID);
         return entryPacket;
@@ -96,7 +92,7 @@ public class EntryPacketFactory {
         final Object[] fixedProperties = getPartialUpdateFieldValues(entryData, partialUpdatedValuesIndicators);
 
         IEntryPacket entryPacket = create(null /*template*/, entryHolder.isTransient(), entryData,
-                entryHolder.getUID(), timeToLive, true, new PropertiesHandler(entryData.getEntryTypeDesc().getTypeDesc(), fixedProperties));
+                entryHolder.getUID(), timeToLive, true, PropertiesHolderFactory.create(entryData.getEntryTypeDesc().getTypeDesc(), fixedProperties));
 
         entryPacket.setOperationID(operationID);
         return entryPacket;
@@ -104,13 +100,13 @@ public class EntryPacketFactory {
 
     public static IEntryPacket createFullPacketForReplication(IEntryHolder entryHolder, ITemplateHolder template, String uid, long timeToLive) {
         IEntryData entryData = entryHolder.getEntryData();
-        return create(template, entryHolder.isTransient(), entryData, uid, timeToLive, true, getPropertiesHandler(null, entryData));
+        return create(template, entryHolder.isTransient(), entryData, uid, timeToLive, true, getPropertiesHolder(null, entryData));
     }
 
     public static IEntryPacket createFullPacket(IEntryHolder entryHolder, ITemplateHolder template, String uid, long timeToLive,
                                                 IEntryData entryData, OperationID operationId) {
 
-        IEntryPacket packet = create(template, entryHolder.isTransient(), entryData, uid, timeToLive, false, getPropertiesHandler(null, entryData));
+        IEntryPacket packet = create(template, entryHolder.isTransient(), entryData, uid, timeToLive, false, getPropertiesHolder(null, entryData));
         packet.setOperationID(operationId);
         return packet;
     }
@@ -136,12 +132,12 @@ public class EntryPacketFactory {
             }
         }
         final long timeToLive = entryData.getTimeToLive(false);
-        return create(template, isTransient, entryData, uid, timeToLive, false, getPropertiesHandler(context, entryData));
+        return create(template, isTransient, entryData, uid, timeToLive, false, getPropertiesHolder(context, entryData));
     }
 
     private static IEntryPacket create(ITemplateHolder template, boolean isTransient, IEntryData entryData,
-                                       String uid, long timeToLive, boolean forceNonExternalizable, PropertiesHandler propertiesHandler) {
-        return createInternal(template, isTransient, entryData, uid, timeToLive, QueryResultTypeInternal.NOT_SET, forceNonExternalizable, propertiesHandler);
+                                       String uid, long timeToLive, boolean forceNonExternalizable, PropertiesHolder propertiesHolder) {
+        return createInternal(template, isTransient, entryData, uid, timeToLive, QueryResultTypeInternal.NOT_SET, forceNonExternalizable, propertiesHolder);
     }
 
     public static IEntryPacket createRemovePacketForPersistency(IEntryHolder entryHolder, OperationID operationID) {
@@ -155,7 +151,7 @@ public class EntryPacketFactory {
     }
 
     private static IEntryPacket createInternal(ITemplateHolder template, boolean isTransient, IEntryData entryData,
-                                               String uid, long timeToLive, QueryResultTypeInternal packetType, boolean forceNotExternalizable, PropertiesHandler propertiesHandler) {
+                                               String uid, long timeToLive, QueryResultTypeInternal packetType, boolean forceNotExternalizable, PropertiesHolder propertiesHolder) {
         final ITypeDesc typeDesc = entryData.getEntryTypeDesc().getTypeDesc();
         final EntryType entryType = entryData.getEntryTypeDesc().getEntryType();
 
@@ -171,24 +167,24 @@ public class EntryPacketFactory {
             case OBJECT_JAVA:
             case DOCUMENT_ENTRY:
                 if (!forceNotExternalizable && typeDesc.isExternalizable() && entryType.isConcrete() && !isReturnWeaklyTypeProperties) {
-                    return new ExternalizableEntryPacket(typeDesc, entryType, propertiesHandler.getFixedProperties(typeDesc), entryData.getDynamicProperties(),
+                    return new ExternalizableEntryPacket(typeDesc, entryType, propertiesHolder.getFixedProperties(typeDesc), entryData.getDynamicProperties(),
                             uid, entryData.getVersion(), timeToLive, isTransient);
                 }
-                return new EntryPacket(typeDesc, entryType, entryData.getDynamicProperties(), uid, entryData.getVersion(), timeToLive, isTransient, propertiesHandler);
+                return new EntryPacket(typeDesc, entryType, entryData.getDynamicProperties(), uid, entryData.getVersion(), timeToLive, isTransient, propertiesHolder);
             case EXTERNAL_ENTRY:
                 final String eeImplClassName = template != null ? template.getExternalEntryImplClassName() : null;
-                return new ExternalEntryPacket(typeDesc, entryType, uid, entryData.getVersion(), timeToLive, isTransient, eeImplClassName, propertiesHandler);
+                return new ExternalEntryPacket(typeDesc, entryType, uid, entryData.getVersion(), timeToLive, isTransient, eeImplClassName, propertiesHolder);
 
             case OBJECT_DOTNET:
             case CPP:
             case PBS_OLD:
                 return new PbsEntryPacket(typeDesc, entryType,
-                       propertiesHandler.getFixedProperties(typeDesc),
+                       propertiesHolder.getFixedProperties(typeDesc),
                         entryData.getDynamicProperties(),
                         uid, entryData.getVersion(), timeToLive, isTransient);
 
             case DOCUMENT_DOTNET:
-                Object[] fixedProperties = propertiesHandler.getFixedProperties(typeDesc);
+                Object[] fixedProperties = propertiesHolder.getFixedProperties(typeDesc);
                 Map<String, Object> dynamicProperties = entryData.getDynamicProperties();
                 if (entryType != EntryType.DOCUMENT_DOTNET && entryType != EntryType.OBJECT_DOTNET) {
                     fixedProperties = DocumentObjectConverterInternal.instance().convertNonPrimitiveFixedPropertiesToDocuments(fixedProperties, typeDesc);
@@ -240,19 +236,12 @@ public class EntryPacketFactory {
         return fieldValues;
     }
 
-    private static PropertiesHandler getPropertiesHandler(Context context, IEntryData entryData) {
-        PropertiesHandler payload;
-        if(entryData.isHybrid()){
-            if(context != null && context.getViewEntryData() != null && context.getViewEntryData().isViewOf(entryData)){
-                payload = context.getViewEntryData().getPropertiesHandler();
-            }else {
-                payload = new PropertiesHandler(entryData.getEntryTypeDesc().getTypeDesc(),
-                        ((HybridEntryData) entryData).getNonSerializedProperties(), ((HybridEntryData)entryData).getPackedSerializedProperties());
-            }
+    private static PropertiesHolder getPropertiesHolder(Context context, IEntryData entryData) {
+        PropertiesHolder holder;
+        if (entryData.isHybrid() && context != null && context.getViewEntryData() != null && context.getViewEntryData().isViewOf(entryData)) {
+            return context.getViewEntryData().getPropertiesHolder();
         } else {
-            payload = new PropertiesHandler(entryData.getEntryTypeDesc().getTypeDesc(), entryData.getFixedPropertiesValues());
+            return PropertiesHolderFactory.create(entryData.getSpaceTypeDescriptor(), entryData);
         }
-        return payload;
     }
-
 }

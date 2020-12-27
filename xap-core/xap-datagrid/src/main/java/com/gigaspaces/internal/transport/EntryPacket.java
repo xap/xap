@@ -25,7 +25,8 @@ import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.query.ICustomQuery;
-import com.gigaspaces.internal.server.storage.PropertiesHandler;
+import com.gigaspaces.internal.server.storage.PropertiesHolder;
+import com.gigaspaces.internal.server.storage.PropertiesHolderFactory;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.core.EntrySerializationException;
 
@@ -51,7 +52,7 @@ public class EntryPacket extends AbstractEntryPacket {
     private static final long serialVersionUID = 2L;
 
     protected String _typeName;
-    private PropertiesHandler propertiesHandler;
+    private PropertiesHolder propertiesHolder;
     private Map<String, Object> _dynamicProperties;
     private String _uid;
     private int _version;
@@ -74,16 +75,16 @@ public class EntryPacket extends AbstractEntryPacket {
      * Default constructor required by {@link java.io.Externalizable}.
      */
     public EntryPacket() {
-        this.propertiesHandler = new PropertiesHandler();
+        this.propertiesHolder = PropertiesHolderFactory.create();
     }
 
     public EntryPacket(ITypeDesc typeDesc, EntryType entryType, Object[] fixedProperties, Map<String, Object> dynamicProperties,
                        String uid, int version, long timeToLive, boolean isTransient) {
-        this(typeDesc, entryType, dynamicProperties, uid, version, timeToLive, isTransient, new PropertiesHandler(typeDesc, fixedProperties));
+        this(typeDesc, entryType, dynamicProperties, uid, version, timeToLive, isTransient, PropertiesHolderFactory.create(typeDesc, fixedProperties));
     }
 
     public EntryPacket(ITypeDesc typeDesc, EntryType entryType, Map<String, Object> dynamicProperties,
-                       String uid, int version, long timeToLive, boolean isTransient, PropertiesHandler propertiesHandler) {
+                       String uid, int version, long timeToLive, boolean isTransient, PropertiesHolder propertiesHolder) {
         super(typeDesc, entryType);
         _typeName = typeDesc.getTypeName();
         _dynamicProperties = dynamicProperties;
@@ -93,18 +94,18 @@ public class EntryPacket extends AbstractEntryPacket {
         _transient = isTransient;
         _noWriteLease = false;
         _fifo = false;
-        this.propertiesHandler = propertiesHandler;
+        this.propertiesHolder = propertiesHolder;
 
     }
 
     protected EntryPacket(ITypeDesc typeDesc, Object[] values) {
-        this(typeDesc, new PropertiesHandler(typeDesc, values));
+        this(typeDesc,PropertiesHolderFactory.create(typeDesc, values));
     }
 
-    protected EntryPacket(ITypeDesc typeDesc, PropertiesHandler propertiesHandler) {
+    protected EntryPacket(ITypeDesc typeDesc, PropertiesHolder propertiesHolder) {
         super(typeDesc, typeDesc.getObjectType());
         this._typeName = typeDesc.getTypeName();
-        this.propertiesHandler = propertiesHandler;
+        this.propertiesHolder = propertiesHolder;
     }
 
     /**
@@ -116,7 +117,7 @@ public class EntryPacket extends AbstractEntryPacket {
     @Override
     public IEntryPacket clone() {
         IEntryPacket packet = super.clone();
-        packet.setPropertiesHandler(propertiesHandler.clone());
+        packet.setPropertiesHolder(propertiesHolder.clone());
         return packet;
     }
 
@@ -161,20 +162,20 @@ public class EntryPacket extends AbstractEntryPacket {
     }
 
     public Object[] getFieldValues() {
-        return propertiesHandler.getFixedProperties(getTypeDescriptor());
+        return propertiesHolder.getFixedProperties(getTypeDescriptor());
     }
 
     public void setFieldsValues(Object[] values) {
         if(getTypeDescriptor() == null && getTypeName() == null){
-            propertiesHandler.setFixedProperties(values);
+            propertiesHolder.setFixedProperties(values);
         } else {
-            propertiesHandler.setFixedProperties(getTypeDescriptor(), values);
+            propertiesHolder.setFixedProperties(getTypeDescriptor(), values);
         }
     }
 
     public Object getFieldValue(int index) {
         try {
-            return this.propertiesHandler.getFixedProperty(this.getTypeDescriptor(), index);
+            return this.propertiesHolder.getFixedProperty(this.getTypeDescriptor(), index);
         } catch (Exception e) {
             throw new IllegalStateException("The field values array was not properly set", e);
         }
@@ -183,9 +184,9 @@ public class EntryPacket extends AbstractEntryPacket {
     public void setFieldValue(int index, Object value) {
         try {
             if(getTypeDescriptor() == null && getTypeName() == null){
-                propertiesHandler.setFixedProperty(index, value);
+                propertiesHolder.setFixedProperty(index, value);
             } else {
-                this.propertiesHandler.setFixedProperty(_typeDesc, index, value);
+                this.propertiesHolder.setFixedProperty(_typeDesc, index, value);
             }
         } catch (Exception e) {
             throw new IllegalStateException("The field values array was not properly set", e);
@@ -254,7 +255,7 @@ public class EntryPacket extends AbstractEntryPacket {
             flags |= FLAG_TIME_TO_LIVE;
         if (_multipleUIDs != null)
             flags |= FLAG_MULTIPLE_UIDS;
-        if (propertiesHandler != null)
+        if (propertiesHolder != null)
             flags |= FLAG_FIELDS_VALUES;
         if (_fifo)
             flags |= FLAG_FIFO;
@@ -310,12 +311,12 @@ public class EntryPacket extends AbstractEntryPacket {
                 out.writeLong(_timeToLive);
             if (_multipleUIDs != null)
                 IOUtils.writeStringArray(out, _multipleUIDs);
-            if (propertiesHandler != null) {
+            if (propertiesHolder != null) {
                 if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
-                    IOUtils.writeObject(out, propertiesHandler);
+                    IOUtils.writeObject(out, propertiesHolder);
                 } else {
                     try {
-                        IOUtils.writeObjectArrayCompressed(out, propertiesHandler.getFixedProperties(_typeDesc));
+                        IOUtils.writeObjectArrayCompressed(out, propertiesHolder.getFixedProperties(_typeDesc));
                     } catch (IOArrayException e) {
                         throw createPropertySerializationException(e, true);
                     }
@@ -364,10 +365,10 @@ public class EntryPacket extends AbstractEntryPacket {
 
             if ((flags & FLAG_FIELDS_VALUES) != 0) {
                 if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
-                    propertiesHandler = IOUtils.readObject(in);
+                    propertiesHolder = IOUtils.readObject(in);
                 } else {
                     try {
-                        propertiesHandler = new PropertiesHandler(_typeDesc, IOUtils.readObjectArrayCompressed(in));
+                        propertiesHolder = PropertiesHolderFactory.create(_typeDesc, IOUtils.readObjectArrayCompressed(in));
                     } catch (IOArrayException e) {
                         throw createPropertySerializationException(e, false);
                     }
@@ -418,16 +419,16 @@ public class EntryPacket extends AbstractEntryPacket {
 
     @Override
     public boolean allNullFieldValues() {
-        return propertiesHandler.allNulls();
+        return propertiesHolder.allNulls();
     }
 
     @Override
-    public PropertiesHandler getPropertiesHandler() {
-        return propertiesHandler;
+    public PropertiesHolder getPropertiesHolder() {
+        return propertiesHolder;
     }
 
     @Override
-    public void setPropertiesHandler(PropertiesHandler hybridBinaryData) {
-        this.propertiesHandler = hybridBinaryData;
+    public void setPropertiesHolder(PropertiesHolder holder) {
+        this.propertiesHolder = holder;
     }
 }

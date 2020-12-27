@@ -1207,7 +1207,7 @@ public class Context {
     }
 
     private void copyFieldsArray(IEntryPacket entryPacket) {
-        entryPacket.getPropertiesHandler().copyFieldsArray();
+        entryPacket.getPropertiesHolder().copyFieldsArray();
     }
 
     public void setSyncHybridOperationDetails(SyncHybridOperationDetails[] syncHybridOperationsDetails) {
@@ -1293,7 +1293,7 @@ public class Context {
             if (viewEntryData == null) {
                 viewEntryData = new ViewPropertiesEntryData();
             }
-            viewEntryData.view(entryData, packet.getPropertiesHandler());
+            viewEntryData.view(entryData, (HybridPropertiesHolder) packet.getPropertiesHolder());
         }
     }
 

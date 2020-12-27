@@ -21,23 +21,23 @@ public class ViewPropertiesEntryData implements IEntryData {
     private static Logger logger = LoggerFactory.getLogger(ViewPropertiesEntryData.class);
     protected IEntryData entry;
     protected Map<String, Object> dynamicProperties;
-    PropertiesHandler propertiesHandler;
+    HybridPropertiesHolder propertiesHolder;
 
     public void view(IEntryData entryData) {
         this.entry = entryData;
         this.dynamicProperties = entryData.getDynamicProperties();
-        this.propertiesHandler = new PropertiesHandler(getEntryTypeDesc().getTypeDesc(),
+        this.propertiesHolder = new HybridPropertiesHolder(getEntryTypeDesc().getTypeDesc(),
                 ((HybridEntryData) entryData).getNonSerializedProperties(),
                 ((HybridEntryData) entryData).getPackedSerializedProperties());
     }
 
-    public void view(IEntryData entryData, PropertiesHandler propertiesHandler) {
-        this.propertiesHandler = propertiesHandler;
+    public void view(IEntryData entryData, HybridPropertiesHolder holder) {
+        this.propertiesHolder = holder;
         this.dynamicProperties = entryData.getDynamicProperties();
     }
 
-    public PropertiesHandler getPropertiesHandler() {
-        return propertiesHandler;
+    public HybridPropertiesHolder getPropertiesHolder() {
+        return propertiesHolder;
     }
 
     @Override
@@ -47,12 +47,12 @@ public class ViewPropertiesEntryData implements IEntryData {
 
     @Override
     public Object[] getFixedPropertiesValues() {
-        return this.propertiesHandler.getFixedProperties(getEntryTypeDesc().getTypeDesc());
+        return this.propertiesHolder.getFixedProperties(getEntryTypeDesc().getTypeDesc());
     }
 
     @Override
     public Object getFixedPropertyValue(int position) {
-        return this.propertiesHandler.getFixedProperty(getEntryTypeDesc().getTypeDesc(), position);
+        return this.propertiesHolder.getFixedProperty(getEntryTypeDesc().getTypeDesc(), position);
     }
 
     @Override

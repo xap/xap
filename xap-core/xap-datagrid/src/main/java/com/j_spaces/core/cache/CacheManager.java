@@ -1553,8 +1553,8 @@ public class CacheManager extends AbstractCacheManager
             if (mutableViewEntryData.isDeserialized()){
                 udata.setFixedPropertyValues(mutableViewEntryData.getFixedPropertiesValues());
             } else {
-                ((HybridEntryData) udata).setFixedPropertyValues(mutableViewEntryData.getPropertiesHandler().getNonSerializedProperties(),
-                        mutableViewEntryData.getPropertiesHandler().getPackedSerializedProperties());
+                ((HybridEntryData) udata).setFixedPropertyValues(mutableViewEntryData.getPropertiesHolder().getNonSerializedProperties(),
+                        mutableViewEntryData.getPropertiesHolder().getPackedSerializedProperties());
             }
 
         } else {

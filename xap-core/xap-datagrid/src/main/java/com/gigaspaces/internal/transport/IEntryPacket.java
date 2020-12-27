@@ -19,7 +19,8 @@ package com.gigaspaces.internal.transport;
 import com.gigaspaces.internal.query.ICustomQuery;
 import com.gigaspaces.internal.query.RawEntry;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
-import com.gigaspaces.internal.server.storage.PropertiesHandler;
+import com.gigaspaces.internal.server.storage.FlatPropertiesHolder;
+import com.gigaspaces.internal.server.storage.PropertiesHolder;
 
 /**
  * this is the basic interface defining the proxy-space or space-space transport layer.
@@ -65,12 +66,12 @@ public interface IEntryPacket extends ITransportPacket, ISwapExternalizable, Raw
     //Temp until we remove externalizable entry packet completely
     boolean isExternalizableEntryPacket();
 
-    default void setPropertiesHandler(PropertiesHandler binaryFields) {
-        throw new UnsupportedOperationException("IEntryPacket.setPropertiesHandler only supported for EntryPacket.class");
+    default void setPropertiesHolder(PropertiesHolder propertiesHolder) {
+        throw new UnsupportedOperationException("IEntryPacket.setPropertiesHolder only supported for EntryPacket.class");
     }
 
-    default PropertiesHandler getPropertiesHandler() {
-        return new PropertiesHandler(getTypeDescriptor(), getFieldValues());
+    default PropertiesHolder getPropertiesHolder() {
+        return new FlatPropertiesHolder(getFieldValues());
     }
 
     default boolean allNullFieldValues() {
