@@ -6,7 +6,6 @@ import java.sql.SQLException;
 
 public class ValueSelectColumn extends SelectColumn {
     private final Object value;
-    private boolean isConsumed;
 
     public ValueSelectColumn(Object value) {
         this.value = value;
@@ -18,16 +17,17 @@ public class ValueSelectColumn extends SelectColumn {
     }
 
     @Override
+    public boolean isUid() {
+        return false;
+    }
+
+    @Override
     public Object getFieldValue(IEntryPacket entry) {
-        if (isConsumed) return null;
-        isConsumed = true;
         return value;
     }
 
     @Override
     public Object getValue() {
-        if (isConsumed) return null;
-        isConsumed = true;
         return value;
     }
 

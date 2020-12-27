@@ -338,7 +338,7 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
             return rc1;
         });
 
-        groupList = groupList.subList(0, limit);
+        groupList = groupList.subList(0, Math.min(groupList.size(), limit));
 
         IQueryResultSet<IEntryPacket> groupByResult = query.isConvertResultToArray() ? new ProjectedResultSet() : new ArrayListResult();
         for (Iterator<IQueryResultSet<IEntryPacket>> iterator = groupList.iterator(); iterator.hasNext(); ) {

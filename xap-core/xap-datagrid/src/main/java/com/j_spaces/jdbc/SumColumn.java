@@ -1,6 +1,10 @@
 package com.j_spaces.jdbc;
 
 
+import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.internal.utils.math.MutableNumber;
+import com.j_spaces.jdbc.query.QueryTableData;
+
 import java.sql.SQLException;
 
 public class SumColumn extends SelectColumn {
@@ -9,6 +13,7 @@ public class SumColumn extends SelectColumn {
     private SelectColumn left;
     private SelectColumn right;
     private String operator;
+    private QueryTableData columnTableData;
 
 
     public SumColumn(String left, String right, String operator) {
@@ -37,13 +42,34 @@ public class SumColumn extends SelectColumn {
 
     @Override
     public void createColumnData(AbstractDMLQuery query) throws SQLException {
-        if (!(left instanceof ValueSelectColumn)) left.createColumnData(query);
-        if (!(right instanceof ValueSelectColumn)) right.createColumnData(query);
+        if (!(left instanceof ValueSelectColumn)) {
+            left.createColumnData(query);
+            this.columnTableData = left.getColumnTableData();
+        }
+        if (!(right instanceof ValueSelectColumn)) {
+            right.createColumnData(query);
+            this.columnTableData = right.getColumnTableData();
+        }
     }
 
     @Override
     public boolean isAllColumns() {
         return false;
+    }
+
+    @Override
+    public boolean isUid() {
+        return false;
+    }
+
+    @Override
+    public QueryTableData getColumnTableData() {
+        return columnTableData;
+    }
+
+    @Override
+    public Object getFieldValue(IEntryPacket entry) {
+        return calc(entry, this).toNumber();
     }
 
     public SelectColumn getLeft() {
@@ -63,6 +89,55 @@ public class SumColumn extends SelectColumn {
         this.right = right;
         return this;
     }
+
+    private MutableNumber add(MutableNumber total, Number addition) {
+        if (addition != null) {
+            if (total == null)
+                total = MutableNumber.fromClass(addition.getClass(), true);
+            total.add(addition);
+        }
+        return total;
+    }
+
+    private MutableNumber remove(MutableNumber total, Number remove) {
+        if (remove != null) {
+            if (total == null)
+                total = MutableNumber.fromClass(remove.getClass(), true);
+            total.remove(remove);
+        }
+        return total;
+    }
+
+
+
+    private MutableNumber calc(IEntryPacket entry, SumColumn sumColumn) {
+        MutableNumber total = null;
+        if (sumColumn.getLeft() instanceof SumColumn) {
+            total = add(total, calc(entry, (SumColumn) sumColumn.getLeft()).toNumber());
+        } else {
+            total = add(total, (Number) sumColumn.getLeft().getFieldValue(entry));
+        }
+
+        if (sumColumn.getRight() instanceof SumColumn) {
+            total = add(total, calc(entry, (SumColumn) sumColumn.getRight()).toNumber());
+        } else if (sumColumn.getRight() instanceof ValueSelectColumn) {
+            if (sumColumn.getOperator().equals("-")) {
+                total = remove(total, (Number) sumColumn.getRight().getValue());
+            } else {
+                total = add(total, (Number) sumColumn.getRight().getValue());
+            }
+        } else {
+            Object rightVal = sumColumn.getRight().getFieldValue(entry);
+            Number right = rightVal instanceof MutableNumber ? ((MutableNumber) rightVal).toNumber() : (Number)rightVal;
+            if (sumColumn.getOperator().equals("-")) {
+                total = remove(total, right);
+            } else {
+                total = add(total, right);
+            }
+        }
+        return total;
+    }
+
 
 //    @Override
 //    public String getName() {
