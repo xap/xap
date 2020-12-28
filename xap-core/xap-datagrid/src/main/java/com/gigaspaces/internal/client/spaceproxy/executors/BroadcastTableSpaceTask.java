@@ -1,10 +1,7 @@
 package com.gigaspaces.internal.client.spaceproxy.executors;
 
 import com.gigaspaces.async.AsyncResult;
-import com.gigaspaces.internal.space.requests.BroadcastTableSpaceRequestInfo;
-import com.gigaspaces.internal.space.requests.PushBroadcastTableEntriesSpaceRequestInfo;
-import com.gigaspaces.internal.space.requests.PushBroadcastTableEntrySpaceRequestInfo;
-import com.gigaspaces.internal.space.requests.SpaceRequestInfo;
+import com.gigaspaces.internal.space.requests.*;
 import com.gigaspaces.internal.space.responses.BroadcastTableSpaceResponseInfo;
 
 import java.io.IOException;
@@ -12,8 +9,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
 
-import static com.gigaspaces.internal.space.requests.BroadcastTableSpaceRequestInfo.Action.PUSH_ENTRIES;
-import static com.gigaspaces.internal.space.requests.BroadcastTableSpaceRequestInfo.Action.PUSH_ENTRY;
+import static com.gigaspaces.internal.space.requests.BroadcastTableSpaceRequestInfo.Action.*;
 
 /**
  * @author alon shoham
@@ -61,6 +57,8 @@ public class BroadcastTableSpaceTask extends SystemDistributedTask<BroadcastTabl
             return new PushBroadcastTableEntrySpaceRequestInfo();
         if(action == PUSH_ENTRIES.value)
             return new PushBroadcastTableEntriesSpaceRequestInfo();
+        if(action == PULL_ENTRIES.value)
+            return new PullBroadcastTableEntriesSpaceRequestInfo();
         throw new IllegalArgumentException("Unknown broadcast table action " + action);
     }
 }

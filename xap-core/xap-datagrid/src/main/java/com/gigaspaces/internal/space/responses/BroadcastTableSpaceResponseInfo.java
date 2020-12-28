@@ -1,6 +1,7 @@
 package com.gigaspaces.internal.space.responses;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.internal.transport.IEntryPacket;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -16,17 +17,23 @@ import java.util.Map;
 public class BroadcastTableSpaceResponseInfo extends AbstractSpaceResponseInfo {
     private static final long serialVersionUID = 1L;
     private Map<Integer, Exception> exceptionMap = new HashMap<>();
+    private IEntryPacket[] entries;
+
+    public BroadcastTableSpaceResponseInfo() {
+    }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         IOUtils.writeObject(out, exceptionMap);
+        IOUtils.writeObject(out, entries);
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         exceptionMap = IOUtils.readObject(in);
+        entries = IOUtils.readObject(in);
     }
 
     public void addException(Integer partitionId, Exception e){
@@ -39,5 +46,13 @@ public class BroadcastTableSpaceResponseInfo extends AbstractSpaceResponseInfo {
 
     public boolean finishedSuccessfully(){
         return exceptionMap.isEmpty();
+    }
+
+    public IEntryPacket[] getEntries() {
+        return entries;
+    }
+
+    public void setEntries(IEntryPacket[] newEntries){
+        this.entries = newEntries;
     }
 }

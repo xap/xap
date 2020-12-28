@@ -73,6 +73,7 @@ import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
+import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.broadcast_table.BroadcastTableHandler;
 import com.gigaspaces.internal.server.space.demote.DemoteHandler;
 import com.gigaspaces.internal.server.space.executors.SpaceActionExecutor;
@@ -118,7 +119,6 @@ import com.gigaspaces.security.directory.CredentialsProvider;
 import com.gigaspaces.security.directory.CredentialsProviderHelper;
 import com.gigaspaces.security.service.SecurityInterceptor;
 import com.gigaspaces.server.space.suspend.SuspendType;
-import com.gigaspaces.start.ProductType;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.time.SystemTime;
 import com.gigaspaces.utils.Pair;
@@ -190,6 +190,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
@@ -271,7 +272,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     private ZookeeperTopologyHandler zookeeperTopologyHandler;
 
     private final Map<Class<? extends SystemTask>, SpaceActionExecutor> executorMap = XapExtensions.getInstance().getActionExecutors();
-    private final BroadcastTableHandler _broadcastTableHandler;
+    private BroadcastTableHandler _broadcastTableHandler;
 
     public SpaceImpl(String spaceName, String containerName, JSpaceContainerImpl container, SpaceURL url,
                      JSpaceAttributes spaceConfig, Properties customProperties,
@@ -347,7 +348,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         if (_clusterPolicy != null && _clusterPolicy.isPersistentStartupEnabled())
             initSpaceStartupStateManager();
 
-        _broadcastTableHandler = new BroadcastTableHandler(getSpaceProxy().getDirectProxy());
+        _broadcastTableHandler = new BroadcastTableHandler(this);
     }
 
     private ZKCollocatedClientConfig createZKCollocatedClientConfig() {
@@ -3277,6 +3278,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         // create a recovery manager
         _recoveryManager = new RecoveryManager(this);
 
+        _broadcastTableHandler = new BroadcastTableHandler(this);
+
         // Perform space recovery according to election state
         if (_leaderSelector != null)
             initAndStartPrimaryBackupSpace();
@@ -3915,6 +3918,54 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             }
         }
         spaceConfig.setBlobstoreRocksDBAllowDuplicateUIDs(isDuplicateUIDsAllowed);
+    }
+
+    public boolean pullBroadcastTables(){
+        List<String> typeNames = getEngine().getTypeManager().getSafeTypeTable().values().stream()
+                .map(IServerTypeDesc::getTypeDesc)
+                .filter(ITypeDesc::isBroadcast)
+                .map(ITypeDesc::getTypeName)
+                .collect(Collectors.toList());
+        return pullBroadcastTables(new LinkedList<>(typeNames));
+    }
+
+    private boolean pullBroadcastTables(LinkedList<String> types) {
+        LinkedList<Integer> targetPartitions = new LinkedList<>();
+        for (int i = 0; i < getEngine().getNumberOfPartitions(); i++) {
+            if (getEngine().getPartitionIdZeroBased() == i)
+                continue;
+            targetPartitions.add(i);
+        }
+        while (!targetPartitions.isEmpty()) {
+            Integer partitionId = targetPartitions.removeFirst();
+            String type;
+            while(!types.isEmpty()) {
+                type = types.removeFirst();
+                if(_broadcastTableHandler.pullEntries(type, partitionId)){
+                    if (_logger.isDebugEnabled()) {
+                        _logger.debug("Space [" + getServiceName() + "] successfully pulled broadcast table type: " + type);
+                    }
+                }
+                else {
+                    if (_logger.isWarnEnabled()) {
+                        _logger.warn("Space [" + getServiceName() + "]" +
+                                " failed to pull broadcast table type: " + type +
+                                " from partition " + partitionId + ". Attempting to pull remaining types from the next partition");
+                    }
+                    break;
+                }
+            }
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Space [" + getServiceName() + "] successfully pulled all broadcast table types");
+            }
+            return true;
+        }
+        if(_logger.isErrorEnabled()){
+            _logger.error("Space [" + getServiceName() + "]" +
+                    " failed to pull broadcast table types: " + String.join(", ", types) +
+                    " from all available partitions");
+        }
+        return false;
     }
 
     private void pushBroadcastEntry(IEntryPacket entryPacket, long lease, boolean isUpdate, long timeout, int modifiers) throws RemoteException {

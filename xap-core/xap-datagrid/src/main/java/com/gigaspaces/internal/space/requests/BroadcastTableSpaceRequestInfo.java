@@ -1,12 +1,8 @@
 package com.gigaspaces.internal.space.requests;
 
 import com.gigaspaces.async.AsyncResult;
-import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.space.responses.BroadcastTableSpaceResponseInfo;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.List;
 
 /**
@@ -17,13 +13,17 @@ import java.util.List;
 public abstract class BroadcastTableSpaceRequestInfo extends AbstractSpaceRequestInfo {
     private static final long serialVersionUID = 1L;
     public enum Action {
-        PUSH_ENTRY(0),
-        PUSH_ENTRIES (1);
-
+        PUSH_ENTRY (0),
+        PUSH_ENTRIES (1),
+        PULL_ENTRIES (2);
         public final byte value;
         Action(int value) {
             this.value = (byte)  value;
         }
+    }
+
+    public BroadcastTableSpaceRequestInfo() {
+        super();
     }
 
     public abstract Action getAction();
@@ -34,7 +34,12 @@ public abstract class BroadcastTableSpaceRequestInfo extends AbstractSpaceReques
             if(asyncResult.getException() != null) {
                 throw asyncResult.getException();
             }
-            result.getExceptionMap().putAll(asyncResult.getResult().getExceptionMap());
+            BroadcastTableSpaceResponseInfo responseInfo = asyncResult.getResult();
+            result.getExceptionMap().putAll(responseInfo.getExceptionMap());
+            if(responseInfo.getEntries() != null) {
+                result.setEntries(asyncResult.getResult().getEntries());
+                break;
+            }
         }
         return result;
     }
