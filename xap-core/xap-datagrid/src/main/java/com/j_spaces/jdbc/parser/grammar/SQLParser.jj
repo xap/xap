@@ -185,8 +185,8 @@ TOKEN [IGNORE_CASE]:  /* Keywords */
 
 TOKEN:  /* Identifiers */
 {
-    <IDENTIFIER: <LETTER> ( "." | "*" | "_" | "`" | ":" | "$" | <LETTER> | <DIGIT> )* >
-  | <ESC_IDENTIFIER: "`" <IDENTIFIER> "`" | "\"" <IDENTIFIER> "\"" >
+    <IDENTIFIER: <LETTER> ( "." | "*" | "_" | "`" | <LETTER> | <DIGIT> )* >
+  | <ESC_IDENTIFIER: "`" <IDENTIFIER> "`" | <QUOTE> (<IDENTIFIER> | ":" | "$" | "(" | " " | ")")+ <QUOTE> >
   | <IDENTIFIER_WITH_SPACES: <QUOTE> <LETTER> (" " <LETTER> | <LETTER>)* <QUOTE> >
   | < #LETTER: ["_","A"-"Z", "a"-"z"] >
   | < #DIGIT: ["0"-"9"] >
