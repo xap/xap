@@ -185,8 +185,8 @@ TOKEN [IGNORE_CASE]:  /* Keywords */
 
 TOKEN:  /* Identifiers */
 {
-    <IDENTIFIER: <LETTER> ( "." | "*" | "_" | "`" |<LETTER> | <DIGIT> )* >
-  | <ESC_IDENTIFIER: "`" <IDENTIFIER> "`" >
+    <IDENTIFIER: <LETTER> ( "." | "*" | "_" | "`" | ":" | "$" | <LETTER> | <DIGIT> )* >
+  | <ESC_IDENTIFIER: "`" <IDENTIFIER> "`" | "\"" <IDENTIFIER> "\"" >
   | <IDENTIFIER_WITH_SPACES: <QUOTE> <LETTER> (" " <LETTER> | <LETTER>)* <QUOTE> >
   | < #LETTER: ["_","A"-"Z", "a"-"z"] >
   | < #DIGIT: ["0"-"9"] >
@@ -698,7 +698,7 @@ SelectColumn getSelectColumn(AbstractDMLQuery query):
 
 }
 {
-    t = id()
+    (t = id()
     {
     	id = QueryProcessor.getDefaultConfig().isParserCaseSensitivity()? t.image : t.image.toUpperCase();
     }
@@ -718,6 +718,10 @@ SelectColumn getSelectColumn(AbstractDMLQuery query):
             return col;
         }
     }
+    | t = <INTEGER_LITERAL> {
+        return new SelectColumnRef(getInteger(t));
+    }
+    )
 }
 
 
@@ -787,7 +791,7 @@ void function(SelectQuery query):
 	
 	<OPENPAREN>
 		(<ASTERISK> {selectC.setName("*"); query.addColumn(selectC);}
-		| (token = id()) {
+		| ([LOOKAHEAD(2) id() "."] token = id()) {
     	    String id = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token.image : token.image.toUpperCase();
 
 			selectC.setName(id);
@@ -815,16 +819,16 @@ SumColumn createSums():
     SumColumn other;
 }
 {
-    ( LOOKAHEAD(4) <OPENPAREN> token1 = id() (operator = <PLUS> | operator = <MINUS>) token2 = id() <CLOSEPAREN> {
+    ( LOOKAHEAD(4) <OPENPAREN> [LOOKAHEAD(2) id() "."] token1 = id() (operator = <PLUS> | operator = <MINUS>) [LOOKAHEAD(2) id() "."] token2 = id() <CLOSEPAREN> {
         String id1 = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token1.image : token1.image.toUpperCase();
         String id2 = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token2.image : token2.image.toUpperCase();
         sumCol = new SumColumn(id1, id2, operator.image);
          }
-    | LOOKAHEAD(4)<OPENPAREN> token1 = id() (operator = <PLUS> | operator = <MINUS>) other = createSums() <CLOSEPAREN> {
+    | LOOKAHEAD(4)<OPENPAREN> [LOOKAHEAD(2) id() "."] token1 = id() (operator = <PLUS> | operator = <MINUS>) other = createSums() <CLOSEPAREN> {
         String id3 = (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? token1.image : token1.image.toUpperCase();
         sumCol = new SumColumn(id3, other, operator.image);
     }
-    | LOOKAHEAD(4) <OPENPAREN> other = createSums() (operator = <PLUS> | operator = <MINUS>) (token1 = id() | token2 = <INTEGER_LITERAL>) <CLOSEPAREN> {
+    | LOOKAHEAD(4) <OPENPAREN> other = createSums() (operator = <PLUS> | operator = <MINUS>) ([LOOKAHEAD(2) id() "."] token1 = id() | token2 = <INTEGER_LITERAL>) <CLOSEPAREN> {
         if (token2 != null) {
             Integer num = getInteger(token2);
             sumCol = new SumColumn(other, num, operator.image);
@@ -898,7 +902,7 @@ ColumnNode createColumnNode(AbstractDMLQuery query,String columnFunc):
         columnNode.setFunctionCallDescription(new com.j_spaces.jdbc.builder.range.FunctionCallDescription(function.image, columnIndex, args));
         return columnNode;
     }
- 	|(t = id() {
+ 	|([LOOKAHEAD(2) id() "." ] t = id() {
     	 String id =  (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? t.image : t.image.toUpperCase();
     	 columnNode = new ColumnNode(id);
     })
@@ -1076,7 +1080,7 @@ OrderColumn createOrderColumn(AbstractDMLQuery query):
   String alias = null;
 }
 {    
-    t = id() 
+    (t = id()
     {
     	id = QueryProcessor.getDefaultConfig().isParserCaseSensitivity()? t.image : t.image.toUpperCase();         
     }
@@ -1086,7 +1090,11 @@ OrderColumn createOrderColumn(AbstractDMLQuery query):
 	
     {
        	return new OrderColumn(id, alias);       	
-    } 
+    }
+    | t = <INTEGER_LITERAL> {
+        return new OrderColumnRef(getInteger(t));
+    }
+    )
 }
 ExpNode SqlExpression(AbstractDMLQuery query):
 {

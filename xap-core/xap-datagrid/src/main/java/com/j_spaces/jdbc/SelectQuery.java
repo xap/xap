@@ -1103,6 +1103,29 @@ public class SelectQuery extends AbstractDMLQuery {
 
         }
 
+        if (getGroupColumn() != null) {
+            for (int i = 0; i < getGroupColumn().size(); i++) {
+                SelectColumn sc = getGroupColumn().get(i);
+                if (!(sc instanceof SelectColumnRef)) continue;
+
+                getGroupColumn().set(i, getQueryColumns().get(((SelectColumnRef) sc).getRefIndex() - 1));
+            }
+        }
+
+        if (getOrderColumns() != null) {
+            for (int i = 0; i < getOrderColumns().size(); i++) {
+                SelectColumn sc = getOrderColumns().get(i);
+                if (!(sc instanceof OrderColumnRef)) continue;
+
+                SelectColumn matchSelectCol = getQueryColumns().get(((OrderColumnRef) sc).getRefIndex() - 1);
+
+                OrderColumn newOrderCol = new OrderColumn(matchSelectCol.hasAlias() ? matchSelectCol.getAlias() : matchSelectCol.getName(), null);
+                newOrderCol.setDesc(((OrderColumnRef) sc).isDesc());
+                newOrderCol.setNullsLast(((OrderColumnRef) sc).areNullsLast());
+                getOrderColumns().set(i, newOrderCol);
+            }
+        }
+
         addAbsentColumns();
     }
 
@@ -1110,6 +1133,10 @@ public class SelectQuery extends AbstractDMLQuery {
      * Add all columns of given table
      */
     private List<SelectColumn> getWildcardColumns(QueryTableData queryTableData) throws SQLException {
+        if (queryTableData.getSubQuery() != null) {
+            return ((SelectQuery) queryTableData.getSubQuery()).getQueryColumns();
+        }
+
         ITypeDesc info = queryTableData.getTypeDesc();
         if (info == null)
             return Collections.emptyList();
