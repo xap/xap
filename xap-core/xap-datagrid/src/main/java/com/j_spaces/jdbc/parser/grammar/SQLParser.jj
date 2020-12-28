@@ -187,6 +187,7 @@ TOKEN:  /* Identifiers */
 {
     <IDENTIFIER: <LETTER> ( "." | "*" | "_" | "`" |<LETTER> | <DIGIT> )* >
   | <ESC_IDENTIFIER: "`" <IDENTIFIER> "`" >
+  | <IDENTIFIER_WITH_SPACES: <QUOTE> <LETTER> (" " <LETTER> | <LETTER>)* <QUOTE> >
   | < #LETTER: ["_","A"-"Z", "a"-"z"] >
   | < #DIGIT: ["0"-"9"] >
   | <RELATION: <LETTER> (<LETTER> | <DIGIT>)* ":" (<LETTER> | <DIGIT>)+ >
@@ -235,6 +236,7 @@ TOKEN:  /* Separators and operators */
   | < OPENBRAKET: "{" >
   | < CLOSEBRAKET: "}" >
   | < COLLECTION_CONTAINS: "[*]" >
+  | < QUOTE: "\"">
 
 }
 
@@ -944,7 +946,7 @@ void selectTableList(SelectQuery query):
   Token alias = null;
 }
 {
-    (table = classNameOrSelect()) [<AS>] [alias = id() ]
+    (table = classNameOrSelect()) [<AS>] [ (alias = id() | alias = idWithSpaces() ) ]
     {query.addTableWithAlias(table, ((alias == null) ? null : alias.image)); alias = null; }
     ("," (table = classNameOrSelect()) [<AS>] [ alias = id() ]
     {query.addTableWithAlias(table, ((alias == null) ? null : alias.image)); alias = null; })*
@@ -1316,11 +1318,14 @@ Token id() :
      	id.image=idStr;
      	return id;
 	}
-
-  
-      
 }
+Token idWithSpaces() :
+{ Token id = null;
+}
+{
+ 	(id= <IDENTIFIER_WITH_SPACES> ) { return id; }
 
+}
 
 
 //handle one condition, and add it to the Query object
