@@ -2,12 +2,10 @@ package com.gigaspaces.internal.jvm;
 
 import com.gigaspaces.api.InternalApi;
 import com.gigaspaces.internal.utils.LazySingleton;
-import com.sun.management.HotSpotDiagnosticMXBean;
-import com.sun.management.VMOption;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.management.ManagementFactory;
+import java.util.Optional;
 
 @InternalApi
 public class JavaUtils {
@@ -16,7 +14,7 @@ public class JavaUtils {
     private static final int JAVA_VERSION_MAJOR = parseJavaMajorVersion(VERSION);
     private static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("win");
     private static final boolean isOsx = System.getProperty("os.name").toLowerCase().startsWith("mac os x");
-    private static final LazySingleton<HotSpotDiagnosticMXBean> hotSpotDiagnosticMXBean = new LazySingleton<>(JavaUtils::initHotspotMBean);
+    private static final LazySingleton<JVMDiagnosticWrapper> jvmDiagnosticWrapper = new LazySingleton<>(JavaUtils::initJVMDiagnosticWrapper);
     private static final LazySingleton<Long> pid = new LazySingleton<>(JavaUtils::findProcessId);
 
     /**
@@ -63,26 +61,16 @@ public class JavaUtils {
      * @throws IOException - thrown if there is an error
      */
     public static void dumpHeap(String filename, boolean live) throws IOException {
-        hotSpotDiagnosticMXBean.getOrCreate().dumpHeap(filename, live);
+        jvmDiagnosticWrapper.getOrCreate().dumpHeap(filename, live);
     }
 
-    public static VMOption getVMOption(String name) {
-        return hotSpotDiagnosticMXBean.getOrCreate().getVMOption(name);
+    public static boolean useCompressedOopsAsBoolean() {
+        return jvmDiagnosticWrapper.getOrCreate().useCompressedOopsAsBoolean();
+
     }
 
-    public static boolean useCompressedOops() {
-        VMOption vmOption = getVMOption("UseCompressedOops");
-        String val = vmOption != null ? vmOption.getValue() : null;
-        return Boolean.parseBoolean(val);
-    }
-
-    private static HotSpotDiagnosticMXBean initHotspotMBean()  {
-        try {
-            return ManagementFactory.newPlatformMXBeanProxy(ManagementFactory.getPlatformMBeanServer(),
-                    "com.sun.management:type=HotSpotDiagnostic", HotSpotDiagnosticMXBean.class);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    private static JVMDiagnosticWrapper initJVMDiagnosticWrapper()  {
+        return JVMUtils.getJVMDiagnosticWrapper();
     }
 
     public static void main(String[] args) {
