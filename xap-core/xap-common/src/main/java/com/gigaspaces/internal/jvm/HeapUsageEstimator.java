@@ -179,7 +179,7 @@ public class HeapUsageEstimator {
             final String dataModel = System.getProperty("sun.arch.data.model");
             if ("32".equals(dataModel)) {
                 return auto32bit();
-            } if (JavaUtils.useCompressedOops()) {
+            } if (JavaUtils.useCompressedOopsAsBoolean()) {
                 return auto64bitCompressedOops();
             } else { // Default:  64-bit uncompressed OOPs object model
                 return auto64bit();
