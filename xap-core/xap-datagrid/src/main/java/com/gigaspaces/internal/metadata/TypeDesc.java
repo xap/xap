@@ -250,6 +250,8 @@ public class TypeDesc implements ITypeDesc {
         newTypeDesc._externalEntryWrapperClass = typeDesc.getExternalEntryWrapperClass();
         newTypeDesc._blobstoreEnabled = typeDesc.isBlobstoreEnabled();
         newTypeDesc.queryExtensionsInfo = typeDesc.getQueryExtensions();
+        newTypeDesc._broadcast = typeDesc.isBroadcast();
+        newTypeDesc.classBinaryStorageAdapter = typeDesc.getClassBinaryStorageAdapter();
 
         newTypeDesc.initializeV9_0_0();
 

@@ -124,8 +124,12 @@ public class TypeDescFactory {
     }
 
     public boolean isBlobStoreCachePolicy() {
-        Object cachePolicy = _spaceProxy.getProxySettings().getCustomProperties().get("space-config.engine.cache_policy");
-        return cachePolicy != null && cachePolicy.equals("3");
+        if(_spaceProxy != null) {
+            Object cachePolicy = _spaceProxy.getProxySettings().getCustomProperties().get("space-config.engine.cache_policy");
+            return cachePolicy != null && cachePolicy.equals("3");
+        } else {
+            return false;
+        }
     }
 
     private static boolean shouldWarnExternalizable(SpaceTypeInfo typeInfo) {
