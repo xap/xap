@@ -2035,7 +2035,7 @@ public class LeaseManager {
             try {
 
                 ITemplatePacket templatePacket = new TemplatePacket();
-
+                templatePacket.setFieldsValues(new Object[0]);
                 IServerTypeDesc typeDesc = _cacheManager.getTypeManager()
                         .loadServerTypeDesc(templatePacket);
 

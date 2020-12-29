@@ -1,5 +1,6 @@
 package com.gigaspaces.client.storage_adapters.class_storage_adapters;
 
+import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.GSByteArrayOutputStream;
 import com.gigaspaces.internal.metadata.PropertyInfo;
@@ -9,11 +10,17 @@ import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import java.io.*;
 import java.util.Map;
 
-public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter {
+@ExperimentalApi
+public class SequentialClassBinaryStorageAdapter extends ClassBinaryStorageAdapter {
+    private static final int HEADER_BYTES = 1;
+
+    private static final byte VERSION = 1;
 
     @Override
     public byte[] toBinary(SpaceTypeDescriptor typeDescriptor, Object[] fields) throws IOException {
         try (GSByteArrayOutputStream bos = new GSByteArrayOutputStream(); GSObjectOutputStream out = new GSObjectOutputStream(bos)) {
+            out.writeByte(VERSION);
+
             int numOfFields = fields.length;
             int modulo = numOfFields % 8 > 0 ? 1 : 0;
             byte[] bitMapNonDefaultFields = new byte[numOfFields / 8 + modulo];
@@ -24,62 +31,72 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
 
             for (int i = 0; i < numOfFields; ++i) {
                 PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[i];
-                if(fields[i] != null && !fields[i].equals(propertyInfo.getClassSerializer().getDefaultValue())){
+                if (hasValue(propertyInfo, fields[i])) {
                     int byteIndex = i / 8;
                     int bitIndex = i % 8;
                     bitMapNonDefaultFields[byteIndex] |= (byte)1 << (7 - bitIndex); //set bit as 1 (non default field)
-                    propertyInfo.getClassSerializer().write(out, fields[i]);
+                    serialize(out, propertyInfo, fields[i]);
                 }
             }
 
-            byte[] serializedFields = bos.toByteArray();
-            System.arraycopy(bitMapNonDefaultFields, 0, serializedFields, 1, bitMapNonDefaultFields.length);
-            return serializedFields;
+            for (int i = 0; i < bitMapNonDefaultFields.length; i++) {
+                bos.writeByte(bitMapNonDefaultFields[i], i + HEADER_BYTES);
+            }
+            return bos.toByteArray();
         }
     }
 
     @Override
     public Object[] fromBinary(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields) throws IOException, ClassNotFoundException {
-        try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields); GSObjectInputStream in = new GSObjectInputStream(bis)) {
-            int numOfFields = ((TypeDesc)typeDescriptor).getSerializedProperties().length;
-            int modulo = numOfFields % 8 > 0 ? 1 : 0;
-            byte[] bitMapNonDefaultFields = new byte[numOfFields / 8 + modulo];
-
-            for(int i = 0; i < bitMapNonDefaultFields.length; ++i){
-                bitMapNonDefaultFields[i] = in.readByte();
-            }
-
-            Object[] objects = new Object[numOfFields];
-            for (int i = 0; i < numOfFields; ++i){
-                int byteIndex = i / 8;
-                int bitIndex = i % 8;
-
-                byte mask = (byte) ((byte)1 << (7 - bitIndex));
-                byte result= (byte) (bitMapNonDefaultFields[byteIndex] & mask);
-
-                PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[i];
-                if (result == mask){ // field with no default value
-                    objects[i] = propertyInfo.getClassSerializer().read(in);
-                } else if (propertyInfo.isPrimitive()){
-                    objects[i] = propertyInfo.getClassSerializer().getDefaultValue();
-                }
-            }
-            return objects;
-        }
+        return fromBinary(typeDescriptor, serializedFields, ((TypeDesc)typeDescriptor).getSerializedProperties().length);
     }
 
     @Override
     public Object getFieldAtIndex(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields, int index) throws IOException, ClassNotFoundException {
-        return fromBinary(typeDescriptor, serializedFields)[index];
+        return fromBinary(typeDescriptor, serializedFields, index + 1)[index];
     }
 
     @Override
     public Object[] getFieldsAtIndexes(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields, int... indexes) throws IOException, ClassNotFoundException {
         Object[] result = new Object[indexes.length];
-        Object[] fields = fromBinary(typeDescriptor, serializedFields);
-        int i = 0;
-        for (int index : indexes) {
-            result[i++] = fields[index];
+        Object[] fields = fromBinary(typeDescriptor, serializedFields, max(indexes) +1);
+        for (int i = 0; i < indexes.length; i++)
+            result[i] = fields[indexes[i]];
+        return result;
+    }
+
+    private Object[] fromBinary(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields, int requestedFields)
+            throws IOException, ClassNotFoundException {
+        try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields); GSObjectInputStream in = new GSObjectInputStream(bis)) {
+            byte version = in.readByte();
+            if (version != VERSION)
+                throw new IllegalStateException("Unsupported version: " + version);
+
+            PropertyInfo[] serializedProperties = ((TypeDesc) typeDescriptor).getSerializedProperties();
+            int numOfFields = serializedProperties.length;
+            int modulo = numOfFields % 8 > 0 ? 1 : 0;
+            byte[] bitMapNonDefaultFields = new byte[numOfFields / 8 + modulo];
+            bis.read(bitMapNonDefaultFields);
+
+            Object[] objects = new Object[requestedFields];
+            for (int i = 0; i < requestedFields; ++i) {
+                int byteIndex = i / 8;
+                int bitIndex = i % 8;
+                byte mask = (byte) ((byte)1 << (7 - bitIndex));
+                byte result= (byte) (bitMapNonDefaultFields[byteIndex] & mask);
+                objects[i] = result == mask ? deserialize(in, serializedProperties[i]) : getDefaultValue(serializedProperties[i]);
+            }
+            return objects;
+        }
+    }
+
+    private static int max(int[] array) {
+        int result = array[0];
+        int length = array.length;
+        for (int i = 1; i < length; i++) {
+            int curr = array[i];
+            if (curr > result)
+                result = curr;
         }
         return result;
     }

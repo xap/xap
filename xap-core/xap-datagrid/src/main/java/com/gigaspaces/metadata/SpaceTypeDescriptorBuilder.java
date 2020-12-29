@@ -21,7 +21,7 @@ import com.gigaspaces.annotation.pojo.FifoSupport;
 import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
-import com.gigaspaces.client.storage_adapters.class_storage_adapters.DefaultClassBinaryStorageAdapter;
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.SequentialClassBinaryStorageAdapter;
 import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.metadata.*;
 import com.gigaspaces.internal.utils.ObjectUtils;
@@ -200,7 +200,16 @@ public class SpaceTypeDescriptorBuilder {
      * @see com.gigaspaces.annotation.pojo.SpaceClassBinaryStorage
      */
     public SpaceTypeDescriptorBuilder binaryStorage() {
-        return binaryStorage(DefaultClassBinaryStorageAdapter.class);
+        return binaryStorage(ClassBinaryStorageLayout.DEFAULT);
+    }
+
+    /**
+     *
+     * @since 15.8
+     * @see com.gigaspaces.annotation.pojo.SpaceClassBinaryStorage
+     */
+    public SpaceTypeDescriptorBuilder binaryStorage(ClassBinaryStorageLayout layout) {
+        return binaryStorage(layout.getAdapterClass());
     }
 
     /**
@@ -209,7 +218,7 @@ public class SpaceTypeDescriptorBuilder {
      * @see com.gigaspaces.annotation.pojo.SpaceClassBinaryStorage
      */
     @ExperimentalApi
-    public SpaceTypeDescriptorBuilder binaryStorage(Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapterClass) {
+    private SpaceTypeDescriptorBuilder binaryStorage(Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapterClass) {
         this.binaryStorageAdapterClass = assertNotNull(binaryStorageAdapterClass, "binaryStorageAdapterClass");
         storageType(StorageType.BINARY);
         return this;

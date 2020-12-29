@@ -170,8 +170,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     private final Logger _operationLogger;
     private final Logger _loggerConfig;
 
-    private static final IEntryPacket EMPTY_ENTRYPACKET;
-
     //---------------  constant exceptions ---------------
     private final static TemplateDeletedException TEMPLATE_DELETED_EXCEPTION = new TemplateDeletedException(null);
     private final static EntryDeletedException ENTRY_DELETED_EXCEPTION = new EntryDeletedException();
@@ -270,11 +268,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
     private final int _resultsSizeLimit;
     private final int _resultsSizeLimitMemoryCheckBatchSize;
-
-
-    static {
-        EMPTY_ENTRYPACKET = new EntryPacket();
-    }
 
     public SpaceEngine(SpaceImpl spaceImpl) throws CreateException, RemoteException {
         _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE + "." + spaceImpl.getNodeName());

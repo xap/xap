@@ -82,4 +82,8 @@ public interface IEntryData extends ServerEntry {
     default boolean isHybrid(){
         return false;
     }
+
+    default boolean isView(){
+        return false;
+    }
 }

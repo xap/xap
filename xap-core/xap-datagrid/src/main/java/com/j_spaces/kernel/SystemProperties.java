@@ -812,6 +812,8 @@ public class SystemProperties extends CommonSystemProperties {
     //GS-13424 java 9 support: VisualVM is not part of JDK 9
     public static final String VISUAL_VM_LAUNCH_FILE_PATH = "com.gs.visualvm.binary";
 
+    public static final String CLASS_BINARY_STORAGE_ADAPTER = "com.gs.class-binary-storage-adapter.";
+
     private static final Map<String, String> defaultValues = initDefaultValues();
 
     private static Map<String, String> initDefaultValues() {

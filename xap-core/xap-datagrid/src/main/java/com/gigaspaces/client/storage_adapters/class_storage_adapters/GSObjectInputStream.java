@@ -5,9 +5,8 @@ import java.io.*;
 public class GSObjectInputStream extends DataInputStream implements ObjectInput{
     private ObjectInputStream ois;
 
-    public GSObjectInputStream(java.io.InputStream in) throws IOException {
+    public GSObjectInputStream(java.io.InputStream in) {
         super(in);
-        readByte();
     }
 
     public Object readObject() throws IOException, ClassNotFoundException {

@@ -160,6 +160,34 @@ public class GSByteArrayOutputStream extends OutputStream {
     }
 
     /**
+     * Writes the provided value at the specified position. The previous data is overridden.
+     * Unsafe operation - it's the user's responsibility to ensure position is not overflow.
+     */
+    public void writeByte(byte v, int position) {
+        _buffer[position] = v;
+    }
+
+    /**
+     * Writes the provided value at the specified position. The previous data is overridden.
+     * Unsafe operation - it's the user's responsibility to ensure position is not overflow.
+     */
+    public void writeShort(short v, int position) {
+        _buffer[position++] = (byte)((v >>>  8) & 0xFF);
+        _buffer[position] = (byte)(v & 0xFF);
+    }
+
+    /**
+     * Writes the provided value at the specified position. The previous data is overridden.
+     * Unsafe operation - it's the user's responsibility to ensure position is not overflow.
+     */
+    public void writeInt(int v, int position) {
+        _buffer[position++] = (byte)((v >>> 24) & 0xFF);
+        _buffer[position++] = (byte)((v >>> 16) & 0xFF);
+        _buffer[position++] = (byte)((v >>>  8) & 0xFF);
+        _buffer[position] = (byte)(v & 0xFF);
+    }
+
+    /**
      * Writes <code>len</code> bytes from the specified byte array starting at offset
      * <code>off</code> to this byte array output stream.
      *

@@ -6,12 +6,8 @@ import java.io.*;
 public class GSObjectOutputStream extends DataOutputStream implements ObjectOutput {
     private ObjectOutputStream oos;
 
-    // Version intended to allow forward/backward compatibility
-    private static final byte VERSION = 1;
-
-    public GSObjectOutputStream(java.io.OutputStream out) throws IOException {
+    public GSObjectOutputStream(java.io.OutputStream out) {
         super(out);
-        writeByte(VERSION);
     }
 
     public void writeObject(Object obj) throws IOException {
