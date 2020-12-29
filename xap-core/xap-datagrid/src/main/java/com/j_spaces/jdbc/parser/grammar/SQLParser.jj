@@ -641,9 +641,10 @@ void selectColumn(SelectQuery query):
   Token value = null;
   SelectColumn selectC = null;
   Token fname = null;
+  Token tableName = null;
   }
 {
-	 [LOOKAHEAD(2) id() "."]
+	 [LOOKAHEAD(2) tableName = id() "."]
      (
         LOOKAHEAD(2) (fname = id() selectC = getSelectColumnOrFunction(getString(fname), query)
      	|<ASTERISK>  { selectC = new SelectColumn("*");  }
@@ -651,6 +652,7 @@ void selectColumn(SelectQuery query):
  	    | value = <STRING_LITERAL> selectC = getSelectColumn(query) { selectC.setValue(value.image); }
  	    )
      	{  if ( selectC != null) {
+     	     selectC.setTableName(getString(tableName));
   	   	     query.addColumn(selectC);
   	   	  }
   	 	}
@@ -884,6 +886,7 @@ ColumnNode createColumnNode(AbstractDMLQuery query,String columnFunc):
  java.util.List params;
  Token number = null;
  Token op = null;
+ Token tableName = null;
  }
  {
     LOOKAHEAD(2) function = <IDENTIFIER> <OPENPAREN> params = createFunctionParams()  <CLOSEPAREN> {
@@ -910,9 +913,9 @@ ColumnNode createColumnNode(AbstractDMLQuery query,String columnFunc):
         columnNode.setFunctionCallDescription(new com.j_spaces.jdbc.builder.range.FunctionCallDescription(function.image, columnIndex, args));
         return columnNode;
     }
- 	|([LOOKAHEAD(2) id() "." ] t = id() {
+ 	|([LOOKAHEAD(2) tableName = id() "." ] t = id() {
     	 String id =  (QueryProcessor.getDefaultConfig().isParserCaseSensitivity()) ? t.image : t.image.toUpperCase();
-    	 columnNode = new ColumnNode(id);
+    	 columnNode = new ColumnNode(id, getString(tableName));
     })
 
     {return columnNode;}
