@@ -682,9 +682,17 @@ SelectColumn getSelectColumnOrFunction(String fname, AbstractDMLQuery query):
 FunctionCallColumn varArgFunctionCall(String fname):
 {
    List params = null;
+   Token token = null;
+   Class type = null;
 }
 {
-  <OPENPAREN> params = createFunctionParams() <CLOSEPAREN> { return new FunctionCallColumn(fname, params); }
+  LOOKAHEAD(3) <OPENPAREN> params = createFunctionParams() <CLOSEPAREN> { return new FunctionCallColumn(fname, params); }
+  | <OPENPAREN> [LOOKAHEAD(2) id() "."] token = id() <AS> type = sqlClass()  <CLOSEPAREN> {
+       params = new ArrayList();
+       params.add(getString(token));
+       params.add(type);
+  return new FunctionCallColumn(fname, params);
+  }
 }
 
 
@@ -1310,6 +1318,45 @@ String sqlType() :
 	    | <SMALLINT> { return Short.class.getName(); }
 	    | <BIGINT> { return Long.class.getName(); }
 		| <BIT> [<OPENPAREN> <INTEGER_LITERAL> <CLOSEPAREN>]{ return String.class.getName(); }
+	} catch (ParseException p) {
+		throw new ParseException("unknown sql data type");
+	}
+}
+
+Class sqlClass() :
+{ Token param, param2=null;}
+{
+	try {
+		(<VARCHAR> | <VARCHAR2>) [<OPENPAREN> <INTEGER_LITERAL> <CLOSEPAREN>]{ return String.class; }
+		| <CHAR> [<OPENPAREN> <INTEGER_LITERAL> <CLOSEPAREN>]{ return String.class; }
+		| <DATE> { return Date.class; }
+		| <DATETIME> { return Timestamp.class; }
+		| <NUMBER> <OPENPAREN> param = <INTEGER_LITERAL> ["," param2 = <INTEGER_LITERAL>] <CLOSEPAREN>
+			{ if (param2 != null && !param2.image.equals("0"))
+				return double.class;
+			  int p = Integer.parseInt(param.image);
+			  if (p < 10)
+			  	return int.class;
+			  else
+			  	return long.class;
+			}
+		| <TIME> { return Time.class; }
+		| <FLOAT> [<OPENPAREN> <INTEGER_LITERAL> <CLOSEPAREN>]{ return float.class; }
+		| <REAL> [<OPENPAREN> <INTEGER_LITERAL> <CLOSEPAREN>]{ return float.class; }
+		| <DOUBLE> { return double.class; }
+		| <BOOLEAN> { return boolean.class;}
+		| (<INTEGER> | <INT>) { return int.class; }
+		| <LONG> { return long.class; }
+		| <BLOB> { return Blob.class; }
+		| <CLOB> { return Clob.class; }
+	    | <TIMESTAMP> { return Timestamp.class; }
+	    | <DECIMAL> { return BigDecimal.class; }
+	    | <NUMERIC> { return BigDecimal.class; }
+	    | <LONGVARCHAR> { return String.class; }
+	    | <TINYINT> { return byte.class; }
+	    | <SMALLINT> { return short.class; }
+	    | <BIGINT> { return long.class; }
+		| <BIT> [<OPENPAREN> <INTEGER_LITERAL> <CLOSEPAREN>]{ return String.class; }
 	} catch (ParseException p) {
 		throw new ParseException("unknown sql data type");
 	}

@@ -34,6 +34,10 @@ public abstract class MutableNumber implements Externalizable {
 
     public abstract void remove(Number x);
 
+    public Number cast(Class<?> newType) {
+        throw new UnsupportedOperationException("Not supported for " + this.getClass());
+    }
+
     public abstract Number calcDivision(long count);
 
     public static MutableNumber fromClass(Class<?> type, boolean widest) {
