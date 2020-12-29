@@ -58,6 +58,6 @@ public class MutableViewHybridEntryData extends ViewPropertiesEntryData implemen
     }
 
     public boolean isDeserialized() {
-        return propertiesHolder.isUnpacked();
+        return propertiesHolder.isDirty();
     }
 }
