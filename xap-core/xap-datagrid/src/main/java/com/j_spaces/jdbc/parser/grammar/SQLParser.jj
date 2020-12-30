@@ -269,7 +269,7 @@ SelectQuery selectSql():
 {
     ( <SELECT> {query = new SelectQuery();}
         [setQuantifier(query) ]
-		[<OPENPAREN>]
+		[LOOKAHEAD(4) <OPENPAREN>]
         selectColumnList(query)
         [<CLOSEPAREN>]
          <FROM>
@@ -796,7 +796,8 @@ void function(SelectQuery query):
  Token token2 = null;
  }
 {
-	(<SUM> { selectC = new SelectColumn(); selectC.setSum(true);selectC.setFunctionName(SqlConstants.SUM); query.setAggFunction(true); }
+(
+	((<SUM> { selectC = new SelectColumn(); selectC.setSum(true);selectC.setFunctionName(SqlConstants.SUM); query.setAggFunction(true); }
 	|<COUNT> { selectC = new SelectColumn(); selectC.setCount(true);selectC.setFunctionName(SqlConstants.COUNT); query.setAggFunction(true); }  
 	|<MAX> { selectC = new SelectColumn(); selectC.setFunctionName(SqlConstants.MAX); query.setAggFunction(true); }
 	|<MIN> { selectC = new SelectColumn(); selectC.setFunctionName(SqlConstants.MIN); query.setAggFunction(true);}
@@ -813,13 +814,16 @@ void function(SelectQuery query):
 			query.addColumn(selectC); }
 	    | selectC = createSums() {
 	        selectC = selectC;
-            selectC.setSum(true);
-            selectC.setFunctionName(SqlConstants.SUM);
             query.addColumn(selectC);
 	    }
 
 			)
 	<CLOSEPAREN>
+	) | selectC = createSums() {
+    	    selectC = selectC;
+            query.addColumn(selectC);
+    	}
+)
 
 	// Optional Column-Alias
 	([< AS >] token = id() { selectC.setAlias(token.image); }	)?

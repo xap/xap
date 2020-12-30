@@ -6,6 +6,8 @@ import com.gigaspaces.internal.utils.math.MutableNumber;
 import com.j_spaces.jdbc.query.QueryTableData;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SumColumn extends SelectColumn {
 
@@ -138,12 +140,6 @@ public class SumColumn extends SelectColumn {
         return total;
     }
 
-
-//    @Override
-//    public String getName() {
-//        return super.getAlias();
-//    }
-
     @Override
     public void setAlias(String alias) {
         super.setAlias(alias);
@@ -161,5 +157,27 @@ public class SumColumn extends SelectColumn {
     public SumColumn setOperator(String operator) {
         this.operator = operator;
         return this;
+    }
+
+    List<String> getColumnNames() {
+        List<String> names = new ArrayList<>();
+        if (getLeft() instanceof SumColumn) {
+            names.addAll(((SumColumn) getLeft()).getColumnNames());
+        } else if (getLeft() instanceof ValueSelectColumn) {
+
+        } else {
+            names.add(getLeft().getName());
+        }
+
+
+        if (getRight() instanceof SumColumn) {
+            names.addAll(((SumColumn) getRight()).getColumnNames());
+        } else if (getRight() instanceof ValueSelectColumn) {
+
+        } else {
+            names.add(getRight().getName());
+        }
+
+        return names;
     }
 }

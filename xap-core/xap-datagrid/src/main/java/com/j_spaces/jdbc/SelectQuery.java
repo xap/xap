@@ -1308,7 +1308,7 @@ public class SelectQuery extends AbstractDMLQuery {
         for (SelectColumn col : getQueryColumns()) {
 
             if (col.isVisible()) {
-                if (isProjected || col instanceof ValueSelectColumn)
+                if (isProjected || col instanceof ValueSelectColumn || col instanceof SumColumn)
                     col.setProjectedIndex(projIndex++);
                 else
                     col.setProjectedIndex(col.getColumnIndexInTable());
@@ -1340,7 +1340,11 @@ public class SelectQuery extends AbstractDMLQuery {
         ArrayList<String> projectedProperties = new ArrayList<String>(getQueryColumns().size());
         for (SelectColumn col : getQueryColumns()) {
             if (col.isVisible() && !col.isAllColumns()) {
-                projectedProperties.add(col.getName());
+                if (col instanceof SumColumn) {
+                    projectedProperties.addAll(((SumColumn) col).getColumnNames());
+                } else {
+                    projectedProperties.add(col.getName());
+                }
             }
         }
 
