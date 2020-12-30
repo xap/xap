@@ -634,7 +634,7 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
             if (col.isVisible()) {
                 columnNames.add(col.getName());
                 columnLabelsList.add(col.getAlias());
-                tableNamesList.add(col.getColumnTableData().getTableName());
+                tableNamesList.add(col instanceof ValueSelectColumn ? "anonymous" : col.getColumnTableData().getTableName());
             }
         }
 

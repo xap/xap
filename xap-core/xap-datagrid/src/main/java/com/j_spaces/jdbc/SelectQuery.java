@@ -1164,7 +1164,7 @@ public class SelectQuery extends AbstractDMLQuery {
                     while (iter.hasNext()) {
                         SelectColumn col = iter.next();
 
-                        if ((!(col instanceof SumColumn)) && col.getColumnData().getColumnName() != null && col.getColumnData().getColumnName().equals(info.getFixedProperty(c).getName())) {
+                        if ((!(col instanceof SumColumn || col instanceof ValueSelectColumn)) && col.getColumnData().getColumnName() != null && col.getColumnData().getColumnName().equals(info.getFixedProperty(c).getName())) {
                             found = true;
                             break;
                         }
@@ -1308,7 +1308,7 @@ public class SelectQuery extends AbstractDMLQuery {
         for (SelectColumn col : getQueryColumns()) {
 
             if (col.isVisible()) {
-                if (isProjected)
+                if (isProjected || col instanceof ValueSelectColumn)
                     col.setProjectedIndex(projIndex++);
                 else
                     col.setProjectedIndex(col.getColumnIndexInTable());

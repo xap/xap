@@ -642,6 +642,7 @@ void selectColumn(SelectQuery query):
   SelectColumn selectC = null;
   Token fname = null;
   Token tableName = null;
+  Token alias = null;
   }
 {
 	 [LOOKAHEAD(2) tableName = id() "."]
@@ -650,6 +651,10 @@ void selectColumn(SelectQuery query):
      	|<ASTERISK>  { selectC = new SelectColumn("*");  }
      	| <UID> { selectC = new SelectColumn("UID");   }
  	    | value = <STRING_LITERAL> selectC = getSelectColumn(query) { selectC.setValue(value.image); }
+ 	    | value = <INTEGER_LITERAL> [<AS> alias = id()] {
+ 	        selectC = new ValueSelectColumn(getInteger(value));
+ 	        selectC.setAlias(getString(alias));
+ 	    }
  	    )
      	{  if ( selectC != null) {
      	     selectC.setTableName(getString(tableName));

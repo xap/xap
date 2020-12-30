@@ -17,6 +17,11 @@ public class ValueSelectColumn extends SelectColumn {
     }
 
     @Override
+    public boolean isAllColumns() {
+        return false;
+    }
+
+    @Override
     public boolean isUid() {
         return false;
     }
@@ -31,4 +36,9 @@ public class ValueSelectColumn extends SelectColumn {
         return value;
     }
 
+    @Override
+    public void setAlias(String alias) {
+        super.setAlias(alias);
+        if (this.getName() == null) this.setName(alias);
+    }
 }
