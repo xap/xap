@@ -118,7 +118,6 @@ import com.gigaspaces.security.directory.CredentialsProvider;
 import com.gigaspaces.security.directory.CredentialsProviderHelper;
 import com.gigaspaces.security.service.SecurityInterceptor;
 import com.gigaspaces.server.space.suspend.SuspendType;
-import com.gigaspaces.start.ProductType;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.time.SystemTime;
 import com.gigaspaces.utils.Pair;
@@ -2236,7 +2235,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 applyEntryPacketOutFilter(answerPacket.m_EntryPacket, modifiers, template.getProjectionTemplate());
 
             if( !take && answerHolder != null) {
-                _engine.updateObjectTypeReadCounts(answerHolder.getServerTypeDesc(), template, answerHolder._numOfEntriesMatched);
+                _engine.updateObjectTypeReadCounts(answerHolder.getServerTypeDesc(), template);
             }
 
             return answerHolder;
@@ -2334,7 +2333,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                  take, sc, returnOnlyUid, modifiers, operationContext, null /*aggregatorContext*/, null);
 
             if( !take && ah != null) {
-                _engine.updateObjectTypeReadCounts(ah.getServerTypeDesc(), template, ah._numOfEntriesMatched);
+                _engine.updateObjectTypeReadCounts(ah.getServerTypeDesc(), template);
             }
 
             if (ah == null)
