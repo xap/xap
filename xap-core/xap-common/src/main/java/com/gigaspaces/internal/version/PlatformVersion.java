@@ -46,7 +46,7 @@ public class PlatformVersion {
     public PlatformVersion(Properties properties) {
         this.id = properties.getProperty("gs.build-name");
         this.version = extractPrefix(id, "-");
-        this.productType = isInsightEdgeAnalytics() ? ProductType.InsightEdge : ProductType.XAP;
+        this.productType = isInsightEdge() ? ProductType.InsightEdge : ProductType.XAP;
         this.officialVersion = "GigaSpaces " + productType + " " + id;
         this.tag = properties.getProperty("gs.git-tag");
         this.shas = extractPropertiesByPrefix(properties, "gs.git-sha.");
@@ -73,6 +73,10 @@ public class PlatformVersion {
     private static String[] extractPatchTokens(String id, String version) {
         String prefix = version + "-patch-";
         return id.startsWith(prefix) ? id.replace(prefix, "").split("-") : new String[] {"", "0"};
+    }
+
+    private static boolean isInsightEdge() {
+        return Files.exists(SystemLocations.singleton().tools("jdbc"));
     }
 
     public static boolean isInsightEdgeAnalytics() {
