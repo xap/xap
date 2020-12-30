@@ -102,6 +102,7 @@ TOKEN [IGNORE_CASE]:  /* Keywords */
   | < END: "end" >
   | < FROM: "from" >
   | < GROUP: "group" >
+  | < HAVING: "having" >
   | < LIMIT: "limit" >
   | < IN: "in" >
   | < IS: "is" >
@@ -278,6 +279,7 @@ SelectQuery selectSql():
          [<WHERE> exp = SqlExpression(query)]
          [groupBy(query)]
          [orderBy(query)]
+         [having(query)]
          [limit(query)]
          [<FOR_UPDATE> { query.setForUpdate(true); }]
     )
@@ -1089,6 +1091,65 @@ void orderBy(SelectQuery query):
 	
 	)*
 	{query.setOrderColumns(list);}
+}
+
+ColumnNode createHavingColumnNode():
+{
+ String table = null;
+ String columnName = null;
+ ColumnNode columnNode = null;
+ Token t, function = null;
+ java.util.List params;
+ Token number = null;
+ Token op = null;
+ Token tableName = null;
+ }
+ {
+    function = <COUNT> <OPENPAREN> params = createFunctionParams()  <CLOSEPAREN> {
+        java.util.List args = new java.util.ArrayList();
+        int pos = 0;
+        int columnIndex = 0;
+        for(Object p : params){
+            if(p instanceof ColumnNode){
+               if(columnNode == null){
+                   args.add(null);
+                   columnNode = (ColumnNode)p;
+                   columnIndex = pos;
+               }else{
+                   throw new ParseException("More then one column in function call " + function.image + " call " + columnNode + " " + p);
+               }
+            } else if (p instanceof Integer) {
+                args.add(p);
+                columnNode = new ValueColumnNode(p);
+                columnIndex = pos;
+            }else{
+                args.add(p);
+            }
+            pos += 1;
+        }
+        if(columnNode == null){
+            throw new ParseException("Missing column in function call " + function.image);
+        }
+        columnNode.setFunctionCallDescription(new com.j_spaces.jdbc.builder.range.FunctionCallDescription(function.image, columnIndex, args));
+        return columnNode;
+    }
+}
+
+void having(SelectQuery query):
+{
+ ExpNode expNode;
+ ColumnNode columnNode1;
+}
+{
+	<HAVING> [LOOKAHEAD(2) <OPENPAREN>] columnNode1 = createHavingColumnNode()
+	(
+              	expNode = containsNode(query,columnNode1)
+              | expNode = isNullNode(query,columnNode1)
+        	  | expNode = betweenNode(query,columnNode1)
+              | expNode = conditionNode(query,columnNode1)
+              | expNode = relationNode(query, columnNode1)
+
+             ) [ LOOKAHEAD(2) <CLOSEPAREN> ] { query.setHavingNode(expNode); }
 }
 
 

@@ -94,6 +94,12 @@ public class SelectQuery extends AbstractDMLQuery {
     public static final boolean pushDownPredicatesToSpace = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.pushDownToSpace", "true"));
 
     private int limit;
+    protected ExpNode havingNode = null;
+
+    public SelectQuery setHavingNode(ExpNode havingNode) {
+        this.havingNode = havingNode;
+        return this;
+    }
 
     public List<Join> getJoins() {
         return joins;
@@ -630,6 +636,15 @@ public class SelectQuery extends AbstractDMLQuery {
         return getQueryColumns().get(0).getAlias();
     }
 
+    private boolean allIsNull(IEntryPacket entry) {
+        for (Object fieldValue : entry.getFieldValues()) {
+            if (fieldValue != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Build result object from aggregation
      */
@@ -637,14 +652,22 @@ public class SelectQuery extends AbstractDMLQuery {
         int i = 0;
         String[] fieldNames = null;
         Object[][] fieldValues = null;
+        int resultRows = entries.size();
+        if (havingNode != null) {
+            for (IEntryPacket packet : entries) {
+                if (allIsNull(packet)) resultRows--;
+            }
+        }
+
         for (IEntryPacket packet : entries) {
             QueryEntryPacket entry = (QueryEntryPacket) packet;
 
             if (fieldNames == null) {
                 fieldNames = entry.getFieldNames();
-                fieldValues = new Object[entries.size()][fieldNames.length];
+                fieldValues = new Object[resultRows][fieldNames.length];
             }
 
+            if (havingNode != null && allIsNull(entry)) continue;
             fieldValues[i++] = entry.getFieldValues();
 
         }
