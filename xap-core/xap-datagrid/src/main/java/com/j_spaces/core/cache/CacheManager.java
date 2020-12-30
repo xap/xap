@@ -5555,9 +5555,10 @@ public class CacheManager extends AbstractCacheManager
                 }
             });
 
-            if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME)) {
+            // remomved if statement as part of GS-14342 in order to allow recording metrics when null template used ( java.lang.Object )
+            // if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME)) {
                 _spaceMetricsRegistrationUtils.registerSpaceDataTypeMetrics(serverTypeDesc, typeData, _engine.getMetricManager().getMetricFlagsState());
-            }
+            //}
 
             if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()) {
                 if (getBlobStoreStorageHandler().getOffHeapCache() != null)
