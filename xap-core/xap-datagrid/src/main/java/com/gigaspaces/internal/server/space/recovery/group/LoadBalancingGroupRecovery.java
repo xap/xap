@@ -78,7 +78,8 @@ public class LoadBalancingGroupRecovery extends RecoveryGroup {
                                 + "] recovered notify templates from ["
                                 + remoteSpaceURL + "]");
                     }
-                    if(_space.pullBroadcastTables()) {
+                    // The horizontal scale check should be handled when scale in/out withput backup space will be supported
+                    if(!_space.getQuiesceHandler().isHorizontalScale() && _space.pullBroadcastTables()) {
                         if (_logger.isInfoEnabled()) {
                             _logger.info("Space [" + _space.getServiceName()
                                     + "] recovered broadcast table entries");

@@ -19,15 +19,17 @@ public class CopyChunksRequestInfo implements SpaceRequestInfo {
     private String spaceName;
     private Map<Integer, String> instanceIds;
     private QuiesceToken token;
+    private ScaleType scaleType;
 
     public CopyChunksRequestInfo() {
     }
 
-    CopyChunksRequestInfo(ClusterTopology newMap, String spaceName, Map<Integer, String> instanceIds, QuiesceToken token) {
+    CopyChunksRequestInfo(ClusterTopology newMap, String spaceName, Map<Integer, String> instanceIds, QuiesceToken token, ScaleType scaleType) {
         this.newMap = newMap;
         this.spaceName = spaceName;
         this.instanceIds = instanceIds;
         this.token = token;
+        this.scaleType = scaleType;
     }
 
     public ClusterTopology getNewMap() {
@@ -56,6 +58,10 @@ public class CopyChunksRequestInfo implements SpaceRequestInfo {
         this.context = spaceContext;
     }
 
+    public ScaleType getScaleType() {
+        return scaleType;
+    }
+
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         IOUtils.writeObject(out, newMap);
@@ -66,6 +72,7 @@ public class CopyChunksRequestInfo implements SpaceRequestInfo {
             IOUtils.writeShort(out, entry.getKey().shortValue());
             IOUtils.writeString(out, entry.getValue());
         }
+        out.writeByte(scaleType.value);
     }
 
     @Override
@@ -78,5 +85,6 @@ public class CopyChunksRequestInfo implements SpaceRequestInfo {
         for (int i = 0; i < size; i++) {
             instanceIds.put((int) IOUtils.readShort(in), IOUtils.readString(in));
         }
+        this.scaleType = in.readByte() == 0 ? ScaleType.IN : ScaleType.OUT;
     }
 }

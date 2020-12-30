@@ -3,6 +3,7 @@ package com.gigaspaces.internal.server.space.repartitioning;
 import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterUtils;
+import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregatorContext;
 import org.slf4j.Logger;
@@ -37,11 +38,14 @@ public class DeleteChunksProducer extends SpaceEntriesAggregator<DeleteChunksRes
 
     @Override
     public void aggregate(SpaceEntriesAggregatorContext context) {
-        Object routingValue = context.getPathValue(context.getTypeDescriptor().getRoutingPropertyName());
+        SpaceTypeDescriptor typeDescriptor = context.getTypeDescriptor();
+        if(typeDescriptor.isBroadcast())
+            return;
+        Object routingValue = context.getPathValue(typeDescriptor.getRoutingPropertyName());
         int newPartitionId = PartitionedClusterUtils.getPartitionId(routingValue, newMap) + 1;
         if (newPartitionId != context.getPartitionId() + 1) {
-            Object idValue = context.getPathValue(context.getTypeDescriptor().getIdPropertyName());
-            String type = context.getTypeDescriptor().getTypeName();
+            Object idValue = context.getPathValue(typeDescriptor.getIdPropertyName());
+            String type = typeDescriptor.getTypeName();
 
             if (batchMap.containsKey(type)) {
                 List<Object> ids = batchMap.get(type);

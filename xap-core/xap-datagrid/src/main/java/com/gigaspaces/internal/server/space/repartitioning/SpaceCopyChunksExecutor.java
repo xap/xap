@@ -4,7 +4,6 @@ import com.gigaspaces.admin.quiesce.QuiesceToken;
 import com.gigaspaces.client.SpaceProxyFactory;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
-import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.space.executors.SpaceActionExecutor;
 import com.gigaspaces.internal.space.requests.SpaceRequestInfo;
@@ -46,7 +45,7 @@ public class SpaceCopyChunksExecutor extends SpaceActionExecutor {
                 executorService.submit(new CopyChunksConsumer(proxyMap,
                         batchQueue, responseInfo, barrier));
             }
-            CopyChunksProducer aggregator = new CopyChunksProducer(info.getNewMap(), batchQueue, batchSize);
+            CopyChunksProducer aggregator = new CopyChunksProducer(info.getNewMap(), batchQueue, batchSize, info.getScaleType(), info.getInstanceIds().keySet());
             EmptyQueryPacket queryPacket = new EmptyQueryPacket();
             queryPacket.setQueryResultType(QueryResultTypeInternal.NOT_SET);
             space.getEngine().aggregate(queryPacket, Collections.singletonList(aggregator), Modifiers.NONE, requestInfo.getSpaceContext());
