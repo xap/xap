@@ -67,6 +67,24 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         this._dotnetStorageType = builder.dotnetStorageType;
     }
 
+    private PropertyInfo(ObjectInput input, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
+        this._name = IOUtils.readString(input);
+        this._typeName = IOUtils.readString(input);
+        this._type = IOUtils.readObject(input);
+        this._primitive = ReflectionUtils.isPrimitive(_typeName);
+        this._spacePrimitive = ReflectionUtils.isSpacePrimitive(_typeName);
+        this._documentSupport = SpaceDocumentSupportHelper.fromCode(input.readByte());
+        this._storageType = StorageType.fromCode(input.readInt());
+        this._dotnetStorageType = input.readByte();
+        String storageAdapterClassName = null;
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_2_0)) {
+            storageAdapterClassName = IOUtils.readString(input);
+        }
+        this._storageAdapter = storageAdapterClassName != null ? PropertyStorageAdapterRegistry.getInstance()
+                .getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName)) : null;
+
+    }
+
     private static StorageType calcEffectiveStorageType(StorageType storageType, StorageType classStorageType, boolean binaryStorageClass, boolean spacePrimitive) {
         if (storageType != StorageType.DEFAULT)
             return storageType;
@@ -200,25 +218,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
     }
 
     static PropertyInfo deserialize(ObjectInput in, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
-        Builder builder = new Builder(IOUtils.readString(in));
-        builder.typeName = IOUtils.readString(in);
-        builder.type = IOUtils.readObject(in);
-        // Removed in 8.0.4: primitive is calculated from typename.
-        //boolean isPrimitive = in.readBoolean();
-        // New in 8.0.1: read SpaceDocumentSupport code
-        builder.documentSupport = SpaceDocumentSupportHelper.fromCode(in.readByte());
-        // New in 9.0.0: read storage type code
-        builder.storageType = StorageType.fromCode(in.readInt());
-        // Changed in 8.0.4: read dotnet storage type as code instead of object.
-        builder.dotnetStorageType = in.readByte();
-        // New in 15.2.0: property storage adapter
-        if (version.greaterOrEquals(PlatformLogicalVersion.v15_2_0)) {
-            String storageAdapterClassName = IOUtils.readString(in);
-            if (storageAdapterClassName != null)
-                builder.storageAdapter(ClassLoaderHelper.loadClass(storageAdapterClassName));
-        }
-
-        return builder.build();
+        return new PropertyInfo(in, version);
     }
 
     void setHybridIndex(int index) {
