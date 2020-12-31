@@ -48,6 +48,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
     private final Class<?> _type;
     private final SpaceDocumentSupport _documentSupport;
     private final StorageType _storageType;
+    private final boolean binaryStorageClass;
     private final PropertyStorageAdapter _storageAdapter;
     private final byte _dotnetStorageType;
     private int originalIndex;
@@ -62,8 +63,9 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         this._documentSupport = builder.documentSupport != SpaceDocumentSupport.DEFAULT
                 ? builder.documentSupport
                 : SpaceDocumentSupportHelper.getDefaultDocumentSupport(_type);
-        this._storageType = calcEffectiveStorageType(builder.storageType, builder.defaultStorageType, builder.binaryStorageClass, _spacePrimitive);
-        this._storageAdapter = initStorageAdapter(builder.storageAdapterClass, _storageType, builder.binaryStorageClass);
+        this.binaryStorageClass = builder.binaryStorageClass;
+        this._storageType = calcEffectiveStorageType(builder.storageType, builder.defaultStorageType, binaryStorageClass, _spacePrimitive);
+        this._storageAdapter = initStorageAdapter(builder.storageAdapterClass, _storageType, binaryStorageClass);
         this._dotnetStorageType = builder.dotnetStorageType;
     }
 
@@ -195,6 +197,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         out.writeByte(_dotnetStorageType);
         // New in 15.2.0: property storage adapter
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_2_0)) {
+            out.writeBoolean(binaryStorageClass);
             IOUtils.writeString(out, _storageAdapter != null ? _storageAdapter.getClass().getName() : null);
         }
     }
@@ -213,9 +216,11 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         builder.dotnetStorageType = in.readByte();
         // New in 15.2.0: property storage adapter
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_2_0)) {
+            builder.binaryStorageClass = in.readBoolean();
             String storageAdapterClassName = IOUtils.readString(in);
-            if (storageAdapterClassName != null)
+            if (storageAdapterClassName != null) {
                 builder.storageAdapter(ClassLoaderHelper.loadClass(storageAdapterClassName));
+            }
         }
 
         return builder.build();
