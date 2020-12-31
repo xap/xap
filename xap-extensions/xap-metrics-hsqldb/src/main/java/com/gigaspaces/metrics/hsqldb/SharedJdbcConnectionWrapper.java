@@ -67,13 +67,14 @@ public class SharedJdbcConnectionWrapper implements Closeable {
                 if (connection == null) {
                     try {
                         final int loginTimeoutInSec = getLoginTimeout();
-                        logger.debug("Connecting to [{}] with a maximum wait time of [{}s]", url, loginTimeoutInSec);
+                        logger.info("Connecting TO [{}] with a maximum wait time of [{}s]", url, loginTimeoutInSec);
                         DriverManager.setLoginTimeout(loginTimeoutInSec);
                         connection = DriverManager.getConnection(url, factory.getUsername(), factory.getPassword());
                         connectionLogger.success();
                         logger.info("Connected to [{}]", url);
                     } catch (Throwable e) {
-                        connectionLogger.fail(e, () -> "[url=" + url + "]");
+                        logger.info("!!! Our catch:" + e.toString() );
+                        connectionLogger.fail(e, () -> "[URL=" + url + "]");
                     }
                 }
             }
