@@ -170,7 +170,9 @@ public class MavenInstallCommand extends CliCommand {
 
     private static List<String> load(Path path) throws IOException {
         try (Stream<String> stream = Files.lines(path)) {
-            return stream.filter(s -> !s.startsWith("#")).collect(Collectors.toList());
+            return stream
+                    .filter(s -> !s.isEmpty() && !s.startsWith("#"))
+                    .collect(Collectors.toList());
         }
     }
 
