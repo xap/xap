@@ -49,7 +49,7 @@ import java.util.Map;
  */
 @com.gigaspaces.api.InternalApi
 public class EntryPacket extends AbstractEntryPacket {
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 1L;
 
     protected String _typeName;
     private PropertiesHolder propertiesHolder;
