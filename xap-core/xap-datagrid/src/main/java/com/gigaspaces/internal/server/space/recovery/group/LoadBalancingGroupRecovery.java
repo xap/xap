@@ -83,11 +83,11 @@ public class LoadBalancingGroupRecovery extends RecoveryGroup {
                             _logger.info("Space [" + _space.getServiceName()
                                     + "] recovered broadcast table entries");
                         }
-                        return new CopyOnlySynchronizeSpaceReplicate(spaceCopyReplica);
                     }
                     else{
                         //TODO
                     }
+                    return new CopyOnlySynchronizeSpaceReplicate(spaceCopyReplica);
                 } else
                     _space.getEngine().rollbackCopyReplica(result);
             } catch (InterruptedException e) {
