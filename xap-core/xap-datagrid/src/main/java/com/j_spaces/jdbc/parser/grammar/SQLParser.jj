@@ -270,9 +270,9 @@ SelectQuery selectSql():
 {
     ( <SELECT> {query = new SelectQuery();}
         [setQuantifier(query) ]
-		[LOOKAHEAD(4) <OPENPAREN>]
+//		[LOOKAHEAD(4) <OPENPAREN>]
         selectColumnList(query)
-        [<CLOSEPAREN>]
+//        [<CLOSEPAREN>]
          <FROM>
          selectTableList(query)
          [joins(query)]
@@ -815,7 +815,6 @@ void function(SelectQuery query):
 			selectC.setName(id);
 			query.addColumn(selectC); }
 	    | selectC = createSums() {
-	        selectC = selectC;
             query.addColumn(selectC);
 	    }
 
