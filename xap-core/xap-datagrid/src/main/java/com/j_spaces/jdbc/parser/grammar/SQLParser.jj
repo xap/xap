@@ -815,6 +815,8 @@ void function(SelectQuery query):
 			selectC.setName(id);
 			query.addColumn(selectC); }
 	    | selectC = createSums() {
+	        selectC.setSum(true);
+            selectC.setFunctionName(SqlConstants.SUM);
             query.addColumn(selectC);
 	    }
 
