@@ -1532,6 +1532,11 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 }
 
                 changeSpaceState(ISpaceState.STARTED, true, true);
+                _logger.info("++++++++++++++++++++details: " + _puName + "  " +  _instanceId + "++++++++++++++++");
+                if(_instanceId.contains("2_1")){
+                    _logger.info("++++++++++++++++++++++++ in sleep+++++++++++++++++");
+                    Thread.sleep(1000 * 60 );
+                }
 
                 _internalSpaceModesListeners.afterSpaceModeChange(spaceMode);
 
