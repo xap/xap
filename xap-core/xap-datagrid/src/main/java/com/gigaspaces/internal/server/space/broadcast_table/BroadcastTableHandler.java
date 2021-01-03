@@ -29,26 +29,23 @@ public class BroadcastTableHandler {
         _proxy = space.getSpaceProxy().getDirectProxy();
     }
 
-    public void pushEntry(IEntryPacket entryPacket, long lease, boolean isUpdate, long timeout, int modifiers) throws RemoteException {
+    public void pushEntry(IEntryPacket entryPacket, long lease, boolean isUpdate, long timeout, int modifiers) {
         executeTask(new PushBroadcastTableEntrySpaceRequestInfo(entryPacket, lease, isUpdate, timeout, modifiers), null);
     }
 
-    public void pushEntries(IEntryPacket[] entryPackets, long lease, long[] leases, long timeout, int modifiers) throws RemoteException {
+    public void pushEntries(IEntryPacket[] entryPackets, long lease, long[] leases, long timeout, int modifiers) {
         executeTask(new PushBroadcastTableEntriesSpaceRequestInfo(entryPackets, lease, leases, timeout, modifiers), null);
     }
 
     public boolean pullEntries(String typeName, Integer targetPartitionId) {
-        try {
-            BroadcastTableSpaceResponseInfo result = executeTask(new PullBroadcastTableEntriesSpaceRequestInfo(typeName), targetPartitionId);
-            if(result!= null && result.getEntries() != null)
-                try {
-                    space.write(result.getEntries(), null, Lease.FOREVER, null, new SpaceContext(), 0, Modifiers.BACKUP_ONLY, true);
-                    return true;
-                } catch (TransactionException | UnknownTypesException e) {
-                    return false;
-                }
-        } catch (RemoteException e) {
-            e.printStackTrace();
+        BroadcastTableSpaceResponseInfo result = executeTask(new PullBroadcastTableEntriesSpaceRequestInfo(typeName), targetPartitionId);
+        if(result != null && result.getEntries() != null) {
+            try {
+                space.write(result.getEntries(), null, Lease.FOREVER, null, new SpaceContext(), 0, Modifiers.BACKUP_ONLY, true);
+                return true;
+            } catch (RemoteException | TransactionException | UnknownTypesException e) {
+                handleException(e, BroadcastTableSpaceRequestInfo.Action.PULL_ENTRIES);
+            }
         }
         return false;
     }
@@ -57,7 +54,7 @@ public class BroadcastTableHandler {
         executeTask(new ClearBroadcastTableEntriesSpaceRequestInfo(template, modifiers), null);
     }
 
-    private BroadcastTableSpaceResponseInfo executeTask(BroadcastTableSpaceRequestInfo broadcastTableSpaceRequestInfo, Object routing) throws RemoteException {
+    private BroadcastTableSpaceResponseInfo executeTask(BroadcastTableSpaceRequestInfo broadcastTableSpaceRequestInfo, Object routing) {
         try {
             final AsyncFuture<BroadcastTableSpaceResponseInfo> future = _proxy.execute(new BroadcastTableSpaceTask(broadcastTableSpaceRequestInfo), routing, null, null);
             BroadcastTableSpaceResponseInfo result = future.get();
@@ -65,21 +62,24 @@ public class BroadcastTableHandler {
                 return result;
             }
             result.getExceptionMap().forEach((key, value) -> {
-                if (_logger.isWarnEnabled()) {
-                    _logger.warn("Broadcast table operation " + broadcastTableSpaceRequestInfo.getAction() + " failed in partition " + key + ". " +
+                if (_logger.isErrorEnabled()) {
+                    _logger.error("Broadcast table operation " + broadcastTableSpaceRequestInfo.getAction() + " failed in partition " + key + ". " +
                             "Notice that broadcast table data is not up to date in this partition", value);
                 }
             });
         } catch (InterruptedException e) {
-            //log
             Thread.currentThread().interrupt();
-        } catch (ExecutionException e) {
-            throw new RemoteException(e.getMessage(), e);
-        } catch (TransactionException e) {
-            // can never happen, transactions are blocked
-        } catch (RemoteException e) {
-            throw e;
+            handleException(e, broadcastTableSpaceRequestInfo.getAction());
+        } catch (RemoteException | ExecutionException | TransactionException e) {
+            handleException(e, broadcastTableSpaceRequestInfo.getAction());
         }
         return null;
+    }
+
+    private void handleException(Exception e, BroadcastTableSpaceRequestInfo.Action action){
+        if (_logger.isErrorEnabled()) {
+            _logger.error("Broadcast table operation " + action + " failed. " +
+                    "Notice that broadcast table data is not up to date in this partition", e);
+        }
     }
 }

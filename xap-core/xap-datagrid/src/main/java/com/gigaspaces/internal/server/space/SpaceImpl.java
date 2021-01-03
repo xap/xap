@@ -3922,12 +3922,31 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         spaceConfig.setBlobstoreRocksDBAllowDuplicateUIDs(isDuplicateUIDsAllowed);
     }
 
+    public void clearBroadcastTables() {
+        List<ITypeDesc> tables = getEngine().getTypeManager().getSafeTypeTable().values().stream()
+                .map(IServerTypeDesc::getTypeDesc)
+                .filter(ITypeDesc::isBroadcast)
+                .collect(Collectors.toList());
+        for (ITypeDesc table: tables){
+            TemplatePacket templatePacket = new TemplatePacket(table);
+            try {
+                _engine.clear(templatePacket, null, null, Modifiers.NONE);
+                if(_logger.isDebugEnabled())
+                    _logger.debug("Cleared broadcast table " + table.getTypeName() + " from partition " + getPartitionId());
+            } catch (UnusableEntryException | TransactionException | UnknownTypeException | RemoteException e) {
+//                Do nothing
+            }
+        }
+    }
+
     public boolean pullBroadcastTables(){
         List<String> typeNames = getEngine().getTypeManager().getSafeTypeTable().values().stream()
                 .map(IServerTypeDesc::getTypeDesc)
                 .filter(ITypeDesc::isBroadcast)
                 .map(ITypeDesc::getTypeName)
                 .collect(Collectors.toList());
+        if(typeNames.isEmpty())
+            return true;
         return pullBroadcastTables(new LinkedList<>(typeNames));
     }
 
@@ -3940,41 +3959,35 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         }
         while (!targetPartitions.isEmpty()) {
             Integer partitionId = targetPartitions.removeFirst();
-            String type;
+            int oneBasedPartitionId = partitionId + 1;
             while(!types.isEmpty()) {
-                type = types.removeFirst();
+                String type = types.removeFirst();
                 if(_broadcastTableHandler.pullEntries(type, partitionId)){
                     if (_logger.isDebugEnabled()) {
-                        _logger.debug("Space [" + getServiceName() + "] successfully pulled broadcast table type: " + type);
+                        _logger.debug("Space [" + getServiceName() + "] successfully pulled broadcast type: " + type + " from partition " + oneBasedPartitionId);
                     }
                 }
                 else {
                     if (_logger.isWarnEnabled()) {
                         _logger.warn("Space [" + getServiceName() + "]" +
-                                " failed to pull broadcast table type: " + type +
-                                " from partition " + partitionId + ". Attempting to pull remaining types from the next partition");
+                                " failed to pull broadcast type: " + type +
+                                " from partition " + oneBasedPartitionId + ". Attempting to pull remaining types from the next partition");
                     }
+                    types.add(type);
                     break;
                 }
             }
-            if (_logger.isDebugEnabled()) {
-                _logger.debug("Space [" + getServiceName() + "] successfully pulled all broadcast table types");
-            }
-            return true;
+            if(types.isEmpty())
+                return true;
         }
-        if(_logger.isErrorEnabled()){
-            _logger.error("Space [" + getServiceName() + "]" +
-                    " failed to pull broadcast table types: " + String.join(", ", types) +
-                    " from all available partitions");
-        }
-        return false;
+        return types.isEmpty();
     }
 
-    private void pushBroadcastEntry(IEntryPacket entryPacket, long lease, boolean isUpdate, long timeout, int modifiers) throws RemoteException {
+    private void pushBroadcastEntry(IEntryPacket entryPacket, long lease, boolean isUpdate, long timeout, int modifiers) {
         _broadcastTableHandler.pushEntry(entryPacket, lease, isUpdate, timeout, modifiers);
     }
 
-    private void pushBroadcastEntries(IEntryPacket[] entryPacket, long lease, long[] leases, long timeout, int modifiers) throws RemoteException {
+    private void pushBroadcastEntries(IEntryPacket[] entryPacket, long lease, long[] leases, long timeout, int modifiers) {
         _broadcastTableHandler.pushEntries(entryPacket, lease ,leases, timeout, modifiers);
     }
 

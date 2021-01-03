@@ -52,7 +52,7 @@ public class SpaceBroadcastTableExecutor extends SpaceActionExecutor {
             if(typeDesc != null && typeDesc.isBroadcast()) {
                 TemplatePacket templatePacket = new TemplatePacket(typeDesc);
                     try {
-                    IEntryPacket[] entries = space.readMultiple(templatePacket, null, false, Integer.MAX_VALUE, info.getSpaceContext(), false, Modifiers.NONE);
+                    IEntryPacket[] entries = space.readMultiple(templatePacket, null, false, Integer.MAX_VALUE, spaceRequestInfo.getSpaceContext(), false, Modifiers.NONE);
                     if(entries != null && entries.length > 0)
                         responseInfo.setEntries(entries);
                     } catch (TransactionException | UnusableEntryException | UnknownTypeException | RemoteException e) {

@@ -20,20 +20,13 @@ import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
 import com.gigaspaces.internal.cluster.node.replica.ISpaceCopyReplicaState;
 import com.gigaspaces.internal.cluster.node.replica.ISpaceCopyResult;
 import com.gigaspaces.internal.cluster.node.replica.ISpaceSynchronizeReplicaState;
-import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceImpl;
-import com.j_spaces.core.UnknownTypesException;
 import com.j_spaces.core.client.FinderException;
 import com.j_spaces.core.client.SpaceFinder;
 import com.j_spaces.core.client.SpaceURL;
-import net.jini.core.transaction.TransactionException;
 
-import java.rmi.RemoteException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 
 /**
@@ -78,15 +71,21 @@ public class LoadBalancingGroupRecovery extends RecoveryGroup {
                                 + "] recovered notify templates from ["
                                 + remoteSpaceURL + "]");
                     }
-                    // The horizontal scale check should be handled when scale in/out withput backup space will be supported
-                    if(!_space.getQuiesceHandler().isHorizontalScale() && _space.pullBroadcastTables()) {
-                        if (_logger.isInfoEnabled()) {
-                            _logger.info("Space [" + _space.getServiceName()
-                                    + "] recovered broadcast table entries");
+                    // The horizontal scale check should be removed when scale in/out without backup space will be supported
+                    if(!_space.getQuiesceHandler().isHorizontalScale() && !_space.getJspaceAttr().isPersistent()) {
+                        if (_space.pullBroadcastTables()) {
+                            if (_logger.isInfoEnabled()) {
+                                _logger.info("Space [" + _space.getServiceName()
+                                        + "] recovered all broadcast types.");
+                            }
+                        } else {
+                            if (_logger.isWarnEnabled()) {
+                                _logger.warn("Space [" + _space.getServiceName() + "]" +
+                                        " failed to pull all broadcast types from available partitions, cleared all broadcast types from space.");
+                                _space.clearBroadcastTables();
+                                return null;
+                            }
                         }
-                    }
-                    else{
-                        //TODO
                     }
                     return new CopyOnlySynchronizeSpaceReplicate(spaceCopyReplica);
                 } else
