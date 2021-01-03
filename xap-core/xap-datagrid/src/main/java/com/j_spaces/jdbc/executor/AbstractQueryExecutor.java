@@ -701,7 +701,7 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
                 if (!sc.isVisible())
                     continue;
 
-                fields[column] = entry.getFieldValue(column++);
+                fields[column++] = entry.getFieldValue(sc.getProjectedIndex());
             }
             IEntryPacket ep = new QueryEntryPacket(fieldNames, fields);
 //            ep.setFieldsValues(fields);

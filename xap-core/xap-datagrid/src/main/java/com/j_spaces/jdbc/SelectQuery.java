@@ -933,6 +933,7 @@ public class SelectQuery extends AbstractDMLQuery {
         }
 
         applyJoinsIfNeeded();
+        pushDownSubQuery();
 
         super.validateQuery(space);
 
@@ -956,6 +957,35 @@ public class SelectQuery extends AbstractDMLQuery {
         }
 
         validateCommonJavaTypeOnDocumentOrStringReturnProperties();
+    }
+
+    private void pushDownSubQuery() {
+        if (!pushDownPredicatesToSpace) return;
+
+        if (getTablesData().size() == 1 && getTablesData().get(0).getSubQuery() != null) {
+            SelectQuery subQuery = ((SelectQuery) getTablesData().get(0).getSubQuery());
+            ExpNode subQueryExpTree = subQuery.getExpTree();
+            ExpNode thisExpTree = this.getExpTree();
+            if(subQueryExpTree == null && thisExpTree != null) {
+                thisExpTree.traverse((x) -> {
+                    if (x instanceof ColumnNode) {
+                        ColumnNode cn = ((ColumnNode) x);
+                        String tableName = getTablesData().get(0).getTableName();
+                        if (cn.getName().startsWith(tableName+".")) {
+                            cn.setName(cn.getName().substring(tableName.length() + 1));
+                        }
+                        if (cn.getTableName().equals(tableName)) {
+                            cn.setTableName(null);
+                        }
+                    }
+                });
+                subQuery.setExpTree(thisExpTree);
+                setExpTree(null);
+            } else if (subQueryExpTree != null && thisExpTree != null) {
+                subQuery.setExpTree(new AndNode(thisExpTree, subQueryExpTree));
+                setExpTree(null);
+            }
+        }
     }
 
 

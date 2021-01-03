@@ -126,4 +126,13 @@ public class ColumnNode extends ValueNode {
         }
         super.prepareValues(values);
     }
+
+    public ColumnNode setTableName(String tableName) {
+        this.tableName = tableName;
+        return this;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
 }
