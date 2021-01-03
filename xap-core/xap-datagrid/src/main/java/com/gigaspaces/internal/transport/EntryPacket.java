@@ -25,6 +25,7 @@ import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.query.ICustomQuery;
+import com.gigaspaces.internal.server.storage.FlatPropertiesHolder;
 import com.gigaspaces.internal.server.storage.PropertiesHolder;
 import com.gigaspaces.internal.server.storage.PropertiesHolderFactory;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
@@ -368,7 +369,7 @@ public class EntryPacket extends AbstractEntryPacket {
                     propertiesHolder = IOUtils.readObject(in);
                 } else {
                     try {
-                        propertiesHolder = PropertiesHolderFactory.create(_typeDesc, IOUtils.readObjectArrayCompressed(in));
+                        propertiesHolder = new FlatPropertiesHolder(IOUtils.readObjectArrayCompressed(in));
                     } catch (IOArrayException e) {
                         throw createPropertySerializationException(e, false);
                     }
