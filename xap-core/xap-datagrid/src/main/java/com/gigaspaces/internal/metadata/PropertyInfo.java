@@ -19,6 +19,7 @@ package com.gigaspaces.internal.metadata;
 import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
 import com.gigaspaces.client.storage_adapters.internal.PropertyStorageAdapterRegistry;
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.internal.serialization.IClassSerializer;
 import com.gigaspaces.internal.utils.ClassUtils;
 import com.gigaspaces.internal.utils.ReflectionUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
@@ -52,6 +53,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
     private final byte _dotnetStorageType;
     private int originalIndex;
     private int hybridIndex;
+    private IClassSerializer _classSerializer;
 
     private PropertyInfo(Builder builder) {
         this._name = builder.name;
@@ -65,6 +67,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         this._storageType = calcEffectiveStorageType(builder.storageType, builder.defaultStorageType, builder.binaryStorageClass, _spacePrimitive);
         this._storageAdapter = initStorageAdapter(builder.storageAdapterClass, _storageType, builder.binaryStorageClass);
         this._dotnetStorageType = builder.dotnetStorageType;
+        this._classSerializer = IOUtils.getIClassSerializer(getType());
     }
 
     private PropertyInfo(ObjectInput input, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
@@ -82,6 +85,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         }
         this._storageAdapter = storageAdapterClassName != null ? PropertyStorageAdapterRegistry.getInstance()
                 .getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName)) : null;
+        this._classSerializer = IOUtils.getIClassSerializer(getType());
 
     }
 
@@ -165,6 +169,10 @@ public class PropertyInfo implements SpacePropertyDescriptor{
 
     public boolean isSpacePrimitive() {
         return _spacePrimitive;
+    }
+
+    public IClassSerializer getClassSerializer() {
+        return _classSerializer;
     }
 
     @Override

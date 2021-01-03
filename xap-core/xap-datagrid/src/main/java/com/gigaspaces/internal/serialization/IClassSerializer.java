@@ -33,6 +33,10 @@ public interface IClassSerializer<T> {
     T read(ObjectInput in)
             throws IOException, ClassNotFoundException;
 
+    default T getDefaultValue(){
+        return null;
+    }
+
     public static final byte CODE_NULL = 0;
 
     public static final byte CODE_OBJECT = -1;

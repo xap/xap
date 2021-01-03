@@ -2,12 +2,11 @@ package com.gigaspaces.client.storage_adapters.class_storage_adapters;
 
 import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.GSByteArrayOutputStream;
-import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.metadata.TypeDesc;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 
 import java.io.*;
-import java.util.Arrays;
 import java.util.Map;
 
 public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter {
@@ -17,23 +16,24 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
         try (GSByteArrayOutputStream bos = new GSByteArrayOutputStream(); GSObjectOutputStream out = new GSObjectOutputStream(bos)) {
             int numOfFields = fields.length;
             int modulo = numOfFields % 8 > 0 ? 1 : 0;
-            byte[] NonNullFieldsBitMap =  new byte[numOfFields / 8 + modulo];
+            byte[] bitMapNonDefaultFields = new byte[numOfFields / 8 + modulo];
 
-            for (int i = 0; i < NonNullFieldsBitMap.length; ++i){
-                IOUtils.getIClassSerializer(Byte.class).write(out, NonNullFieldsBitMap[i]);
+            for (byte b : bitMapNonDefaultFields) {
+                out.writeByte(b);
             }
 
             for (int i = 0; i < numOfFields; ++i) {
-                if (fields[i] != null) {
+                PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[i];
+                if(fields[i] != null && !fields[i].equals(propertyInfo.getClassSerializer().getDefaultValue())){
                     int byteIndex = i / 8;
                     int bitIndex = i % 8;
-                    NonNullFieldsBitMap[byteIndex] |= (byte)1 << (7 - bitIndex); //sign bit as 1 (non-null field)
-                    IOUtils.getIClassSerializer(((TypeDesc)typeDescriptor).getSerializedProperties()[i].getType()).write(out, fields[i]);
+                    bitMapNonDefaultFields[byteIndex] |= (byte)1 << (7 - bitIndex); //set bit as 1 (non default field)
+                    propertyInfo.getClassSerializer().write(out, fields[i]);
                 }
             }
 
             byte[] serializedFields = bos.toByteArray();
-            System.arraycopy(NonNullFieldsBitMap, 0, serializedFields, 1, NonNullFieldsBitMap.length);
+            System.arraycopy(bitMapNonDefaultFields, 0, serializedFields, 1, bitMapNonDefaultFields.length);
             return serializedFields;
         }
     }
@@ -43,10 +43,10 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
         try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields); GSObjectInputStream in = new GSObjectInputStream(bis)) {
             int numOfFields = ((TypeDesc)typeDescriptor).getSerializedProperties().length;
             int modulo = numOfFields % 8 > 0 ? 1 : 0;
-            byte[] bitMapIsNonNullField = new byte[numOfFields / 8 + modulo];
+            byte[] bitMapNonDefaultFields = new byte[numOfFields / 8 + modulo];
 
-            for(int i = 0; i < bitMapIsNonNullField.length; ++i){
-                bitMapIsNonNullField[i] = (byte)IOUtils.getIClassSerializer(Byte.class).read(in);
+            for(int i = 0; i < bitMapNonDefaultFields.length; ++i){
+                bitMapNonDefaultFields[i] = in.readByte();
             }
 
             Object[] objects = new Object[numOfFields];
@@ -55,10 +55,13 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
                 int bitIndex = i % 8;
 
                 byte mask = (byte) ((byte)1 << (7 - bitIndex));
-                byte result= (byte) (bitMapIsNonNullField[byteIndex] & mask);
+                byte result= (byte) (bitMapNonDefaultFields[byteIndex] & mask);
 
-                if (result == mask){ //field is non-null
-                    objects[i] = IOUtils.getIClassSerializer(((TypeDesc)typeDescriptor).getSerializedProperties()[i].getType()).read(in);
+                PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[i];
+                if (result == mask){ // field with no default value
+                    objects[i] = propertyInfo.getClassSerializer().read(in);
+                } else if (propertyInfo.isPrimitive()){
+                    objects[i] = propertyInfo.getClassSerializer().getDefaultValue();
                 }
             }
             return objects;
