@@ -15,6 +15,8 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
     private static final int HEADER_BYTES = 1;
     private static final int POSITION_BYTES = 2; // short == 2 bytes
 
+    private static final int MAX_LENGTH = Short.MAX_VALUE * 2; // == -2 when cast to short. -1 is reserved for other uses.
+
     private static final byte VERSION = 1;
 
     @Override
@@ -32,8 +34,8 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
                 PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[i];
                 if (hasValue(propertyInfo, fields[i])) {
                     int count = bos.getCount();
-                    if (count > Short.MAX_VALUE){
-                        throw new IOException("Property [" + propertyInfo.getType().getName() + "] overflows serialized buffer. Position is [" + count + "]");
+                    if (count > MAX_LENGTH) {
+                        throw new IOException("Position " + count + " exceeds maximum length " + MAX_LENGTH + " [type=" + typeDescriptor.getTypeName() + ", property=" + propertyInfo.getName() + "]");
                     }
                     bos.writeShort((short) count, i * POSITION_BYTES + HEADER_BYTES);
                     serialize(out, propertyInfo, fields[i]);
@@ -80,7 +82,9 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
     protected Object getFieldAtIndex(SpaceTypeDescriptor typeDescriptor, GSByteArrayInputStream bis, GSObjectInputStream in , int index)
             throws IOException, ClassNotFoundException {
         bis.setPosition(index * POSITION_BYTES + HEADER_BYTES);
-        short position = in.readShort();
+        int position = in.readShort();
+        if (position < -1)
+            position = position & 0xffff; //https://stackoverflow.com/questions/3153787/how-do-i-print-a-short-as-an-unsigned-short-in-java
 
         PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[index];
         if (position == -1) {
