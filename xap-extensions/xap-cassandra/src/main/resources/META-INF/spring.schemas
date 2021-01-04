@@ -13,3 +13,4 @@ http\://www.openspaces.org/schema/14.5/archive-cassandra/openspaces-archive-cass
 http\://www.openspaces.org/schema/15.0/archive-cassandra/openspaces-archive-cassandra.xsd=org/openspaces/cassandra/config/openspaces-archive-cassandra.xsd
 http\://www.openspaces.org/schema/15.2/archive-cassandra/openspaces-archive-cassandra.xsd=org/openspaces/cassandra/config/openspaces-archive-cassandra.xsd
 http\://www.openspaces.org/schema/15.5/archive-cassandra/openspaces-archive-cassandra.xsd=org/openspaces/cassandra/config/openspaces-archive-cassandra.xsd
+http\://www.openspaces.org/schema/15.8/archive-cassandra/openspaces-archive-cassandra.xsd=org/openspaces/cassandra/config/openspaces-archive-cassandra.xsd

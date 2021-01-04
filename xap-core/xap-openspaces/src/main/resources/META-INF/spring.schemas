@@ -207,3 +207,13 @@ http\://www.openspaces.org/schema/15.5/jdbc/openspaces-jdbc.xsd=org/openspaces/j
 http\://www.openspaces.org/schema/15.5/jms/openspaces-jms.xsd=org/openspaces/jms/config/openspaces-jms.xsd
 http\://www.openspaces.org/schema/15.5/remoting/openspaces-remoting.xsd=org/openspaces/remoting/config/openspaces-remoting.xsd
 http\://www.openspaces.org/schema/15.5/sla/openspaces-sla.xsd=org/openspaces/pu/sla/config/openspaces-sla.xsd
+
+http\://www.openspaces.org/schema/15.8/admin/openspaces-admin.xsd=org/openspaces/admin/config/openspaces-admin.xsd
+http\://www.openspaces.org/schema/15.8/archive/openspaces-archive.xsd=org/openspaces/archive/config/openspaces-archive.xsd
+http\://www.openspaces.org/schema/15.8/core/gateway/openspaces-gateway.xsd=org/openspaces/core/gateway/config/openspaces-gateway.xsd
+http\://www.openspaces.org/schema/15.8/core/openspaces-core.xsd=org/openspaces/core/config/openspaces-core.xsd
+http\://www.openspaces.org/schema/15.8/events/openspaces-events.xsd=org/openspaces/events/config/openspaces-events.xsd
+http\://www.openspaces.org/schema/15.8/jdbc/openspaces-jdbc.xsd=org/openspaces/jdbc/config/openspaces-jdbc.xsd
+http\://www.openspaces.org/schema/15.8/jms/openspaces-jms.xsd=org/openspaces/jms/config/openspaces-jms.xsd
+http\://www.openspaces.org/schema/15.8/remoting/openspaces-remoting.xsd=org/openspaces/remoting/config/openspaces-remoting.xsd
+http\://www.openspaces.org/schema/15.8/sla/openspaces-sla.xsd=org/openspaces/pu/sla/config/openspaces-sla.xsd

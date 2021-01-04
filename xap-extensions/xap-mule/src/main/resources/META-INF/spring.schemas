@@ -45,3 +45,6 @@ http\://www.openspaces.org/schema/15.2/mule/3.7/mule-os-queue.xsd=org/openspaces
 
 http\://www.openspaces.org/schema/15.5/mule/3.7/mule-os-eventcontainer.xsd=org/openspaces/esb/mule/eventcontainer/config/mule-os-eventcontainer.xsd
 http\://www.openspaces.org/schema/15.5/mule/3.7/mule-os-queue.xsd=org/openspaces/esb/mule/queue/config/mule-os-queue.xsd
+
+http\://www.openspaces.org/schema/15.8/mule/3.7/mule-os-eventcontainer.xsd=org/openspaces/esb/mule/eventcontainer/config/mule-os-eventcontainer.xsd
+http\://www.openspaces.org/schema/15.8/mule/3.7/mule-os-queue.xsd=org/openspaces/esb/mule/queue/config/mule-os-queue.xsd
