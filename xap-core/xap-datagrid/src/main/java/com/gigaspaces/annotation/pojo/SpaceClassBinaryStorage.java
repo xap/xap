@@ -2,7 +2,7 @@ package com.gigaspaces.annotation.pojo;
 
 import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
-import com.gigaspaces.client.storage_adapters.class_storage_adapters.DefaultClassBinaryStorageAdapter;
+import com.gigaspaces.client.storage_adapters.class_storage_adapters.SequentialClassBinaryStorageAdapter;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -29,5 +29,5 @@ public @interface SpaceClassBinaryStorage {
      * NOTE: this setting is experimental and subject to breaking changes in future versions.
      */
     @ExperimentalApi
-    Class<? extends ClassBinaryStorageAdapter> adapter() default DefaultClassBinaryStorageAdapter.class;
+    Class<? extends ClassBinaryStorageAdapter> adapter() default SequentialClassBinaryStorageAdapter.class;
 }

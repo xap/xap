@@ -32,7 +32,6 @@ import java.util.Map;
  * @author Yael Nahon
  * @since 15.8
  */
-
 @ExperimentalApi
 public abstract class ClassBinaryStorageAdapter {
 

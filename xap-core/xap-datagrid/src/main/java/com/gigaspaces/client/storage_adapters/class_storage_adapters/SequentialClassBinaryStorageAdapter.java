@@ -1,5 +1,6 @@
 package com.gigaspaces.client.storage_adapters.class_storage_adapters;
 
+import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.GSByteArrayOutputStream;
 import com.gigaspaces.internal.metadata.PropertyInfo;
@@ -9,7 +10,8 @@ import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import java.io.*;
 import java.util.Map;
 
-public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter {
+@ExperimentalApi
+public class SequentialClassBinaryStorageAdapter extends ClassBinaryStorageAdapter {
     private static final int HEADER_BYTES = 1;
 
     private static final byte VERSION = 1;
