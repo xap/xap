@@ -33,7 +33,6 @@ import com.gigaspaces.internal.serialization.NullClassSerializer;
 import com.gigaspaces.internal.serialization.ObjectClassSerializer;
 import com.gigaspaces.internal.serialization.ShortClassSerializer;
 import com.gigaspaces.internal.serialization.StringClassSerializer;
-import com.gigaspaces.internal.serialization.primitives.*;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
@@ -76,7 +75,6 @@ public class IOUtils {
 
     private static final Map<Class<?>, IClassSerializer<?>> _typeCache;
     private static final Map<Byte, IClassSerializer<?>> _codeCache;
-    private static final Map<String, IClassSerializer<?>> _primitiveTypeCache;
 
     private static final ObjectIntegerMap<Class<?>> _classToCode = CollectionsFactory.getInstance().createObjectIntegerMap();
     private static final IntegerObjectMap<Class<?>> _codeToClass = CollectionsFactory.getInstance().createIntegerObjectMap();
@@ -87,7 +85,6 @@ public class IOUtils {
     static {
         _typeCache = new HashMap<Class<?>, IClassSerializer<?>>();
         _codeCache = new HashMap<Byte, IClassSerializer<?>>();
-        _primitiveTypeCache = new HashMap<String, IClassSerializer<?>>();
 
         // Register default serializer (by code only):
         _codeCache.put(_defaultSerializer.getCode(), _defaultSerializer);
@@ -105,8 +102,6 @@ public class IOUtils {
         // Register common java types:
         register(String.class, new StringClassSerializer());
         register(byte[].class, new ByteArrayClassSerializer());
-
-        initPrimitiveDataTypeMap(_primitiveTypeCache);
 
         //register(HashMap.class, new HashMapSerializer());
 
@@ -1095,29 +1090,11 @@ public class IOUtils {
         return l;
     }
 
-    public static IClassSerializer getIClassSerializer(Class type){
-        // Get serializer by type:
-        IClassSerializer serializer = _typeCache.get(type);
-
-        //if type is primitive
-        if(serializer == null){
-            serializer = _primitiveTypeCache.get(type.getName());
-        }
-        // If type does not have serializer, or serializer is not supported in target version, use default serializer:
-        if (serializer == null) {
-            return _defaultSerializer;
-        }
-        return serializer;
+    public static Map<Class<?>, IClassSerializer<?>> getClassSerializers() {
+        return _typeCache;
     }
 
-   private static void initPrimitiveDataTypeMap(Map<String, IClassSerializer<?>> map){
-        map.put("byte", new BytePrimitiveClassSerializer());
-        map.put("short", new ShortPrimitiveClassSerializer());
-        map.put("int", new IntPrimitiveClassSerializer());
-        map.put("long", new LongPrimitiveClassSerializer());
-        map.put("float", new FloatPrimitiveClassSerializer());
-        map.put("double", new DoublePrimitiveClassSerializer());
-        map.put("boolean", new BooleanPrimitiveClassSerializer());
-        map.put("char", new CharPrimitiveClassSerializer());
+    public static IClassSerializer<?> getDefaultSerializer() {
+        return _defaultSerializer;
     }
 }

@@ -20,6 +20,8 @@ import com.gigaspaces.client.storage_adapters.PropertyStorageAdapter;
 import com.gigaspaces.client.storage_adapters.internal.PropertyStorageAdapterRegistry;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.serialization.IClassSerializer;
+import com.gigaspaces.internal.serialization.compressed.*;
+import com.gigaspaces.internal.serialization.primitives.*;
 import com.gigaspaces.internal.utils.ClassUtils;
 import com.gigaspaces.internal.utils.ReflectionUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
@@ -31,6 +33,8 @@ import com.j_spaces.kernel.ClassLoaderHelper;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -41,6 +45,40 @@ import java.util.Set;
  */
 @com.gigaspaces.api.InternalApi
 public class PropertyInfo implements SpacePropertyDescriptor{
+
+    private static final Map<Class<?>, IClassSerializer<?>> _binaryClassSerializers = initBinarySerializers();
+    private static final Map<Class<?>, IClassSerializer<?>> _compressedClassSerializers = initCompressedSerializers();
+
+    private static Map<Class<?>, IClassSerializer<?>> initBinarySerializers() {
+        // Create a copy of the ioutils serializers (for backwards), then add more:
+        Map<Class<?>, IClassSerializer<?>> result = new HashMap<>(IOUtils.getClassSerializers());
+        result.put(byte.class, new BytePrimitiveClassSerializer());
+        result.put(short.class, new ShortPrimitiveClassSerializer());
+        result.put(int.class, new IntPrimitiveClassSerializer());
+        result.put(long.class, new LongPrimitiveClassSerializer());
+        result.put(float.class, new FloatPrimitiveClassSerializer());
+        result.put(double.class, new DoublePrimitiveClassSerializer());
+        result.put(boolean.class, new BooleanPrimitiveClassSerializer());
+        result.put(char.class, new CharPrimitiveClassSerializer());
+        return result;
+    }
+
+    private static Map<Class<?>, IClassSerializer<?>> initCompressedSerializers() {
+        Map<Class<?>, IClassSerializer<?>> result = new HashMap<>();
+
+        result.put(Object.class, DefaultCompressedClassSerializer.instance);
+        result.put(String.class, DefaultCompressedClassSerializer.instance);
+
+        result.put(short.class, new ShortPrimitiveCompressedClassSerializer());
+        result.put(int.class, new IntPrimitiveCompressedClassSerializer());
+        result.put(long.class, new LongPrimitiveCompressedClassSerializer());
+
+        result.put(Short.class, new ShortCompressedClassSerializer());
+        result.put(Integer.class, new IntegerCompressedClassSerializer());
+        result.put(Long.class, new LongCompressedClassSerializer());
+
+        return result;
+    }
 
     private final String _name;
     private final String _typeName;
@@ -53,7 +91,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
     private final byte _dotnetStorageType;
     private int originalIndex;
     private int hybridIndex;
-    private IClassSerializer _classSerializer;
+    private final IClassSerializer _classSerializer;
 
     private PropertyInfo(Builder builder) {
         this._name = builder.name;
@@ -67,7 +105,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         this._storageType = calcEffectiveStorageType(builder.storageType, builder.defaultStorageType, builder.binaryStorageClass, _spacePrimitive);
         this._storageAdapter = initStorageAdapter(builder.storageAdapterClass, _storageType, builder.binaryStorageClass);
         this._dotnetStorageType = builder.dotnetStorageType;
-        this._classSerializer = IOUtils.getIClassSerializer(getType());
+        this._classSerializer = getIClassSerializer(_type, _storageType);
     }
 
     private PropertyInfo(ObjectInput input, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
@@ -85,7 +123,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         }
         this._storageAdapter = storageAdapterClassName != null ? PropertyStorageAdapterRegistry.getInstance()
                 .getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName)) : null;
-        this._classSerializer = IOUtils.getIClassSerializer(getType());
+        this._classSerializer = getIClassSerializer(_type, _storageType);
 
     }
 
@@ -160,6 +198,24 @@ public class PropertyInfo implements SpacePropertyDescriptor{
             storageAdapterClass = storageType.getStorageAdapterClass();
         }
         return storageAdapterClass == null ? null : PropertyStorageAdapterRegistry.getInstance().getOrCreate(storageAdapterClass);
+    }
+
+    private static IClassSerializer getIClassSerializer(Class<?> type, StorageType storageType) {
+        if (storageType == StorageType.COMPRESSED) {
+            // Check if type has a specific serializer:
+            IClassSerializer serializer = _compressedClassSerializers.get(type);
+            if (serializer != null)
+                return serializer;
+            // if not, check if type supports compression:
+            if (type.getName().startsWith("java.lang.") || type.isPrimitive())
+                throw new UnsupportedOperationException(storageType + " cannot be used on a property of type " + type.getName());
+            // return default compression:
+            return _compressedClassSerializers.get(Object.class);
+        }
+        // Get serializer by type:
+        IClassSerializer serializer = _binaryClassSerializers.get(type);
+        // If type does not have serializer, or serializer is not supported in target version, use default serializer:
+        return serializer != null ? serializer : IOUtils.getDefaultSerializer();
     }
 
     @Override
