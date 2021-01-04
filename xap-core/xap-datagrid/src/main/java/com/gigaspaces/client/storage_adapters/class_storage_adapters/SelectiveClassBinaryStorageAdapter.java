@@ -15,9 +15,13 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
     private static final int HEADER_BYTES = 1;
     private static final int POSITION_BYTES = 2; // short == 2 bytes
 
+    private static final byte VERSION = 1;
+
     @Override
     public byte[] toBinary(SpaceTypeDescriptor typeDescriptor, Object[] fields) throws IOException {
         try (GSByteArrayOutputStream bos = new GSByteArrayOutputStream();GSObjectOutputStream out = new GSObjectOutputStream(bos)) {
+            out.writeByte(VERSION);
+
             int numOfFields = fields.length;
             // Write positions placeholders
             for (int i = 0; i < numOfFields; ++i) {
@@ -43,6 +47,7 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
     @Override
     public Object[] fromBinary(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields) throws IOException, ClassNotFoundException {
         try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields); GSObjectInputStream in = new GSObjectInputStream(bis)) {
+            assertVersion(in);
             int length = ((TypeDesc)typeDescriptor).getSerializedProperties().length;
             Object[] objects = new Object[length];
             for (int i = 0; i < length; ++i)
@@ -54,6 +59,7 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
     @Override
     public Object getFieldAtIndex(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields, int index) throws IOException, ClassNotFoundException {
         try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields);GSObjectInputStream in = new GSObjectInputStream(bis)) {
+            assertVersion(in);
             return getFieldAtIndex(typeDescriptor, bis, in, index);
         }
     }
@@ -62,6 +68,7 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
     @Override
     public Object[] getFieldsAtIndexes(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields, int... indexes) throws IOException, ClassNotFoundException {
         try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields); GSObjectInputStream in = new GSObjectInputStream(bis)) {
+            assertVersion(in);
             int length = indexes.length;
             Object[] objects = new Object[length];
             for (int i = 0; i < length; ++i)
@@ -103,5 +110,11 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
     @Override
     public boolean isDirectFieldAccessOptimized() {
         return true;
+    }
+
+    private void assertVersion(GSObjectInputStream in) throws IOException {
+        byte version = in.readByte();
+        if (version != VERSION)
+            throw new IllegalStateException("Unsupported version: " + version);
     }
 }

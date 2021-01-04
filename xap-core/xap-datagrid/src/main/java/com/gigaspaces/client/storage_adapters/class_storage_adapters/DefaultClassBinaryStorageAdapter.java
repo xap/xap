@@ -12,9 +12,13 @@ import java.util.Map;
 public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter {
     private static final int HEADER_BYTES = 1;
 
+    private static final byte VERSION = 1;
+
     @Override
     public byte[] toBinary(SpaceTypeDescriptor typeDescriptor, Object[] fields) throws IOException {
         try (GSByteArrayOutputStream bos = new GSByteArrayOutputStream(); GSObjectOutputStream out = new GSObjectOutputStream(bos)) {
+            out.writeByte(VERSION);
+
             int numOfFields = fields.length;
             int modulo = numOfFields % 8 > 0 ? 1 : 0;
             byte[] bitMapNonDefaultFields = new byte[numOfFields / 8 + modulo];
@@ -43,6 +47,9 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
     @Override
     public Object[] fromBinary(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields) throws IOException, ClassNotFoundException {
         try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields); GSObjectInputStream in = new GSObjectInputStream(bis)) {
+            byte version = in.readByte();
+            if (version != VERSION)
+                throw new IllegalStateException("Unsupported version: " + version);
             int numOfFields = ((TypeDesc)typeDescriptor).getSerializedProperties().length;
             int modulo = numOfFields % 8 > 0 ? 1 : 0;
             byte[] bitMapNonDefaultFields = new byte[numOfFields / 8 + modulo];
