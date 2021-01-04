@@ -12,17 +12,16 @@ import java.util.Map;
 
 public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapter {
 
+    private static final int HEADER_BYTES = 1;
     private static final int POSITION_BYTES = 2; // short == 2 bytes
 
     @Override
     public byte[] toBinary(SpaceTypeDescriptor typeDescriptor, Object[] fields) throws IOException {
         try (GSByteArrayOutputStream bos = new GSByteArrayOutputStream();GSObjectOutputStream out = new GSObjectOutputStream(bos)) {
             int numOfFields = fields.length;
-            short[] positions = new short[numOfFields];
-
-            for (int l = 0; l < numOfFields; ++l) {
-                positions[l] = 0;
-                out.writeShort(positions[l]);
+            // Write positions placeholders
+            for (int i = 0; i < numOfFields; ++i) {
+                out.writeShort(-1);
             }
 
             for (int i = 0; i < numOfFields; ++i) {
@@ -32,23 +31,12 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
                     if (count > Short.MAX_VALUE){
                         throw new IOException("Property [" + propertyInfo.getType().getName() + "] overflows serialized buffer. Position is [" + count + "]");
                     }
-                    positions[i] = (short) count;
+                    bos.writeShort((short) count, i * POSITION_BYTES + HEADER_BYTES);
                     serialize(out, propertyInfo, fields[i]);
-                } else {
-                    positions[i] = -1;
                 }
             }
 
-            byte[] serializedFields = bos.toByteArray();
-            bos.reset();
-            for (int j = 0; j < numOfFields; ++j) {
-                out.writeShort(positions[j]);
-            }
-
-            byte[] positionsByteMap = bos.toByteArray();
-            System.arraycopy(positionsByteMap, 0, serializedFields, 1, numOfFields * POSITION_BYTES);
-
-            return serializedFields;
+            return bos.toByteArray();
         }
     }
 
@@ -84,7 +72,7 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
 
     protected Object getFieldAtIndex(SpaceTypeDescriptor typeDescriptor, GSByteArrayInputStream bis, GSObjectInputStream in , int index)
             throws IOException, ClassNotFoundException {
-        bis.setPosition(index * POSITION_BYTES + 1);
+        bis.setPosition(index * POSITION_BYTES + HEADER_BYTES);
         short position = in.readShort();
 
         PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[index];

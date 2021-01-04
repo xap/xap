@@ -10,6 +10,7 @@ import java.io.*;
 import java.util.Map;
 
 public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter {
+    private static final int HEADER_BYTES = 1;
 
     @Override
     public byte[] toBinary(SpaceTypeDescriptor typeDescriptor, Object[] fields) throws IOException {
@@ -32,9 +33,10 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
                 }
             }
 
-            byte[] serializedFields = bos.toByteArray();
-            System.arraycopy(bitMapNonDefaultFields, 0, serializedFields, 1, bitMapNonDefaultFields.length);
-            return serializedFields;
+            for (int i = 0; i < bitMapNonDefaultFields.length; i++) {
+                bos.writeByte(bitMapNonDefaultFields[i], i + HEADER_BYTES);
+            }
+            return bos.toByteArray();
         }
     }
 
