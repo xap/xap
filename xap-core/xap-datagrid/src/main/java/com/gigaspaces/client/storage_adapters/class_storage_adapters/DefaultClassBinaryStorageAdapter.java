@@ -24,11 +24,11 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
 
             for (int i = 0; i < numOfFields; ++i) {
                 PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[i];
-                if(fields[i] != null && !fields[i].equals(propertyInfo.getClassSerializer().getDefaultValue())){
+                if (hasValue(propertyInfo, fields[i])) {
                     int byteIndex = i / 8;
                     int bitIndex = i % 8;
                     bitMapNonDefaultFields[byteIndex] |= (byte)1 << (7 - bitIndex); //set bit as 1 (non default field)
-                    propertyInfo.getClassSerializer().write(out, fields[i]);
+                    serialize(out, propertyInfo, fields[i]);
                 }
             }
 
@@ -58,11 +58,7 @@ public class DefaultClassBinaryStorageAdapter extends ClassBinaryStorageAdapter 
                 byte result= (byte) (bitMapNonDefaultFields[byteIndex] & mask);
 
                 PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[i];
-                if (result == mask){ // field with no default value
-                    objects[i] = propertyInfo.getClassSerializer().read(in);
-                } else if (propertyInfo.isPrimitive()){
-                    objects[i] = propertyInfo.getClassSerializer().getDefaultValue();
-                }
+                objects[i] = result == mask ? deserialize(in, propertyInfo) : getDefaultValue(propertyInfo);
             }
             return objects;
         }

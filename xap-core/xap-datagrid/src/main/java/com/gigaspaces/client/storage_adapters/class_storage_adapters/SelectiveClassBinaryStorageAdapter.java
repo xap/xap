@@ -7,12 +7,12 @@ import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.metadata.TypeDesc;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 
-
 import java.io.*;
 import java.util.Map;
 
-
 public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapter {
+
+    private static final int POSITION_BYTES = 2; // short == 2 bytes
 
     @Override
     public byte[] toBinary(SpaceTypeDescriptor typeDescriptor, Object[] fields) throws IOException {
@@ -27,15 +27,15 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
 
             for (int i = 0; i < numOfFields; ++i) {
                 PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[i];
-                if (fields[i] == null || fields[i].equals(propertyInfo.getClassSerializer().getDefaultValue())) {
-                    positions[i] = -1;
-                } else {
+                if (hasValue(propertyInfo, fields[i])) {
                     int count = bos.getCount();
                     if (count > Short.MAX_VALUE){
                         throw new IOException("Property [" + propertyInfo.getType().getName() + "] overflows serialized buffer. Position is [" + count + "]");
                     }
                     positions[i] = (short) count;
-                    propertyInfo.getClassSerializer().write(out, fields[i]);
+                    serialize(out, propertyInfo, fields[i]);
+                } else {
+                    positions[i] = -1;
                 }
             }
 
@@ -46,7 +46,7 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
             }
 
             byte[] positionsByteMap = bos.toByteArray();
-            System.arraycopy(positionsByteMap, 0, serializedFields, 1, numOfFields * 2);
+            System.arraycopy(positionsByteMap, 0, serializedFields, 1, numOfFields * POSITION_BYTES);
 
             return serializedFields;
         }
@@ -55,45 +55,18 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
     @Override
     public Object[] fromBinary(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields) throws IOException, ClassNotFoundException {
         try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields); GSObjectInputStream in = new GSObjectInputStream(bis)) {
-            int numOfFields = ((TypeDesc)typeDescriptor).getSerializedProperties().length;
-            short[] positions = new short[numOfFields];
-
-            for (int i = 0; i < numOfFields; ++i){
-                positions[i] = in.readShort();
-            }
-
-            Object[] obj = new Object[numOfFields];
-            for (int i = 0; i < numOfFields; ++i){
-                PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[i];
-                if (positions[i] == -1){
-                    if (propertyInfo.isPrimitive()){
-                        obj[i] = propertyInfo.getClassSerializer().getDefaultValue();
-                    }
-                } else {
-                    obj[i] = propertyInfo.getClassSerializer().read(in);
-                }
-            }
-            return obj;
+            int length = ((TypeDesc)typeDescriptor).getSerializedProperties().length;
+            Object[] objects = new Object[length];
+            for (int i = 0; i < length; ++i)
+                objects[i] = getFieldAtIndex(typeDescriptor, bis, in, i);
+            return objects;
         }
     }
-
 
     @Override
     public Object getFieldAtIndex(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields, int index) throws IOException, ClassNotFoundException {
         try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields);GSObjectInputStream in = new GSObjectInputStream(bis)) {
-           bis.skip(index * 2);
-           short position = in.readShort();
-
-           PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[index];
-           if (position == -1){
-               if (propertyInfo.isPrimitive()){
-                  return propertyInfo.getClassSerializer().getDefaultValue();
-               }
-               return null;
-           }
-
-           bis.setPosition(position);
-           return propertyInfo.getClassSerializer().read(in);
+            return getFieldAtIndex(typeDescriptor, bis, in, index);
         }
     }
 
@@ -101,26 +74,25 @@ public class SelectiveClassBinaryStorageAdapter extends ClassBinaryStorageAdapte
     @Override
     public Object[] getFieldsAtIndexes(SpaceTypeDescriptor typeDescriptor, byte[] serializedFields, int... indexes) throws IOException, ClassNotFoundException {
         try (GSByteArrayInputStream bis = new GSByteArrayInputStream(serializedFields); GSObjectInputStream in = new GSObjectInputStream(bis)) {
-            short[] positions = new short[indexes.length];
-            Object[] objects = new Object[indexes.length];
-
-            for (int i = 0; i < indexes.length; ++i){
-                bis.setPosition(indexes[i] * 2 + 1);
-                positions[i] = in.readShort();
-            }
-
-            for (int i = 0; i < indexes.length; ++i){
-                PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[indexes[i]];
-                if (positions[i] == -1){
-                    if (propertyInfo.isPrimitive()){
-                        objects[i] = propertyInfo.getClassSerializer().getDefaultValue();
-                    }
-                } else {
-                    bis.setPosition(positions[i]);
-                    objects[i] = ((TypeDesc)typeDescriptor).getSerializedProperties()[indexes[i]].getClassSerializer().read(in);
-                }
-            }
+            int length = indexes.length;
+            Object[] objects = new Object[length];
+            for (int i = 0; i < length; ++i)
+                objects[i] = getFieldAtIndex(typeDescriptor, bis, in, indexes[i]);
             return objects;
+        }
+    }
+
+    protected Object getFieldAtIndex(SpaceTypeDescriptor typeDescriptor, GSByteArrayInputStream bis, GSObjectInputStream in , int index)
+            throws IOException, ClassNotFoundException {
+        bis.setPosition(index * POSITION_BYTES + 1);
+        short position = in.readShort();
+
+        PropertyInfo propertyInfo = ((TypeDesc)typeDescriptor).getSerializedProperties()[index];
+        if (position == -1) {
+            return getDefaultValue(propertyInfo);
+        } else {
+            bis.setPosition(position);
+            return deserialize(in, propertyInfo);
         }
     }
 

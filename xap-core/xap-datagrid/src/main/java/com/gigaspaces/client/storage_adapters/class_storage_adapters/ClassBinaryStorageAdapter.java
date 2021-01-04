@@ -17,9 +17,13 @@
 package com.gigaspaces.client.storage_adapters.class_storage_adapters;
 
 import com.gigaspaces.api.ExperimentalApi;
+import com.gigaspaces.internal.metadata.PropertyInfo;
+import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Map;
 
 /**
@@ -100,5 +104,23 @@ public abstract class ClassBinaryStorageAdapter {
 
     public String getName() {
         return this.getClass().getSimpleName();
+    }
+
+    protected boolean hasValue(SpacePropertyDescriptor property, Object value) {
+        return value != null && !value.equals(((PropertyInfo)property).getClassSerializer().getDefaultValue());
+    }
+
+    protected Object getDefaultValue(SpacePropertyDescriptor property) {
+        return ((PropertyInfo)property).getClassSerializer().getDefaultValue();
+    }
+
+    protected void serialize(ObjectOutput output, SpacePropertyDescriptor property, Object value)
+            throws IOException {
+        ((PropertyInfo)property).getClassSerializer().write(output, value);
+    }
+
+    protected Object deserialize(ObjectInput input, SpacePropertyDescriptor property)
+            throws IOException, ClassNotFoundException {
+        return ((PropertyInfo)property).getClassSerializer().read(input);
     }
 }
