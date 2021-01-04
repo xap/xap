@@ -1,8 +1,7 @@
 package com.gigaspaces.annotation.pojo;
 
 import com.gigaspaces.api.ExperimentalApi;
-import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
-import com.gigaspaces.client.storage_adapters.class_storage_adapters.SequentialClassBinaryStorageAdapter;
+import com.gigaspaces.metadata.ClassBinaryStorageLayout;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -25,9 +24,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SpaceClassBinaryStorage {
     /**
-     * Sets the adapter to be used for packing/unpacking properties.
-     * NOTE: this setting is experimental and subject to breaking changes in future versions.
+     * Determines the layout of the binary storage
      */
     @ExperimentalApi
-    Class<? extends ClassBinaryStorageAdapter> adapter() default SequentialClassBinaryStorageAdapter.class;
+    ClassBinaryStorageLayout layout() default ClassBinaryStorageLayout.DEFAULT;
 }

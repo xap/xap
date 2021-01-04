@@ -873,7 +873,7 @@ public class SpaceTypeInfo implements Externalizable {
 
         SpaceClassBinaryStorage spaceClassBinaryStorage = _type.getAnnotation(SpaceClassBinaryStorage.class);
         if (spaceClassBinaryStorage != null){
-            this._spaceClassStorageAdapter = spaceClassBinaryStorage.adapter();
+            this._spaceClassStorageAdapter = spaceClassBinaryStorage.layout().getAdapterClass();
             // TODO: validate ambiguity.
             this._storageType = StorageType.BINARY;
         }

@@ -200,7 +200,16 @@ public class SpaceTypeDescriptorBuilder {
      * @see com.gigaspaces.annotation.pojo.SpaceClassBinaryStorage
      */
     public SpaceTypeDescriptorBuilder binaryStorage() {
-        return binaryStorage(SequentialClassBinaryStorageAdapter.class);
+        return binaryStorage(ClassBinaryStorageLayout.DEFAULT);
+    }
+
+    /**
+     *
+     * @since 15.8
+     * @see com.gigaspaces.annotation.pojo.SpaceClassBinaryStorage
+     */
+    public SpaceTypeDescriptorBuilder binaryStorage(ClassBinaryStorageLayout layout) {
+        return binaryStorage(layout.getAdapterClass());
     }
 
     /**
@@ -209,7 +218,7 @@ public class SpaceTypeDescriptorBuilder {
      * @see com.gigaspaces.annotation.pojo.SpaceClassBinaryStorage
      */
     @ExperimentalApi
-    public SpaceTypeDescriptorBuilder binaryStorage(Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapterClass) {
+    private SpaceTypeDescriptorBuilder binaryStorage(Class<? extends ClassBinaryStorageAdapter> binaryStorageAdapterClass) {
         this.binaryStorageAdapterClass = assertNotNull(binaryStorageAdapterClass, "binaryStorageAdapterClass");
         storageType(StorageType.BINARY);
         return this;
