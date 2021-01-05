@@ -26,6 +26,7 @@ import com.gigaspaces.internal.utils.ClassUtils;
 import com.gigaspaces.internal.utils.ReflectionUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.metadata.SpaceDocumentSupport;
+import com.gigaspaces.metadata.SpaceMetadataValidationException;
 import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.kernel.ClassLoaderHelper;
@@ -154,7 +155,7 @@ public class PropertyInfo implements SpacePropertyDescriptor{
                 return serializer;
             // if not, check if type supports compression:
             if (type.getName().startsWith("java.lang.") || type.isPrimitive())
-                throw new UnsupportedOperationException(storageType + " cannot be used on a property of type " + type.getName());
+                throw new SpaceMetadataValidationException(type.getTypeName(), storageType + " cannot be used on a property of type " + type.getName());
             // return default compression:
             return _compressedClassSerializers.get(Object.class);
         }
