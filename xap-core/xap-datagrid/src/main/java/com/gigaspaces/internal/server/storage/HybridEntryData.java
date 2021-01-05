@@ -62,27 +62,36 @@ public class HybridEntryData implements IBinaryEntryData {
         }
     }
 
+    private HybridEntryData(Object[] nonSerializedProperties, byte[] packedSerializedProperties, Map<String, Object> dynamicProperties, EntryTypeDesc entryTypeDesc, int version,
+                           long expirationTime, EntryXtnInfo entryXtnInfo) {
+        this._entryTypeDesc = entryTypeDesc;
+        this._versionID = version;
+        this._expirationTime = expirationTime;
+        this._entryTxnInfo = entryXtnInfo;
+        this._dynamicProperties = dynamicProperties;
+        this.nonSerializedProperties = nonSerializedProperties;
+        this.serializedProperties = packedSerializedProperties;
+    }
+
 
     @Override
     public ITransactionalEntryData createCopy(int newVersion, long newExpiration, EntryXtnInfo newEntryXtnInfo, boolean shallowCloneData) {
-        byte[] packeSerializedProperties = shallowCloneData ? Arrays.copyOf(this.serializedProperties, this.serializedProperties.length) : serializedProperties;
+        byte[] packedSerializedProperties = shallowCloneData ? Arrays.copyOf(this.serializedProperties, this.serializedProperties.length) : serializedProperties;
         Object[] nonSerializeData = shallowCloneData ? Arrays.copyOf(this.nonSerializedProperties, this.nonSerializedProperties.length) : nonSerializedProperties;
         Map<String, Object> dynamicProperties = shallowCloneData && _dynamicProperties != null ? new HashMap<>(_dynamicProperties) : _dynamicProperties;
-        return new HybridEntryData(new HybridPropertiesHolder(getEntryTypeDesc().getTypeDesc()
-                , nonSerializeData, packeSerializedProperties), dynamicProperties, this._entryTypeDesc, newVersion, newExpiration, newEntryXtnInfo);
+        return new HybridEntryData(nonSerializeData, packedSerializedProperties, dynamicProperties, this._entryTypeDesc, newVersion, newExpiration, newEntryXtnInfo);
     }
 
     @Override
     public ITransactionalEntryData createCopy(IEntryData newEntryData, long newExpirationTime) {
         if (newEntryData instanceof HybridEntryData) {
             HybridEntryData data = (HybridEntryData) newEntryData;
-            return new HybridEntryData(new HybridPropertiesHolder(newEntryData.getEntryTypeDesc().getTypeDesc(),
-                    data.getNonSerializedProperties(), data.getPackedSerializedProperties()),
+            return new HybridEntryData(data.getNonSerializedProperties(), data.getPackedSerializedProperties(),
                     newEntryData.getDynamicProperties(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
                     copyTxnInfo(false, false));
         } else {
-            return new HybridEntryData(newEntryData.getFixedPropertiesValues(), newEntryData.getDynamicProperties(), newEntryData.getEntryTypeDesc(), newEntryData.getVersion(), newExpirationTime,
-                    copyTxnInfo(false, false));
+            Thread.dumpStack();
+            throw new IllegalStateException("Code should be unreachable");
         }
     }
 

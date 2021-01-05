@@ -54,6 +54,8 @@ public class TemplateEntryData implements IEntryData {
     private ICustomQuery _customQuery;
     private int _versionID;            //??? why we need it in template ???
     private long _expirationTime;
+    private boolean checkedAllNullFields;
+    private boolean isAllNullFields;
 
     private final short[] _extendedMatchCodes;
     private final Object[] _rangeValues;
@@ -93,6 +95,8 @@ public class TemplateEntryData implements IEntryData {
                     "b) define a null value for those properties " +
                     "c) use an alternate query mechanism (e.g. SQLQuery). " +
                     "(you can disable this protection, though it is not recommended, by setting the following system property: " + ProtectiveMode.PRIMITIVE_WITHOUT_NULL_VALUE + "=false)");
+
+        this.checkedAllNullFields = false;
     }
 
     public TemplateEntryData() {
@@ -228,27 +232,34 @@ public class TemplateEntryData implements IEntryData {
     }
 
     private boolean isNullTemplate() {
-        if(_fieldsValues != null) {
-            for (Object fieldsValue : _fieldsValues) {
-                if (fieldsValue != null) {
-                    return false;
+        if(!this.checkedAllNullFields){
+            //initializing isAllNullFields
+            this.isAllNullFields = true;
+            if(_fieldsValues != null) {
+                for (Object fieldsValue : _fieldsValues) {
+                    if (fieldsValue != null) {
+                        this.isAllNullFields =  false;
+                        break;
+                    }
                 }
             }
+            this.isAllNullFields = isAllNullFields && (_customQuery == null && _extendedMatchCodes == null);
+            this.checkedAllNullFields = true;
         }
-        return _customQuery == null && _extendedMatchCodes == null;
+        return this.isAllNullFields;
     }
 
-    private boolean matchBasic(ServerEntry entry, int skipIndex, int[] templateIndexes) {
+    private boolean matchBasic(ServerEntry entry, int skipIndex, int[] positionsForScanning) {
         // if the template has no fields, there is a match
         if (_fieldsValues == null || _fieldsValues.length == 0)
             return true;
 
         // first try quick-reject
-        if (quickReject(entry, templateIndexes))
+        if (quickReject(entry, positionsForScanning))
             return false;
 
         // compare every template field (besides the skipIndex, if skipIndex != -1)
-        for(int i : templateIndexes){
+        for(int i : positionsForScanning){
             Object templateValue = getFixedPropertyValue(i);
             if (i == skipIndex || templateValue == null)
                 continue;
@@ -265,8 +276,8 @@ public class TemplateEntryData implements IEntryData {
      * Hashcode based quick-reject. If this method returns true, the match is rejected. If it
      * returns false, a full match will be performed by the engine.
      */
-    private boolean quickReject(ServerEntry entry, int[] templateIndexes) {
-        for(int i : templateIndexes){
+    private boolean quickReject(ServerEntry entry, int[] positionsForScanning) {
+        for(int i : positionsForScanning){
             Object templateFieldValue = _fieldsValues[i];
             if (templateFieldValue == null)
                 continue;

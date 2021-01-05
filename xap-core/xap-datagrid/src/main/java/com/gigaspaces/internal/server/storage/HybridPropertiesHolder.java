@@ -106,9 +106,8 @@ public class HybridPropertiesHolder implements PropertiesHolder {
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeBoolean(unpacked);
         out.writeBoolean(dirty);
-        if (unpacked && dirty) {
+        if (dirty) {
             IOUtils.writeObjectArrayCompressed(out, nonSerializedProperties);
             IOUtils.writeObjectArrayCompressed(out, unpackedSerializedProperties);
         } else {
@@ -123,12 +122,12 @@ public class HybridPropertiesHolder implements PropertiesHolder {
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        unpacked = in.readBoolean();
-        dirty = in.readBoolean();
-        if (unpacked && dirty) {
+        this.dirty = in.readBoolean();
+        if (dirty) {
             nonSerializedProperties = IOUtils.readObjectArrayCompressed(in);
             unpackedSerializedProperties = IOUtils.readObjectArrayCompressed(in);
             this.packedSerializedProperties = EMPTY_BYTE_ARRAY;
+            this.unpacked = true;
         } else {
             nonSerializedProperties = IOUtils.readObjectArrayCompressed(in);
             int unpackedSize = IOUtils.readInt(in);
@@ -144,7 +143,7 @@ public class HybridPropertiesHolder implements PropertiesHolder {
                 packedSerializedProperties = new byte[packedSize];
                 in.readFully(packedSerializedProperties);
             }
-            unpacked = false;
+            this.unpacked = false;
         }
     }
 
