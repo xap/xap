@@ -243,7 +243,7 @@ public class EntryPacket extends AbstractEntryPacket {
     private static final short FLAG_CUSTOM_QUERY = 1 << 10;
     private static final short FLAG_DYNAMIC_PROPERTIES = 1 << 11;
 
-    private short buildFlags() {
+    private short buildFlags(PlatformLogicalVersion version) {
         short flags = 0;
 
         if (_typeName != null)
@@ -256,7 +256,7 @@ public class EntryPacket extends AbstractEntryPacket {
             flags |= FLAG_TIME_TO_LIVE;
         if (_multipleUIDs != null)
             flags |= FLAG_MULTIPLE_UIDS;
-        if (propertiesHolder != null)
+        if (propertiesHolderFlag(version))
             flags |= FLAG_FIELDS_VALUES;
         if (_fifo)
             flags |= FLAG_FIFO;
@@ -272,6 +272,14 @@ public class EntryPacket extends AbstractEntryPacket {
             flags |= FLAG_DYNAMIC_PROPERTIES;
 
         return flags;
+    }
+
+    private boolean propertiesHolderFlag(PlatformLogicalVersion version) {
+        if (propertiesHolder == null) return false;
+
+        if (version.lessThan(PlatformLogicalVersion.v15_8_0) && propertiesHolder.allNulls()) return false;
+
+        return true;
     }
 
     @Override
@@ -300,7 +308,7 @@ public class EntryPacket extends AbstractEntryPacket {
     private final void serializePacket(ObjectOutput out,
                                        PlatformLogicalVersion version) {
         try {
-            out.writeShort(buildFlags());
+            out.writeShort(buildFlags(version));
 
             if (_typeName != null)
                 IOUtils.writeRepetitiveString(out, _typeName);
@@ -312,7 +320,7 @@ public class EntryPacket extends AbstractEntryPacket {
                 out.writeLong(_timeToLive);
             if (_multipleUIDs != null)
                 IOUtils.writeStringArray(out, _multipleUIDs);
-            if (propertiesHolder != null) {
+            if (propertiesHolder != null && propertiesHolderFlag(version)) {
                 if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
                     IOUtils.writeObject(out, propertiesHolder);
                 } else {

@@ -71,11 +71,16 @@ public class FlatPropertiesHolder implements PropertiesHolder {
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        IOUtils.writeObjectArrayCompressed(out, fields);
+        boolean writeFields = (fields != null);
+        out.writeBoolean(writeFields);
+        if (writeFields)
+            IOUtils.writeObjectArrayCompressed(out, fields);
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        fields = IOUtils.readObjectArrayCompressed(in);
+        boolean readFields = in.readBoolean();
+        if (readFields)
+            fields = IOUtils.readObjectArrayCompressed(in);
     }
 }
