@@ -81,7 +81,8 @@ public class CollocatedJoinSpaceTask extends SystemDistributedTask<CollocatedJoi
                     }
                 }
                 for (SelectColumn queryColumn : subQuery.getQueryColumns()) {
-                    queryColumn.getColumnData().setColumnIndexInTableUnsafe(queryColumn.getProjectedIndex());
+                    if (queryColumn.isVisible())
+                        queryColumn.getColumnData().setColumnIndexInTableUnsafe(queryColumn.getProjectedIndex());
                 }
                 for (OrderColumn orderColumn : subQuery.getOrderColumns()) {
                     orderColumn.getColumnTableData().setTableIndexUnsafe(1); //the table is now the second one = 1

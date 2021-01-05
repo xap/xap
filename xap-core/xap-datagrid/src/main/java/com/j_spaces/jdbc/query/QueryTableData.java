@@ -375,7 +375,12 @@ public class QueryTableData implements Externalizable {
         if (subQuery instanceof SelectQuery)
             ((SelectQuery) subQuery).setFlattenResults(flatten);
         ResponsePacket rp = subQuery.executeOnSpace(space, txn);
-        return (IQueryResultSet<IEntryPacket>) rp.getResultSet();
+        IQueryResultSet<IEntryPacket> entries = (IQueryResultSet<IEntryPacket>)rp.getResultSet();
+
+        if (subQuery instanceof SelectQuery)
+            ((SelectQuery) subQuery).createProjectionIndices(entries);
+
+        return entries;
     }
 
     /**

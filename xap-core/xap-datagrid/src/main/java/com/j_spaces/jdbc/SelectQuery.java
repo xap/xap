@@ -1352,7 +1352,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
     /**
      * Creates the projection indices for all visible query columns
      */
-    private void createProjectionIndices(IQueryResultSet<IEntryPacket> entries) {
+    public void createProjectionIndices(IQueryResultSet<IEntryPacket> entries) {
 
         if (isJoined()) {
             for (IEntryPacket entry : entries) {
