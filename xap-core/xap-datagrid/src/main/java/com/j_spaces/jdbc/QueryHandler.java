@@ -193,7 +193,7 @@ public class QueryHandler {
 
             }
             // Clone the query  to avoid concurrency issues
-            else if (query instanceof AbstractDMLQuery) {
+            if (query instanceof AbstractDMLQuery) {
                 query = ((AbstractDMLQuery) query).clone();
             }
 
