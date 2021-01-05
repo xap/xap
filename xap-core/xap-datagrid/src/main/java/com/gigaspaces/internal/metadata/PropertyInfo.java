@@ -127,24 +127,6 @@ public class PropertyInfo implements SpacePropertyDescriptor{
 
     }
 
-    private PropertyInfo(ObjectInput input, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
-        this._name = IOUtils.readString(input);
-        this._typeName = IOUtils.readString(input);
-        this._type = IOUtils.readObject(input);
-        this._primitive = ReflectionUtils.isPrimitive(_typeName);
-        this._spacePrimitive = ReflectionUtils.isSpacePrimitive(_typeName);
-        this._documentSupport = SpaceDocumentSupportHelper.fromCode(input.readByte());
-        this._storageType = StorageType.fromCode(input.readInt());
-        this._dotnetStorageType = input.readByte();
-        String storageAdapterClassName = null;
-        if (version.greaterOrEquals(PlatformLogicalVersion.v15_2_0)) {
-            storageAdapterClassName = IOUtils.readString(input);
-        }
-        this._storageAdapter = storageAdapterClassName != null ? PropertyStorageAdapterRegistry.getInstance()
-                .getOrCreate(ClassLoaderHelper.loadClass(storageAdapterClassName)) : null;
-
-    }
-
     private static StorageType calcEffectiveStorageType(StorageType storageType, StorageType classStorageType, boolean binaryStorageClass, boolean spacePrimitive) {
         if (storageType != StorageType.DEFAULT)
             return storageType;
