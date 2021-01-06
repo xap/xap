@@ -564,7 +564,7 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
             context.setOperationVisibilityTime(packet.getCreationTime());
             ServerTransaction txn = packet.getTransaction();
 
-            if (txn == null && (
+            if (txn == null && !context.isBackupOnly() && (
                     _cacheManager.getTemplatesManager().anyNotifyUpdateTemplates()
                             || _cacheManager.getTemplatesManager().anyNotifyMatchedTemplates()
                             || _cacheManager.getTemplatesManager().anyNotifyRematchedTemplates())
@@ -1235,7 +1235,7 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
                                 case SpaceOperations.UPDATE: {
                                     boolean isMatched = _cacheManager.getTemplatesManager().anyNotifyMatchedTemplates();
                                     boolean isRematched = _cacheManager.getTemplatesManager().anyNotifyRematchedTemplates();
-                                    if (_cacheManager.getTemplatesManager().anyNotifyUpdateTemplates() || isRematched || isMatched) {
+                                    if (!context.isBackupOnly() && (_cacheManager.getTemplatesManager().anyNotifyUpdateTemplates() || isRematched || isMatched)) {
                                         notifyContextHolder = new UpdateNotifyContextHolder(shadowEh, entry, context.getOperationID(), isMatched, isRematched);
                                     } else if (!_cacheManager.getTemplatesManager().anyNotifyUnmatchedTemplates())
                                         continue;
