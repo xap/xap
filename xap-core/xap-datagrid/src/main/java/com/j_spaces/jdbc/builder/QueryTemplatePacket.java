@@ -852,7 +852,11 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
         if (version.greaterOrEquals(PlatformLogicalVersion.v11_0_0))
             out.writeBoolean(_allIndexValuesQuery);
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
-            IOUtils.writeObject(out, _table);
+            if (_table != null && _table.isJoined()){
+                IOUtils.writeObject(out, _table);
+            }
+            else
+                IOUtils.writeObject(out, null);
 
 
     }
