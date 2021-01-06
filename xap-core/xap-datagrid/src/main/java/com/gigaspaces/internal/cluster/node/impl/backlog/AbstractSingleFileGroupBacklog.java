@@ -754,7 +754,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             // don't mark all packets as confirmed in case of DirectPersistencySync
             // packets should not be removed from redo log
             if (!isDirectPersistencySync) {
-                onBeginSynchronization(memberName);
+//                onBeginSynchronization(memberName);
             }
             clearConfirmedPackets();
             // Create new sync map (override old if exists)
@@ -1016,7 +1016,8 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             if (entryData.requiresRecoveryDuplicationProtection()
                     && synchronizingData.filterEntryData(entryData.getUid(),
                     packet.getKey(),
-                    entryData.filterIfNotPresentInReplicaState())) {
+                    entryData.filterIfNotPresentInReplicaState(),
+                    entryData.isTransient())) {
                 // First time we encounter the need to filter, break the loop
                 shouldFilter = true;
                 break;
@@ -1032,7 +1033,8 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
                 if (entryData.requiresRecoveryDuplicationProtection()
                         && synchronizingData.filterEntryData(entryData.getUid(),
                         packet.getKey(),
-                        entryData.filterIfNotPresentInReplicaState())) {
+                        entryData.filterIfNotPresentInReplicaState(),
+                        entryData.isTransient())) {
                     if (logger != null && logger.isLoggable(Level.FINEST))
                         logger.finest(getLogPrefix()
                                 + "filtered obsolete replication data ["
