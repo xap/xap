@@ -10,6 +10,7 @@ import com.gigaspaces.internal.space.requests.PushBroadcastTableEntriesSpaceRequ
 import com.gigaspaces.internal.space.requests.PushBroadcastTableEntrySpaceRequestInfo;
 import com.gigaspaces.internal.space.responses.BroadcastTableSpaceResponseInfo;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.j_spaces.core.SpaceContext;
 import com.j_spaces.core.UnknownTypesException;
 import com.j_spaces.core.client.Modifiers;
 import net.jini.core.lease.Lease;
@@ -43,7 +44,7 @@ public class BroadcastTableHandler {
             BroadcastTableSpaceResponseInfo result = executeTask(new PullBroadcastTableEntriesSpaceRequestInfo(typeName), targetPartitionId);
             if(result!= null && result.getEntries() != null)
                 try {
-                    space.write(result.getEntries(), null, Lease.FOREVER, null, null, 0, Modifiers.BACKUP_ONLY, true);
+                    space.write(result.getEntries(), null, Lease.FOREVER, null, new SpaceContext(), 0, Modifiers.BACKUP_ONLY, true);
                     return true;
                 } catch (TransactionException | UnknownTypesException e) {
                     return false;
