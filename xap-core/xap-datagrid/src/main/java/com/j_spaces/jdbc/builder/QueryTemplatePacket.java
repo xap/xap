@@ -855,6 +855,8 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
             if (_table != null && _table.isJoined()){
                 IOUtils.writeObject(out, _table);
             }
+            else
+                IOUtils.writeObject(out, null);
 
 
     }
@@ -869,9 +871,8 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
         if (version.greaterOrEquals(PlatformLogicalVersion.v11_0_0))
             _allIndexValuesQuery = in.readBoolean();
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
-            if (_table != null &&_table.isJoined()){
                 _table = IOUtils.readObject(in);
-            }
+            
     }
 
     private void uniteContainsItems(QueryTemplatePacket template) {
