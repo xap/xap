@@ -92,6 +92,8 @@ public class ReplicationNodeReplicaHandler {
                                               ReplicaRequestPacket replicaRequestPacket) {
 
         _lock.lock();
+        _logger.info("###MISHEL - newReplicaRequest - requesterLookupName = " + requesterLookupName);
+        _logger.info("###MISHEL - newReplicaRequest - replicaRequestPacket = " + replicaRequestPacket);
         try {
             String channelName = XapExtensions.getInstance().getReplicationUtils().toChannelName(requesterLookupName);
 
@@ -285,6 +287,7 @@ public class ReplicationNodeReplicaHandler {
         ReplicaRequestData replicaData = getReplicaContext(context);
 
         CurrentStageInfo currentStage = replicaData.getProducer().nextReplicaStage();
+        _logger.info("###MISHEL - nextReplicaState - currentStage = " + currentStage);
         if (currentStage.isLastStage()) {
             if (_logger.isLoggable(Level.FINER))
                 _logger.finer(_replicationNode.getLogPrefix() + "context ["

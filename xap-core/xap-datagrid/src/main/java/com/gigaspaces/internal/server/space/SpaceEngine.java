@@ -2131,6 +2131,7 @@ public class SpaceEngine implements ISpaceModeListener {
             throws UnusableEntryException, UnknownTypeException,
             TransactionException, RemoteException, InterruptedException {
         monitorMemoryUsage(true /*writeOp*/);
+        _logger.info("###MISHEL - update - updatedEntry = " + updated_entry);
         monitorReplicationStateForModifyingOperation(txn, OperationWeightInfoFactory.create(1, WeightInfoOperationType.UPDATE));
 
         Context context = (fromReplication && getReplicationNode().getBlobStoreReplicationBulkConsumeHelper() != null)

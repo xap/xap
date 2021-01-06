@@ -74,6 +74,7 @@ public class UpdateReplicationPacketData
     public void execute(IReplicationInContext context,
                         IReplicationInFacade inReplicationHandler, ReplicationPacketDataMediator dataMediator) throws Exception {
         try {
+            System.out.println("###MISHEL M2- update - getEntryPacket = " + getEntryPacket());
             inReplicationHandler.inUpdateEntry(context, getEntryPacket(), getPreviousEntryPacket(), false, _overrideVersion, _flags);
         } finally {
             ReplicationInContentContext contentContext = context.getContentContext();

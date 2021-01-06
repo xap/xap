@@ -85,8 +85,8 @@ public class SynchronizingData<T extends IReplicationPacketData<?>> {
     public synchronized boolean filterEntryData(String uid, long packetKey,
                                                 boolean filterIfNotPresentInReplicaState, boolean isTransientEntry) {
         if (!_entriesUidMap.containsKey(uid)) {
-            if (_logger.isLoggable(Level.FINER)) {
-                _logger.finer("[SynchronizingData::filterEntryData] not in _entriesUidMap: uid=" + uid + " ,_keyWhenCopyStageCompleted=" + _keyWhenCopyStageCompleted +
+            if (_logger.isLoggable(Level.INFO)) {
+                _logger.info("[SynchronizingData::filterEntryData] not in _entriesUidMap: uid=" + uid + " ,_keyWhenCopyStageCompleted=" + _keyWhenCopyStageCompleted +
                         " ,packetKey=" + packetKey + " ,isDirectPersistency=" + _isDirectPersistencySync);
             }
             //don't filter any data from redo log (which is not in sync list) when doing direct persistency sync list recovery
