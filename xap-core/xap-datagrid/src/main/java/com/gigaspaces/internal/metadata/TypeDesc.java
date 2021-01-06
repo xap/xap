@@ -55,7 +55,7 @@ public class TypeDesc implements ITypeDesc {
     private static final long serialVersionUID = 1L;
 
     public static final int NO_SUCH_PROPERTY = -1;
-    private static final boolean ENABLE_EXTERNALIZABLE = Boolean.getBoolean(SystemProperties.SERIALIZE_USING_EXTERNALIZABLE);
+    private static final boolean ENABLE_EXTERNALIZABLE = false;
 
     // Serializable content:
     private String _typeName;
