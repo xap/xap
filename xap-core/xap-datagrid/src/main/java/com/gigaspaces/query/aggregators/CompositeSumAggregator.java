@@ -1,8 +1,13 @@
 package com.gigaspaces.query.aggregators;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.utils.math.MutableNumber;
 import com.j_spaces.jdbc.SumColumn;
 import com.j_spaces.jdbc.ValueSelectColumn;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 
 /**
@@ -90,5 +95,17 @@ public class CompositeSumAggregator extends AbstractPathAggregator<MutableNumber
                 result = MutableNumber.fromClass(number.getClass(), true);
             result.remove(number);
         }
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        IOUtils.writeObject(out, funcColumn);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        funcColumn = IOUtils.readObject(in);
     }
 }
