@@ -973,7 +973,9 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
             SelectQuery subQuery = ((SelectQuery) getTablesData().get(0).getSubQuery());
             ExpNode subQueryExpTree = subQuery.getExpTree();
             ExpNode thisExpTree = this.getExpTree();
-            if(subQueryExpTree == null && thisExpTree != null) {
+
+            if (thisExpTree != null) {
+                //remove table reference so it will be treated like regular field
                 thisExpTree.traverse((x) -> {
                     if (x instanceof ColumnNode) {
                         ColumnNode cn = ((ColumnNode) x);
@@ -986,10 +988,15 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
                         }
                     }
                 });
-                subQuery.setExpTree(thisExpTree);
-                setExpTree(null);
-            } else if (subQueryExpTree != null && thisExpTree != null) {
-                subQuery.setExpTree(new AndNode(thisExpTree, subQueryExpTree));
+
+                //if no exptree in subquery -> just move super to subquery
+                if (subQueryExpTree == null) {
+                    subQuery.setExpTree(thisExpTree);
+                } else { // do and
+                    subQuery.setExpTree(new AndNode(thisExpTree, subQueryExpTree));
+                }
+
+                //delete exptree of super
                 setExpTree(null);
             }
         }
