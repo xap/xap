@@ -97,4 +97,9 @@ public class ViewPropertiesEntryData implements IEntryData {
     public void setDynamicProperties(Map<String, Object> dynamicProperties) {
         throw new IllegalStateException("Data cannot be modified on entry data view");
     }
+
+    @Override
+    public boolean isView() {
+        return true;
+    }
 }

@@ -238,7 +238,9 @@ public class EntryPacketFactory {
 
     private static PropertiesHolder getPropertiesHolder(Context context, IEntryData entryData) {
         PropertiesHolder holder;
-        if (entryData.isHybrid() && context != null && context.getViewEntryData() != null && context.getViewEntryData().isViewOf(entryData)) {
+        if(entryData.isView()){
+            return ((ViewPropertiesEntryData) entryData).getPropertiesHolder();
+        } else if (entryData.isHybrid() && context != null && context.getViewEntryData() != null && context.getViewEntryData().isViewOf(entryData)) {
             return context.getViewEntryData().getPropertiesHolder();
         } else {
             return PropertiesHolderFactory.create(entryData.getSpaceTypeDescriptor(), entryData);
