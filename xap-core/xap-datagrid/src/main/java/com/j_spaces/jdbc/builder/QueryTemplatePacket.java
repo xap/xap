@@ -851,8 +851,12 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
             IOUtils.writeObject(out, _projectionTemplate);
         if (version.greaterOrEquals(PlatformLogicalVersion.v11_0_0))
             out.writeBoolean(_allIndexValuesQuery);
-        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
-            IOUtils.writeObject(out, _table);
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)){
+            if (_table.isJoined()){
+                IOUtils.writeObject(out, _table);
+            }
+        }
+
 
 
     }
@@ -866,8 +870,12 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
             _projectionTemplate = IOUtils.readObject(in);
         if (version.greaterOrEquals(PlatformLogicalVersion.v11_0_0))
             _allIndexValuesQuery = in.readBoolean();
-        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
-            _table = IOUtils.readObject(in);
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)){
+            if (_table.isJoined()){
+                _table = IOUtils.readObject(in);
+            }
+
+        }
     }
 
     private void uniteContainsItems(QueryTemplatePacket template) {
