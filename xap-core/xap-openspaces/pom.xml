@@ -647,19 +647,18 @@
                         <configuration>
                             <additionalparam>-Xdoclint:none</additionalparam>
                             <sourcepath>${project.build.sourceDirectory};${basedir}/../gigaspaces/src/java</sourcepath>
-                            <windowtitle>GigaSpaces XAP 9.5 API</windowtitle>
+                            <windowtitle>GigaSpaces ${project.version} API</windowtitle>
                             <source>1.8</source>
                             <author>true</author>
                             <version>true</version>
                             <use>true</use>
-                            <header>&lt;a href="index.html" target="_top"&gt;GigaSpaces XAP 9.5
-                                API&lt;/a&gt;</header>
+                            <header>&lt;a href="index.html" target="_top"&gt;GigaSpaces ${project.version} API&lt;/a&gt;</header>
                             <additionalJOptions>
                                 <additionalJOption>-J-Xmx256m</additionalJOption>
                                 <additionalJOption>-J-XX:MaxPermSize=256m</additionalJOption>
                                 <additionalJOption>-breakiterator</additionalJOption>
                             </additionalJOptions>
-                            <doctitle>&lt;h1&gt;GigaSpaces XAP 9.5 API&lt;/h1&gt;</doctitle>
+                            <doctitle>&lt;h1&gt;GigaSpaces ${project.version} API&lt;/h1&gt;</doctitle>
                             <bottom>
                                 &lt;i&gt;Copyright &amp;copy;
                                 &lt;a href="http://www.gigaspaces.com/"
