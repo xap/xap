@@ -715,7 +715,7 @@ SelectColumn getSelectColumn(AbstractDMLQuery query):
 
 }
 {
-    (t = id()
+    ([LOOKAHEAD(2) id() "."] t = id()
     {
     	id = QueryProcessor.getDefaultConfig().isParserCaseSensitivity()? t.image : t.image.toUpperCase();
     }
