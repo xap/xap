@@ -2202,7 +2202,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             }
             context.setFromReplication(fromReplication);
             context.setOrigin(origin);
-
+            if(Modifiers.contains(modifiers, Modifiers.BACKUP_ONLY))
+                context.setBackupOnly();
             return update(context, updated_entry, txn, lease, timeout, sc, fromReplication,
                     newRouter, modifiers, null, multipleIdsContext);
         } finally {
@@ -5156,7 +5157,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         boolean isNotifyMatched = _cacheManager.getTemplatesManager().anyNotifyMatchedTemplates();
         boolean isNotifyRematched = _cacheManager.getTemplatesManager().anyNotifyRematchedTemplates();
-        if (_cacheManager.getTemplatesManager().anyNonNotifyTemplates() || _cacheManager.getTemplatesManager().anyNotifyUpdateTemplates() || isNotifyMatched || isNotifyRematched) {
+        if (!context.isBackupOnly() && (_cacheManager.getTemplatesManager().anyNonNotifyTemplates() || _cacheManager.getTemplatesManager().anyNotifyUpdateTemplates() || isNotifyMatched || isNotifyRematched)) {
 
             if (reWrittenUnderXtn) // it is not a true update, just take+write under xtn
             {
