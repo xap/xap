@@ -31,6 +31,7 @@ import com.gigaspaces.internal.server.space.operations.ChangeEntriesSpaceOperati
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridOperationDetails;
+import com.gigaspaces.internal.transport.HybridEntryPacket;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.TemplatePacketFactory;
 import com.gigaspaces.lrmi.nio.IResponseContext;
@@ -1207,7 +1208,14 @@ public class Context {
     }
 
     private void copyFieldsArray(IEntryPacket entryPacket) {
-        entryPacket.getPropertiesHolder().copyFieldsArray();
+        if (entryPacket.isHybrid()) {
+            ((HybridEntryPacket) entryPacket).getPropertiesHolder().copyFieldsArray();
+        } else {
+            Object[] src = entryPacket.getFieldValues();
+            Object[] target = new Object[src.length];
+            System.arraycopy(src, 0, target, 0, src.length);
+            entryPacket.setFieldsValues(target);
+        }
     }
 
     public void setSyncHybridOperationDetails(SyncHybridOperationDetails[] syncHybridOperationsDetails) {
@@ -1293,7 +1301,7 @@ public class Context {
             if (viewEntryData == null) {
                 viewEntryData = new ViewPropertiesEntryData();
             }
-            viewEntryData.view(entryData, (HybridPropertiesHolder) packet.getPropertiesHolder());
+            viewEntryData.view(entryData, ((HybridEntryPacket) packet).getPropertiesHolder());
         }
     }
 

@@ -28,9 +28,9 @@ import com.gigaspaces.internal.cluster.node.impl.packets.data.ReplicationPacketD
 import com.gigaspaces.internal.cluster.node.impl.view.EntryPacketServerEntryAdapter;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
-import com.gigaspaces.internal.server.storage.PropertiesHolder;
+import com.gigaspaces.internal.server.storage.HybridPropertiesHolder;
 import com.gigaspaces.internal.server.storage.IEntryData;
-import com.gigaspaces.internal.server.storage.PropertiesHolderFactory;
+import com.gigaspaces.internal.transport.HybridEntryPacket;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
@@ -165,8 +165,8 @@ public class UpdateReplicationPacketData
         _overrideVersion = in.readBoolean();
         _flags = in.readShort();
         if (in.readBoolean() /* serializeFullContent */) {
-            if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
-                deserializePreviousEntryDataPost158(in);
+            if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_8_0) && getEntryPacket().isHybrid()) {
+                deserializePreviousEntryDataPostHybrid(in);
             } else {
                 deserializePreviousEntryData(in);
             }
@@ -206,32 +206,32 @@ public class UpdateReplicationPacketData
         return serializedPreviousFixedProperties;
     }
 
-    private void deserializePreviousEntryDataPost158(ObjectInput in) throws IOException, ClassNotFoundException {
+    private void deserializePreviousEntryDataPostHybrid(ObjectInput in) throws IOException, ClassNotFoundException {
         final boolean hasPreviousEntryDataBeenSerialzed = in.readBoolean();
 
         if (!hasPreviousEntryDataBeenSerialzed)
             return;
 
-        PropertiesHolder previousHolder = deserializePreviousPropertiesHolder(in);
+        HybridPropertiesHolder previousHolder = deserializePreviousPropertiesHolder(in);
 
         DynamicPropertiesDeserializationData data = deserializePreviousDynamicProperties(in);
         Map<String, Object> previousDynamicProperties = data._serializedPreviousDynamicProperties;
         boolean previousDynamicPropertiesExisted = data._previousDynamicPropertiesExisted;
-        createPreviousEntryDataPost158(previousHolder, previousDynamicProperties, previousDynamicPropertiesExisted);
+        createPreviousEntryDataHybrid(previousHolder, previousDynamicProperties, previousDynamicPropertiesExisted);
     }
 
-    private PropertiesHolder deserializePreviousPropertiesHolder(ObjectInput in) throws IOException, ClassNotFoundException {
+    private HybridPropertiesHolder deserializePreviousPropertiesHolder(ObjectInput in) throws IOException, ClassNotFoundException {
         boolean isSerialized = in.readBoolean();
         if(isSerialized){
-            return (PropertiesHolder) in.readObject();
+            return (HybridPropertiesHolder) in.readObject();
         }
         return null;
     }
 
-    private void createPreviousEntryDataPost158(PropertiesHolder previousHolder, Map<String, Object> previousDynamicProperties, boolean previousDynamicPropertiesExisted) {
+    private void createPreviousEntryDataHybrid(HybridPropertiesHolder previousHolder, Map<String, Object> previousDynamicProperties, boolean previousDynamicPropertiesExisted) {
         _previousEntryPacket = getEntryPacket().clone();
         if (previousHolder != null)
-            _previousEntryPacket.setPropertiesHolder(previousHolder);
+            ((HybridEntryPacket) _previousEntryPacket).setPropertiesHolder(previousHolder);
 
         if (previousDynamicProperties != null)
             _previousEntryPacket.setDynamicProperties(previousDynamicProperties);
@@ -355,8 +355,8 @@ public class UpdateReplicationPacketData
         out.writeShort(_flags);
         out.writeBoolean(_serializeFullContent);
         if (_serializeFullContent) {
-            if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
-                serializePreviousEntryDataPost158(out);
+            if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_8_0) && getEntryPacket().isHybrid()) {
+                serializePreviousEntryDataHybrid(out);
             } else {
                 serializePreviousEntryData(out);
             }
@@ -415,7 +415,7 @@ public class UpdateReplicationPacketData
         }
     }
 
-    private void serializePreviousEntryDataPost158(ObjectOutput out) throws IOException {
+    private void serializePreviousEntryDataHybrid(ObjectOutput out) throws IOException {
         // flag to indicate whether the previousEntryData was written
         if (_previousEntryData != null) {
             out.writeBoolean(true);
@@ -452,7 +452,7 @@ public class UpdateReplicationPacketData
         out.writeBoolean(serialize);
 
         if (serialize) {
-            PropertiesHolder payload = PropertiesHolderFactory.create(_previousEntryData.getSpaceTypeDescriptor(), serializedPrevious);
+            HybridPropertiesHolder payload = new HybridPropertiesHolder(_previousEntryData.getSpaceTypeDescriptor(), serializedPrevious);
             out.writeObject(payload);
         }
     }
@@ -529,7 +529,7 @@ public class UpdateReplicationPacketData
             ClassNotFoundException {
         super.readFromSwap(in);
         _overrideVersion = in.readBoolean();
-        deserializePreviousEntryDataPost158(in);
+        deserializePreviousEntryDataPostHybrid(in);
         _flags = in.readShort();
         _expirationTime = in.readLong();
         restoreCurrentEntryData();
@@ -543,7 +543,7 @@ public class UpdateReplicationPacketData
     public void writeToSwap(ObjectOutput out) throws IOException {
         super.writeToSwap(out);
         out.writeBoolean(_overrideVersion);
-        serializePreviousEntryDataPost158(out);
+        serializePreviousEntryDataHybrid(out);
         out.writeShort(_flags);
         out.writeLong(_expirationTime);
     }

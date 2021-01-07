@@ -1,22 +1,3 @@
-/*
- * Copyright (c) 2008-2016, GigaSpaces Technologies, Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @(#)EntryPacket.java 1.0   24/10/2000  10:15AM
- */
 package com.gigaspaces.internal.transport;
 
 import com.gigaspaces.internal.io.IOArrayException;
@@ -25,6 +6,7 @@ import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.query.ICustomQuery;
+import com.gigaspaces.internal.server.storage.HybridPropertiesHolder;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.core.EntrySerializationException;
 
@@ -33,38 +15,34 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Map;
 
-/**
- * This class represents a packet of information transmitted between a J-Space client and its
- * J-Space server (and vice versa). <p/> The information transmitted is composed of 2 types:
- * information on the entry's class, and information on the entry's data (the fields' values). Since
- * the protocol between J-Space client and server are designed for minimum data passing, most of the
- * fields in an EntryPacket are usually null (they are transmitted once for each entry class in a
- * client's life-time). <p/> All the fields in this class are public, in order to increase access
- * and modification speed (no need to call a method).
- *
- * @author Igor Goldenberg
- * @version 1.0
- */
 @com.gigaspaces.api.InternalApi
-public class EntryPacket extends AbstractEntryPacket {
+public class HybridEntryPacket extends AbstractEntryPacket {
     private static final long serialVersionUID = 1L;
-
+    private static final short FLAG_CLASSNAME = 1 << 0;
+    private static final short FLAG_UID = 1 << 1;
+    private static final short FLAG_VERSION = 1 << 2;
+    private static final short FLAG_TIME_TO_LIVE = 1 << 3;
+    private static final short FLAG_MULTIPLE_UIDS = 1 << 4;
+    private static final short FLAG_FIELDS_VALUES = 1 << 5;
+    private static final short FLAG_FIFO = 1 << 6;
+    private static final short FLAG_TRANSIENT = 1 << 7;
+    private static final short FLAG_NO_WRITE_LEASE = 1 << 8;
+    private static final short FLAG_RETURN_ONLY_UIDS = 1 << 9;
+    private static final short FLAG_CUSTOM_QUERY = 1 << 10;
+    private static final short FLAG_DYNAMIC_PROPERTIES = 1 << 11;
     protected String _typeName;
-    private Object[] _fixedProperties;
+    protected boolean _returnOnlyUIDs;
+    private HybridPropertiesHolder propertiesHolder;
     private Map<String, Object> _dynamicProperties;
     private String _uid;
     private int _version;
     private long _timeToLive;
     private boolean _transient;
-
     private ICustomQuery _customQuery;
-
     //for read/take multiple - on output: UIDS of entries to read/take,
     //on input- the result UIDs of the operation if ReturnOnlyUids option is used
     // this field is valid only if the classname is null
     private String[] _multipleUIDs;
-    protected boolean _returnOnlyUIDs;
-
     // Deprecated:
     private boolean _noWriteLease;
     private boolean _fifo;
@@ -72,14 +50,18 @@ public class EntryPacket extends AbstractEntryPacket {
     /**
      * Default constructor required by {@link java.io.Externalizable}.
      */
-    public EntryPacket() {
+    public HybridEntryPacket() {
     }
 
-    public EntryPacket(ITypeDesc typeDesc, EntryType entryType, Object[] fixedProperties, Map<String, Object> dynamicProperties,
-                       String uid, int version, long timeToLive, boolean isTransient) {
+    public HybridEntryPacket(ITypeDesc typeDesc, EntryType entryType, Object[] fixedProperties, Map<String, Object> dynamicProperties,
+                             String uid, int version, long timeToLive, boolean isTransient) {
+        this(typeDesc, entryType, dynamicProperties, uid, version, timeToLive, isTransient, new HybridPropertiesHolder(typeDesc, fixedProperties));
+    }
+
+    public HybridEntryPacket(ITypeDesc typeDesc, EntryType entryType, Map<String, Object> dynamicProperties,
+                             String uid, int version, long timeToLive, boolean isTransient, HybridPropertiesHolder propertiesHolder) {
         super(typeDesc, entryType);
         _typeName = typeDesc.getTypeName();
-        _fixedProperties = fixedProperties;
         _dynamicProperties = dynamicProperties;
         _uid = uid;
         _version = version;
@@ -87,12 +69,18 @@ public class EntryPacket extends AbstractEntryPacket {
         _transient = isTransient;
         _noWriteLease = false;
         _fifo = false;
+        this.propertiesHolder = propertiesHolder;
+
     }
 
-    protected EntryPacket(ITypeDesc typeDesc, Object[] values) {
+    protected HybridEntryPacket(ITypeDesc typeDesc, Object[] values) {
+        this(typeDesc, new HybridPropertiesHolder(typeDesc, values));
+    }
+
+    protected HybridEntryPacket(ITypeDesc typeDesc, HybridPropertiesHolder propertiesHolder) {
         super(typeDesc, typeDesc.getObjectType());
         this._typeName = typeDesc.getTypeName();
-        this._fixedProperties = values;
+        this.propertiesHolder = propertiesHolder;
     }
 
     /**
@@ -104,8 +92,7 @@ public class EntryPacket extends AbstractEntryPacket {
     @Override
     public IEntryPacket clone() {
         IEntryPacket packet = super.clone();
-        if (_fixedProperties != null)
-            packet.setFieldsValues(_fixedProperties.clone());
+        ((HybridEntryPacket) packet).setPropertiesHolder(propertiesHolder.clone());
         return packet;
     }
 
@@ -150,16 +137,20 @@ public class EntryPacket extends AbstractEntryPacket {
     }
 
     public Object[] getFieldValues() {
-        return _fixedProperties;
+        return propertiesHolder.getFixedProperties(getTypeDescriptor());
     }
 
     public void setFieldsValues(Object[] values) {
-        this._fixedProperties = values;
+        if (getTypeDescriptor() == null && getTypeName() == null) {
+            propertiesHolder.setFixedProperties(values);
+        } else {
+            propertiesHolder.setFixedProperties(getTypeDescriptor(), values);
+        }
     }
 
     public Object getFieldValue(int index) {
         try {
-            return _fixedProperties[index];
+            return this.propertiesHolder.getFixedProperty(this.getTypeDescriptor(), index);
         } catch (Exception e) {
             throw new IllegalStateException("The field values array was not properly set", e);
         }
@@ -167,7 +158,11 @@ public class EntryPacket extends AbstractEntryPacket {
 
     public void setFieldValue(int index, Object value) {
         try {
-            _fixedProperties[index] = value;
+            if (getTypeDescriptor() == null && getTypeName() == null) {
+                propertiesHolder.setFixedProperty(index, value);
+            } else {
+                this.propertiesHolder.setFixedProperty(_typeDesc, index, value);
+            }
         } catch (Exception e) {
             throw new IllegalStateException("The field values array was not properly set", e);
         }
@@ -209,20 +204,7 @@ public class EntryPacket extends AbstractEntryPacket {
         _customQuery = customQuery;
     }
 
-    private static final short FLAG_CLASSNAME = 1 << 0;
-    private static final short FLAG_UID = 1 << 1;
-    private static final short FLAG_VERSION = 1 << 2;
-    private static final short FLAG_TIME_TO_LIVE = 1 << 3;
-    private static final short FLAG_MULTIPLE_UIDS = 1 << 4;
-    private static final short FLAG_FIELDS_VALUES = 1 << 5;
-    private static final short FLAG_FIFO = 1 << 6;
-    private static final short FLAG_TRANSIENT = 1 << 7;
-    private static final short FLAG_NO_WRITE_LEASE = 1 << 8;
-    private static final short FLAG_RETURN_ONLY_UIDS = 1 << 9;
-    private static final short FLAG_CUSTOM_QUERY = 1 << 10;
-    private static final short FLAG_DYNAMIC_PROPERTIES = 1 << 11;
-
-    private short buildFlags() {
+    private short buildFlags(PlatformLogicalVersion version) {
         short flags = 0;
 
         if (_typeName != null)
@@ -235,7 +217,7 @@ public class EntryPacket extends AbstractEntryPacket {
             flags |= FLAG_TIME_TO_LIVE;
         if (_multipleUIDs != null)
             flags |= FLAG_MULTIPLE_UIDS;
-        if (_fixedProperties != null)
+        if (propertiesHolder != null)
             flags |= FLAG_FIELDS_VALUES;
         if (_fifo)
             flags |= FLAG_FIFO;
@@ -251,6 +233,16 @@ public class EntryPacket extends AbstractEntryPacket {
             flags |= FLAG_DYNAMIC_PROPERTIES;
 
         return flags;
+    }
+
+    private boolean calcPropertiesHolderFlag(PlatformLogicalVersion version) {
+        if (propertiesHolder == null)
+            return false;
+
+        if (version.lessThan(PlatformLogicalVersion.v15_8_0) && propertiesHolder.allNulls())
+            return false;
+
+        return true;
     }
 
     @Override
@@ -279,7 +271,7 @@ public class EntryPacket extends AbstractEntryPacket {
     private final void serializePacket(ObjectOutput out,
                                        PlatformLogicalVersion version) {
         try {
-            out.writeShort(buildFlags());
+            out.writeShort(buildFlags(version));
 
             if (_typeName != null)
                 IOUtils.writeRepetitiveString(out, _typeName);
@@ -291,13 +283,8 @@ public class EntryPacket extends AbstractEntryPacket {
                 out.writeLong(_timeToLive);
             if (_multipleUIDs != null)
                 IOUtils.writeStringArray(out, _multipleUIDs);
-            if (_fixedProperties != null) {
-                try {
-                    IOUtils.writeObjectArrayCompressed(out, _fixedProperties);
-                } catch (IOArrayException e) {
-                    throw createPropertySerializationException(e, true);
-                }
-            }
+            if (propertiesHolder != null)
+                IOUtils.writeObject(out, propertiesHolder);
             if (_dynamicProperties != null)
                 IOUtils.writeObject(out, _dynamicProperties);
             if (_customQuery != null)
@@ -318,8 +305,7 @@ public class EntryPacket extends AbstractEntryPacket {
         deserializePacket(in, version);
     }
 
-    private final void deserializePacket(ObjectInput in,
-                                         PlatformLogicalVersion version) {
+    private final void deserializePacket(ObjectInput in, PlatformLogicalVersion version) {
         try {
             final short flags = in.readShort();
 
@@ -338,13 +324,8 @@ public class EntryPacket extends AbstractEntryPacket {
                 _timeToLive = in.readLong();
             if ((flags & FLAG_MULTIPLE_UIDS) != 0)
                 _multipleUIDs = IOUtils.readStringArray(in);
-            if ((flags & FLAG_FIELDS_VALUES) != 0) {
-                try {
-                    _fixedProperties = IOUtils.readObjectArrayCompressed(in);
-                } catch (IOArrayException e) {
-                    throw createPropertySerializationException(e, false);
-                }
-            }
+            if ((flags & FLAG_FIELDS_VALUES) != 0)
+                propertiesHolder = IOUtils.readObject(in);
             if ((flags & FLAG_DYNAMIC_PROPERTIES) != 0)
                 _dynamicProperties = IOUtils.readObject(in);
             if ((flags & FLAG_CUSTOM_QUERY) != 0)
@@ -388,4 +369,23 @@ public class EntryPacket extends AbstractEntryPacket {
         return true;
     }
 
+    @Override
+    public boolean allNullFieldValues() {
+        return propertiesHolder.allNulls();
+    }
+
+
+    public HybridPropertiesHolder getPropertiesHolder() {
+        return propertiesHolder;
+    }
+
+
+    public void setPropertiesHolder(HybridPropertiesHolder holder) {
+        this.propertiesHolder = holder;
+    }
+
+    @Override
+    public boolean isHybrid() {
+        return true;
+    }
 }
