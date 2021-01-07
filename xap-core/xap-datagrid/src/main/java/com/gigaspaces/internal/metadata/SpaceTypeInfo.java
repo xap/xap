@@ -1460,6 +1460,8 @@ public class SpaceTypeInfo implements Externalizable {
             throw new SpaceMetadataValidationException(_type, "Routing property and broadcast table cannot be used together.");
         if(_idAutoGenerate)
             throw new SpaceMetadataValidationException(_type, "Auto generated id and broadcast table cannot be used together.");
+        if(!_persist)
+            throw new SpaceMetadataValidationException(_type, "Broadcast table cannot be transient.");
     }
 
     private void validateGetterSetter(SpacePropertyInfo property, String propertyDesc, ConstructorPropertyValidation validation) {
