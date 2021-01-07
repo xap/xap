@@ -16,11 +16,12 @@
 
 package com.gigaspaces.internal.server.storage;
 
-import com.gigaspaces.client.storage_adapters.class_storage_adapters.ClassBinaryStorageAdapter;
+
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceUidFactory;
+import com.gigaspaces.internal.transport.HybridEntryPacket;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.core.LeaseManager;
@@ -131,9 +132,8 @@ public class EntryHolderFactory {
         final EntryXtnInfo entryXtnInfo = createXtnEntryInfo ? new EntryXtnInfo() : null;
 
         if (entryDataType == EntryDataType.FLAT) {
-            ClassBinaryStorageAdapter adapter = (entryTypeDesc.getTypeDesc()).getClassBinaryStorageAdapter();
-            if (adapter != null) {
-                return new HybridEntryData((HybridPropertiesHolder) entryPacket.getPropertiesHolder(), entryPacket.getDynamicProperties(),
+            if (entryPacket.isHybrid()) {
+                return new HybridEntryData(((HybridEntryPacket) entryPacket).getPropertiesHolder(), entryPacket.getDynamicProperties(),
                         entryTypeDesc, version, lease, entryXtnInfo);
             } else {
                 return new FlatEntryData(entryPacket.getFieldValues(), entryPacket.getDynamicProperties(),

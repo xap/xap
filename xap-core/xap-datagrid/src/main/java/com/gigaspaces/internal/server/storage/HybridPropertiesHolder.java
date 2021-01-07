@@ -7,7 +7,7 @@ import com.gigaspaces.internal.metadata.PropertyInfo;
 import java.io.*;
 import java.util.Arrays;
 
-public class HybridPropertiesHolder implements PropertiesHolder {
+public class HybridPropertiesHolder implements Externalizable {
     private static final Object[] EMPTY_OBJECTS_ARRAY = new Object[0];
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
     private Object[] unpackedSerializedProperties;
@@ -174,14 +174,14 @@ public class HybridPropertiesHolder implements PropertiesHolder {
                 '}';
     }
 
-    @Override
+
     public boolean allNulls() {
         return this.unpackedSerializedProperties.length == 0
                 && this.packedSerializedProperties.length == 0
                 && this.nonSerializedProperties.length == 0;
     }
 
-    @Override
+
     public void copyFieldsArray() {
         Object[] src = nonSerializedProperties;
         Object[] target;
@@ -198,14 +198,14 @@ public class HybridPropertiesHolder implements PropertiesHolder {
         }
     }
 
-    @Override
+
     public void setFixedProperties(ITypeDesc typeDescriptor, Object[] values) {
         splitProperties(typeDescriptor, values);
         this.unpacked = true;
         this.dirty = true;
     }
 
-    @Override
+
     public void setFixedProperty(ITypeDesc typeDesc, int position, Object value) {
         if (typeDesc.isSerializedProperty(position)) {
             if (!unpacked) {
@@ -242,7 +242,7 @@ public class HybridPropertiesHolder implements PropertiesHolder {
         }
     }
 
-    @Override
+
     public void setFixedProperties(Object[] values) {
         this.nonSerializedProperties = values;
         this.unpackedSerializedProperties = EMPTY_OBJECTS_ARRAY;
@@ -250,7 +250,7 @@ public class HybridPropertiesHolder implements PropertiesHolder {
         this.dirty = true;
     }
 
-    @Override
+
     public void setFixedProperty(int position, Object value) {
         this.nonSerializedProperties[position] = value;
     }

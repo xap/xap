@@ -20,7 +20,6 @@ import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.query.ICustomQuery;
-import com.gigaspaces.internal.server.storage.FlatPropertiesHolder;
 
 /**
  * This class represents a packet of information transmitted between a J-Space client and its
@@ -45,7 +44,7 @@ public class TemplatePacket extends EntryPacket implements ITemplatePacket {
 
     public TemplatePacket(ITypeDesc typeDesc, EntryType entryType, Object[] fixedProperties, ICustomQuery customQuery,
                           String uid, int version, long timeToLive, boolean isTransient) {
-        super(typeDesc, entryType, null, uid, version, timeToLive, isTransient, new FlatPropertiesHolder(fixedProperties));
+        super(typeDesc, entryType, fixedProperties, null, uid, version, timeToLive, isTransient);
         setCustomQuery(customQuery);
     }
 

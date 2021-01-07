@@ -21,7 +21,6 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.converter.ConversionException;
-import com.gigaspaces.internal.server.storage.PropertiesHolder;
 import com.gigaspaces.internal.transport.EntryPacket;
 import com.gigaspaces.internal.transport.TransportPacketType;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
@@ -56,9 +55,9 @@ public class ExternalEntryPacket extends EntryPacket {
         super(typeDesc, entryType, fixedProperties, null, uid, version, timeToLive, isTransient);
     }
 
-    public ExternalEntryPacket(ITypeDesc typeDesc, EntryType entryType,
-                               String uid, int version, long timeToLive, boolean isTransient, String implClassName, PropertiesHolder propertiesHolder) {
-        super(typeDesc, entryType, null, uid, version, timeToLive, isTransient, propertiesHolder);
+    public ExternalEntryPacket(ITypeDesc typeDesc, EntryType entryType, Object[] fixedProperties,
+                               String uid, int version, long timeToLive, boolean isTransient, String implClassName) {
+        super(typeDesc, entryType, fixedProperties, null, uid, version, timeToLive, isTransient);
         _implClassName = implClassName;
     }
 
