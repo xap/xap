@@ -96,7 +96,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
     private boolean allowedToUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.allowCollocatedJoin", "true"));
     private boolean flattenResults;
 
-    private static final boolean forceUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.forceCollocatedJoin", "true"));
+    private static final boolean forceUseCollocatedJoin = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.forceCollocatedJoin", "false"));
     public static final boolean pushDownPredicatesToSpace = Boolean.parseBoolean(System.getProperty("com.gs.jdbc.pushDownToSpace", "true"));
 
     private int limit;
@@ -363,7 +363,30 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
             }
         }
 
-        return shardedTables.size() <= 1;
+        if (shardedTables.size() <= 1) return true;
+
+        try {
+            if (getTableNamesNested().size() == 1) return true;
+        } catch (Exception e) {
+            _logger.warn("Could not check collocated join", e);
+            return false;
+        }
+
+        return false;
+    }
+
+    private Set<String> getTableNamesNested() throws Exception {
+        Set<String> tableNames = new HashSet<>();
+        for (QueryTableData tablesDatum : getTablesData()) {
+            if (tablesDatum.getSubQuery() == null) {
+                tableNames.add(tablesDatum.getTableName());
+            } else if (tablesDatum.getSubQuery() instanceof SelectQuery) {
+                tableNames.addAll(((SelectQuery) tablesDatum.getSubQuery()).getTableNamesNested());
+            } else {
+                throw new Exception("Cannot check collocated join for subqueries that are not of type SelectQuery");
+            }
+        }
+        return tableNames;
     }
 
     private boolean isAllRefTable(List<String> refTables) {
