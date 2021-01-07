@@ -84,6 +84,11 @@ public class SynchronizingData<T extends IReplicationPacketData<?>> {
     // getPackets
     public synchronized boolean filterEntryData(String uid, long packetKey,
                                                 boolean filterIfNotPresentInReplicaState, boolean isTransientEntry) {
+        //changed by Mishel due to Tadiran transition from 7.1.4 to 14.0.1 - GS-14365 ->>
+        if (!isTransientEntry) {
+            return false;
+        }
+
         if (!_entriesUidMap.containsKey(uid)) {
             if (_logger.isLoggable(Level.FINER)) {
                 _logger.finer("[SynchronizingData::filterEntryData] not in _entriesUidMap: uid=" + uid + " ,_keyWhenCopyStageCompleted=" + _keyWhenCopyStageCompleted +
@@ -93,6 +98,7 @@ public class SynchronizingData<T extends IReplicationPacketData<?>> {
             if (_isDirectPersistencySync) {
                 return false;
             }
+
             // If this operation is not filtered if not present in the replica,
             // it should be inserted to the uid map
             // (e.g, Write of entry which occurred after the replica iterator
@@ -100,13 +106,8 @@ public class SynchronizingData<T extends IReplicationPacketData<?>> {
             if (!filterIfNotPresentInReplicaState)
                 _entriesUidMap.put(uid, packetKey);
 
-
-//            return filterIfNotPresentInReplicaState; changed by Mishel due to Tadiran transition from 7.1.4 to 14.0.1 - GS-14365 ->>
-            if (isTransientEntry) {
-                return filterIfNotPresentInReplicaState;
-            }
             //return false when it's not transient
-            return false;
+            return filterIfNotPresentInReplicaState;
         }
 
         long keyAtGenerationTime = _entriesUidMap.get(uid);
