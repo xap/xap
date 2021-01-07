@@ -854,11 +854,11 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
             if (_table != null && _table.isJoined()){
                 IOUtils.writeObject(out, _table);
-            }
-            else
+                IOUtils.writeObject(out, _ranges);
+                IOUtils.writeObject(out, _aggregationSet);
+            } else {
                 IOUtils.writeObject(out, null);
-
-
+            }
     }
 
     private void deserialize(ObjectInput in, PlatformLogicalVersion version) throws IOException, ClassNotFoundException {
@@ -870,8 +870,13 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
             _projectionTemplate = IOUtils.readObject(in);
         if (version.greaterOrEquals(PlatformLogicalVersion.v11_0_0))
             _allIndexValuesQuery = in.readBoolean();
-        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
+        if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
             _table = IOUtils.readObject(in);
+            if (_table != null && _table.isJoined()) {
+                _ranges = IOUtils.readObject(in);
+                _aggregationSet = IOUtils.readObject(in);
+            }
+        }
     }
 
     private void uniteContainsItems(QueryTemplatePacket template) {
