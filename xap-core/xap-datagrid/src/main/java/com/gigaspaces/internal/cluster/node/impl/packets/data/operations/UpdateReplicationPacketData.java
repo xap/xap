@@ -166,7 +166,7 @@ public class UpdateReplicationPacketData
         _flags = in.readShort();
         if (in.readBoolean() /* serializeFullContent */) {
             if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_8_0) && getEntryPacket().isHybrid()) {
-                deserializePreviousEntryDataPostHybrid(in);
+                deserializePreviousEntryDataHybrid(in);
             } else {
                 deserializePreviousEntryData(in);
             }
@@ -206,7 +206,7 @@ public class UpdateReplicationPacketData
         return serializedPreviousFixedProperties;
     }
 
-    private void deserializePreviousEntryDataPostHybrid(ObjectInput in) throws IOException, ClassNotFoundException {
+    private void deserializePreviousEntryDataHybrid(ObjectInput in) throws IOException, ClassNotFoundException {
         final boolean hasPreviousEntryDataBeenSerialzed = in.readBoolean();
 
         if (!hasPreviousEntryDataBeenSerialzed)
@@ -529,7 +529,11 @@ public class UpdateReplicationPacketData
             ClassNotFoundException {
         super.readFromSwap(in);
         _overrideVersion = in.readBoolean();
-        deserializePreviousEntryDataPostHybrid(in);
+        if (getEntryPacket().isHybrid()) {
+            deserializePreviousEntryDataHybrid(in);
+        } else {
+            deserializePreviousEntryData(in);
+        }
         _flags = in.readShort();
         _expirationTime = in.readLong();
         restoreCurrentEntryData();
@@ -543,7 +547,11 @@ public class UpdateReplicationPacketData
     public void writeToSwap(ObjectOutput out) throws IOException {
         super.writeToSwap(out);
         out.writeBoolean(_overrideVersion);
-        serializePreviousEntryDataHybrid(out);
+        if (getEntryPacket().isHybrid()) {
+            serializePreviousEntryDataHybrid(out);
+        } else {
+            serializePreviousEntryData(out);
+        }
         out.writeShort(_flags);
         out.writeLong(_expirationTime);
     }
