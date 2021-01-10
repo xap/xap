@@ -21,6 +21,8 @@ import com.gigaspaces.internal.cluster.node.impl.groups.ReplicationChannelDataFi
 import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPacketData;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.ObjectLongMap;
+import com.gigaspaces.internal.server.space.SpaceEngine;
+import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.j_spaces.core.exception.internal.ReplicationInternalSpaceException;
 
 import java.util.logging.Level;
@@ -45,7 +47,14 @@ public class SynchronizingData<T extends IReplicationPacketData<?>> {
     /**
      * @return true if the data with the same uid already exists, otherwise false
      */
-    public synchronized boolean updateUidKey(String uid, long currentKey) {
+    public synchronized boolean updateUidKey(String uid, long currentKey, SpaceEngine _spaceEngine) {
+        if (_spaceEngine != null) {
+            IEntryHolder entryHolder = _spaceEngine.getCacheManager().getEntryByUidFromPureCache(uid);
+            if (entryHolder != null && !entryHolder.isTransient()) {
+                return false;
+            }
+        }
+
         // Update the current key when this uid data was generated
         if (_entriesUidMap.containsKey(uid))
             return true;
