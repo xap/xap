@@ -77,7 +77,7 @@ public class EntryPacketFactory {
     public static IEntryPacket createFullPacket(IEntryData entryData, OperationID operationID, String uid, boolean isTransient, QueryResultTypeInternal queryResultType) {
         final long timeToLive = entryData.getTimeToLive(true);
         IEntryPacket entryPacket;
-        if (entryData.isHybrid()) {
+        if (entryData.isHybrid() || entryData.isView())  {
             entryPacket = createInternalHybrid(null /*template*/, isTransient, entryData, uid, timeToLive, queryResultType,
                     false, getPropertiesHolder(null, entryData));
         } else {
@@ -92,7 +92,7 @@ public class EntryPacketFactory {
         final IEntryData entryData = entryHolder.getEntryData();
         final long timeToLive = entryData.getTimeToLive(true);
         IEntryPacket entryPacket;
-        if (entryData.isHybrid()) {
+        if (entryData.isHybrid() || entryData.isView())  {
             entryPacket = createHybrid(null /*template*/, entryHolder.isTransient(), entryData, entryHolder.getUID(), timeToLive,
                     true, getPropertiesHolder(null, entryData));
         } else {
@@ -131,7 +131,7 @@ public class EntryPacketFactory {
     public static IEntryPacket createFullPacket(IEntryHolder entryHolder, ITemplateHolder template, String uid, long timeToLive,
                                                 IEntryData entryData, OperationID operationId) {
         IEntryPacket packet;
-        if (entryData.isHybrid()) {
+        if (entryData.isHybrid() || entryData.isView())  {
             packet = createHybrid(template, entryHolder.isTransient(), entryData, uid, timeToLive, false, getPropertiesHolder(null, entryData));
         } else {
             packet = create(template, entryHolder.isTransient(), entryData, entryData.getFixedPropertiesValues(), uid, timeToLive, false);
@@ -161,7 +161,7 @@ public class EntryPacketFactory {
             }
         }
         final long timeToLive = entryData.getTimeToLive(false);
-        if (entryData.isHybrid()) {
+        if (entryData.isHybrid() || entryData.isView()) {
             return createHybrid(template, isTransient, entryData, uid, timeToLive, false, getPropertiesHolder(context, entryData));
         }else {
             return create(template, isTransient, entryData, entryData.getFixedPropertiesValues(), uid, timeToLive, false);

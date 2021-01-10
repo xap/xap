@@ -111,9 +111,7 @@ public interface ITypeDesc extends SpaceTypeDescriptor, IDotnetTypeDescDetails, 
 
     PropertyInfo[] getNonSerializedProperties();
 
-    boolean isSerializedProperty(int index);
-
-    int findHybridIndex(int index);
-
     int[] getPositionsForScanning();
+
+    int[] getPositionsForSplitting();
 }

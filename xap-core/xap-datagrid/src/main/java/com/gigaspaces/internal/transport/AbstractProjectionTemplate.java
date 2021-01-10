@@ -81,18 +81,37 @@ public abstract class AbstractProjectionTemplate implements Externalizable {
 
         PathsProjectionHandler pathsHandler = null;
         int[] fixedPropertiesIndexes = getFixedPropertiesIndexes();
+        ITypeDesc typeDescriptor = entryPacket.getTypeDescriptor();
         if (!entryPacket.allNullFieldValues()) {
-            final int numOfFixedProperties = entryPacket.getTypeDescriptor().getNumOfFixedProperties();
-            final Object[] projectedValues = new Object[numOfFixedProperties];
-            if (fixedPropertiesIndexes != null) {
-                for (int index : fixedPropertiesIndexes)
-                    projectedValues[index] = entryPacket.getFieldValue(index);
+            final int numOfFixedProperties = typeDescriptor.getNumOfFixedProperties();
+            if(entryPacket.isHybrid() && getFixedPaths() == null){
+                final Object[] projectedNonSerialized = new Object[typeDescriptor.getNonSerializedProperties().length];
+                final Object[] projectedSerialized = new Object[typeDescriptor.getSerializedProperties().length];
+                if (fixedPropertiesIndexes != null) {
+                    int[] optimizedPositions = typeDescriptor.getPositionsForSplitting();
+                    for (int index : fixedPropertiesIndexes){
+                        if(optimizedPositions[index] > 0){
+                            projectedNonSerialized[optimizedPositions[index] -1] = entryPacket.getFieldValue(index);
+                        } else {
+                            projectedSerialized[(optimizedPositions[index] * -1) -1] = entryPacket.getFieldValue(index);
+                        }
+                        ((HybridEntryPacket) entryPacket).getPropertiesHolder().setNonSerialized(projectedNonSerialized);
+                        ((HybridEntryPacket) entryPacket).getPropertiesHolder().setSerialized(projectedSerialized);
+                    }
+                }
+
+            } else {
+                final Object[] projectedValues = new Object[numOfFixedProperties];
+                if (fixedPropertiesIndexes != null) {
+                    for (int index : fixedPropertiesIndexes)
+                        projectedValues[index] = entryPacket.getFieldValue(index);
+                }
+                if (getFixedPaths() != null) {
+                    pathsHandler = getPathsHandler(typeDescriptor);
+                    pathsHandler.applyFixedPathsProjections(entryPacket, projectedValues);
+                }
+                entryPacket.setFieldsValues(projectedValues);
             }
-            if (getFixedPaths() != null) {
-                pathsHandler = getPathsHandler(entryPacket.getTypeDescriptor());
-                pathsHandler.applyFixedPathsProjections(entryPacket, projectedValues);
-            }
-            entryPacket.setFieldsValues(projectedValues);
         }
 
         if (entryPacket.getDynamicProperties() != null) {
@@ -106,7 +125,7 @@ public abstract class AbstractProjectionTemplate implements Externalizable {
                 if (projectedDynamicProperties == null)
                     projectedDynamicProperties = new DocumentProperties(getDynamicPaths().length);
                 if (pathsHandler == null)
-                    pathsHandler = getPathsHandler(entryPacket.getTypeDescriptor());
+                    pathsHandler = getPathsHandler(typeDescriptor);
                 pathsHandler.applyDynamicPathsProjections(entryPacket, projectedDynamicProperties);
             }
             entryPacket.setDynamicProperties(projectedDynamicProperties);

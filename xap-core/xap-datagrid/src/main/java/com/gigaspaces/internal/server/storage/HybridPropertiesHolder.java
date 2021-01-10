@@ -2,7 +2,6 @@ package com.gigaspaces.internal.server.storage;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.metadata.PropertyInfo;
 
 import java.io.*;
 import java.util.Arrays;
@@ -61,27 +60,27 @@ public class HybridPropertiesHolder implements Externalizable {
         }
 
         Object[] fields = new Object[typeDesc.getProperties().length];
-        int i = 0;
-        for (PropertyInfo property : typeDesc.getProperties()) {
-            if (property.isBinarySpaceProperty(typeDesc)) {
-                fields[i] = this.unpackedSerializedProperties[typeDesc.findHybridIndex(i)];
+        int[] optimizedPositions = typeDesc.getPositionsForSplitting();
+        for (int i = 0; i < optimizedPositions.length; i++) {
+            if (optimizedPositions[i] < 0) {
+                fields[i] = this.unpackedSerializedProperties[(optimizedPositions[i] * -1) - 1];
             } else {
-                fields[i] = this.nonSerializedProperties[typeDesc.findHybridIndex(i)];
+                fields[i] = this.nonSerializedProperties[optimizedPositions[i] - 1];
             }
-            i++;
         }
         return fields;
 
     }
 
     public Object getFixedProperty(ITypeDesc typeDesc, int position) {
-        if (typeDesc.isSerializedProperty(position)) {
+        int[] optimizedPositions = typeDesc.getPositionsForSplitting();
+        if (optimizedPositions[position] < 0) {
             if (!unpacked) {
                 unpackSerializedProperties(typeDesc);
             }
-            return unpackedSerializedProperties[typeDesc.findHybridIndex(position)];
+            return unpackedSerializedProperties[(optimizedPositions[position] * -1) - 1];
         } else {
-            return nonSerializedProperties[typeDesc.findHybridIndex(position)];
+            return nonSerializedProperties[optimizedPositions[position] - 1];
         }
     }
 
@@ -207,14 +206,15 @@ public class HybridPropertiesHolder implements Externalizable {
 
 
     public void setFixedProperty(ITypeDesc typeDesc, int position, Object value) {
-        if (typeDesc.isSerializedProperty(position)) {
+        int[] optimizedPositions = typeDesc.getPositionsForSplitting();
+        if (optimizedPositions[position] < 0) {
             if (!unpacked) {
                 unpackSerializedProperties(typeDesc);
             }
-            unpackedSerializedProperties[typeDesc.findHybridIndex(position)] = value;
+            unpackedSerializedProperties[(optimizedPositions[position] * -1) - 1] = value;
             dirty = true;
         } else {
-            nonSerializedProperties[typeDesc.findHybridIndex(position)] = value;
+            nonSerializedProperties[optimizedPositions[position] - 1] = value;
         }
     }
 
@@ -225,18 +225,15 @@ public class HybridPropertiesHolder implements Externalizable {
             return;
         }
 
-        this.nonSerializedProperties = new Object[typeDesc.getNonSerializedProperties().length];
-        this.unpackedSerializedProperties = new Object[typeDesc.getSerializedProperties().length];
+        this.nonSerializedProperties = nonSerializedProperties == null ? new Object[typeDesc.getNonSerializedProperties().length] : nonSerializedProperties;
+        this.unpackedSerializedProperties = unpackedSerializedProperties == null ? new Object[typeDesc.getSerializedProperties().length] : unpackedSerializedProperties;
+        int[] optimizedPositions = typeDesc.getPositionsForSplitting();
         if (values != null && values.length != 0) {
-            int nonSerializedFieldsIndex = 0;
-            int serializedFieldsIndex = 0;
-            for (PropertyInfo property : typeDesc.getProperties()) {
-                if (property.getStorageType() != null && property.isBinarySpaceProperty(typeDesc)) {
-                    this.unpackedSerializedProperties[serializedFieldsIndex] = values[typeDesc.getFixedPropertyPosition(property.getName())];
-                    serializedFieldsIndex++;
+            for (int i = 0; i < optimizedPositions.length; i++) {
+                if (optimizedPositions[i] < 0) {
+                    this.unpackedSerializedProperties[(optimizedPositions[i] * -1) - 1] = values[i];
                 } else {
-                    this.nonSerializedProperties[nonSerializedFieldsIndex] = values[typeDesc.getFixedPropertyPosition(property.getName())];
-                    nonSerializedFieldsIndex++;
+                    this.nonSerializedProperties[optimizedPositions[i] - 1] = values[i];
                 }
             }
         }
@@ -257,5 +254,16 @@ public class HybridPropertiesHolder implements Externalizable {
 
     public boolean isDirty() {
         return dirty;
+    }
+
+    public void setNonSerialized(Object[] nonSerialized) {
+        this.nonSerializedProperties = nonSerialized;
+    }
+
+
+    public void setSerialized(Object[] serialized) {
+        this.unpackedSerializedProperties = serialized;
+        this.unpacked = true;
+        this.dirty = true;
     }
 }

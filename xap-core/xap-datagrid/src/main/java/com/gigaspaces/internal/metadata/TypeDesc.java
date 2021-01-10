@@ -38,12 +38,10 @@ import com.gigaspaces.query.extension.metadata.TypeQueryExtensions;
 import com.j_spaces.core.client.ExternalEntry;
 import com.j_spaces.core.client.MetaDataEntry;
 import com.j_spaces.kernel.ClassLoaderHelper;
-import com.j_spaces.kernel.SystemProperties;
 import net.jini.core.entry.Entry;
 
 import java.io.*;
 import java.util.*;
-import java.util.stream.IntStream;
 
 /**
  * @author Niv Ingberg
@@ -123,6 +121,7 @@ public class TypeDesc implements ITypeDesc {
 
     private transient PropertyInfo[] _serializedProperties;
     private transient PropertyInfo[] _nonSerializedProperties;
+    private transient int[] _positionsForSplitting;
 
     /**
      * Default constructor for Externalizable.
@@ -191,18 +190,19 @@ public class TypeDesc implements ITypeDesc {
         int serializedFieldsCount = (int) Arrays.stream(_fixedProperties).filter(propertyInfo -> propertyInfo.isBinarySpaceProperty(this)).count();
         _nonSerializedProperties = new PropertyInfo[_fixedProperties.length - serializedFieldsCount];
         _serializedProperties = new PropertyInfo[serializedFieldsCount];
+        _positionsForSplitting = new int[_fixedProperties.length];
         int nonSerializedFieldsIndex = 0;
         int serializedFieldsIndex = 0;
         for (int i = 0; i < _fixedProperties.length; i++) {
             if(_fixedProperties[i].getStorageType() != null && _fixedProperties[i].isBinarySpaceProperty(this)){
                 _serializedProperties[serializedFieldsIndex] = _fixedProperties[i];
-                _serializedProperties[serializedFieldsIndex].setHybridIndex(serializedFieldsIndex);
                 _serializedProperties[serializedFieldsIndex].setOriginalIndex(i);
+                _positionsForSplitting[i] = ((serializedFieldsIndex + 1) * -1);
                 serializedFieldsIndex++;
             } else {
                 _nonSerializedProperties[nonSerializedFieldsIndex] = _fixedProperties[i];
-                _nonSerializedProperties[nonSerializedFieldsIndex].setHybridIndex(nonSerializedFieldsIndex);
                 _nonSerializedProperties[nonSerializedFieldsIndex].setOriginalIndex(i);
+                _positionsForSplitting[i] = nonSerializedFieldsIndex + 1;
                 nonSerializedFieldsIndex++;
             }
         }
@@ -1456,16 +1456,6 @@ public class TypeDesc implements ITypeDesc {
         return _externalEntryWrapperClass;
     }
 
-    @Override
-    public boolean isSerializedProperty(int index) {
-        return _fixedProperties[index].isBinarySpaceProperty(this);
-    }
-
-    @Override
-    public int findHybridIndex(int index) {
-        return _fixedProperties[index].getHybridIndex();
-    }
-
     public PropertyInfo[] getSerializedProperties() {
         return _serializedProperties;
     }
@@ -1476,5 +1466,10 @@ public class TypeDesc implements ITypeDesc {
 
     public int[] getPositionsForScanning() {
         return positionsForScanning;
+    }
+
+    @Override
+    public int[] getPositionsForSplitting() {
+        return _positionsForSplitting;
     }
 }
