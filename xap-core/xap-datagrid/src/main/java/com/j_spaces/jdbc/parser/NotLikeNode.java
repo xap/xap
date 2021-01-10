@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package com.j_spaces.jdbc.parser;
 
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
@@ -28,38 +27,27 @@ import java.sql.SQLException;
  */
 @com.gigaspaces.api.InternalApi
 public class NotLikeNode extends ExpNode {
+    private static final long serialVersionUID = 1L;
 
     public NotLikeNode() {
         super();
     }
 
-
     @Override
-    public boolean isValidCompare(Object ob1, Object ob2) throws ClassCastException {
+    public boolean isValidCompare(Object ob1, Object ob2) {
         return false;
     }
 
-
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#newInstance()
-     */
     @Override
     public ExpNode newInstance() {
         return new NotLikeNode();
     }
 
-
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#accept(com.j_spaces.jdbc.builder.QueryTemplateBuilder)
-     */
     @Override
     public void accept(QueryTemplateBuilder builder) throws SQLException {
         builder.build(this);
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         return toString(" not like  ");

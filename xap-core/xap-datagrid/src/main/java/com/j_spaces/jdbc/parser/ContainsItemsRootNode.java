@@ -16,12 +16,16 @@
 
 package com.j_spaces.jdbc.parser;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
 import com.j_spaces.jdbc.query.QueryColumnData;
 import com.j_spaces.jdbc.query.QueryTableData;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.SQLException;
 import java.util.TreeMap;
 
@@ -34,11 +38,16 @@ import java.util.TreeMap;
 
 @com.gigaspaces.api.InternalApi
 public class ContainsItemsRootNode extends LiteralNode {
+    private static final long serialVersionUID = 1L;
+
     //the subtree of containsIemConditions
     private ExpNode _containsSubs;
     private String _root;
     private ColumnNode _rootColumnNode;
-    private static String _dummyValue = "";
+    private static final String _dummyValue = "";
+
+    public ContainsItemsRootNode() {
+    }
 
     public ContainsItemsRootNode(Object containsSubs, String root, ColumnNode rootColumnNode) {
         super(_dummyValue);
@@ -97,5 +106,21 @@ public class ContainsItemsRootNode extends LiteralNode {
         QueryColumnData queryColumnData = _rootColumnNode.getColumnData();
         QueryTableData tableData = queryColumnData.getColumnTableData();
         return tableData.getTypeDesc();
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        IOUtils.writeObject(out, _containsSubs);
+        IOUtils.writeString(out, _root);
+        IOUtils.writeObject(out, _rootColumnNode);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        _containsSubs = IOUtils.readObject(in);
+        _root = IOUtils.readString(in);
+        _rootColumnNode = IOUtils.readObject(in);
     }
 }

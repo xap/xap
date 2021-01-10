@@ -17,6 +17,7 @@
 package com.j_spaces.jdbc;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.security.authorities.SpaceAuthority.SpacePrivilege;
 import com.gigaspaces.security.service.SecurityContext;
@@ -26,6 +27,9 @@ import com.j_spaces.core.SpaceContextHelper;
 
 import net.jini.core.transaction.Transaction;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.SQLException;
 
 import org.slf4j.Logger;
@@ -38,6 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 @com.gigaspaces.api.InternalApi
 public class DropTableQuery implements Query {
+    private static final long serialVersionUID = 1L;
 
     private String tableName;
 
@@ -47,6 +52,9 @@ public class DropTableQuery implements Query {
     private QuerySession session;
 
     private SecurityInterceptor securityInterceptor;
+
+    public DropTableQuery() {
+    }
 
     public ResponsePacket executeOnSpace(ISpaceProxy space, Transaction txn) throws SQLException {
         ResponsePacket response = new ResponsePacket();
@@ -119,4 +127,15 @@ public class DropTableQuery implements Query {
         return false;
     }
 
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        IOUtils.writeRepetitiveString(out, tableName);
+        IOUtils.writeObject(out, session);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        tableName = IOUtils.readRepetitiveString(in);
+        session = IOUtils.readObject(in);
+    }
 }

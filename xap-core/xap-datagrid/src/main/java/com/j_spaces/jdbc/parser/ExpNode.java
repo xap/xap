@@ -17,6 +17,7 @@
 package com.j_spaces.jdbc.parser;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.jdbc.Stack;
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
@@ -29,7 +30,7 @@ import com.j_spaces.jdbc.query.QueryTableData;
 
 import net.jini.core.transaction.Transaction;
 
-import java.io.Serializable;
+import java.io.*;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.TreeMap;
@@ -42,7 +43,8 @@ import java.util.function.Consumer;
  * @author Michael Mitrani, 2Train4
  */
 public abstract class ExpNode
-        implements Cloneable, Serializable {
+        implements Cloneable, Externalizable {
+    private static final long serialVersionUID = 1L;
 
     protected ExpNode leftChild, rightChild;
 
@@ -167,8 +169,7 @@ public abstract class ExpNode
      *
      * @return true if the two given objects satisfy the condition
      */
-    public abstract boolean isValidCompare(Object ob1, Object ob2)
-            throws ClassCastException;
+    public abstract boolean isValidCompare(Object ob1, Object ob2);
 
 
     /**
@@ -296,4 +297,17 @@ public abstract class ExpNode
         }
     }
 
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        IOUtils.writeObject(out, rightChild);
+        IOUtils.writeObject(out, leftChild);
+        IOUtils.writeObject(out, template);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        this.rightChild = IOUtils.readObject(in);
+        this.leftChild = IOUtils.readObject(in);
+        this.template = IOUtils.readObject(in);
+    }
 }

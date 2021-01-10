@@ -18,6 +18,7 @@ package com.j_spaces.jdbc.query;
 
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.jdbc.*;
@@ -29,8 +30,7 @@ import com.j_spaces.jdbc.parser.ExpNode;
 
 import net.jini.core.transaction.Transaction;
 
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 
 
 /**
@@ -38,12 +38,13 @@ import java.io.Serializable;
  * @since 7.0
  */
 @com.gigaspaces.api.InternalApi
-public class QueryTableData implements Serializable {
+public class QueryTableData implements Externalizable {
+    private static final long serialVersionUID = 1L;
 
-    private final String _tableName;
-    private final String _tableAlias;
+    private String _tableName;
+    private String _tableAlias;
     // the sequential index of the table in the "from" clause
-    private final int _tableIndex;
+    private int _tableIndex;
 
     // the space type descriptor for this table/class
     private ITypeDesc _typeDesc;
@@ -60,6 +61,10 @@ public class QueryTableData implements Serializable {
     private boolean _isJoined;
     private boolean _hasAsterixSelectColumns;
     private Query subQuery;
+
+    // Required by Externalizable
+    public QueryTableData() {
+    }
 
     public QueryTableData(String name, String alias, int index) {
         _tableName = name;
@@ -375,5 +380,85 @@ public class QueryTableData implements Serializable {
 
     public boolean isBroadcastTable(){
         return _typeDesc != null && _typeDesc.isBroadcast();
+    }
+
+    private static final short FLAG_TABLE_NAME = 1 << 0;
+    private static final short FLAG_TABLE_ALIAS = 1 << 1;
+    private static final short FLAG_TYPE_DESC = 1 << 2;
+    private static final short FLAG_JOIN_CONDITION = 1 << 3;
+    private static final short FLAG_TABLE_CONDITION = 1 << 4;
+    private static final short FLAG_JOIN_TABLE = 1 << 5;
+    private static final short FLAG_JOINED = 1 << 6;
+    private static final short FLAG_ASTERISK_COLS = 1 << 7;
+    private static final short FLAG_SUBQUERY = 1 << 8;
+
+    private short buildFlags() {
+        short flags = 0;
+
+        if (_tableName != null)
+            flags |= FLAG_TABLE_NAME;
+        if (_tableAlias != null)
+            flags |= FLAG_TABLE_ALIAS;
+        if (_typeDesc != null)
+            flags |= FLAG_TYPE_DESC;
+        if (_joinCondition != null)
+            flags |= FLAG_JOIN_CONDITION;
+        if (_tableCondition != null)
+            flags |= FLAG_TABLE_CONDITION;
+        if (_joinTable != null)
+            flags |= FLAG_JOIN_TABLE;
+        if (_isJoined)
+            flags |= FLAG_JOINED;
+        if (_hasAsterixSelectColumns)
+            flags |= FLAG_ASTERISK_COLS;
+        if (subQuery != null)
+            flags |= FLAG_SUBQUERY;
+
+        return flags;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeShort(buildFlags());
+        if (_tableName != null)
+            IOUtils.writeRepetitiveString(out, _tableName);
+        if (_tableAlias != null)
+            IOUtils.writeRepetitiveString(out, _tableAlias);
+        out.writeInt(_tableIndex);
+        if (_typeDesc != null)
+            IOUtils.writeObject(out, _typeDesc);
+        if (_joinCondition != null)
+            IOUtils.writeObject(out, _joinCondition);
+        if (_tableCondition != null)
+            IOUtils.writeObject(out, _tableCondition);
+        if (_joinTable != null)
+            IOUtils.writeObject(out, _joinTable);
+        out.writeByte(Join.JoinType.toCode(_joinType));
+        IOUtils.writeObject(out, _joinType);
+        if (subQuery != null)
+            IOUtils.writeObject(out, subQuery);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        short flags = in.readShort();
+        if ((flags & FLAG_TABLE_NAME) != 0)
+            _tableName = IOUtils.readRepetitiveString(in);
+        if ((flags & FLAG_TABLE_ALIAS) != 0)
+            _tableAlias = IOUtils.readRepetitiveString(in);
+        _tableIndex = in.readInt();
+        if ((flags & FLAG_TYPE_DESC) != 0)
+            _typeDesc = IOUtils.readObject(in);
+        if ((flags & FLAG_JOIN_CONDITION) != 0)
+            _joinCondition = IOUtils.readObject(in);
+        if ((flags & FLAG_TABLE_CONDITION) != 0)
+            _tableCondition = IOUtils.readObject(in);
+        if ((flags & FLAG_JOIN_TABLE) != 0)
+            _joinTable = IOUtils.readObject(in);
+        _joinType = Join.JoinType.fromCode(in.readByte());
+        _isJoined = (flags & FLAG_JOINED) != 0;
+        _hasAsterixSelectColumns = (flags & FLAG_ASTERISK_COLS) != 0;
+        if ((flags & FLAG_SUBQUERY) != 0)
+           subQuery = IOUtils.readObject(in);
     }
 }

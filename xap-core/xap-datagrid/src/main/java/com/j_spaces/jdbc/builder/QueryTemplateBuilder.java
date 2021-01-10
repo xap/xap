@@ -20,6 +20,7 @@
 package com.j_spaces.jdbc.builder;
 
 import com.gigaspaces.annotation.sql.SqlFunctionReturnType;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.query.CompoundContainsItemsCustomQuery;
 import com.gigaspaces.internal.query.IContainsItemsCustomQuery;
@@ -33,7 +34,7 @@ import com.j_spaces.jdbc.parser.*;
 import com.j_spaces.jdbc.query.QueryColumnData;
 import com.j_spaces.jdbc.query.QueryTableData;
 
-import java.io.Serializable;
+import java.io.*;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -44,13 +45,16 @@ import java.util.*;
  * @author anna
  */
 @com.gigaspaces.api.InternalApi
-public class QueryTemplateBuilder implements Serializable
-
+public class QueryTemplateBuilder implements Externalizable
 {
-
+    private static final long serialVersionUID = 1L;
 
     // The query object
     private AbstractDMLQuery query;
+
+    // Required for Externalizable
+    public QueryTemplateBuilder() {
+    }
 
     /**
      *
@@ -691,4 +695,13 @@ public class QueryTemplateBuilder implements Serializable
         node.createColumnData(query);
     }
 
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        IOUtils.writeObject(out, query);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        query = IOUtils.readObject(in);
+    }
 }

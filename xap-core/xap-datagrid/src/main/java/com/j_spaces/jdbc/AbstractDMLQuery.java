@@ -20,6 +20,7 @@ import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.gigaspaces.internal.transport.IEntryPacket;
@@ -44,6 +45,9 @@ import com.j_spaces.jdbc.query.QueryTableData;
 
 import net.jini.core.transaction.Transaction;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.BatchUpdateException;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -63,6 +67,7 @@ import java.util.stream.Collectors;
  *         INSERT
  */
 public abstract class AbstractDMLQuery implements Query, Cloneable {
+    private static final long serialVersionUID = 1L;
 
     protected boolean isPrepared;
     protected List queryColumns = null;  //list of columns of the query.
@@ -91,7 +96,7 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
     protected boolean _convertResultToArray = true;
 
     // Template builder
-    private final QueryTemplateBuilder _builder = new QueryTemplateBuilder(this);
+    private QueryTemplateBuilder _builder = new QueryTemplateBuilder(this);
 
     private int _readModifier = ReadModifiers.REPEATABLE_READ;
     private long _timeout;
@@ -698,5 +703,65 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
 
     public void setExplainPlan(ExplainPlan _explainPlan) {
         this._explainPlan = _explainPlan;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeBoolean(isPrepared);
+        IOUtils.writeList(out, queryColumns);
+        IOUtils.writeObject(out, expTree);
+        IOUtils.writeObjectArray(out, preparedValues);
+        IOUtils.writeList(out, _tablesData);
+        IOUtils.writeObject(out, session);
+        IOUtils.writeObject(out, rownum);
+        IOUtils.writeObject(out, valueMap);
+        out.writeBoolean(m_isUseTemplate);
+        IOUtils.writeObject(out, tables);
+        out.writeBoolean(_buildOnly);
+        out.writeBoolean(_convertResultToArray);
+        IOUtils.writeObject(out, _builder);
+        out.writeInt(_readModifier);
+        out.writeLong(_timeout);
+        out.writeBoolean(_ifExists);
+        IOUtils.writeObject(out, _routing);
+        out.writeBoolean(_dirtyState);
+        IOUtils.writeObject(out, _executor);
+        out.writeInt(_minEntriesToWaitFor);
+        out.writeBoolean(_returnResult);
+        IOUtils.writeObject(out, _operationID);
+        out.writeByte(_queryResultType.getCode());
+        out.writeBoolean(_containsSubQueries);
+        IOUtils.writeObject(out, _projectionTemplate);
+        // IOUtils.writeObject(out, _explainPlan); not serializable
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        isPrepared = in.readBoolean();
+        queryColumns = IOUtils.readList(in);
+        expTree = IOUtils.readObject(in);
+        preparedValues = IOUtils.readObjectArray(in);
+        _tablesData = Collections.synchronizedList(IOUtils.readList(in));
+        session = IOUtils.readObject(in);
+        rownum = IOUtils.readObject(in);
+        valueMap = IOUtils.readObject(in);
+        m_isUseTemplate = in.readBoolean();
+        tables = IOUtils.readObject(in);
+        _buildOnly = in.readBoolean();
+        _convertResultToArray = in.readBoolean();
+        _builder = IOUtils.readObject(in);
+        _readModifier = in.readInt();
+        _timeout = in.readLong();
+        _ifExists = in.readBoolean();
+        _routing = IOUtils.readObject(in);
+        _dirtyState = in.readBoolean();
+        _executor = IOUtils.readObject(in);
+        _minEntriesToWaitFor = in.readInt();
+        _returnResult = in.readBoolean();
+        _operationID = IOUtils.readObject(in);
+        _queryResultType = QueryResultTypeInternal.fromCode(in.readByte());
+        _containsSubQueries = in.readBoolean();
+        _projectionTemplate = IOUtils.readObject(in);
+        //_explainPlan =IOUtils.readObject(in); not serializable
     }
 }

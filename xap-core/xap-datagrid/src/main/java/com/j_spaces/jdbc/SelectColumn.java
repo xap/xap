@@ -16,11 +16,12 @@
 
 package com.j_spaces.jdbc;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.jdbc.query.QueryColumnData;
 import com.j_spaces.jdbc.query.QueryTableData;
 
-import java.io.Serializable;
+import java.io.*;
 import java.sql.SQLException;
 
 /**
@@ -29,7 +30,8 @@ import java.sql.SQLException;
  * @author Michael Mitrani, 2Train4, 2004
  */
 @com.gigaspaces.api.InternalApi
-public class SelectColumn implements Serializable {
+public class SelectColumn implements Externalizable {
+    private static final long serialVersionUID = 1L;
 
     private String name = null;
     private String alias = null;
@@ -44,7 +46,7 @@ public class SelectColumn implements Serializable {
     private boolean isVisible = true;
 
     private QueryColumnData _columnData;
-    private final boolean _isDynamic;
+    private boolean _isDynamic;
 
     public SelectColumn() {
         _isDynamic = false;
@@ -257,4 +259,33 @@ public class SelectColumn implements Serializable {
         return SQLUtil.getFieldValue(entry, _columnData);
     }
 
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        IOUtils.writeString(out, name);
+        IOUtils.writeString(out, alias);
+        out.writeBoolean(isSum);
+        out.writeBoolean(isCount);
+        out.writeInt(projectedIndex);
+        IOUtils.writeObject(out, initValue);
+        out.writeBoolean(isInitValue);
+        IOUtils.writeString(out, funcName);
+        out.writeBoolean(isVisible);
+        IOUtils.writeObject(out, _columnData);
+        out.writeBoolean(_isDynamic);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        name = IOUtils.readString(in);
+        alias = IOUtils.readString(in);
+        isSum = in.readBoolean();
+        isCount = in.readBoolean();
+        projectedIndex = in.readInt();
+        initValue = IOUtils.readObject(in);
+        isInitValue = in.readBoolean();
+        funcName = IOUtils.readString(in);
+        isVisible = in.readBoolean();
+        _columnData = IOUtils.readObject(in);
+        _isDynamic = in.readBoolean();
+    }
 }

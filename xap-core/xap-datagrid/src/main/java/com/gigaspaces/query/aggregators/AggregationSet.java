@@ -17,7 +17,9 @@
 
 package com.gigaspaces.query.aggregators;
 
-import java.io.Serializable;
+import com.gigaspaces.internal.io.IOUtils;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,9 +30,13 @@ import java.util.List;
  * @since 10.0
  */
 
-public class AggregationSet implements Serializable {
+public class AggregationSet implements Externalizable {
+    private static final long serialVersionUID = 1L;
 
-    private final List<SpaceEntriesAggregator> aggregators = new ArrayList<SpaceEntriesAggregator>();
+    private final ArrayList<SpaceEntriesAggregator> aggregators = new ArrayList<SpaceEntriesAggregator>();
+
+    public AggregationSet() {
+    }
 
     public AggregationSet add(SpaceEntriesAggregator aggregator) {
         aggregators.add(aggregator);
@@ -125,5 +131,22 @@ public class AggregationSet implements Serializable {
 
     List<SpaceEntriesAggregator> getAggregators() {
         return aggregators;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeInt(aggregators.size());
+        for (SpaceEntriesAggregator aggregator : aggregators) {
+            IOUtils.writeObject(out, aggregator);
+        }
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        int size = in.readInt();
+        aggregators.ensureCapacity(size);
+        for (int i = 0; i < size; i++) {
+            aggregators.add(IOUtils.readObject(in));
+        }
     }
 }

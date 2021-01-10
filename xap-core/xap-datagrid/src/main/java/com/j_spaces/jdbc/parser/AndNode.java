@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package com.j_spaces.jdbc.parser;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
@@ -33,7 +32,7 @@ import java.sql.SQLException;
  */
 @com.gigaspaces.api.InternalApi
 public class AndNode extends ExpNode {
-
+    private static final long serialVersionUID = 1L;
 
     public AndNode(ExpNode leftChild, ExpNode rightChild) {
         super(leftChild, rightChild);
@@ -44,7 +43,7 @@ public class AndNode extends ExpNode {
     }
 
     @Override
-    public boolean isValidCompare(Object ob1, Object ob2) throws ClassCastException {
+    public boolean isValidCompare(Object ob1, Object ob2) {
         //this method is never called here really so it doesn't matter
         return true;
     }
@@ -54,26 +53,16 @@ public class AndNode extends ExpNode {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#newInstance()
-     */
     @Override
     public ExpNode newInstance() {
         return new AndNode();
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#accept(com.j_spaces.jdbc.builder.QueryTemplateBuilder)
-     */
     @Override
     public void accept(QueryTemplateBuilder builder) throws SQLException {
         builder.build(this);
     }
 
-
-    /**
-     * Accept the query executor
-     */
     @Override
     public void accept(IQueryExecutor executor, ISpaceProxy space, Transaction txn, int readModifier, int max) throws SQLException {
         executor.execute(this, space, txn, readModifier, max);
@@ -81,13 +70,9 @@ public class AndNode extends ExpNode {
 
     @Override
     public boolean createJoinIndex(QueryTableData tableData) {
-
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         return "(" + toString(" and ") + ")";

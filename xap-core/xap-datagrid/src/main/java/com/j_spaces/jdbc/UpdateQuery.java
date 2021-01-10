@@ -19,6 +19,7 @@ package com.j_spaces.jdbc;
 import com.gigaspaces.client.WriteMultipleException;
 import com.gigaspaces.client.WriteMultipleException.IWriteResult;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.logger.Constants;
@@ -41,6 +42,9 @@ import com.j_spaces.jdbc.query.IQueryResultSet;
 
 import net.jini.core.transaction.Transaction;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.BatchUpdateException;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -53,6 +57,7 @@ import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class UpdateQuery extends AbstractDMLQuery {
+    private static final long serialVersionUID = 1L;
     private List<LiteralNode> updatedValues;
     private boolean byUid = false;
     private List<UpdateColumn> _updatedColumns;
@@ -476,5 +481,23 @@ public class UpdateQuery extends AbstractDMLQuery {
         return new BatchResponsePacket(result);
     }
 
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
 
+        IOUtils.writeList(out, updatedValues);
+        out.writeBoolean(byUid);
+        IOUtils.writeList(out, _updatedColumns);
+        out.writeBoolean(_selfIncrementedUpdateColumn);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+
+        updatedValues = IOUtils.readList(in);
+        byUid = in.readBoolean();
+        _updatedColumns = IOUtils.readList(in);
+        _selfIncrementedUpdateColumn = in.readBoolean();
+    }
 }

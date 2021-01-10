@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package com.j_spaces.jdbc.parser;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
@@ -35,7 +34,7 @@ import java.sql.SQLException;
  */
 @com.gigaspaces.api.InternalApi
 public class EqualNode extends ExpNode {
-
+    private static final long serialVersionUID = 1L;
 
     public EqualNode() {
         super();
@@ -46,7 +45,7 @@ public class EqualNode extends ExpNode {
     }
 
     @Override
-    public boolean isValidCompare(Object ob1, Object ob2) throws ClassCastException {
+    public boolean isValidCompare(Object ob1, Object ob2) {
         // Comparison with null is not supported
         if (ob1 == null || ob2 == null)
             return false;
@@ -54,38 +53,23 @@ public class EqualNode extends ExpNode {
             return ((Comparable) ob1).compareTo(ob2) == 0;
     }
 
-
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#newInstance()
-     */
     @Override
     public ExpNode newInstance() {
         return new EqualNode();
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#accept(com.j_spaces.jdbc.builder.QueryTemplateBuilder)
-     */
     @Override
     public void accept(QueryTemplateBuilder builder) throws SQLException {
         builder.build(this, TemplateMatchCodes.EQ, TemplateMatchCodes.IS_NULL);
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
-
         return toString(DefaultSQLQueryBuilder.mapCodeToSign(TemplateMatchCodes.EQ));
     }
 
     @Override
-    public EntriesCursor createIndex(QueryTableData table,
-                                     IQueryResultSet<IEntryPacket> entries) {
-
+    public EntriesCursor createIndex(QueryTableData table, IQueryResultSet<IEntryPacket> entries) {
         return new HashedEntriesCursor(table, this, entries);
     }
-
-
 }

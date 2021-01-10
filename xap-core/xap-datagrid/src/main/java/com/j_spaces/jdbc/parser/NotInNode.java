@@ -24,23 +24,21 @@ import net.jini.core.transaction.Transaction;
 
 import java.sql.SQLException;
 
-
 /**
  * The NotInNode. it is used for cases of nested queries as part of a WHERE clause.
  *
  * @author Alex
  */
 @com.gigaspaces.api.InternalApi
-public class NotInNode
-        extends AbstractInNode {
+public class NotInNode extends AbstractInNode {
+    private static final long serialVersionUID = 1L;
 
     public NotInNode() {
         super();
     }
 
     @Override
-    public boolean isValidCompare(Object ob1, Object ob2)
-            throws ClassCastException {
+    public boolean isValidCompare(Object ob1, Object ob2) {
         // never called here
         return false;
     }
@@ -50,34 +48,19 @@ public class NotInNode
         return false;
     }
 
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.j_spaces.jdbc.parser.ExpNode#newInstance()
-     */
     @Override
     public ExpNode newInstance() {
         return new NotInNode();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.j_spaces.jdbc.parser.ExpNode#accept(com.j_spaces.jdbc.builder.QueryTemplateBuilder)
-     */
     @Override
-    public void accept(QueryTemplateBuilder builder)
-            throws SQLException {
+    public void accept(QueryTemplateBuilder builder) throws SQLException {
         builder.build(this);
     }
 
-    /**
-     * Accept the query executor
-     */
     @Override
-    public void accept(IQueryExecutor executor, ISpaceProxy space,
-                       Transaction txn, int readModifier, int max) throws SQLException {
+    public void accept(IQueryExecutor executor, ISpaceProxy space, Transaction txn, int readModifier, int max)
+            throws SQLException {
         executor.execute(this, space, txn, readModifier, max);
     }
 }

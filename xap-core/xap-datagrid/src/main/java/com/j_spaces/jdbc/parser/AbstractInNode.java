@@ -16,17 +16,21 @@
 
 package com.j_spaces.jdbc.parser;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.j_spaces.jdbc.ResultEntry;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.reflect.Array;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class AbstractInNode
-        extends ExpNode {
+public abstract class AbstractInNode extends ExpNode {
+    private static final long serialVersionUID = 1L;
 
     protected HashSet<LiteralNode> valuesList;
 
@@ -114,4 +118,15 @@ public abstract class AbstractInNode
         }
     }
 
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        IOUtils.writeObject(out, valuesList);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        this.valuesList = IOUtils.readObject(in);
+    }
 }

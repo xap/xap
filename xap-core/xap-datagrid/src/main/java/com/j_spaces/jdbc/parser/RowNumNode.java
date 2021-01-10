@@ -17,6 +17,10 @@
 package com.j_spaces.jdbc.parser;
 
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * This node represents the rownum command. it has its start index and the number of rows to
  * collect
@@ -25,11 +29,16 @@ package com.j_spaces.jdbc.parser;
  */
 @com.gigaspaces.api.InternalApi
 public class RowNumNode extends ValueNode {
-    private int startIndex = 0; //preset value
-    private int endIndex = 0; //preset value
+    private static final long serialVersionUID = 1L;
+
+    private int startIndex; //preset value
+    private int endIndex; //preset value
 
     //additional limitation on the results number - set per SQLQuery
     private int maxResults = Integer.MAX_VALUE;
+
+    public RowNumNode() {
+    }
 
     public RowNumNode(int start, int end) {
         this.startIndex = Math.min(start, end);
@@ -94,5 +103,21 @@ public class RowNumNode extends ValueNode {
     @Override
     public Object clone() {
         return new RowNumNode(startIndex, endIndex);
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        out.writeInt(startIndex);
+        out.writeInt(endIndex);
+        out.writeInt(maxResults);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        startIndex = in.readInt();
+        endIndex = in.readInt();
+        maxResults = in.readInt();
     }
 }

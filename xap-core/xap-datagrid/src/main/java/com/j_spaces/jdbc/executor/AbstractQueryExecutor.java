@@ -17,6 +17,7 @@
 package com.j_spaces.jdbc.executor;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.security.AccessDeniedException;
@@ -34,6 +35,9 @@ import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -53,6 +57,8 @@ import org.slf4j.LoggerFactory;
  * @since 7.0
  */
 public abstract class AbstractQueryExecutor implements IQueryExecutor {
+    private static final long serialVersionUID = 1L;
+
     /**
      * This private class implements the Comparator and is used to sort. the entries when ORDER BY
      * is used in the query
@@ -98,8 +104,12 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
 
     protected final static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
-    protected final AbstractDMLQuery query;
-    private final HashMap<ExpNode, IQueryResultSet<IEntryPacket>> _intermediateResults = new HashMap<ExpNode, IQueryResultSet<IEntryPacket>>();
+    protected AbstractDMLQuery query;
+    private HashMap<ExpNode, IQueryResultSet<IEntryPacket>> _intermediateResults = new HashMap<ExpNode, IQueryResultSet<IEntryPacket>>();
+
+    // Required for Externalizable
+    public AbstractQueryExecutor() {
+    }
 
     public AbstractQueryExecutor(AbstractDMLQuery query) {
         super();
@@ -629,5 +639,15 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
         innerQueryNode.setResults(innerResponse.getResultEntry());
     }
 
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        IOUtils.writeObject(out, query);
+        IOUtils.writeObject(out, _intermediateResults);
+    }
 
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        query = IOUtils.readObject(in);
+        _intermediateResults = IOUtils.readObject(in);
+    }
 }

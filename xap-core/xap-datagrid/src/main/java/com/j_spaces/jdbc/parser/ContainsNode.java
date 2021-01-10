@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-
 package com.j_spaces.jdbc.parser;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
@@ -26,6 +26,9 @@ import com.j_spaces.jdbc.query.IQueryResultSet;
 import com.j_spaces.jdbc.query.QueryTableData;
 import com.j_spaces.sadapter.datasource.DefaultSQLQueryBuilder;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.SQLException;
 
 /**
@@ -36,6 +39,7 @@ import java.sql.SQLException;
  */
 @com.gigaspaces.api.InternalApi
 public class ContainsNode extends ExpNode {
+    private static final long serialVersionUID = 1L;
 
     // Holds the contains fields indexes.
     private short _templateMatchCode;
@@ -57,25 +61,16 @@ public class ContainsNode extends ExpNode {
         this.relation = relation;
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#newInstance()
-     */
     @Override
     public ExpNode newInstance() {
         return new ContainsNode();
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#accept(com.j_spaces.jdbc.builder.QueryTemplateBuilder)
-     */
     @Override
     public void accept(QueryTemplateBuilder builder) throws SQLException {
         builder.buildContainsTemplate(this);
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         return toString(DefaultSQLQueryBuilder.mapCodeToSign(TemplateMatchCodes.CONTAINS_TOKEN));
@@ -87,9 +82,7 @@ public class ContainsNode extends ExpNode {
     }
 
     @Override
-    public EntriesCursor createIndex(QueryTableData table,
-                                     IQueryResultSet<IEntryPacket> entries) {
-
+    public EntriesCursor createIndex(QueryTableData table, IQueryResultSet<IEntryPacket> entries) {
         return new HashedEntriesCursor(table, this, entries);
     }
 
@@ -122,5 +115,21 @@ public class ContainsNode extends ExpNode {
 
     public String getRelation() {
         return relation;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        out.writeShort(_templateMatchCode);
+        IOUtils.writeString(out, _path);
+        IOUtils.writeString(out, relation);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        _templateMatchCode = in.readShort();
+        _path = IOUtils.readString(in);
+        relation = IOUtils.readString(in);
     }
 }

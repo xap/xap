@@ -42,16 +42,18 @@ import java.sql.SQLException;
  */
 @com.gigaspaces.api.InternalApi
 public class QueryExecutor extends AbstractQueryExecutor {
+    private static final long serialVersionUID = 1L;
+
+    // Required for Externalizable
+    public QueryExecutor() {
+    }
+
     public QueryExecutor(AbstractDMLQuery query) {
         super(query);
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.executor.IQueryExecutor#execute(com.j_spaces.jdbc.parser.OrNode, com.j_spaces.core.IJSpace, net.jini.core.transaction.Transaction, int, int)
-     */
-    public void execute(OrNode exp, ISpaceProxy space, Transaction txn,
-                        int readModifier, int max) throws SQLException {
-
+    public void execute(OrNode exp, ISpaceProxy space, Transaction txn, int readModifier, int max)
+            throws SQLException {
         // if template is simple - just execute it
         if (exp.getTemplate() != null) {
             IQueryResultSet<IEntryPacket> results = executeTemplate(exp.getTemplate(), space, txn, readModifier, max);
@@ -104,11 +106,8 @@ public class QueryExecutor extends AbstractQueryExecutor {
 
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.executor.IQueryExecutor#execute(com.j_spaces.jdbc.parser.AndNode, com.j_spaces.core.IJSpace, net.jini.core.transaction.Transaction, int, int)
-     */
-    public void execute(AndNode exp, ISpaceProxy space, Transaction txn,
-                        int readModifier, int max) throws SQLException {
+    public void execute(AndNode exp, ISpaceProxy space, Transaction txn, int readModifier, int max)
+            throws SQLException {
         // if template is simple - just execute it
         if (exp.getTemplate() != null) {
             IQueryResultSet<IEntryPacket> results = executeTemplate(exp.getTemplate(), space, txn, readModifier, max);
@@ -149,11 +148,8 @@ public class QueryExecutor extends AbstractQueryExecutor {
 
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.executor.IQueryExecutor#execute(com.j_spaces.jdbc.parser.InNode, com.j_spaces.core.IJSpace, net.jini.core.transaction.Transaction, int, int)
-     */
-    public void execute(InNode exp, ISpaceProxy space, Transaction txn,
-                        int readModifier, int max) throws SQLException {
+    public void execute(InNode exp, ISpaceProxy space, Transaction txn, int readModifier, int max)
+            throws SQLException {
         QueryTemplatePacket template = exp.getTemplate();
         // If template wasn't set during the building phase - inner query
         if (template == null) {
@@ -169,11 +165,8 @@ public class QueryExecutor extends AbstractQueryExecutor {
         setResults(exp, results);
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.executor.IQueryExecutor#execute(com.j_spaces.jdbc.parser.NotInNode, com.j_spaces.core.IJSpace, net.jini.core.transaction.Transaction, int, int)
-     */
-    public void execute(NotInNode exp, ISpaceProxy space,
-                        Transaction txn, int readModifier, int max) throws SQLException {
+    public void execute(NotInNode exp, ISpaceProxy space, Transaction txn, int readModifier, int max)
+            throws SQLException {
 
         QueryTemplatePacket template = exp.getTemplate();
         // If template wasn't set during the building phase - inner query
@@ -234,16 +227,13 @@ public class QueryExecutor extends AbstractQueryExecutor {
         }
     }
 
-    public IQueryResultSet<IEntryPacket> execute(ISpaceProxy space, Transaction txn, int readModifier,
-                                                 int max) throws SQLException {
+    public IQueryResultSet<IEntryPacket> execute(ISpaceProxy space, Transaction txn, int readModifier, int max)
+            throws SQLException {
         return traverseExpressionTree(query.getExpTree(), space, txn, readModifier, max);
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.executor.IQueryExecutor#execute(com.j_spaces.jdbc.parser.ExpNode, com.j_spaces.core.IJSpace, net.jini.core.transaction.Transaction, int, int)
-     */
-    public void execute(ExpNode expNode, ISpaceProxy space, Transaction txn,
-                        int readModifier, int max) throws SQLException {
+    public void execute(ExpNode expNode, ISpaceProxy space, Transaction txn, int readModifier, int max)
+            throws SQLException {
         IQueryResultSet<IEntryPacket> results = executeTemplate(expNode.getTemplate(), space, txn, readModifier, max);
         setResults(expNode, results);
     }
