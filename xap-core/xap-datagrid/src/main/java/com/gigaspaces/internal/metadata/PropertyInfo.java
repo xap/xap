@@ -91,7 +91,6 @@ public class PropertyInfo implements SpacePropertyDescriptor{
     private final PropertyStorageAdapter _storageAdapter;
     private final byte _dotnetStorageType;
     private int originalIndex;
-    private int hybridIndex;
     private final IClassSerializer _classSerializer;
 
     private PropertyInfo(Builder builder) {
@@ -286,20 +285,12 @@ public class PropertyInfo implements SpacePropertyDescriptor{
         return new PropertyInfo(in, version);
     }
 
-    void setHybridIndex(int index) {
-        this.hybridIndex = index;
-    }
-
     void setOriginalIndex(int index) {
         this.originalIndex = index;
     }
 
     public int getOriginalIndex() {
         return originalIndex;
-    }
-
-    int getHybridIndex() {
-        return hybridIndex;
     }
 
     public static class Builder {

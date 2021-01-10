@@ -95,18 +95,13 @@ import java.util.Set;
     }
 
     @Override
-    public boolean isSerializedProperty(int index) {
-        return false;
-    }
-
-    @Override
-    public int findHybridIndex(int index) {
-        return 0;
-    }
-
-    @Override
     public int[] getPositionsForScanning() {
         return new int[0];
+    }
+
+    @Override
+    public int[] getOptimizedPositions() {
+        return null;
     }
 
     @Override
