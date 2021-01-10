@@ -49,6 +49,7 @@ import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPacket
 import com.gigaspaces.internal.cluster.node.impl.packets.data.ReplicationPacketEntryDataConversionException;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.MapProcedure;
+import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.redolog.*;
 import com.gigaspaces.internal.server.space.redolog.storage.BufferedRedoLogFileStorageDecorator;
 import com.gigaspaces.internal.server.space.redolog.storage.CacheLastRedoLogFileStorageDecorator;
@@ -754,6 +755,7 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
             // don't mark all packets as confirmed in case of DirectPersistencySync
             // packets should not be removed from redo log
             if (!isDirectPersistencySync) {
+//                changed by Mishel due to Tadiran transition from 7.1.4 to 14.0.1 - GS-14365 ->>
 //                onBeginSynchronization(memberName);
             }
             clearConfirmedPackets();
@@ -767,11 +769,11 @@ public abstract class AbstractSingleFileGroupBacklog<T extends IReplicationOrder
 
     protected abstract void onBeginSynchronization(String memberName);
 
-    public boolean synchronizationDataGenerated(String memberName, String uid) {
+    public boolean synchronizationDataGenerated(String memberName, String uid, SpaceEngine _spaceEngine) {
         _rwLock.writeLock().lock();
         try {
             SynchronizingData syncData = _activeSynchronizingTarget.get(memberName);
-            return syncData.updateUidKey(uid, getLastInsertedKeyToBacklogUnsafe());
+            return syncData.updateUidKey(uid, getLastInsertedKeyToBacklogUnsafe(), _spaceEngine);
         } finally {
             _rwLock.writeLock().unlock();
         }

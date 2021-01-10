@@ -23,6 +23,7 @@ import com.gigaspaces.internal.cluster.node.impl.ReplicationSingleOperationType;
 import com.gigaspaces.internal.cluster.node.impl.backlog.IReplicationGroupBacklog;
 import com.gigaspaces.internal.cluster.node.impl.config.DynamicSourceGroupConfigHolder;
 import com.gigaspaces.internal.cluster.node.impl.router.ReplicationEndpointDetails;
+import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.metrics.MetricRegistrator;
 
@@ -100,7 +101,7 @@ public interface IReplicationSourceGroup {
      * During synchronization process, notify the channel specified by the target name, that a sync
      * data was generated in order for it to know to filter older data when replicating to target
      */
-    boolean synchronizationDataGenerated(String synchronizingMemberLookupName, String uid);
+    boolean synchronizationDataGenerated(String synchronizingMemberLookupName, String uid, SpaceEngine _spaceEngine);
 
     /**
      * During synchronization process, notify the channel specified by the target name that the copy
