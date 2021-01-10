@@ -20,20 +20,14 @@ import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.nio.Pivot;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.kernel.ManagedRunnable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.channels.CancelledKeyException;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.ClosedSelectorException;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Provides a general selector logic.
@@ -70,7 +64,7 @@ public abstract class AbstractSelectorThread extends ManagedRunnable implements 
             checkForDeadConnections();
             _selector.select(SELECT_TIMEOUT);
             Set<SelectionKey> readyKeys = _selector.selectedKeys();
-            if (readyKeys == null) {
+            if (readyKeys == null || readyKeys.isEmpty()) {
                 return;
             }
             Iterator<SelectionKey> iterator = readyKeys.iterator();

@@ -20,23 +20,19 @@ import com.gigaspaces.config.ConfigurationException;
 import com.gigaspaces.config.lrmi.ITransportConfig;
 import com.gigaspaces.config.lrmi.nio.NIOConfiguration;
 import com.gigaspaces.internal.lrmi.LRMIMonitoringDetailsImpl;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.utils.concurrent.GSThread;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
-import com.gigaspaces.lrmi.ClientPeerInvocationHandler;
-import com.gigaspaces.lrmi.ConnPoolInvocationHandler;
-import com.gigaspaces.lrmi.ConnectionPool;
-import com.gigaspaces.lrmi.DynamicSmartStub;
-import com.gigaspaces.lrmi.GenericExporter;
-import com.gigaspaces.lrmi.LRMIRuntime;
-import com.gigaspaces.lrmi.ProtocolAdapter;
-import com.gigaspaces.lrmi.ServerPeer;
+import com.gigaspaces.lrmi.*;
 import com.gigaspaces.lrmi.classloading.DefaultClassProvider;
 import com.gigaspaces.lrmi.classloading.IClassProvider;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientConversationRunner;
 import com.gigaspaces.lrmi.nio.selector.handler.client.ClientHandler;
 import com.gigaspaces.management.transport.ITransportConnection;
 import com.j_spaces.core.service.ServiceConfigLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -44,9 +40,6 @@ import java.rmi.RemoteException;
 import java.rmi.server.ExportException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * An NIO based implementation of LRMI Protocol Adapter
@@ -105,13 +98,14 @@ public class PAdapter implements ProtocolAdapter<CPeer> {
         _exporter = (GenericExporter) ServiceConfigLoader.getExporter();
         initClassProvider();
 
-        _handlers = new ClientHandler[4];
+        final int nThreads = GsEnv.propertyInt("com.gs.lrmi.nio.selector.handler.client.threads").get(4);
+        _handlers = new ClientHandler[nThreads];
         for (int i = 0; i < _handlers.length; i++) {
             try {
                 _handlers[i] = new ClientHandler();
-                GSThread writeThread = new GSThread(_handlers[i], "LRMI-async-Selector-Thread-" + i);
-                writeThread.setDaemon(true);
-                writeThread.start();
+                GSThread clientHandlerThread = new GSThread(_handlers[i], "LRMI-async-client-selector-thread-" + i);
+                clientHandlerThread.setDaemon(true);
+                clientHandlerThread.start();
             } catch (IOException e) {
                 _logger.error("cant create a selector for async calls", e);
                 throw new IllegalStateException("cant create a selector for async calls", e);
@@ -119,9 +113,9 @@ public class PAdapter implements ProtocolAdapter<CPeer> {
         }
         try {
             _clientConversationRunner = new ClientConversationRunner();
-            GSThread writeThread = new GSThread(_clientConversationRunner, "LRMI-async-client-connection-Thread-");
-            writeThread.setDaemon(true);
-            writeThread.start();
+            GSThread clientConversationThread = new GSThread(_clientConversationRunner, "LRMI-async-client-connection-thread-");
+            clientConversationThread.setDaemon(true);
+            clientConversationThread.start();
         } catch (Exception e) {
             _logger.error("cant create a selector for connect", e);
             throw new IllegalStateException("cant create a selector for connect", e);
