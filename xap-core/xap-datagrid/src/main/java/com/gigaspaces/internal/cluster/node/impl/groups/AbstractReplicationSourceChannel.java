@@ -54,6 +54,7 @@ import com.gigaspaces.internal.cluster.node.impl.router.IReplicationMonitoredCon
 import com.gigaspaces.internal.cluster.node.impl.router.IReplicationRouter;
 import com.gigaspaces.internal.cluster.node.impl.router.ReplicationEndpointDetails;
 import com.gigaspaces.internal.cluster.node.replica.CannotExecuteSynchronizeReplicaException;
+import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.concurrent.AsyncCallable;
 import com.gigaspaces.internal.utils.concurrent.IAsyncHandler;
@@ -523,9 +524,9 @@ public abstract class AbstractReplicationSourceChannel
         return _synchronizing;
     }
 
-    public boolean synchronizationDataGenerated(String uid) {
+    public boolean synchronizationDataGenerated(String uid, SpaceEngine _spaceEngine) {
         return getGroupBacklog().synchronizationDataGenerated(getMemberName(),
-                uid);
+                uid, _spaceEngine);
     }
 
     public void synchronizationCopyStageDone() {

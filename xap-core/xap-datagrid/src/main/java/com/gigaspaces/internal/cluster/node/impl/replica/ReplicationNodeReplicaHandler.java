@@ -220,7 +220,7 @@ public class ReplicationNodeReplicaHandler {
                     if (replicaData.isSynchronizeReplica()) {
                         IReplicationSourceGroup sourceGroup = _replicationNode.getReplicationSourceGroup(replicaData.getGroupName());
                         boolean duplicateUid = sourceGroup.synchronizationDataGenerated(replicaData.getOriginLookupName(),
-                                data.getUid());
+                                data.getUid(), _spaceEngine);
 
                         // handles objects that were already recovered
                         // this can happen because the data set is not fully locked

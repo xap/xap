@@ -31,6 +31,7 @@ import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPack
 import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPacketDataProducer;
 import com.gigaspaces.internal.cluster.node.impl.processlog.IProcessLogHandshakeResponse;
 import com.gigaspaces.internal.cluster.node.impl.processlog.IProcessResult;
+import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.metrics.MetricRegistrator;
 
@@ -94,7 +95,7 @@ public interface IReplicationGroupBacklog extends IDynamicSourceGroupStateListen
 
     void beginSynchronizing(String memberName, boolean isDirectPersistencySync);
 
-    boolean synchronizationDataGenerated(String memberName, String uid);
+    boolean synchronizationDataGenerated(String memberName, String uid, SpaceEngine _spaceEngine);
 
     void synchronizationCopyStageDone(String memberName);
 

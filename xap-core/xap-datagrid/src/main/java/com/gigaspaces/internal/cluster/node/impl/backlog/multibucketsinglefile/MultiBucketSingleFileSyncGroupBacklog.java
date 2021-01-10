@@ -32,7 +32,7 @@ import java.util.ArrayList;
 @com.gigaspaces.api.InternalApi
 public class MultiBucketSingleFileSyncGroupBacklog extends AbstractMultiBucketSingleFileGroupBacklog
         implements IReplicationSyncGroupBacklog {
-    public MultiBucketSingleFileSyncGroupBacklog(
+    public MultiBucketSingleFileSyncGroupBacklog (
             DynamicSourceGroupConfigHolder sourceConfig, String name,
             IReplicationPacketDataProducer<?> dataProducer) {
         super(sourceConfig, name, dataProducer);

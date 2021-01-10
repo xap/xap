@@ -33,6 +33,7 @@ import com.gigaspaces.internal.cluster.node.impl.router.ConnectionState;
 import com.gigaspaces.internal.cluster.node.impl.router.IReplicationMonitoredConnection;
 import com.gigaspaces.internal.cluster.node.impl.router.IReplicationRouter;
 import com.gigaspaces.internal.cluster.node.impl.router.ReplicationEndpointDetails;
+import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.collections.CopyOnUpdateMap;
 import com.gigaspaces.internal.utils.concurrent.IAsyncHandlerProvider;
@@ -310,9 +311,9 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
     }
 
     public boolean synchronizationDataGenerated(
-            String synchronizingMemberLookupName, String uid) {
+            String synchronizingMemberLookupName, String uid, SpaceEngine _spaceEngine) {
         AbstractReplicationSourceChannel channel = getChannelSafe(synchronizingMemberLookupName);
-        return channel.synchronizationDataGenerated(uid);
+        return channel.synchronizationDataGenerated(uid, _spaceEngine);
     }
 
     @Override
