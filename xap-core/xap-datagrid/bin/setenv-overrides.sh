@@ -1,6 +1,6 @@
 ##*******************************************************************************************************
 ## Use this script to override default GigaSpaces settings using environment variables.
-## For more information see https://docs.gigaspaces.com/15.5/started/common-environment-variables.html
+## For more information see https://docs.gigaspaces.com/15.8/started/common-environment-variables.html
 ##
 ## Common variables:
 ## -----------------
