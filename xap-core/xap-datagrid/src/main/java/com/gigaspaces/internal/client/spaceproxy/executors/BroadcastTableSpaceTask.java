@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static com.gigaspaces.internal.space.requests.BroadcastTableSpaceRequestInfo.Action.*;
 
@@ -53,12 +54,17 @@ public class BroadcastTableSpaceTask extends SystemDistributedTask<BroadcastTabl
     }
 
     private BroadcastTableSpaceRequestInfo generateRequest(byte action){
-        if(action == PUSH_ENTRY.value)
-            return new PushBroadcastTableEntrySpaceRequestInfo();
-        if(action == PUSH_ENTRIES.value)
-            return new PushBroadcastTableEntriesSpaceRequestInfo();
-        if(action == PULL_ENTRIES.value)
-            return new PullBroadcastTableEntriesSpaceRequestInfo();
-        throw new IllegalArgumentException("Unknown broadcast table action " + action);
+        switch (BroadcastTableSpaceRequestInfo.Action.valueOf(action)){
+            case PUSH_ENTRY:
+                return new PushBroadcastTableEntrySpaceRequestInfo();
+            case PUSH_ENTRIES:
+                return new PushBroadcastTableEntriesSpaceRequestInfo();
+            case PULL_ENTRIES:
+                return new PullBroadcastTableEntriesSpaceRequestInfo();
+            case CLEAR_ENTRIES:
+                return new ClearBroadcastTableEntriesSpaceRequestInfo();
+            default:
+                throw new NoSuchElementException("Couldn't match broadcast table action to value " + action);
+        }
     }
 }

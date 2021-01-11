@@ -4,12 +4,10 @@ import com.gigaspaces.async.AsyncFuture;
 import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.executors.BroadcastTableSpaceTask;
 import com.gigaspaces.internal.server.space.SpaceImpl;
-import com.gigaspaces.internal.space.requests.BroadcastTableSpaceRequestInfo;
-import com.gigaspaces.internal.space.requests.PullBroadcastTableEntriesSpaceRequestInfo;
-import com.gigaspaces.internal.space.requests.PushBroadcastTableEntriesSpaceRequestInfo;
-import com.gigaspaces.internal.space.requests.PushBroadcastTableEntrySpaceRequestInfo;
+import com.gigaspaces.internal.space.requests.*;
 import com.gigaspaces.internal.space.responses.BroadcastTableSpaceResponseInfo;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.j_spaces.core.SpaceContext;
 import com.j_spaces.core.UnknownTypesException;
 import com.j_spaces.core.client.Modifiers;
@@ -53,6 +51,10 @@ public class BroadcastTableHandler {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public void clearEntries(ITemplatePacket template, int modifiers) throws RemoteException{
+        executeTask(new ClearBroadcastTableEntriesSpaceRequestInfo(template, modifiers), null);
     }
 
     private BroadcastTableSpaceResponseInfo executeTask(BroadcastTableSpaceRequestInfo broadcastTableSpaceRequestInfo, Object routing) throws RemoteException {

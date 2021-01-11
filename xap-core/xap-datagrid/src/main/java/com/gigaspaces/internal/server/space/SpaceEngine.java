@@ -208,7 +208,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     private final FifoGroupsHandler _fifoGroupsHandler;
     private LeaseManager _leaseManager;
     private MemoryManager _memoryManager;
-    private ServerIteratorsManager _serverIteratorsManager;
+    private final ServerIteratorsManager _serverIteratorsManager;
 
     /*--------- Working Groups ---------*/
     private final WorkingGroup<BusPacket<Processor>> _processorWG;
@@ -985,7 +985,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 _cacheManager.getStorageAdapter().supportsGetEntries() &&
                 !serverTypeDesc.hasSubTypes(); // TODO: Remove sub types limitation.
 
-        final AbstractIdsQueryPacket idsQueryPacket = (AbstractIdsQueryPacket) template;
+        final AbstractIdsQueryPacket idsQueryPacket = template;
         final Object[] ids = idsQueryPacket.getIds();
 
         ReadByIdsInfo rIdsInfo = null;
@@ -1245,6 +1245,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         context.setOperationID(template.getOperationID());
         context.setReadByIdsInfo(readByIdsInfo);
         context.setPrefetchedNonBlobStoreEntries(prefetchedNonBlobStoreEntries);
+        context.applyOperationContext(sc);
 
         if(take && Modifiers.contains(operationModifiers,Modifiers.BACKUP_ONLY)){
             context.setBackupOnly();
@@ -1426,7 +1427,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
      * if entryPacket.NoWriteLease=true the return value will be Entry UID(String) of Entry,
      * otherwise Lease object.
      */
-    public WriteEntriesResult write(IEntryPacket[] entryPackets, Transaction txn, long lease, long leases[], int modifiers, SpaceContext sc, long timeout, boolean newRouter)
+    public WriteEntriesResult write(IEntryPacket[] entryPackets, Transaction txn, long lease, long[] leases, int modifiers, SpaceContext sc, long timeout, boolean newRouter)
             throws TransactionException, RemoteException, UnknownTypesException {
         monitorMemoryUsage(true);
         monitorReplicationStateForModifyingOperation(txn, OperationWeightInfoFactory.create(entryPackets.length, WeightInfoOperationType.WRITE));
@@ -4126,35 +4127,13 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                     toScan,
                     makeWaitForInfo, entryTypeDesc);
     }
-    /*
-    Determine if engine should skip any operation in context of broadcast tables
-    returns false if one the following conditions is met:
-    1. Operation is clear
-    2. Operation is from collocated proxy and not server iterator
-    3. Cluster is not partitioned
-    4. Operation is in leader partition
-    Returns true if:
-    1. Operation is take (take operation deletes only partitioned entries)
-    2. None of the false conditions is met
-     */
+
     public boolean skipBroadcastTable(Context context,
                                       ITemplateHolder template){
-        if(template != null){
-            if(template.isClear()) {
-                return false;
-            }
-            if(template.isTakeOperation()) {
-                return true;
-            }
-            if(!context.isFromClustered() && !template.isServerIterator()) {
-                return false;
-            }
-        }
-        if(!getClusterInfo().isPartitioned())
-            return false;
-        if(getPartitionIdZeroBased() == 0)
-            return false;
-        return true;
+        boolean emptyTakeNotClearTemplate = template.isEmptyTemplate() && !template.isClear() && template.isTakeOperation();
+        if(!getClusterInfo().isPartitioned() || getPartitionIdZeroBased() == 0)
+            return emptyTakeNotClearTemplate;
+        return  context.isFromClustered(); // for other partitions, don't skip embedded proxy operations
     }
 
     private IScanListIterator<IEntryCacheInfo> getOrCreateScanListIteratorFromServerIterator(Context context, IServerTypeDesc entryTypeDesc, ITemplateHolder template, IServerTypeDesc serverTypeDesc) {
@@ -5231,7 +5210,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         ServerTransaction est = entry.getWriteLockTransaction();
 
         if (template.getXidOriginatedTransaction() != null && est != null && template.getXidOriginatedTransaction().equals(est))
-            //if both entry & template under same xtn, its not read committed
+        //if both entry & template under same xtn, its not read committed
             return false;
 
         return true;

@@ -4,6 +4,7 @@ import com.gigaspaces.async.AsyncResult;
 import com.gigaspaces.internal.space.responses.BroadcastTableSpaceResponseInfo;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * @author alon shoham
@@ -15,10 +16,18 @@ public abstract class BroadcastTableSpaceRequestInfo extends AbstractSpaceReques
     public enum Action {
         PUSH_ENTRY (0),
         PUSH_ENTRIES (1),
-        PULL_ENTRIES (2);
+        PULL_ENTRIES (2),
+        CLEAR_ENTRIES(3);
         public final byte value;
         Action(int value) {
-            this.value = (byte)  value;
+            this.value = (byte) value;
+        }
+        public static Action valueOf(byte value){
+            for(Action action: Action.values()){
+                if(action.value == value)
+                    return action;
+            }
+            throw new NoSuchElementException("Couldn't find action with value " + value);
         }
     }
 

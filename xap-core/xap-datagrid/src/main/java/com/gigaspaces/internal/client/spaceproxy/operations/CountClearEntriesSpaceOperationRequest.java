@@ -90,7 +90,7 @@ public class CountClearEntriesSpaceOperationRequest extends SpaceOperationReques
 
     @Override
     public PartitionedClusterExecutionType getPartitionedClusterExecutionType() {
-        if (_templatePacket.getRoutingFieldValue() != null || isReplicatedTableOperation())
+        if (_templatePacket.getRoutingFieldValue() != null || _templatePacket.isBroadcast())
             return PartitionedClusterExecutionType.SINGLE;
 
         return PartitionedClusterExecutionType.BROADCAST_CONCURRENT;
@@ -126,10 +126,6 @@ public class CountClearEntriesSpaceOperationRequest extends SpaceOperationReques
     @Override
     public String getLRMIMethodTrackingId() {
         return isClear() ? "clear" : "count";
-    }
-
-    private boolean isReplicatedTableOperation() {
-        return !isClear() && _templatePacket.isBroadcast();
     }
 
     @Override

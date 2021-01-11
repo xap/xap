@@ -8,6 +8,7 @@ import com.gigaspaces.internal.space.responses.SpaceResponseInfo;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.TemplatePacket;
 import com.gigaspaces.security.authorities.SpaceAuthority;
+import com.j_spaces.core.SpaceContext;
 import com.j_spaces.core.UnknownTypeException;
 import com.j_spaces.core.UnknownTypesException;
 import com.j_spaces.core.client.Modifiers;
@@ -59,6 +60,14 @@ public class SpaceBroadcastTableExecutor extends SpaceActionExecutor {
                     }
                 }
             return responseInfo;
+        }
+        if(requestInfo.getAction() == CLEAR_ENTRIES) {
+            ClearBroadcastTableEntriesSpaceRequestInfo info = (ClearBroadcastTableEntriesSpaceRequestInfo) spaceRequestInfo;
+            try {
+                space.clear(info.getTemplatePacket(), null, Modifiers.add(info.getModifiers(), Modifiers.BACKUP_ONLY), new SpaceContext());
+            } catch (UnusableEntryException | UnknownTypeException | TransactionException | RemoteException e) {
+                responseInfo.addException(partitionId, e);
+            }
         }
         return responseInfo;
     }
