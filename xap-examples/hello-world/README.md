@@ -1,11 +1,11 @@
 # Hello World Example
 
-This example demonstrates the concepts behind GigaSpaces data grid.
- 
+This example demonstrates the basic concepts behind GigaSpaces data grid.
+
+# Overview
+
 There are two counter parts: a client and a server. The client, "HelloWorld.java" updates a 
 data-grid with "Hello" and "World!" data entities and then reads them back.
-
-The `HelloWorld` main class accepts the following arguments: `-name` {data-grid name} `-mode` {embedded,remote}
 
 ## Message.java
 
@@ -25,8 +25,14 @@ Additional annotations can be applied - here are a couple:
 This main class can either start a single data-grid instance (embedded) in it's JVM for easy development, or connect
 to an existing (remote) data-grid (by specifying its name).
 
-## Embedded Data Grid
-Import Maven `examples/hello-world/pom.xml` into your IDE of choice as a maven project.
+# Running The Example
+
+This example is a standard maven project - you can open it in your IDE of choice by importing `examples/hello-world/pom.xml` as maven.
+
+The `HelloWorld` main class accepts the following arguments: `-name` {data-grid name} `-mode` {embedded,remote}
+
+## Running in Embedded Mode
+
 Launch the `HelloWorld` main (arguments: `-name` myDataGrid `-mode` embedded)
 
 This will start an embedded data-grid followed by write and read of Message entities.
@@ -41,41 +47,39 @@ read - ['Hello', 'World!']
 
 ![helloworld-1](images/embedded.png)
 
-## Deploying a Remote Data Grid
+## Running in Remote Mode
 
-To connect to a *remote* data-grid, you first need to start a data grid in a local environment.
-It is possible to start a standalone data grid instance, but it is easier to use the Service Grid.
+To connect to a *remote* data-grid, you need a cluster manager to host the data grid. 
 
-### Starting the Service Grid with 1 data-grid instance
-To start the service grid locally with a single container use the run the `gs.(sh|bat)` as follows:
-- gs.(sh|bat) host run-agent --auto --gsc=1
+### Overview - Cluster Managers
 
-To deploy a data grid, run:
+A data grid requires a cluster manager. The following cluster managers are available:
+
+* Standalone
+* Service Grid
+* Kubernetes
+* ElasticGrid
+
+The Service Grid is recommended for beginners, which is what we'll show here. 
+If you're using the open source package, you'll need to use the standalone cluster manager, which is discussed later in this page.  
+
+### Deploying a data grid
+
+To start the service grid locally with a single container, run the `gs.(sh|bat)` as follows:
+- gs.(sh|bat) host run-agent --auto --containers=1
+
+To deploy a data grid called `myDataGrid`, run:
 - gs.(sh|bat) space deploy myDataGrid
 
 ![helloworld-1r](images/remote.png)
 
-### Starting the Service Grid with 2 data-grid partitions
-The commands differ in the number of containers hosting the data-grid instances.
-
-- gs.(sh|bat) host run-agent --auto --gsc=2
-- gs.(sh|bat) space deploy --partitions=2 myDataGrid
-
-![helloworld-2](images/partitioned.png)
-
-### Starting the Service Grid with 2 highly-available data-grid partitions (one backup for each)
-- gs.(sh|bat) host run-agent --auto --gsc=4
-- gs.(sh|bat) space deploy --partitions=2 --ha myDataGrid
-
-![helloworld-3](images/partitioned-with-backup.png)
-
-## Running the Example - Remote
 Now that we have a remote data-grid, we can connect to it.
 
-Import Maven `examples/hello-world/pom.xml` into your IDE of choice as a maven project.
 Launch the `HelloWorld` main (arguments: `-name` myDataGrid `-mode` remote)
 
 This will connect your  client to your remote data-grid followed by write and read of Message entities.
+
+*Tip*: The cluster manager includes a web-based UI which is started at http://localhost:8090
 
 ### output
 ```
@@ -85,11 +89,30 @@ write - 'World!'
 read - ['Hello', 'World!']
 ```
 
-## Stopping the data grid
+### Stopping the data grid
 
-Before deploying a new data grid we need to stop the previous processes.
+To terminate the local service grid agent, run:
 
-`Ctrl+c` on all gs.(sh|bat) processes
+- gs.(sh|bat) host kill-agent
+
+### Deploying a data-grid with 2 partitions (optional)
+
+Use the same commands, but specify 2 containers (1 per instance), and add the `--partitions` parameter:
+
+- gs.(sh|bat) host run-agent --auto --containers=2
+- gs.(sh|bat) space deploy myDataGrid --partitions=2
+
+![helloworld-2](images/partitioned.png)
+
+### Deploying a data-grid with 2 highly-available partitions (optional)
+
+Use the same commands, but specify 4 containers (1 per instance), and add the `--ha` parameter:
+
+- gs.(sh|bat) host run-agent --auto --containers=4
+- gs.(sh|bat) space deploy myDataGrid --partitions=2 --ha
+
+![helloworld-3](images/partitioned-with-backup.png)
+
 
 ## Starting standalone data grid instance/s (without Service Grid)
 
