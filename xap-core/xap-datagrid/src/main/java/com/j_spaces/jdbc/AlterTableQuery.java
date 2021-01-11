@@ -17,7 +17,6 @@
 package com.j_spaces.jdbc;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
-import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.security.authorities.SpaceAuthority.SpacePrivilege;
@@ -28,9 +27,6 @@ import com.j_spaces.core.SpaceContextHelper;
 
 import net.jini.core.transaction.Transaction;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.sql.SQLException;
 
 import org.slf4j.Logger;
@@ -47,7 +43,6 @@ import org.slf4j.LoggerFactory;
  */
 @com.gigaspaces.api.InternalApi
 public class AlterTableQuery implements Query {
-    private static final long serialVersionUID = 1L;
 
     private String tableName;
     private String[] indices;
@@ -56,9 +51,6 @@ public class AlterTableQuery implements Query {
     //logger
     final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
     private QuerySession session;
-
-    public AlterTableQuery() {
-    }
 
     public ResponsePacket executeOnSpace(ISpaceProxy space, Transaction txn) throws SQLException {
         try {
@@ -154,17 +146,4 @@ public class AlterTableQuery implements Query {
         return false;
     }
 
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        IOUtils.writeRepetitiveString(out, tableName);
-        IOUtils.writeObject(out, session);
-        IOUtils.writeStringArray(out, indices);
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        tableName = IOUtils.readRepetitiveString(in);
-        session = IOUtils.readObject(in);
-        indices = IOUtils.readStringArray(in);
-    }
 }

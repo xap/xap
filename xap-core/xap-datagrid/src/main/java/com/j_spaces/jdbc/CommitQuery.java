@@ -17,14 +17,10 @@
 package com.j_spaces.jdbc;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
-import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.security.service.SecurityInterceptor;
 
 import net.jini.core.transaction.Transaction;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.sql.SQLException;
 
 /**
@@ -35,14 +31,9 @@ import java.sql.SQLException;
  */
 @com.gigaspaces.api.InternalApi
 public class CommitQuery implements Query {
-    private static final long serialVersionUID = 1L;
 
-    private boolean isCommit;
+    final private boolean isCommit;
     private QuerySession session = null;
-
-    // Required for Externalizable
-    public CommitQuery() {
-    }
 
     /**
      * @param isCommit - true for COMMIT, false for ROLLBACK
@@ -50,7 +41,6 @@ public class CommitQuery implements Query {
     public CommitQuery(boolean isCommit) {
         this.isCommit = isCommit;
     }
-
 
     public boolean isCommit() {
         return isCommit;
@@ -128,15 +118,4 @@ public class CommitQuery implements Query {
         return false;
     }
 
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeBoolean(isCommit);
-        IOUtils.writeObject(out, session);
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        isCommit = in.readBoolean();
-        session = IOUtils.readObject(in);
-    }
 }

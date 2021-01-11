@@ -53,7 +53,6 @@ import org.slf4j.LoggerFactory;
  */
 @com.gigaspaces.api.InternalApi
 public class DeleteQuery extends AbstractDMLQuery {
-    private static final long serialVersionUID = 1L;
     final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     public DeleteQuery() {

@@ -52,6 +52,7 @@ import net.jini.core.transaction.TransactionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -66,7 +67,7 @@ import java.util.*;
  * @author Michael Mitrani, 2Train4, 2004
  */
 @com.gigaspaces.api.InternalApi
-public class SelectQuery extends AbstractDMLQuery {
+public class SelectQuery extends AbstractDMLQuery implements Externalizable {
     private static final long serialVersionUID = 1L;
 
     /**

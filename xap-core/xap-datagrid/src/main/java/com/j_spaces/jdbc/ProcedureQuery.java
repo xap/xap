@@ -23,7 +23,6 @@
 package com.j_spaces.jdbc;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
-import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.core.ExternalEntryPacket;
@@ -33,9 +32,6 @@ import com.j_spaces.kernel.ClassLoaderHelper;
 
 import net.jini.core.transaction.Transaction;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -51,7 +47,6 @@ import java.util.HashMap;
  */
 @com.gigaspaces.api.InternalApi
 public class ProcedureQuery extends AbstractDMLQuery {
-    private static final long serialVersionUID = 1L;
 
     private String procName;
     private ArrayList paramList;
@@ -159,21 +154,5 @@ public class ProcedureQuery extends AbstractDMLQuery {
         query._tablesData = this._tablesData;
         query.tables = tables;
         return query;
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        super.writeExternal(out);
-
-        IOUtils.writeString(out, procName);
-        IOUtils.writeObject(out, paramList);
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        super.readExternal(in);
-
-        procName = IOUtils.readString(in);
-        paramList = IOUtils.readObject(in);
     }
 }

@@ -67,7 +67,6 @@ import java.util.stream.Collectors;
  *         INSERT
  */
 public abstract class AbstractDMLQuery implements Query, Cloneable {
-    private static final long serialVersionUID = 1L;
 
     protected boolean isPrepared;
     protected List queryColumns = null;  //list of columns of the query.
@@ -705,8 +704,9 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
         this._explainPlan = _explainPlan;
     }
 
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
+    protected void writeExternal(ObjectOutput out) throws IOException {
+        if (securityInterceptor != null)
+            throw new IllegalStateException("Cannot be serialized in secured mode");
         out.writeBoolean(isPrepared);
         IOUtils.writeList(out, queryColumns);
         IOUtils.writeObject(out, expTree);
@@ -735,8 +735,7 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
         // IOUtils.writeObject(out, _explainPlan); not serializable
     }
 
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    protected void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         isPrepared = in.readBoolean();
         queryColumns = IOUtils.readList(in);
         expTree = IOUtils.readObject(in);

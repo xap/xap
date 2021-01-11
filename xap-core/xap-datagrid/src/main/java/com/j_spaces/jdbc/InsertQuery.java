@@ -18,7 +18,6 @@ package com.j_spaces.jdbc;
 
 import com.gigaspaces.client.WriteMultipleException;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
-import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.security.authorities.SpaceAuthority.SpacePrivilege;
 import com.gigaspaces.security.service.SecurityContext;
@@ -35,15 +34,11 @@ import com.j_spaces.jdbc.parser.LiteralNode;
 import net.jini.core.lease.Lease;
 import net.jini.core.transaction.Transaction;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.sql.BatchUpdateException;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * This class handles the INSERT query logic.
@@ -52,11 +47,9 @@ import java.util.List;
  */
 @com.gigaspaces.api.InternalApi
 public class InsertQuery extends AbstractDMLQuery {
-    private static final long serialVersionUID = 1L;
-
     //the values to insert can either come from a VALUES clause, or
     //from an inner select
-    private List<LiteralNode> values; //an array of the values to insert
+    private ArrayList<LiteralNode> values; //an array of the values to insert
     private AbstractDMLQuery innerQuery = null;
 
     public InsertQuery() {
@@ -390,21 +383,5 @@ public class InsertQuery extends AbstractDMLQuery {
             throw new BatchUpdateException(e.getMessage(), result);
         }
         return new BatchResponsePacket(result);
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        super.writeExternal(out);
-
-        IOUtils.writeList(out, values);
-        IOUtils.writeObject(out, innerQuery);
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        super.readExternal(in);
-
-        values = IOUtils.readList(in);
-        innerQuery = IOUtils.readObject(in);
     }
 }

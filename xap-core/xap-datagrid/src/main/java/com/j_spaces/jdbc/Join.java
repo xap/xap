@@ -7,13 +7,14 @@ import com.j_spaces.jdbc.parser.AndNode;
 import com.j_spaces.jdbc.parser.ExpNode;
 import net.jini.core.transaction.Transaction;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.sql.SQLException;
 
 @com.gigaspaces.api.InternalApi
-public class Join implements Query, Cloneable {
+public class Join implements Query, Cloneable, Externalizable {
     private static final long serialVersionUID = 1L;
 
     public enum JoinType {
