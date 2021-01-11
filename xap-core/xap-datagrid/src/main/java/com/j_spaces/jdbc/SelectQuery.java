@@ -19,6 +19,7 @@ package com.j_spaces.jdbc;
 import com.gigaspaces.client.transaction.ITransactionManagerProvider;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.exceptions.BatchQueryException;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.transport.IEntryPacket;
@@ -51,6 +52,10 @@ import net.jini.core.transaction.TransactionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.*;
@@ -62,7 +67,8 @@ import java.util.*;
  * @author Michael Mitrani, 2Train4, 2004
  */
 @com.gigaspaces.api.InternalApi
-public class SelectQuery extends AbstractDMLQuery {
+public class SelectQuery extends AbstractDMLQuery implements Externalizable {
+    private static final long serialVersionUID = 1L;
 
     /**
      * SYSTABLES constants
@@ -70,8 +76,8 @@ public class SelectQuery extends AbstractDMLQuery {
     private static final String SYSTABLES = "SYSTABLES";
     private static final String SYSTABLES_TABLENAME = "TABLENAME";
 
-    private ArrayList<OrderColumn> orderColumns = null;
-    private ArrayList<SelectColumn> groupColumn = null;
+    private List<OrderColumn> orderColumns;
+    private List<SelectColumn> groupColumn;
     private boolean isAggFunction = false;
     private boolean forUpdate = false; //is this select for an update.
     private boolean isAddAbsentCol = false;
@@ -815,7 +821,7 @@ public class SelectQuery extends AbstractDMLQuery {
         this.groupColumn = groupColumnList;
     }
 
-    public ArrayList<SelectColumn> getGroupColumn() {
+    public List<SelectColumn> getGroupColumn() {
         return this.groupColumn;
     }
 
@@ -1216,7 +1222,7 @@ public class SelectQuery extends AbstractDMLQuery {
         }
     }
 
-    public ArrayList<OrderColumn> getOrderColumns() {
+    public List<OrderColumn> getOrderColumns() {
         return orderColumns;
     }
 
@@ -1300,5 +1306,37 @@ public class SelectQuery extends AbstractDMLQuery {
     }
     private void allowedToUseCollocatedJoin(boolean allowedToUseCollocatedJoin) {
         this.allowedToUseCollocatedJoin = allowedToUseCollocatedJoin;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+
+        IOUtils.writeList(out, orderColumns);
+        IOUtils.writeList(out, groupColumn);
+        out.writeBoolean(isAggFunction);
+        out.writeBoolean(forUpdate);
+        out.writeBoolean(isAddAbsentCol);
+        out.writeBoolean(isDistinct);
+        IOUtils.writeObject(out, _aggregationSet);
+        out.writeBoolean(isSelectAll);
+        IOUtils.writeList(out, joins);
+        out.writeBoolean(allowedToUseCollocatedJoin);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+
+        orderColumns = IOUtils.readList(in);
+        groupColumn = IOUtils.readList(in);
+        isAggFunction = in.readBoolean();
+        forUpdate = in.readBoolean();
+        isAddAbsentCol = in.readBoolean();
+        isDistinct = in.readBoolean();
+        _aggregationSet = IOUtils.readObject(in);
+        isSelectAll = in.readBoolean();
+        joins = IOUtils.readList(in);
+        allowedToUseCollocatedJoin = in.readBoolean();
     }
 }

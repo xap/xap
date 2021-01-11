@@ -16,6 +16,7 @@
 
 package com.j_spaces.jdbc.parser;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.SQLUtil;
@@ -23,6 +24,9 @@ import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
 import com.j_spaces.jdbc.builder.range.FunctionCallDescription;
 import com.j_spaces.jdbc.query.QueryColumnData;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -34,6 +38,7 @@ import java.util.List;
  */
 @com.gigaspaces.api.InternalApi
 public class ColumnNode extends ValueNode {
+    private static final long serialVersionUID = 1L;
 
     private QueryColumnData _columnData;
     private String _name;
@@ -56,14 +61,8 @@ public class ColumnNode extends ValueNode {
         this.functionCallDescription = functionCallDescription;
     }
 
-    /**
-     * @param query
-     * @throws SQLException
-     */
-    public void createColumnData(AbstractDMLQuery query)
-            throws SQLException {
+    public void createColumnData(AbstractDMLQuery query) throws SQLException {
         _columnData = QueryColumnData.newColumnData(_name, query);
-
     }
 
     public QueryColumnData getColumnData() {
@@ -74,10 +73,6 @@ public class ColumnNode extends ValueNode {
         return _columnData.getColumnPath();
     }
 
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         if (functionCallDescription == null) {
@@ -119,5 +114,21 @@ public class ColumnNode extends ValueNode {
             }
         }
         super.prepareValues(values);
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        IOUtils.writeObject(out, _columnData);
+        IOUtils.writeString(out, _name);
+        IOUtils.writeObject(out, functionCallDescription);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        _columnData = IOUtils.readObject(in);
+        _name = IOUtils.readString(in);
+        functionCallDescription = IOUtils.readObject(in);
     }
 }

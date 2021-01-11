@@ -16,6 +16,11 @@
 
 package com.j_spaces.jdbc;
 
+import com.gigaspaces.internal.io.IOUtils;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.SQLException;
 
 /**
@@ -26,12 +31,16 @@ import java.sql.SQLException;
  */
 @com.gigaspaces.api.InternalApi
 public class UpdateColumn extends SelectColumn {
+    private static final long serialVersionUID = 1L;
 
     protected String _selfIncrementedColumnName;
 
     public UpdateColumn(String columnPath) {
         super(columnPath);
         _selfIncrementedColumnName = null;
+    }
+
+    public UpdateColumn() {
     }
 
     /**
@@ -66,4 +75,15 @@ public class UpdateColumn extends SelectColumn {
             throw new SQLException("Operator '+' is only allowed for the same column.");
     }
 
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        IOUtils.writeString(out, _selfIncrementedColumnName);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        _selfIncrementedColumnName = IOUtils.readString(in);
+    }
 }

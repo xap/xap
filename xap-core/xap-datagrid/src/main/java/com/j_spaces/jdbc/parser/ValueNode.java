@@ -31,16 +31,15 @@ import java.sql.SQLException;
  * @author Michael Mitrani, 2Train4, 2004
  */
 @com.gigaspaces.api.InternalApi
-public class ValueNode
-        extends ExpNode {
+public class ValueNode extends ExpNode {
+    private static final long serialVersionUID = 1L;
 
     public ValueNode() {
         super();
     }
 
     @Override
-    public boolean isValidCompare(Object ob1, Object ob2)
-            throws ClassCastException {
+    public boolean isValidCompare(Object ob1, Object ob2) {
         return false;
     }
 
@@ -54,31 +53,16 @@ public class ValueNode
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.j_spaces.jdbc.parser.ExpNode#newInstance()
-     */
     @Override
     public ExpNode newInstance() {
         return new ValueNode();
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#accept(com.j_spaces.jdbc.executor.QueryExecutor, com.j_spaces.core.IJSpace, net.jini.core.transaction.Transaction, int, int)
-     */
     @Override
-    public void accept(IQueryExecutor executor, ISpaceProxy space, Transaction txn,
-                       int readModifier, int max) throws SQLException {
+    public void accept(IQueryExecutor executor, ISpaceProxy space, Transaction txn, int readModifier, int max) throws SQLException {
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#accept(com.j_spaces.jdbc.builder.QueryTemplateBuilder)
-     */
     @Override
     public void accept(QueryTemplateBuilder builder) throws SQLException {
-
     }
-
-
 }

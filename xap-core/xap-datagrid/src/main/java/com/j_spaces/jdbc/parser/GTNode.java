@@ -29,6 +29,7 @@ import java.sql.SQLException;
  */
 @com.gigaspaces.api.InternalApi
 public class GTNode extends ExpNode {
+    private static final long serialVersionUID = 1L;
 
     public GTNode() {
         super();
@@ -39,41 +40,27 @@ public class GTNode extends ExpNode {
     }
 
     @Override
-    public boolean isValidCompare(Object ob1, Object ob2) throws ClassCastException {
+    public boolean isValidCompare(Object ob1, Object ob2) {
         // Comparison with null is not supported
         if (ob1 == null || ob2 == null)
             return false;
         else
             return ((Comparable) ob1).compareTo(ob2) > 0;
-
     }
 
-
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#newInstance()
-     */
     @Override
     public ExpNode newInstance() {
         return new GTNode();
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#accept(com.j_spaces.jdbc.builder.QueryTemplateBuilder, com.j_spaces.core.client.BasicTypeInfo)
-     */
     @Override
     public void accept(QueryTemplateBuilder builder)
             throws SQLException {
         builder.build(this, TemplateMatchCodes.GT);
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
-
         return toString(DefaultSQLQueryBuilder.mapCodeToSign(TemplateMatchCodes.GT));
     }
-
-
 }

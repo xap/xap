@@ -16,6 +16,7 @@
 
 package com.j_spaces.jdbc.query;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.j_spaces.jdbc.AbstractDMLQuery;
@@ -23,7 +24,7 @@ import com.j_spaces.jdbc.Query;
 import com.j_spaces.jdbc.SelectColumn;
 import com.j_spaces.jdbc.SelectQuery;
 
-import java.io.Serializable;
+import java.io.*;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -34,16 +35,21 @@ import java.util.function.Function;
  * @since 7.0
  */
 @com.gigaspaces.api.InternalApi
-public class QueryColumnData implements Serializable {
+public class QueryColumnData implements Externalizable {
+    private static final long serialVersionUID = 1L;
 
     protected static final String ASTERIX_COLUMN = "*";
     protected static final String UID_COLUMN = "UID";
 
     // query column path - used for query navigation - Person.car.color='red'
-    private final String _columnPath;
-    private final String _columnName;
+    private String _columnPath;
+    private String _columnName;
     private QueryTableData _columnTable;
     private int _columnIndex; //the index of the column in its table
+
+    // Required for Externalizable
+    public QueryColumnData() {
+    }
 
     public QueryColumnData(QueryTableData tableData, String columnPath) {
         _columnPath = isUidColumn(columnPath) ? UID_COLUMN : columnPath;
@@ -276,5 +282,21 @@ public class QueryColumnData implements Serializable {
 
     private void setColumnIndexInTable(int columnIndex) {
         this._columnIndex = columnIndex;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        IOUtils.writeString(out, _columnPath);
+        IOUtils.writeString(out, _columnName);
+        IOUtils.writeObject(out, _columnTable);
+        out.writeInt(_columnIndex);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        _columnPath = IOUtils.readString(in);
+        _columnName = IOUtils.readString(in);
+        _columnTable = IOUtils.readObject(in);
+        _columnIndex = in.readInt();
     }
 }

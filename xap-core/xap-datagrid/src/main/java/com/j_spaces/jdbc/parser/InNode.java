@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package com.j_spaces.jdbc.parser;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
@@ -32,14 +31,14 @@ import java.sql.SQLException;
  */
 @com.gigaspaces.api.InternalApi
 public class InNode extends AbstractInNode {
+    private static final long serialVersionUID = 1L;
 
     public InNode() {
         super();
     }
 
     @Override
-    public boolean isValidCompare(Object ob1, Object ob2)
-            throws ClassCastException {
+    public boolean isValidCompare(Object ob1, Object ob2) {
         //never called here
         return false;
     }
@@ -49,26 +48,16 @@ public class InNode extends AbstractInNode {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#newInstance()
-     */
     @Override
     public ExpNode newInstance() {
         return new InNode();
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#accept(com.j_spaces.jdbc.builder.QueryTemplateBuilder)
-     */
     @Override
     public void accept(QueryTemplateBuilder builder) throws SQLException {
         builder.build(this);
-
     }
 
-    /**
-     * Accept the query executor
-     */
     @Override
     public void accept(IQueryExecutor executor, ISpaceProxy space, Transaction txn, int readModifier, int max) throws SQLException {
         executor.execute(this, space, txn, readModifier, max);

@@ -16,9 +16,13 @@
 
 package com.j_spaces.jdbc.parser;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.SQLException;
 
 /**
@@ -26,6 +30,8 @@ import java.sql.SQLException;
  */
 @com.gigaspaces.api.InternalApi
 public class RelationNode extends ExpNode {
+    private static final long serialVersionUID = 1L;
+
     private String relation;
 
     public RelationNode() {
@@ -37,23 +43,17 @@ public class RelationNode extends ExpNode {
     }
 
     @Override
-    public boolean isValidCompare(Object ob1, Object ob2) throws ClassCastException {
+    public boolean isValidCompare(Object ob1, Object ob2) {
         // Comparison with null is not supported
         //noinspection unchecked
         return !(ob1 == null || ob2 == null) && ((Comparable) ob1).compareTo(ob2) == 0;
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#newInstance()
-     */
     @Override
     public ExpNode newInstance() {
         return new RelationNode();
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#accept(com.j_spaces.jdbc.builder.QueryTemplateBuilder)
-     */
     @Override
     public void accept(QueryTemplateBuilder builder) throws SQLException {
         builder.build(this);
@@ -73,5 +73,17 @@ public class RelationNode extends ExpNode {
         RelationNode cloned = (RelationNode) super.clone();
         cloned.relation = this.relation;
         return cloned;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        IOUtils.writeString(out, relation);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        this.relation = IOUtils.readString(in);
     }
 }

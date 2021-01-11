@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package com.j_spaces.jdbc.parser;
 
 import com.j_spaces.core.client.TemplateMatchCodes;
@@ -30,6 +29,7 @@ import java.sql.SQLException;
  */
 @com.gigaspaces.api.InternalApi
 public class LTNode extends ExpNode {
+    private static final long serialVersionUID = 1L;
 
     public LTNode() {
         super();
@@ -40,7 +40,7 @@ public class LTNode extends ExpNode {
     }
 
     @Override
-    public boolean isValidCompare(Object ob1, Object ob2) throws ClassCastException {
+    public boolean isValidCompare(Object ob1, Object ob2) {
         // Comparison with null is not supported
         if (ob1 == null || ob2 == null)
             return false;
@@ -48,28 +48,16 @@ public class LTNode extends ExpNode {
             return ((Comparable) ob1).compareTo(ob2) < 0;
     }
 
-
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#newInstance()
-     */
     @Override
     public ExpNode newInstance() {
         return new LTNode();
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#accept(com.j_spaces.jdbc.builder.QueryTemplateBuilder, com.j_spaces.core.client.BasicTypeInfo)
-     */
     @Override
-    public void accept(QueryTemplateBuilder builder)
-            throws SQLException {
+    public void accept(QueryTemplateBuilder builder) throws SQLException {
         builder.build(this, TemplateMatchCodes.LT);
     }
 
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         return toString(DefaultSQLQueryBuilder.mapCodeToSign(TemplateMatchCodes.LT));

@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-
 package com.j_spaces.jdbc.parser;
 
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.SQLException;
 
 /**
@@ -29,24 +31,21 @@ import java.sql.SQLException;
  */
 @com.gigaspaces.api.InternalApi
 public class IsNullNode extends ExpNode {
+    private static final long serialVersionUID = 1L;
 
-    private boolean isNot = false;
+    private boolean isNot;
 
     public IsNullNode(ExpNode leftChild, ExpNode rightChild) {
         super(leftChild, rightChild);
     }
 
-    /**
-     *
-     */
     public IsNullNode() {
     }
 
     @Override
-    public boolean isValidCompare(Object ob1, Object ob2) throws ClassCastException {
+    public boolean isValidCompare(Object ob1, Object ob2) {
         return ((ob1 == null && !isNot) || (ob1 != null && isNot));
     }
-
 
     /**
      * @param isNot if true, this is a IS NOT NULL. otherwise it's IS NULL
@@ -60,32 +59,32 @@ public class IsNullNode extends ExpNode {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#newInstance()
-     */
     @Override
     public ExpNode newInstance() {
         IsNullNode node = new IsNullNode();
-
         node.setNot(isNot);
-
         return node;
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#accept(com.j_spaces.jdbc.builder.QueryTemplateBuilder, com.j_spaces.core.client.BasicTypeInfo)
-     */
     @Override
-    public void accept(QueryTemplateBuilder builder)
-            throws SQLException {
+    public void accept(QueryTemplateBuilder builder) throws SQLException {
         builder.build(this, isNot ? TemplateMatchCodes.NOT_NULL : TemplateMatchCodes.IS_NULL);
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         return leftChild.toString() + (isNot ? " is not null " : " is null");
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        out.writeBoolean(isNot);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        isNot = in.readBoolean();
     }
 }

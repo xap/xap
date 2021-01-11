@@ -19,6 +19,9 @@ package com.j_spaces.jdbc.parser;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.j_spaces.jdbc.SQLUtil;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.SQLException;
 import java.util.TreeMap;
 
@@ -30,8 +33,12 @@ import java.util.TreeMap;
  */
 @com.gigaspaces.api.InternalApi
 public class PreparedNode extends LiteralNode {
+    private static final long serialVersionUID = 1L;
 
-    final private int index;
+    private int index;
+
+    public PreparedNode() {
+    }
 
     public PreparedNode(Object value) {
         this(value, -1);
@@ -80,6 +87,18 @@ public class PreparedNode extends LiteralNode {
     //override the clone method in ValueNode. we need the index only.
     public Object clone() {
         return new PreparedNode(null, this.index);
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        out.writeInt(index);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        index = in.readInt();
     }
 }
 

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package com.j_spaces.jdbc.parser;
 
 import com.j_spaces.core.client.TemplateMatchCodes;
@@ -30,44 +29,30 @@ import java.sql.SQLException;
  */
 @com.gigaspaces.api.InternalApi
 public class LikeNode extends ExpNode {
-
+    private static final long serialVersionUID = 1L;
 
     public LikeNode() {
         super();
-
     }
 
     @Override
-    public boolean isValidCompare(Object ob1, Object ob2) throws ClassCastException {
+    public boolean isValidCompare(Object ob1, Object ob2) {
         return false;
     }
 
-
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#newInstance()
-     */
     @Override
     public ExpNode newInstance() {
         return new LikeNode();
     }
 
-    /* (non-Javadoc)
-     * @see com.j_spaces.jdbc.parser.ExpNode#accept(com.j_spaces.jdbc.builder.QueryTemplateBuilder)
-     */
     @Override
     public void accept(QueryTemplateBuilder builder) throws SQLException {
 
         builder.build(this, TemplateMatchCodes.REGEX);
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
-
         return toString(DefaultSQLQueryBuilder.mapCodeToSign(TemplateMatchCodes.REGEX));
     }
-
-
 }

@@ -16,11 +16,15 @@
 
 package com.j_spaces.jdbc.parser;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.query.QueryColumnData;
 import com.j_spaces.jdbc.query.QueryTableData;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.SQLException;
 
 /**
@@ -32,8 +36,9 @@ import java.sql.SQLException;
 
 @com.gigaspaces.api.InternalApi
 public class ContainsItemNode extends ContainsNode {
+    private static final long serialVersionUID = 1L;
 
-    private ITypeDesc typeDesc =null;
+    private ITypeDesc typeDesc;
 
     public ContainsItemNode() {
         super();
@@ -72,5 +77,17 @@ public class ContainsItemNode extends ContainsNode {
 
     public ITypeDesc getTypeDesc() {
         return typeDesc;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        IOUtils.writeObject(out, typeDesc);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        typeDesc = IOUtils.readObject(in);
     }
 }

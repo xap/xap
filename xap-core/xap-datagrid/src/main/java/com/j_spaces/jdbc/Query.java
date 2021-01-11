@@ -21,7 +21,6 @@ import com.gigaspaces.security.service.SecurityInterceptor;
 
 import net.jini.core.transaction.Transaction;
 
-import java.io.Serializable;
 import java.sql.SQLException;
 
 /**
@@ -29,7 +28,7 @@ import java.sql.SQLException;
  *
  * @author Michael Mitrani, 2Train4 - 2004
  */
-public interface Query extends Serializable {
+public interface Query {
     /**
      * Will execute this query on the space and return a ResponsePacket
      */

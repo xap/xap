@@ -17,6 +17,7 @@
 package com.j_spaces.jdbc.executor;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.JoinedEntry;
@@ -39,6 +40,9 @@ import com.j_spaces.jdbc.query.QueryTableData;
 
 import net.jini.core.transaction.Transaction;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -54,14 +58,19 @@ import java.util.Set;
  */
 @com.gigaspaces.api.InternalApi
 public class JoinedQueryExecutor extends AbstractQueryExecutor {
+    private static final long serialVersionUID = 1L;
 
     // the entry that is currently undergoing the matching
     private JoinedEntry _currentEntry;
-    private final HashMap<ExpNode, Boolean> _currentEntryResults = new HashMap<>();
-    private final HashMap<ExpNode, Set<LiteralNode>> _inNodeValues = new HashMap<>();
+    private HashMap<ExpNode, Boolean> _currentEntryResults = new HashMap<>();
+    private HashMap<ExpNode, Set<LiteralNode>> _inNodeValues = new HashMap<>();
     // optimization of the tree traversal - built once an any additional traversal
     // doesn't require to use the stack
     private ExpNode[] _traversalOrder;
+
+    // Required for Externalizable
+    public JoinedQueryExecutor() {
+    }
 
     public JoinedQueryExecutor(AbstractDMLQuery query) {
         super(query);
@@ -419,5 +428,23 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
                 t.clear();
             }
         }
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        IOUtils.writeObject(out, _currentEntry);
+        IOUtils.writeObject(out, _currentEntryResults);
+        IOUtils.writeObject(out, _inNodeValues);
+        IOUtils.writeObject(out, _traversalOrder);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        _currentEntry = IOUtils.readObject(in);
+        _currentEntryResults = IOUtils.readObject(in);
+        _inNodeValues = IOUtils.readObject(in);
+        _traversalOrder = IOUtils.readObject(in);
     }
 }

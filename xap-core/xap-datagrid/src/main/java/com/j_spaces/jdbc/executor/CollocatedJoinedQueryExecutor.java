@@ -12,27 +12,24 @@ import net.jini.core.transaction.Transaction;
 
 import java.sql.SQLException;
 
-
 /**
  * @author yohanakh
  * @since 15.8.0
  */
 @com.gigaspaces.api.InternalApi
-public class CollocatedJoinedQueryExecutor
-        extends AbstractQueryExecutor {
+public class CollocatedJoinedQueryExecutor extends AbstractQueryExecutor {
+    private static final long serialVersionUID = 1L;
 
-    /**
-     * @param query
-     */
-    public CollocatedJoinedQueryExecutor(AbstractDMLQuery query) {
-        super(query);
-
+    // Required for Externalizable
+    public CollocatedJoinedQueryExecutor() {
     }
 
-    public IQueryResultSet<IEntryPacket> execute(ISpaceProxy space,
-                                                 Transaction txn, int readModifier, int max)
-            throws SQLException {
+    public CollocatedJoinedQueryExecutor(AbstractDMLQuery query) {
+        super(query);
+    }
 
+    public IQueryResultSet<IEntryPacket> execute(ISpaceProxy space, Transaction txn, int readModifier, int max)
+            throws SQLException {
         try {
             AsyncFuture<CollocatedJoinSpaceResponseInfo> res = space.execute(new CollocatedJoinSpaceTask(query, txn, readModifier, max), null, null, null);
             return res.get().getResult();

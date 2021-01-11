@@ -1,13 +1,19 @@
 package com.j_spaces.jdbc;
 
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.query.sql.functions.SqlFunction;
 import com.gigaspaces.query.sql.functions.SqlFunctionExecutionContext;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.List;
 
 @com.gigaspaces.api.InternalApi
 public class FunctionCallColumn extends SelectColumn {
+    private static final long serialVersionUID = 1L;
 
     private List params;
 
@@ -42,5 +48,17 @@ public class FunctionCallColumn extends SelectColumn {
             });
         }
         throw new RuntimeException("Unknown function [" + getFunctionName() + "]");
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        IOUtils.writeList(out, params);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        params = IOUtils.readList(in);
     }
 }

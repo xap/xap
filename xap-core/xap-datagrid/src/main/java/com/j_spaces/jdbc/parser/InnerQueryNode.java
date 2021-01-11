@@ -17,6 +17,7 @@
 package com.j_spaces.jdbc.parser;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.j_spaces.jdbc.ResultEntry;
 import com.j_spaces.jdbc.SelectQuery;
@@ -24,8 +25,10 @@ import com.j_spaces.jdbc.executor.IQueryExecutor;
 
 import net.jini.core.transaction.Transaction;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.SQLException;
-
 
 /**
  * Represents an inner (sub) query in a WHERE clause condition.
@@ -34,11 +37,14 @@ import java.sql.SQLException;
  * @since 8.0
  */
 @com.gigaspaces.api.InternalApi
-public class InnerQueryNode
-        extends LiteralNode {
+public class InnerQueryNode extends LiteralNode {
+    private static final long serialVersionUID = 1L;
 
     protected SelectQuery _innerQuery;
     protected ResultEntry _results;
+
+    public InnerQueryNode() {
+    }
 
     public InnerQueryNode(SelectQuery innerQuery) {
         super(null);
@@ -123,4 +129,17 @@ public class InnerQueryNode
         return super.toString();
     }
 
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        IOUtils.writeObject(out, _innerQuery);
+        IOUtils.writeObject(out, _results);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        _innerQuery = IOUtils.readObject(in);
+        _results = IOUtils.readObject(in);
+    }
 }

@@ -16,11 +16,17 @@
 
 package com.j_spaces.jdbc;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * Created by anna on 11/26/14.
  */
 @com.gigaspaces.api.InternalApi
 public class OrderColumn extends SelectColumn {
+    private static final long serialVersionUID = 1L;
+
     private boolean isDesc = false;
 
     private boolean nullsLast = false;
@@ -29,6 +35,8 @@ public class OrderColumn extends SelectColumn {
         super(columnName, columnAlias);
     }
 
+    public OrderColumn() {
+    }
 
     public boolean isDesc() {
         return isDesc;
@@ -44,5 +52,19 @@ public class OrderColumn extends SelectColumn {
 
     public void setNullsLast(boolean nullsLast) {
         this.nullsLast = nullsLast;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        out.writeBoolean(isDesc);
+        out.writeBoolean(nullsLast);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        isDesc = in.readBoolean();
+        nullsLast = in.readBoolean();
     }
 }

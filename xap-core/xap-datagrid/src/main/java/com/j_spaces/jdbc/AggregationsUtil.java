@@ -50,8 +50,8 @@ public class AggregationsUtil {
                                                       int entriesLimit) {
 
         List<SelectColumn> selectColumns = query.getQueryColumns();
-        ArrayList<SelectColumn> groupByColumns = query.getGroupColumn();
-        ArrayList<OrderColumn> orderColumns = query.getOrderColumns();
+        List<SelectColumn> groupByColumns = query.getGroupColumn();
+        List<OrderColumn> orderColumns = query.getOrderColumns();
         AggregationSet aggregationSet = new AggregationSet();
 
         // simple aggregations (max,count, etc)

@@ -16,9 +16,13 @@
 
 package com.j_spaces.jdbc.parser;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.j_spaces.jdbc.SQLUtil;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -31,8 +35,12 @@ import java.time.LocalDate;
  */
 @com.gigaspaces.api.InternalApi
 public class LiteralNode extends ValueNode {
+    private static final long serialVersionUID = 1L;
 
     protected Object value;
+
+    public LiteralNode() {
+    }
 
     public LiteralNode(Object value) {
         super();
@@ -83,5 +91,17 @@ public class LiteralNode extends ValueNode {
     @Override
     public Object clone() {
         return new LiteralNode(value);
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        IOUtils.writeObject(out, value);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        value = IOUtils.readObject(in);
     }
 }
