@@ -463,6 +463,7 @@ public class QueryTableData implements Externalizable {
     private static final short FLAG_JOINED = 1 << 6;
     private static final short FLAG_ASTERISK_COLS = 1 << 7;
     private static final short FLAG_SUBQUERY = 1 << 8;
+    private static final short FLAG_EXPTREE = 1 << 9;
 
     private short buildFlags() {
         short flags = 0;
@@ -485,7 +486,8 @@ public class QueryTableData implements Externalizable {
             flags |= FLAG_ASTERISK_COLS;
         if (subQuery != null)
             flags |= FLAG_SUBQUERY;
-
+        if (_expTree != null)
+            flags |= FLAG_EXPTREE;
         return flags;
     }
 
@@ -508,7 +510,8 @@ public class QueryTableData implements Externalizable {
         out.writeByte(Join.JoinType.toCode(_joinType));
         if (subQuery != null)
             IOUtils.writeObject(out, subQuery);
-        IOUtils.writeObject(out, _expTree);
+        if (_expTree != null)
+            IOUtils.writeObject(out, _expTree);
     }
 
     @Override
@@ -532,7 +535,8 @@ public class QueryTableData implements Externalizable {
         _hasAsterixSelectColumns = (flags & FLAG_ASTERISK_COLS) != 0;
         if ((flags & FLAG_SUBQUERY) != 0)
            subQuery = IOUtils.readObject(in);
-        _expTree = IOUtils.readObject(in);
+        if ((flags & FLAG_EXPTREE) != 0)
+            _expTree = IOUtils.readObject(in);
 
     }
 }
