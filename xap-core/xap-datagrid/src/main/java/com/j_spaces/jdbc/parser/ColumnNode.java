@@ -128,7 +128,7 @@ public class ColumnNode extends ValueNode {
         IOUtils.writeObject(out, _columnData);
         IOUtils.writeString(out, _name);
         IOUtils.writeObject(out, functionCallDescription);
-        IOUtils.writeString(out, _tableName);
+        IOUtils.writeString(out, tableName);
     }
 
     @Override
@@ -137,7 +137,7 @@ public class ColumnNode extends ValueNode {
         _columnData = IOUtils.readObject(in);
         _name = IOUtils.readString(in);
         functionCallDescription = IOUtils.readObject(in);
-        _tableName = IOUtils.readString(in);
+        tableName = IOUtils.readString(in);
     }
 
     public ColumnNode setTableName(String tableName) {

@@ -47,6 +47,7 @@ import java.util.List;
 @com.gigaspaces.api.InternalApi
 public class QueryTableData implements Externalizable {
     private static final long serialVersionUID = 1L;
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     private String _tableName;
     private String _tableAlias;
