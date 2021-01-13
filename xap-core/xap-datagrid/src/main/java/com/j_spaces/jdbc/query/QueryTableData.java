@@ -434,7 +434,6 @@ public class QueryTableData implements Externalizable {
         if (_joinTable != null)
             IOUtils.writeObject(out, _joinTable);
         out.writeByte(Join.JoinType.toCode(_joinType));
-        IOUtils.writeObject(out, _joinType);
         if (subQuery != null)
             IOUtils.writeObject(out, subQuery);
     }
