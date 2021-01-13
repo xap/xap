@@ -18,7 +18,11 @@ import org.slf4j.LoggerFactory;
 
 import java.rmi.RemoteException;
 import java.util.concurrent.ExecutionException;
-
+/**
+ * @author alon shoham
+ * @since 15.8.0
+ */
+@com.gigaspaces.api.InternalApi
 public class BroadcastTableHandler {
     private Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_BROADCAST_TABLE);
     private final SpaceImpl space;

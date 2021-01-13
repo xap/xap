@@ -18,7 +18,11 @@ import net.jini.core.transaction.TransactionException;
 import java.rmi.RemoteException;
 
 import static com.gigaspaces.internal.space.requests.BroadcastTableSpaceRequestInfo.Action.*;
-
+/**
+ * @author alon shoham
+ * @since 15.8.0
+ */
+@com.gigaspaces.api.InternalApi
 public class SpaceBroadcastTableExecutor extends SpaceActionExecutor {
     @Override
     public SpaceResponseInfo execute(SpaceImpl space, SpaceRequestInfo spaceRequestInfo) {
