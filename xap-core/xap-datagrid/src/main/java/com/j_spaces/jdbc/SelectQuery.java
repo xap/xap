@@ -773,7 +773,9 @@ public class SelectQuery extends AbstractDMLQuery {
         query.setProjectionTemplate(this.getProjectionTemplate());
         query.setContainsSubQueries(this.containsSubQueries());
         query.isSelectAll = this.isSelectAll;
-
+        query.joins = this.joins;
+        query.allowedToUseCollocatedJoin = this.allowedToUseCollocatedJoin;
+        query.flattenResults = this.flattenResults;
 
         int numOfColumns = 0;
         for (SelectColumn col : this.getQueryColumns()) {
