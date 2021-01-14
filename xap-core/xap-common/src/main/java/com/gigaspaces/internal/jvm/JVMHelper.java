@@ -18,10 +18,8 @@ package com.gigaspaces.internal.jvm;
 
 import com.gigaspaces.internal.jvm.jmx.JMXJVMDetailsProbe;
 import com.gigaspaces.internal.jvm.jmx.JMXJVMStatisticsProbe;
-import com.gigaspaces.internal.jvm.sigar.SigarJVMStatisticsProbe;
 import com.gigaspaces.internal.os.ProcessCpuSampler;
 import com.gigaspaces.internal.os.ProcessCpuSamplerFactory;
-import com.gigaspaces.internal.sigar.SigarChecker;
 import com.gigaspaces.logger.LogHelper;
 
 import java.util.logging.Level;
@@ -60,16 +58,6 @@ public class JVMHelper {
             return tryCreateInstance(statisticsProbeClass);
 
         ProcessCpuSampler cpuSampler = ProcessCpuSamplerFactory.create();
-        if (cpuSampler.sampleTotalCpuTime() == cpuSampler.NA && SigarChecker.isAvailable()) {
-            try {
-                JVMStatisticsProbe result = new SigarJVMStatisticsProbe();
-                result.probeStatistics();
-                return result;
-            } catch (Throwable t) {
-                LogHelper.log(_loggerName, Level.FINE, "Trying to load sigar failed", t);
-                // ignore, no sigar
-            }
-        }
 
         try {
             JVMStatisticsProbe result = new JMXJVMStatisticsProbe(cpuSampler);

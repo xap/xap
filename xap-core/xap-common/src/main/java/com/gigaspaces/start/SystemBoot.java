@@ -21,7 +21,6 @@ import com.gigaspaces.api.BootException;
 import com.gigaspaces.grid.gsa.AgentHelper;
 import com.gigaspaces.internal.jvm.JVMHelper;
 import com.gigaspaces.internal.jvm.JVMStatistics;
-import com.gigaspaces.internal.sigar.SigarChecker;
 import com.gigaspaces.logger.GSLogConfigLoader;
 import com.gigaspaces.logger.RollingFileHandler;
 import com.sun.jini.start.ServiceDescriptor;
@@ -299,9 +298,6 @@ public class SystemBoot {
                     logger.trace("Security policy=" + System.getProperty("java.security.policy"));
                 }
             }
-
-            // preload sigar in boot time under the app class loader
-            SigarChecker.isAvailable();
 
             // print the pid if we are running with gs-agent, so that the agent will know the process id
             if (AgentHelper.hasAgentId()) {

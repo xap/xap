@@ -44,11 +44,6 @@
             <version>${jna.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.hyperic</groupId>
-            <artifactId>sigar</artifactId>
-        </dependency>
-
         <!-- Optional dependencies -->
 
         <!-- GigaSpaces uses an internal lightweight yaml parser. If SnakeYaml is included, it will be used instead. -->

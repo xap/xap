@@ -144,10 +144,6 @@
             <artifactId>xap-cassandra</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.hyperic</groupId>
-            <artifactId>sigar</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.github.oshi</groupId>
             <artifactId>oshi-core</artifactId>
             <version>${oshi.version}</version>
@@ -231,11 +227,6 @@
                 <version>1.1</version>
             </dependency>
             <dependency>
-                <groupId>org.hyperic</groupId>
-                <artifactId>sigar</artifactId>
-                <version>1.6.5</version>
-            </dependency>
-            <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
                 <version>${jackson.version}</version>
@@ -293,24 +284,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>com.googlecode.maven-download-plugin</groupId>
-                <artifactId>download-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>download sigar artifacts</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>wget</goal>
-                        </goals>
-                        <configuration>
-                            <url>https://github.com/Gigaspaces/xap-third-parties/raw/master/sigar-1.6.5-bin.zip</url>
-                            <unpack>true</unpack>
-                            <outputDirectory>target/package/product/lib/optional</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>

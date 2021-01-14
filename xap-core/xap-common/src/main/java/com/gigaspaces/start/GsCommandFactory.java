@@ -125,16 +125,11 @@ public class GsCommandFactory {
         command.classpathWithJars(locations().libOptionalSecurity());
     }
 
-    protected void appendSigarClassPath() {
-        command.classpathWithJars(locations().libOptional("sigar"));
-    }
-
     protected void appendOshiClassPath() {
         command.classpathWithJars(locations().libOptional("oshi"));
     }
 
     protected void appendMetricToolsClassPath() {
-        appendSigarClassPath();
         appendOshiClassPath();
     }
 

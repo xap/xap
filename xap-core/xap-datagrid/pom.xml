@@ -32,10 +32,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.hyperic</groupId>
-            <artifactId>sigar</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.github.oshi</groupId>
             <artifactId>oshi-core</artifactId>
             <version>${oshi.version}</version>

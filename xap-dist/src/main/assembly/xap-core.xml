@@ -22,14 +22,6 @@
 
 		<dependencySet>
 			<useProjectArtifact>false</useProjectArtifact>
-			<outputDirectory>product/lib/optional/sigar</outputDirectory>
-			<includes>
-				<include>org.hyperic:sigar</include>
-			</includes>
-			<outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
-		</dependencySet>
-		<dependencySet>
-			<useProjectArtifact>false</useProjectArtifact>
 			<outputDirectory>product/lib/optional/oshi</outputDirectory>
 			<includes>
 				<include>com.github.oshi:oshi-core</include>

@@ -18,11 +18,7 @@ package com.gigaspaces.internal.os;
 
 import com.gigaspaces.internal.os.jmx.JMXOSDetailsProbe;
 import com.gigaspaces.internal.os.jmx.JMXOSStatisticsProbe;
-import com.gigaspaces.internal.os.sigar.SigarOSDetailsProbe;
-import com.gigaspaces.internal.os.sigar.SigarOSStatisticsProbe;
 import com.gigaspaces.internal.oshi.OshiChecker;
-import com.gigaspaces.internal.sigar.SigarChecker;
-
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,17 +44,7 @@ public class OSHelper {
         String statisticsProbeClass = System.getProperty("gs.admin.os.probe.statistics");
         if (statisticsProbeClass == null) {
             if(OshiChecker.isAvailable()){
-
                 statisticsProbeX = new OshiOSStatisticsProbe();
-            } else if (SigarChecker.isAvailable()) {
-                try {
-                    statisticsProbeX = new SigarOSStatisticsProbe();
-                    statisticsProbeX.probeStatistics();
-                } catch (Throwable t) {
-                    statisticsProbeX = null;
-                    _logger.debug("Trying to load sigar failed", t);
-                    // ignore, no sigar
-                }
             }
             if (statisticsProbeX == null) {
                 // try JMX
@@ -68,7 +54,6 @@ public class OSHelper {
                 } catch (Throwable t) {
                     statisticsProbeX = null;
                     _logger.debug("Trying to load JMX failed", t);
-                    // ignore, no sigar
                 }
             }
         } else {
@@ -86,16 +71,6 @@ public class OSHelper {
         if (detailsProbeClass == null) {
             if(OshiChecker.isAvailable()){
                 detailsProbeX = new OshiOSDetailsProbe();
-
-            } else if (SigarChecker.isAvailable()) {
-                try {
-                    detailsProbeX = new SigarOSDetailsProbe();
-                    detailsProbeX.probeDetails();
-                } catch (Throwable t) {
-                    detailsProbeX = null;
-                    _logger.debug("Trying to load sigar failed", t);
-                    // ignore, no sigar
-                }
             }
             if (detailsProbeX == null) {
                 // than JMX
@@ -105,7 +80,6 @@ public class OSHelper {
                 } catch (Throwable t) {
                     detailsProbeX = null;
                     _logger.debug("Trying to load JMX failed", t);
-                    // ignore, no sigar
                 }
             }
         } else {
