@@ -29,6 +29,7 @@ public class PlatformVersion {
     private static final PlatformVersion instance = new PlatformVersion(getVersionPropertiesFromFile("com/gigaspaces/internal/version/PlatformVersion.properties"));
 
     private final String id;
+    private final String dockerTag;
     private final String version;
     private final String officialVersion;
     private final byte majorVersion;
@@ -45,6 +46,7 @@ public class PlatformVersion {
 
     public PlatformVersion(Properties properties) {
         this.id = properties.getProperty("gs.build-name");
+        this.dockerTag = toDockerTag(id);
         this.version = extractPrefix(id, "-");
         this.productType = isInsightEdge() ? ProductType.InsightEdge : ProductType.XAP;
         this.officialVersion = "GigaSpaces " + productType + " " + id;
@@ -63,6 +65,18 @@ public class PlatformVersion {
         spVersion = Byte.parseByte(versionTokens[2]);
 
         productHelpUrl = "https://docs.gigaspaces.com/" + majorVersion + "." + minorVersion;
+    }
+
+    private static String toDockerTag(String id) {
+        // if id is "major.minor.0" return "major.minor"
+        if (id.endsWith(".0") && !id.contains("-") && count(id, '.') == 2) {
+            return id.substring(0, id.length() - 2);
+        }
+        return id;
+    }
+
+    private static long count(String s, char c) {
+        return s.chars().filter(ch -> ch == c).count();
     }
 
     private static String extractPrefix(String s, String separator) {
@@ -158,6 +172,10 @@ public class PlatformVersion {
 
     public String getId() {
         return id;
+    }
+
+    public String getDockerTag() {
+        return dockerTag;
     }
 
     /**
