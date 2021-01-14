@@ -4,7 +4,7 @@
 # * It is highly recommended NOT TO MODIFY THIS SCRIPT, to simplify future upgrades.                        *
 # * If you need to override the defaults, please modify setenv-overrides.sh or set                          *
 # * the GS_SETTINGS_FILE environment variable to your custom script.                                       *
-# * For more information see https://docs.gigaspaces.com/15.8/started/common-environment-variables.html     *
+# * For more information see https://docs.gigaspaces.com/16.0/started/common-environment-variables.html     *
 # ***********************************************************************************************************
 #Load overrides settings.
 DIRNAME=$(dirname ${BASH_SOURCE[0]})
