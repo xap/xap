@@ -852,7 +852,7 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
         if (version.greaterOrEquals(PlatformLogicalVersion.v11_0_0))
             out.writeBoolean(_allIndexValuesQuery);
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
-            if (_table != null && _table.isJoined()){
+            if (_table != null){
                 IOUtils.writeObject(out, _table);
                 IOUtils.writeObject(out, _ranges);
                 IOUtils.writeObject(out, _aggregationSet);
@@ -872,7 +872,7 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
             _allIndexValuesQuery = in.readBoolean();
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0)) {
             _table = IOUtils.readObject(in);
-            if (_table != null && _table.isJoined()) {
+            if (_table != null) {
                 _ranges = IOUtils.readObject(in);
                 _aggregationSet = IOUtils.readObject(in);
             }
