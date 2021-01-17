@@ -29,7 +29,7 @@ to an existing (remote) data-grid (by specifying its name).
 
 This example is a standard maven project - you can open it in your IDE of choice by importing `examples/hello-world/pom.xml` as maven.
 
-The `HelloWorld` main class accepts the following arguments: `-name` {data-grid name} `-mode` {embedded,remote}
+The `HelloWorld` main class accepts the following arguments: `-name` {data-grid name} `-mode` {embedded | remote}
 
 ## Running in Embedded Mode
 
@@ -63,9 +63,12 @@ A data grid requires a cluster manager. The following cluster managers are avail
 The Service Grid is recommended for beginners, which is what we'll show here. 
 If you're using the open source package, you'll need to use the standalone cluster manager, which is discussed later in this page.  
 
+*Tip*: The cluster manager includes a web-based UI which is started at http://localhost:8090
+
 ### Deploying a data grid
 
 To start the service grid locally with a single container, run the `gs.(sh|bat)` as follows:
+
 - gs.(sh|bat) host run-agent --auto --containers=1
 
 To deploy a data grid called `myDataGrid`, run:
@@ -78,8 +81,6 @@ Now that we have a remote data-grid, we can connect to it.
 Launch the `HelloWorld` main (arguments: `-name` myDataGrid `-mode` remote)
 
 This will connect your  client to your remote data-grid followed by write and read of Message entities.
-
-*Tip*: The cluster manager includes a web-based UI which is started at http://localhost:8090
 
 ### output
 ```
