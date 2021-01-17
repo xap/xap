@@ -16,6 +16,8 @@
 
 package com.gigaspaces.config.lrmi;
 
+import java.io.Externalizable;
+
 /**
  * This interface defines the underline communication transport protocol configuration.
  *
@@ -23,7 +25,7 @@ package com.gigaspaces.config.lrmi;
  * @see GenericExporter
  * @since 5.2
  **/
-public interface ITransportConfig {
+public interface ITransportConfig extends Externalizable {
     /**
      * @return the protocol adaptor name of underlying transport protocol
      */

@@ -22,12 +22,12 @@ package com.gigaspaces.lrmi;
 
 import com.gigaspaces.annotation.lrmi.OneWayRemoteCall;
 import com.gigaspaces.config.lrmi.ITransportConfig;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.logger.Constants;
 
 import net.jini.export.Exporter;
 
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.lang.ref.WeakReference;
 import java.rmi.Remote;
 import java.rmi.server.ExportException;
@@ -94,7 +94,7 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("unchecked")
 @com.gigaspaces.api.InternalApi
 public class GenericExporter
-        implements Exporter, Serializable {
+        implements Exporter, Externalizable {
     private static final long serialVersionUID = 1L;
 
     // logger
@@ -103,7 +103,7 @@ public class GenericExporter
     /**
      * the configuration object this exporter
      */
-    final private ITransportConfig _config;
+    private ITransportConfig _config;
 
     /**
      * cache all exported object in local VM as WeakReference
@@ -163,6 +163,9 @@ public class GenericExporter
         }
     }// WeakKey
 
+    public GenericExporter() {
+    }
+
     /**
      * Constructor.
      *
@@ -205,7 +208,7 @@ public class GenericExporter
      * @throws IllegalStateException    if an object has already been exported with this
      *                                  <code>Exporter</code> instance
      **/
-    synchronized public Remote export(Remote impl) throws ExportException {
+    public Remote export(Remote impl) throws ExportException {
         return export(impl, _config, true);
     }
 
@@ -234,7 +237,7 @@ public class GenericExporter
      * @throws IllegalStateException    if an object has already been exported with this
      *                                  <code>Exporter</code> instance
      **/
-    synchronized public Remote export(Remote impl, boolean allowCache) throws ExportException {
+    public Remote export(Remote impl, boolean allowCache) throws ExportException {
         return export(impl, _config, allowCache);
     }
 
@@ -263,7 +266,7 @@ public class GenericExporter
      * @throws IllegalStateException    if an object has already been exported with this
      *                                  <code>Exporter</code> instance
      **/
-    synchronized public Remote export(Remote impl, ITransportConfig config, boolean allowCache) throws ExportException {
+    public Remote export(Remote impl, ITransportConfig config, boolean allowCache) throws ExportException {
         if (_logger.isDebugEnabled()) {
             _logger.debug("Trying to export class=" + impl.getClass());
         }
@@ -300,7 +303,7 @@ public class GenericExporter
      * Unexport the desired obj from the underlying transport protocol and remove the obj from the
      * manage cache.
      */
-    synchronized protected boolean _unexport(Remote obj) {
+    protected boolean _unexport(Remote obj) {
         WeakReference<Remote> weakStub = _identityExportObjTable.get(new WeakKey(obj));
         Remote dynamicProxy = weakStub != null ? weakStub.get() : null;
 		
@@ -330,7 +333,7 @@ public class GenericExporter
      *            unexports the object if there are no pending or in-progress calls
      * @return true if operation is successful, false otherwise
      */
-    synchronized public boolean unexport(Remote obj) {
+    public boolean unexport(Remote obj) {
         _unexport(obj);
 
 		/* remove from cache */
@@ -343,7 +346,7 @@ public class GenericExporter
     /**
      * {@inheritDoc}
      */
-    synchronized public boolean unexport(boolean force) {
+    public boolean unexport(boolean force) {
 		/* unexport all objects */
         for (Iterator<WeakKey> iter = _identityExportObjTable.keySet().iterator(); iter.hasNext(); ) {
             WeakKey exportedObjImpl = iter.next();
@@ -374,17 +377,27 @@ public class GenericExporter
      * @param obj the object to check.
      * @return <code>true</code> if provided obj exported and manage by GenericExporter.
      **/
-    synchronized public boolean isExported(Remote obj) {
+    public boolean isExported(Remote obj) {
         return _identityExportObjTable.containsKey(new WeakKey(obj));
     }
 
-    /**
-     * reconstruct the GenericExporter after serialization
-     */
-    private void readObject(java.io.ObjectInputStream in) throws IOException,
-            ClassNotFoundException {
-        in.defaultReadObject();
+//    /**
+//     * reconstruct the GenericExporter after serialization
+//     */
+//    private void readObject(java.io.ObjectInputStream in) throws IOException,
+//            ClassNotFoundException {
+//        in.defaultReadObject();
+//
+//        _identityExportObjTable = new HashMap<WeakKey, WeakReference<Remote>>();
+//    }
 
-        _identityExportObjTable = new HashMap<WeakKey, WeakReference<Remote>>();
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        IOUtils.writeObject(out, _config);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        _config = IOUtils.readObject(in);
     }
 }

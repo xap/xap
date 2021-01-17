@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * @since 5.2
  **/
 
-public class NIOConfiguration implements ITransportConfig, Cloneable, Externalizable {
+public class NIOConfiguration implements ITransportConfig, Cloneable {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(NIOConfiguration.class.getName());
 
