@@ -133,9 +133,12 @@ public class CliExecutor {
             return handleException(CliCommandException.userError("Operation was aborted by CTRL-D."));
 
         boolean userError = e instanceof CliCommandException && ((CliCommandException) e).isUserError();
+        boolean timeOutError = e instanceof CliCommandException && ((CliCommandException) e).isTimeoutError();
         System.err.println();
         if (userError) {
             System.err.println(formatAnsi("@|bold,fg(yellow) " + toString(e, false) + "|@"));
+        } else if (timeOutError) {
+            System.err.println(formatAnsi("@|bold,fg(yellow) [TIMEOUT] " + toString(e, false) + "|@"));
         } else {
             String envVarKey = "CLI_VERBOSE";
             boolean verbose = Boolean.parseBoolean(GsEnv.get(envVarKey, "false"));

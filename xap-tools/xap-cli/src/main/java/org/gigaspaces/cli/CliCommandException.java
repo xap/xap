@@ -18,6 +18,7 @@ package org.gigaspaces.cli;
 public class CliCommandException extends Exception {
     public static final int CODE_GENERAL_ERROR = 1;
     public static final int CODE_INVALID_INPUT = 2;
+    public static final int CODE_TIMEOUT = 6;
 
     private int exitCode = CODE_GENERAL_ERROR;
 
@@ -44,5 +45,9 @@ public class CliCommandException extends Exception {
 
     public boolean isUserError() {
         return exitCode == CODE_INVALID_INPUT;
+    }
+
+    public boolean isTimeoutError() {
+        return exitCode == CODE_TIMEOUT;
     }
 }
