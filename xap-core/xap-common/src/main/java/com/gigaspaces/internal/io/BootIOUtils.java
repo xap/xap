@@ -424,7 +424,7 @@ public class BootIOUtils {
         StringBuilder content = new StringBuilder();
         while ((line = input.readLine()) != null) {
             content.append( line );
-            content.append( '\n' );
+            content.append( System.lineSeparator() );
         }
         input.close();
         return content.toString();
