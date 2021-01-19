@@ -89,8 +89,8 @@ public interface Constants {
     final public static String LOGGER_COMMON = "com.gigaspaces.core.common";
     final public static String LOGGER_CONFIG = "com.gigaspaces.core.config";
     final public static String LOGGER_SPACE = "com.gigaspaces.space";
-    final public static String LOGGER_ENGINE = "com.gigaspaces.space.engine";
-    final public static String LOGGER_ENGINE_OPERATIONS = "com.gigaspaces.space.operations";
+    final public static String LOGGER_ENGINE = "com.gigaspaces.engine";
+    final public static String LOGGER_ENGINE_OPERATIONS = "com.gigaspaces.operations";
     final public static String LOGGER_LEASE = "com.gigaspaces.core.lease";
     final public static String LOGGER_REFLECTION = "com.gigaspaces.core.reflection";
     final public static String LOGGER_LOOKUPMANAGER = "com.gigaspaces.core.lookupmanager";
@@ -102,10 +102,10 @@ public interface Constants {
 
     final public static String LOGGER_REPLICATION = "com.gigaspaces.replication";
     final public static String LOGGER_MIRROR_REPLICATION = LOGGER_REPLICATION + ".mirror";
-    final public static String LOGGER_CLUSTER_ACTIVE_ELECTION = "com.gigaspaces.space.active-election";
-    final public static String LOGGER_CLUSTER_ACTIVE_ELECTION_XBACKUP = "com.gigaspaces.space.active-election.xbackup";
-    final public static String LOGGER_SPACE_TYPEMANAGER = "com.gigaspaces.space.typemanager";
-    final public static String LOGGER_SPACE_TEMPLATE_SCANNER = "com.gigaspaces.space.templatescanner";
+    final public static String LOGGER_CLUSTER_ACTIVE_ELECTION = "com.gigaspaces.active-election";
+    final public static String LOGGER_CLUSTER_ACTIVE_ELECTION_XBACKUP = "com.gigaspaces.active-election.xbackup";
+    final public static String LOGGER_SPACE_TYPEMANAGER = "com.gigaspaces.typemanager";
+    final public static String LOGGER_SPACE_TEMPLATE_SCANNER = "com.gigaspaces.templatescanner";
 
     final public static String LOGGER_REPLICATION_NODE = LOGGER_REPLICATION + ".node";
     final public static String LOGGER_REPLICATION_REPLICA = LOGGER_REPLICATION + ".replica";
