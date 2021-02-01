@@ -45,6 +45,8 @@ import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.IStorageConsistency;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.StorageConsistencyModes;
+import com.gigaspaces.internal.server.space.tiered_storage.CachePredicate;
+import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageManager;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridStorageAdapter;
 import com.gigaspaces.internal.transport.ITemplatePacket;
@@ -85,6 +87,8 @@ import com.j_spaces.core.cache.blobStore.sadapter.IBlobStoreStorageAdapter;
 import com.j_spaces.core.cache.blobStore.storage.BlobStoreHashMock;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.IndexMetricsContext;
+import com.j_spaces.core.cache.context.TemplateMatchTier;
+import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.cache.fifoGroup.FifoGroupCacheImpl;
 import com.j_spaces.core.client.*;
 import com.j_spaces.core.cluster.ClusterPolicy;
@@ -468,9 +472,9 @@ public class CacheManager extends AbstractCacheManager
         _evictionStrategy = createEvictionStrategy(configReader, properties);
 
         //create the lock manager
-        _lockManager = isBlobStoreCachePolicy() ? new BlobStoreLockManager() : ((isAllInCachePolicy() ?
-                new AllInCacheLockManager<IEntryHolder>() :
-                new BasicEvictableLockManager<IEntryHolder>(configReader)));
+        _lockManager = isBlobStoreCachePolicy() ? new BlobStoreLockManager() :
+                (isTieredStorage() ? new TieredStorageLockManager<>(configReader) :
+                        (isAllInCachePolicy() ? new AllInCacheLockManager<>() : new BasicEvictableLockManager<>(configReader)));
 
 		/* get min extd' index activation size  */
         _minExtendedIndexActivationSize = configReader.getIntSpaceProperty(
@@ -1346,6 +1350,11 @@ public class CacheManager extends AbstractCacheManager
         return _evictionStrategy.evict(evictionQuota);
     }
 
+    @Override
+    public boolean isTieredStorage() {
+        return _engine.getTieredStorageManager() != null;
+    }
+
 
     /**
      * insert an entry to the space.
@@ -1366,8 +1375,24 @@ public class CacheManager extends AbstractCacheManager
 
         IEntryCacheInfo pE = null;
 
-        pE = insertEntryToCache(context, entryHolder, true /* newEntry */,
-                typeData, true /*pin*/, InitialLoadOrigin.NON /*fromInitialLoad*/);
+        if(isTieredStorage()){
+            if(context.getEntryTieredState() == null){
+                throw new IllegalStateException("trying to write entry in tiered mode but context.getEntryTieredState() == null, uid = "+entryHolder.getUID());
+            }
+            if(context.isColdEntry() && entryHolder.getXidOriginatedTransaction() == null) {
+                _engine.getTieredStorageManager().getInternalStorage().insertEntry(context, entryHolder);
+            }
+
+
+        }
+
+        if((isTieredStorage() && context.isHotEntry()) || !isTieredStorage()) {
+            pE = insertEntryToCache(context, entryHolder, true /* newEntry */,
+                    typeData, true /*pin*/, InitialLoadOrigin.NON /*fromInitialLoad*/);
+        } else {//(isTieredStorage() && !context.isHotEntry())
+            pE = EntryCacheInfoFactory.createEntryCacheInfo(entryHolder);
+            context.setWriteResult(new WriteEntryResult(pE.getUID(), 0, 0));
+        }
 
         if (pE == _entryAlreadyInSpaceIndication) {
             throw new EntryAlreadyInSpaceException(entryHolder.getUID(), entryHolder.getClassName());
@@ -1377,7 +1402,11 @@ public class CacheManager extends AbstractCacheManager
             try {
                 if (entryHolder.isBlobStoreEntry() && isDirectPersistencyEmbeddedtHandlerUsed() && context.isActiveBlobStoreBulk())
                     context.setForBulkInsert(entryHolder);
-                _storageAdapter.insertEntry(context, entryHolder, origin, shouldReplicate);
+
+                if(!isTieredStorage()) {
+                    _storageAdapter.insertEntry(context, entryHolder, origin, shouldReplicate);
+                }
+
                 //If should be sent to cluster
                 if (shouldReplicate && !context.isDelayedReplicationForbulkOpUsed())
                     handleInsertEntryReplication(context, entryHolder);
@@ -1438,7 +1467,9 @@ public class CacheManager extends AbstractCacheManager
         IEntryData originalData = entry.getEntryData();
         try {
 
-            if (entry.isBlobStoreEntry()) {
+            if(isTieredStorage()){
+                pEntry = getPEntryByUid(entry.getUID());
+            } else if (entry.isBlobStoreEntry()) {
                 pEntry = ((IBlobStoreEntryHolder) entry).getBlobStoreResidentPart();
                 context.setBlobStoreOriginalEntryInfo(originalData, ((IBlobStoreEntryHolder) entry).getBlobStoreVersion());
             } else if (isAllInCachePolicy())
@@ -1446,17 +1477,76 @@ public class CacheManager extends AbstractCacheManager
 
             IEntryData newEntryData = template.getUpdatedEntry().getEntryData();
 
-            pEntry = updateEntryInCache(context, pEntry, pEntry != null ? pEntry.getEntryHolder(this) : entry, newEntryData, newEntryData.getExpirationTime(), template.getOperationModifiers());
-            new_eh = pEntry.getEntryHolder(this);
-            if (entry.isBlobStoreEntry() && isDirectPersistencyEmbeddedtHandlerUsed() && context.isActiveBlobStoreBulk())
-                context.setForBulkUpdate(new_eh, originalData, template.getMutators());
-            _storageAdapter.updateEntry(context, new_eh, shouldReplicate, origin, context.getPartialUpdatedValuesIndicators());
+            if (isTieredStorage()) {
+                if (UpdateModifiers.isPartialUpdate(template.getOperationModifiers())) {
+                    handlePartialUpdate(context, originalData, newEntryData);
+                }
+
+                IEntryHolder cold_eh = EntryHolderFactory.createEntryHolder(entry.getServerTypeDesc(), (ITransactionalEntryData) newEntryData, entry.getUID(), entry.isTransient());
+                TieredStorageManager tieredStorageManager = _engine.getTieredStorageManager();
+                if(!entry.isTransient()){
+                    tieredStorageManager.getInternalStorage().updateEntry(context, cold_eh);
+                }
+
+
+                String typeName = newEntryData.getSpaceTypeDescriptor().getTypeName();
+                if(!tieredStorageManager.hasCacheRule(typeName)) {
+                    context.setEntryTieredState(TieredState.TIERED_COLD);
+                } else {
+                    CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
+                    if(cacheRule.evaluate(newEntryData)){
+                        if(cacheRule.isTransient()){
+                            context.setEntryTieredState(TieredState.TIERED_HOT);
+                        } else {
+                            context.setEntryTieredState(TieredState.TIERED_HOT_AND_COLD);
+                        }
+                    } else {
+                        context.setEntryTieredState(TieredState.TIERED_COLD);
+                    }
+                }
+
+
+                if(pEntry != null){ //old is hot or transient
+                    if(context.isHotEntry()){
+                        pEntry = updateEntryInCache(context, pEntry,  pEntry.getEntryHolder(this) , newEntryData, newEntryData.getExpirationTime(), template.getOperationModifiers());
+                    } else {
+                        boolean removed = removeEntryFromCache(entry, false, true, pEntry, RecentDeleteCodes.NONE);
+                        pEntry = null;
+                    }
+                } else {
+                    if(context.isHotEntry()){
+                        pEntry = insertEntryToCache(context, cold_eh, false, getTypeData(cold_eh.getServerTypeDesc()), false,  InitialLoadOrigin.NON);
+                    }
+                }
+
+                if(pEntry != null){
+                    new_eh = pEntry.getEntryHolder(this);
+                } else {
+                    new_eh = cold_eh;
+                }
+
+            } else {
+                pEntry = updateEntryInCache(context, pEntry, pEntry != null ? pEntry.getEntryHolder(this) : entry, newEntryData, newEntryData.getExpirationTime(), template.getOperationModifiers());
+                new_eh = pEntry.getEntryHolder(this);
+                if (entry.isBlobStoreEntry() && isDirectPersistencyEmbeddedtHandlerUsed() && context.isActiveBlobStoreBulk())
+                    context.setForBulkUpdate(new_eh, originalData, template.getMutators());
+                _storageAdapter.updateEntry(context, new_eh, shouldReplicate, origin, context.getPartialUpdatedValuesIndicators());
+            }
+
 
             if (shouldReplicate && !context.isDelayedReplicationForbulkOpUsed())
                 handleUpdateEntryReplication(context, new_eh, originalData, template.getMutators());
         } catch (Exception ex) {
             if (ex instanceof DuplicateIndexValueException)
                 throw (RuntimeException) ex; //mending inconsistent state already tried in update-references
+
+            if(isTieredStorage()) {
+                if (ex instanceof SAException)
+                    throw (SAException) ex;
+
+                throw new RuntimeException(ex);
+            }
+
 
             try {
                 if (entry.getEntryData().getVersion() == template.getUpdatedEntry().getEntryData().getVersion()) {//when RuntimeException is thrown we revert the references to the before update situation
@@ -1691,8 +1781,13 @@ public class CacheManager extends AbstractCacheManager
             if (pEntry != null)
                 return pEntry.getEntryHolder(this);
         } //if (pEntry != null)
-        if (!isEvictableCachePolicy() || _isMemorySA)
-            return null;   //no relevant entry found
+        if (!isEvictableCachePolicy() || _isMemorySA) {
+            if(context.getEntryTieredState()  != TieredState.TIERED_HOT_AND_COLD && context.getEntryTieredState() != TieredState.TIERED_COLD) {
+                return null;   //no relevant entry found
+            } else if (!isTieredStorage()) {
+                return null;   //no relevant entry found
+            }
+        }
 
         if (useOnlyCache)
             return null;
@@ -1704,8 +1799,15 @@ public class CacheManager extends AbstractCacheManager
         if (!lockedEntry && context.getPrefetchedNonBlobStoreEntries() != null)
             entry = context.getPrefetchedNonBlobStoreEntries().get(entryHolder.getUID());
             //use space uid
-        else
-            entry = _storageAdapter.getEntry(context, entryHolder.getUID(), entryHolder.getClassName(), entryHolder);
+        else {
+
+            if(_engine.getTieredStorageManager() != null){
+                entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(context, entryHolder.getServerTypeDesc().getTypeName(),
+                        entryHolder.isHollowEntry() ? context.getSuppliedEntryIdForColdTier() : entryHolder.getEntryId());
+            } else {
+                entry = _storageAdapter.getEntry(context, entryHolder.getUID(), entryHolder.getClassName(), entryHolder);
+            }
+        }
 
         if (entry == null)
             return null;
@@ -1900,7 +2002,18 @@ public class CacheManager extends AbstractCacheManager
                 if (!disableSAcall) {
                     if (entryHolder.isBlobStoreEntry() && isDirectPersistencyEmbeddedtHandlerUsed() && context.isActiveBlobStoreBulk())
                         context.setForBulkRemove(entryHolder, removeReason);
-                    _storageAdapter.removeEntry(context, entryHolder, origin, leaseExpiration, shouldReplicate);
+                    if(isTieredStorage()){
+                        if(context.getEntryTieredState() == null ){
+                            throw new IllegalStateException("context.getEntryTieredState() == null in  remove entry ");
+                        }
+
+                        if(context.getEntryTieredState() != TieredState.TIERED_HOT){
+                            _engine.getTieredStorageManager().getInternalStorage().removeEntry(context, entryHolder);
+                        }
+                    } else {
+
+                        _storageAdapter.removeEntry(context, entryHolder, origin, leaseExpiration, shouldReplicate);
+                    }
                     if (shouldReplicate && !context.isDelayedReplicationForbulkOpUsed())
                         handleRemoveEntryReplication(context, entryHolder, removeReason);
                 }
@@ -1920,7 +2033,18 @@ public class CacheManager extends AbstractCacheManager
                     if (!disableSAcall) {
                         if (entryHolder.isBlobStoreEntry() && isDirectPersistencyEmbeddedtHandlerUsed() && context.isActiveBlobStoreBulk())
                             context.setForBulkRemove(entryHolder, removeReason);
-                        _storageAdapter.removeEntry(context, entryHolder, origin, leaseExpiration, actualUpdateRedoLog);
+
+                        if(isTieredStorage()){
+                            if(context.getEntryTieredState() == null ){
+                                throw new IllegalStateException("context.getEntryTieredState() == null in  remove entry ");
+                            }
+
+                            if(context.getEntryTieredState() != TieredState.TIERED_HOT){
+                                _engine.getTieredStorageManager().getInternalStorage().removeEntry(context, entryHolder);
+                            }
+                        } else {
+                            _storageAdapter.removeEntry(context, entryHolder, origin, leaseExpiration, actualUpdateRedoLog);
+                        }
 
                         if (actualUpdateRedoLog && !context.isDelayedReplicationForbulkOpUsed())
                             handleRemoveEntryReplication(context, entryHolder, removeReason);
@@ -1940,9 +2064,15 @@ public class CacheManager extends AbstractCacheManager
 
         RecentDeleteCodes recentDeleteUsage = updated_recent_deletes ? RecentDeleteCodes.INSERT_DUMMY : RecentDeleteCodes.NONE;
 
-        if (!entryHolder.isBlobStoreEntry() || context.getBlobStoreBulkInfo() == null || (((IBlobStoreEntryHolder) entryHolder).getBulkInfo() == null && !context.getBlobStoreBulkInfo().wasEntryRemovedInChunk(entryHolder.getUID())))
+        if(isTieredStorage()){
+            if(context.getEntryTieredState() != TieredState.TIERED_COLD)
+                removeEntryFromCache(entryHolder, false /*initiatedByEvictionStrategy*/, true/*locked*/, pEntry/* pEntry*/, recentDeleteUsage);
+
+        } else if (!entryHolder.isBlobStoreEntry() || context.getBlobStoreBulkInfo() == null || (((IBlobStoreEntryHolder) entryHolder).getBulkInfo() == null
+                && !context.getBlobStoreBulkInfo().wasEntryRemovedInChunk(entryHolder.getUID()))) {
             //in case of blob-store bulk remove the entry from cache only after the bulk op performed
             removeEntryFromCache(entryHolder, false /*initiatedByEvictionStrategy*/, true/*locked*/, pEntry/* pEntry*/, recentDeleteUsage);
+        }
 
         /** perform sync-repl if need */
         if (!context.isSyncReplFromMultipleOperation() && !context.isDisableSyncReplication() && shouldReplicate /* don't replicate if not needed */) {
@@ -2781,7 +2911,7 @@ public class CacheManager extends AbstractCacheManager
 
     public int count(Context context, ITemplateHolder template, final XtnEntry xtnFilter)
             throws SAException {
-        final boolean memoryOnly = isCacheExternalDB() || _isMemorySA || isResidentEntriesCachePolicy() || template.isMemoryOnlySearch();
+        final boolean memoryOnly = isTieredStorage() ? template.isMemoryOnlySearch() : isCacheExternalDB() || _isMemorySA || isResidentEntriesCachePolicy() || template.isMemoryOnlySearch();
         final boolean slaveLeaseManager = _leaseManager.isSlaveLeaseManagerForEntries();
 
         if (xtnFilter != null)
@@ -3721,22 +3851,7 @@ public class CacheManager extends AbstractCacheManager
             //if partial update- insert the correct values to new fields array
             context.setPartialUpdatedValuesIndicators(null);
             if (partial_update) {
-                int numOfFields = originalEntryData.getNumOfFixedProperties();
-                boolean[] partialUpdatedValuesIndicators = new boolean[numOfFields];
-                boolean anyPartial = false;
-                for (int i = 0; i < numOfFields; i++) {//handle partial update
-                    if (newEntryData.getFixedPropertyValue(i) == null) {
-                        newEntryData.setFixedPropertyValue(i, originalEntryData.getFixedPropertyValue(i)); //supplement
-                        partialUpdatedValuesIndicators[i] = true;
-                        anyPartial = _partialUpdateReplication;
-                    }
-                }
-
-                if (newEntryData.getDynamicProperties() == null)
-                    newEntryData.setDynamicProperties(originalEntryData.getDynamicProperties());
-
-                if (anyPartial)
-                    context.setPartialUpdatedValuesIndicators(partialUpdatedValuesIndicators);
+                handlePartialUpdate(context, originalEntryData, newEntryData);
             }
 
             //in case of sequence number verify it havent been changed
@@ -3781,6 +3896,25 @@ public class CacheManager extends AbstractCacheManager
         } finally {
             pEntry.getEntryHolder(this).setunStable(false);
         }
+    }
+
+    private void handlePartialUpdate(Context context, IEntryData originalEntryData, IEntryData newEntryData) {
+        int numOfFields = originalEntryData.getNumOfFixedProperties();
+        boolean[] partialUpdatedValuesIndicators = new boolean[numOfFields];
+        boolean anyPartial = false;
+        for (int i = 0; i < numOfFields; i++) {//handle partial update
+            if (newEntryData.getFixedPropertyValue(i) == null) {
+                newEntryData.setFixedPropertyValue(i, originalEntryData.getFixedPropertyValue(i)); //supplement
+                partialUpdatedValuesIndicators[i] = true;
+                anyPartial = _partialUpdateReplication;
+            }
+        }
+
+        if (newEntryData.getDynamicProperties() == null)
+            newEntryData.setDynamicProperties(originalEntryData.getDynamicProperties());
+
+        if (anyPartial)
+            context.setPartialUpdatedValuesIndicators(partialUpdatedValuesIndicators);
     }
 
 
@@ -4041,37 +4175,56 @@ public class CacheManager extends AbstractCacheManager
         return refpos;
     }
 
-    public IEntryCacheInfo getEntryByUniqueId(IServerTypeDesc currServerTypeDesc, Object templateValue, ITemplateHolder template) {
+    public IEntryCacheInfo getEntryByUniqueId(Context context, IServerTypeDesc currServerTypeDesc, Object templateValue, ITemplateHolder template) {
         TypeData typeData = _typeDataMap.get(currServerTypeDesc);
 
         // If template is FIFO but type is not FIFO, do not search it:
         if (template.isFifoSearch() && !typeData.isFifoSupport())
             return null;
 
-        // If template has no fields of type has no indexes, skip index optimization:
-        if (!typeData.hasIndexes())
-            return null;
+        if(context.getTemplateTieredState() != TemplateMatchTier.MATCH_COLD) {//TODO - tiered storage - what if template tiered state == null
+            // If template has no fields of type has no indexes, skip index optimization:
+            if (!typeData.hasIndexes())
+                return null;
 
-        int latestIndexToConsider = typeData.getLastIndexCreationNumber();
+            int latestIndexToConsider = typeData.getLastIndexCreationNumber();
 
-        // If type contains a primary key definition, check it first:
-        TypeDataIndex<IStoredList<IEntryCacheInfo>> primaryKey = typeData.getIdField();
-        if (primaryKey != null && latestIndexToConsider >= primaryKey.getIndexCreationNumber()) {
-            if (typeData.disableIdIndexForEntries(primaryKey))
-                return getPEntryByUid(typeData.generateUid(templateValue));
+            // If type contains a primary key definition, check it first:
+            TypeDataIndex<IStoredList<IEntryCacheInfo>> primaryKey = typeData.getIdField();
+            if (primaryKey != null && latestIndexToConsider >= primaryKey.getIndexCreationNumber()) {
+                if (typeData.disableIdIndexForEntries(primaryKey))
+                    return getPEntryByUid(typeData.generateUid(templateValue));
 
-            IStoredList<IEntryCacheInfo> res = primaryKey.getUniqueEntriesStore().get(templateValue);
-            if (res != null && !res.isMultiObjectCollection())
-                return res.getObjectFromHead();
+                IStoredList<IEntryCacheInfo> res = primaryKey.getUniqueEntriesStore().get(templateValue);
+                if (res != null && !res.isMultiObjectCollection())
+                    return res.getObjectFromHead();
+            }
         }
+
+        if(_engine.getTieredStorageManager() != null){
+            if(ReadModifiers.isMemoryOnlySearch(template.getOperationModifiers())){
+                return null;
+            }
+            if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_COLD || context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
+                try {
+                    IEntryHolder entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(context, currServerTypeDesc.getTypeName(), templateValue);
+                    if (entry != null) {
+                        return EntryCacheInfoFactory.createEntryCacheInfo(entry);
+                    }
+                } catch (SAException e){
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
         return null;
     }
 
 
-    public IEntryCacheInfo[] getEntriesByUniqueIds(IServerTypeDesc currServerTypeDesc, Object[] ids, ITemplateHolder template) {
+    public IEntryCacheInfo[] getEntriesByUniqueIds(Context context, IServerTypeDesc currServerTypeDesc, Object[] ids, ITemplateHolder template) {
         IEntryCacheInfo[] res = new IEntryCacheInfo[ids.length];
         for (int i = 0; i < ids.length; i++) {
-            res[i] = getEntryByUniqueId(currServerTypeDesc, ids[i], template);
+            res[i] = getEntryByUniqueId(context, currServerTypeDesc, ids[i], template);
         }
         return res;
     }

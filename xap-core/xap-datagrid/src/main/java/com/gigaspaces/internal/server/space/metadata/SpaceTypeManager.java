@@ -28,6 +28,7 @@ import com.gigaspaces.internal.server.metadata.AddTypeDescResultType;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceConfigReader;
 import com.gigaspaces.internal.server.space.SpaceInstanceConfig;
+import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageManager;
 import com.gigaspaces.internal.transport.ITransportPacket;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.logger.LogLevel;
@@ -42,6 +43,7 @@ import com.j_spaces.core.UnknownTypeException;
 import com.j_spaces.core.client.ExternalEntry;
 import com.j_spaces.core.client.SpaceURL;
 import com.j_spaces.core.exception.internal.DirectoryInternalSpaceException;
+import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.SystemProperties;
 
 import net.jini.core.entry.Entry;
@@ -75,12 +77,13 @@ public class SpaceTypeManager {
     private final Object _typeDescLock = new Object();
     private final AtomicInteger _typeIdGenerator;
     private final Set<IServerTypeDescListener> _typeDescListeners;
+    private final TieredStorageManager tieredStorageManager;
 
     public SpaceTypeManager(SpaceConfigReader configReader) {
-        this(new TypeDescFactory(), configReader);
+        this(new TypeDescFactory(), configReader, null);
     }
 
-    public SpaceTypeManager(TypeDescFactory typeDescFactory, SpaceConfigReader configReader) {
+    public SpaceTypeManager(TypeDescFactory typeDescFactory, SpaceConfigReader configReader, TieredStorageManager tieredStorageManager) {
         logEnter("SpaceTypeManager.ctor", "spaceName", configReader.getFullSpaceName());
 
         this._typeDescFactory = typeDescFactory;
@@ -92,7 +95,7 @@ public class SpaceTypeManager {
         IServerTypeDesc rootTypeDesc = createServerTypeDescInstance(IServerTypeDesc.ROOT_TYPE_NAME, objectTypeDesc, null, _typeMap);
         _typeMap.put(null, rootTypeDesc);
         createServerTypeDescInstance(IServerTypeDesc.ROOT_SYSTEM_TYPE_NAME, null, null, _typeMap);
-
+        this.tieredStorageManager = tieredStorageManager;
         logExit("SpaceTypeManager.ctor", "spaceName", configReader.getFullSpaceName());
     }
 
@@ -281,9 +284,18 @@ public class SpaceTypeManager {
                 // Get type from local map to verify local changes do not affect global view:
                 serverTypeDesc = localTypeMap.get(typeName);
 
-                if (action == AddTypeDescResultType.CREATED)
+                if (action == AddTypeDescResultType.CREATED) {
                     serverTypeDesc = createServerTypeDesc(typeDesc, localTypeMap);
-                else if (action == AddTypeDescResultType.ACTIVATED)
+                    if(tieredStorageManager != null && (!tieredStorageManager.hasCacheRule(typeDesc.getTypeName()) ||
+                                    !tieredStorageManager.isTransient(typeDesc.getTypeName()))){
+                        try {
+                            tieredStorageManager.getInternalStorage().createTable(typeDesc);
+                        } catch (SAException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                } else if (action == AddTypeDescResultType.ACTIVATED)
                     activateServerTypeDesc(serverTypeDesc, typeDesc, localTypeMap);
                 else if (action == AddTypeDescResultType.UPDATED)
                     serverTypeDesc = updateServerTypeDesc(serverTypeDesc, typeDesc);

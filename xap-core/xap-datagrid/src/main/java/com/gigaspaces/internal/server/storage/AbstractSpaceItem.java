@@ -115,6 +115,10 @@ public abstract class AbstractSpaceItem implements ISpaceItem, Textualizable {
         return _transient;
     }
 
+    public void setTransient(boolean _transient) {
+        this._transient = _transient;
+    }
+
     public boolean isMaybeUnderXtn() {
         return _maybeUnderXtn;
     }

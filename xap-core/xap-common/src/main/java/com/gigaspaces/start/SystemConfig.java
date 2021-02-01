@@ -332,6 +332,8 @@ public class SystemConfig {
             classpathBuilder.appendOptionalJars("spring");
         }
 
+        classpathBuilder.appendOptionalJars("tiered-storage/sqlite");
+
         return classpathBuilder.toURLs();
     }
 

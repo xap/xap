@@ -281,4 +281,6 @@ public interface ITemplateHolder extends ISpaceItem, IEntryHolder {
     void setServerIteratorInfo(ServerIteratorInfo serverIteratorInfo);
 
     boolean isClear();
+
+    TemplateEntryData getTemplateEntryData();
 }

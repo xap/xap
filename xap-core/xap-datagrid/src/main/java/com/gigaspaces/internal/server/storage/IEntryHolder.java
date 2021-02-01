@@ -123,4 +123,10 @@ public interface IEntryHolder extends ISpaceItem {
 
     IEntryHolder getOriginalEntryHolder();
 
+    void setTransient(boolean isTransient);
+
+    default boolean isHollowEntry(){
+        return false;
+    }
+
 }

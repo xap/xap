@@ -64,5 +64,10 @@ public class EvictionCacheManager extends AbstractCacheManager {
             ((AbstractEvictionStrategy) _evictionStrategy).setBatchSize(evictionQuota);
         }
     }
+
+    @Override
+    public boolean isTieredStorage() {
+        return false;
+    }
 }
 

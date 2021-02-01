@@ -80,6 +80,7 @@ public class XapExtensions {
         registerSystemTaskExecutor(DeleteChunksTask.class, new SpaceDeleteChunksExecutor());
         registerSystemTaskExecutor(CollocatedJoinSpaceTask.class, new SpaceCollocatedJoinExecutor());
         registerSystemTaskExecutor(BroadcastTableSpaceTask.class, new SpaceBroadcastTableExecutor());
+        registerSystemTaskExecutor(GetEntriesTieredMetaDataTask.class, new SpaceGetEntriesTieredMetaDataExecutor());
     }
 
     public ReplicationRouterBuilderFactory getReplicationRouterBuilderFactory() {

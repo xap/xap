@@ -243,6 +243,12 @@ public class Context {
 
     private boolean _fromClustered;
 
+
+    //tiered storage
+    private TieredState entryTieredState;
+    private TemplateMatchTier templateTieredState;
+    private Object suppliedEntryIdForColdTier;
+
     public Context() {
     }
 
@@ -477,6 +483,9 @@ public class Context {
         _backupOnly=false;
         viewEntryData = null;
         _fromClustered = false;
+        entryTieredState = null;
+        templateTieredState = null;
+        suppliedEntryIdForColdTier = null;
     }
 
     public void setOnMatchUid(String uid)
@@ -1311,5 +1320,38 @@ public class Context {
             setFromGateway(sc.isFromGateway());
             setFromClustered(sc.isClustered());
         }
+    }
+
+    public TieredState getEntryTieredState() {
+        return entryTieredState;
+    }
+
+    public Context setEntryTieredState(TieredState entryTieredState) {
+        this.entryTieredState = entryTieredState;
+        return this;
+    }
+
+    public TemplateMatchTier getTemplateTieredState() {
+        return templateTieredState;
+    }
+
+    public void setTemplateTieredState(TemplateMatchTier templateTieredState) {
+        this.templateTieredState = templateTieredState;
+    }
+
+    public boolean isHotEntry(){
+        return entryTieredState == TieredState.TIERED_HOT || entryTieredState == TieredState.TIERED_HOT_AND_COLD;
+    }
+
+    public boolean isColdEntry(){
+        return entryTieredState == TieredState.TIERED_COLD || entryTieredState == TieredState.TIERED_HOT_AND_COLD;
+    }
+
+    public Object getSuppliedEntryIdForColdTier() {
+        return suppliedEntryIdForColdTier;
+    }
+
+    public void setSuppliedEntryIdForColdTier(Object suppliedEntryIdForColdTier) {
+        this.suppliedEntryIdForColdTier = suppliedEntryIdForColdTier;
     }
 }

@@ -87,6 +87,7 @@ import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.StorageConsistencyModes;
 import com.gigaspaces.internal.server.space.replication.SpaceReplicationInitializer;
 import com.gigaspaces.internal.server.space.replication.SpaceReplicationManager;
+import com.gigaspaces.internal.server.space.tiered_storage.*;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.SynchronizationStorageAdapter;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridSAException;
@@ -121,7 +122,10 @@ import com.j_spaces.core.cache.blobStore.optimizations.BlobStoreOperationOptimiz
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.blobStore.storage.preFetch.BlobStorePreFetchIteratorBasedHandler;
 import com.j_spaces.core.cache.context.Context;
+import com.j_spaces.core.cache.context.TemplateMatchTier;
+import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.*;
+import com.j_spaces.core.client.sql.ReadQueryParser;
 import com.j_spaces.core.cluster.*;
 import com.j_spaces.core.exception.internal.EngineInternalSpaceException;
 import com.j_spaces.core.exception.internal.ProxyInternalSpaceException;
@@ -133,6 +137,9 @@ import com.j_spaces.core.filters.ReplicationStatistics.ReplicationMode;
 import com.j_spaces.core.sadapter.*;
 import com.j_spaces.core.server.processor.*;
 import com.j_spaces.core.transaction.TransactionHandler;
+import com.j_spaces.jdbc.AbstractDMLQuery;
+import com.j_spaces.jdbc.builder.QueryTemplatePacket;
+import com.j_spaces.jdbc.builder.range.Range;
 import com.j_spaces.kernel.ClassLoaderHelper;
 import com.j_spaces.kernel.*;
 import com.j_spaces.kernel.list.CircularNumerator;
@@ -161,6 +168,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.Engine.*;
+import static com.j_spaces.core.Constants.TieredStorage.*;
 
 @com.gigaspaces.api.InternalApi
 public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedListener {
@@ -269,6 +277,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     private final int _resultsSizeLimit;
     private final int _resultsSizeLimitMemoryCheckBatchSize;
 
+    private TieredStorageManager tieredStorageManager;
+
     public SpaceEngine(SpaceImpl spaceImpl) throws CreateException, RemoteException {
         _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE + "." + spaceImpl.getNodeName());
         _operationLogger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE_OPERATIONS + "." + spaceImpl.getNodeName());
@@ -306,8 +316,18 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         _directProxy = spaceImpl.getSingleProxy();
 
-        final TypeDescFactory typeDescFactory = new TypeDescFactory(_directProxy);
-        _typeManager = new SpaceTypeManager(typeDescFactory, _configReader);
+        try {
+            initTieredStorageManager(spaceImpl);
+            final TypeDescFactory typeDescFactory = new TypeDescFactory(_directProxy);
+            _typeManager = new SpaceTypeManager(typeDescFactory, _configReader, tieredStorageManager);
+            if (isTieredStorage()) {
+                tieredStorageManager.getInternalStorage().initialize(_spaceName, _fullSpaceName, _typeManager);
+            }
+        } catch (SAException e) {
+            throw new CreateException("Failed to initialize InternalRDBMS", e);
+        } catch (IllegalAccessException | InstantiationException | ClassNotFoundException e) {
+            throw new CreateException("Failed to instantiate InternalRDBMS class");
+        }
 
         _partitionId = _clusterInfo.getPartitionOfMember(_fullSpaceName);
 
@@ -366,6 +386,22 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             registerSpaceMetrics(_metricRegistrator);
         _serverIteratorsManager = new ServerIteratorsManager(_spaceImpl.getPartitionId());
         spaceImpl.registerToClusterInfoChangedEvent(this);
+    }
+
+
+    private void initTieredStorageManager(SpaceImpl space) throws RemoteException, IllegalAccessException, InstantiationException, ClassNotFoundException {
+        Object tieredStorage = this._clusterInfo.getCustomComponent("TieredStorage");
+        if(tieredStorage != null ){
+            TieredStorageConfig storageConfig = (TieredStorageConfig) tieredStorage;
+            String className = System.getProperty(TIERED_STORAGE_INTERNAL_RDBMS_CLASS_PROP, TIERED_STORAGE_INTERNAL_RDBMS_CLASS_DEFAULT);
+            InternalRDBMS rdbms = ClassLoaderHelper.newInstance(className);
+            this.tieredStorageManager = new TieredStorageManagerImpl(storageConfig, rdbms, space.getSpaceProxy().getDirectProxy());
+        }
+    }
+
+
+    public TieredStorageManager getTieredStorageManager() {
+        return tieredStorageManager;
     }
 
     private void blobStoreOverrideConfig(SpaceImpl spaceImpl) {
@@ -825,6 +861,31 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         WriteEntryResult writeResult = null;
         EntryAlreadyInSpaceException entryInSpaceEx = null;
         try {
+            if(tieredStorageManager != null) {
+                String typeName = eHolder.getServerTypeDesc().getTypeName();
+                eHolder.setTransient(false);
+                if(!tieredStorageManager.hasCacheRule(typeName)) {
+                    context.setEntryTieredState(TieredState.TIERED_COLD);
+                } else{
+                    CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
+                    if(cacheRule.evaluate(eHolder.getEntryData())){
+                        if(cacheRule.isTransient()){
+                            eHolder.setTransient(true);
+                            context.setEntryTieredState(TieredState.TIERED_HOT);
+                        } else {
+                            context.setEntryTieredState(TieredState.TIERED_HOT_AND_COLD);
+                        }
+                    } else {
+                        if(cacheRule.isTransient()){
+                            _logger.warn("tried to write transient type but doesnt fit cache rule");
+                            return  new WriteEntryResult();
+                        } else {
+                            context.setEntryTieredState(TieredState.TIERED_COLD);
+                        }
+                    }
+                }
+
+            }
             context.cacheViewEntryDataIfNeeded(eHolder.getEntryData(), entryPacket);
             writeResult = _coreProcessor.handleDirectWriteSA(context, eHolder, serverTypeDesc, fromReplication,
                     origin, reInsertedEntry, packetUid != null,
@@ -1221,6 +1282,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         tHolder.getAnswerHolder().setServerTypeDesc(typeDesc);
         tHolder.setNonBlockingRead(isNonBlockingReadForOperation(tHolder));
         tHolder.setID(template.getID());
+
+        IEntryHolder entr;
 
         if (take) // call  filters for take
         {
@@ -2607,6 +2670,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             context.setOperationID(template.getOperationID());
             tHolder.setReRegisterLeaseOnUpdate(lease != UPDATE_NO_LEASE);
             context.applyOperationContext(sc);
+
             _coreProcessor.handleDirectChangeSA(context, tHolder, fromReplication, origin);
 
             answerSetByThisThread = context.isOpResultByThread();
@@ -3554,6 +3618,14 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         this._spaceImpl.removeClusterInfoChangedListener(this);
 
         _dataTypesMetricRegistrators.clear();
+
+        if(isTieredStorage()){
+            tieredStorageManager.getInternalStorage().shutDown();
+        }
+    }
+
+    public boolean isTieredStorage() {
+        return tieredStorageManager != null;
     }
 
 
@@ -3571,6 +3643,11 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                                                     boolean useSCN)
             throws TransactionException, TemplateDeletedException,
             SAException {
+        if(isTieredStorage() && context.getTemplateTieredState() == null) {
+            context.setTemplateTieredState(tieredStorageManager.guessTemplateTier(template));
+        }
+
+
         // is it an operation by id ?? if so search only for specific entry
         if (template.getUidToOperateBy() != null)
             return getEntryByIdAndOperateSA(context, template,
@@ -3586,7 +3663,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         //optimize performance for read-by-id
         if (template.getID() != null && template.getExtendedMatchCodes() == null) {
-            IScanListIterator<IEntryCacheInfo> toScan = _cacheManager.getEntryByUniqueId(serverTypeDesc, template.getID(), template);
+            IScanListIterator<IEntryCacheInfo> toScan = _cacheManager.getEntryByUniqueId(context, serverTypeDesc, template.getID(), template);
             if (toScan != null && !toScan.isIterator()) {
                 res = getMatchedEntryAndOperateSA_Entry(context,
                         template, makeWaitForInfo,
@@ -3602,7 +3679,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         if (context.getReadByIdsInfo() != null) {//read by ids, try using the entries prefetched earlier
             if (context.getReadByIdsInfo().getPos() == -1)
                 //prefetch all
-                context.getReadByIdsInfo().setEntries(_cacheManager.getEntriesByUniqueIds(serverTypeDesc, context.getReadByIdsInfo().getIds(), template));
+                context.getReadByIdsInfo().setEntries(_cacheManager.getEntriesByUniqueIds(context, serverTypeDesc, context.getReadByIdsInfo().getIds(), template));
 
             if (context.getReadByIdsInfo().getEntries()[context.getReadByIdsInfo().incrementPos()] != null) {
                 res =
@@ -3798,17 +3875,31 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         boolean replicatedFromCentralDB = isReplicatedFromCentralDB(context);
 
-        //if update/take/takeIE arrives from central-db replication only retrieve from pure cache
-        boolean cacheOnly = (replicatedFromCentralDB && (template.getTemplateOperation() == SpaceOperations.UPDATE
-                || template.getTemplateOperation() == SpaceOperations.TAKE_IE
-                || template.getTemplateOperation() == SpaceOperations.TAKE))
-                || template.isInitiatedEvictionOperation() || template.isMemoryOnlySearch();
-        IEntryHolder entry = _cacheManager.getEntry(context, uid, template.getClassName(),
-                template, true /*tryInsertToCache*/, false /*lockedEntry*/, cacheOnly);
+        IEntryHolder entry = null;
+        if(_cacheManager.isTieredStorage()){
+            if(tieredStorageManager.isTransient(template.getServerTypeDesc().getTypeName())){
+                template.setTransient(true);
+            }
+            if(template.isReadOperation() && template.getXidOriginated() == null){
+                entry = _cacheManager.getEntry(context, uid, template.getClassName(),
+                        template, false /*tryInsertToCache*/, false /*lockedEntry*/, template.isMemoryOnlySearch() || template.isTransient());
+            } else {
+                entry = EntryHolderFactory.createTieredStorageHollowEntry(context, template.getServerTypeDesc(), uid, template.isTransient(), template.getEntryId());
+            }
+        } else {
+            //if update/take/takeIE arrives from central-db replication only retrieve from pure cache
+            boolean cacheOnly = (replicatedFromCentralDB && (template.getTemplateOperation() == SpaceOperations.UPDATE
+                    || template.getTemplateOperation() == SpaceOperations.TAKE_IE
+                    || template.getTemplateOperation() == SpaceOperations.TAKE))
+                    || template.isInitiatedEvictionOperation() || template.isMemoryOnlySearch();
+            entry = _cacheManager.getEntry(context, uid, template.getClassName(),
+                    template, true /*tryInsertToCache*/, false /*lockedEntry*/, cacheOnly);
+        }
+
 
         boolean exceptionIfNoEntry = false;
         if (template.isMatchByID()) {
-            if (entry != null) {
+            if (entry != null && !entry.isHollowEntry()) {
                 ITransactionalEntryData ed = entry.getTxnEntryData();
                 context.setRawmatchResult(ed, ed.getOtherUpdateUnderXtnEntry() != null ? MatchResult.MASTER_AND_SHADOW : MatchResult.MASTER, entry, template);
 
@@ -3930,6 +4021,11 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             return;
         }
 
+        if(isTieredStorage()){
+            if(context.getTemplateTieredState() == null){
+                context.setTemplateTieredState(getTieredStorageManager().guessTemplateTier(template));
+            }
+        }
 
         // get template BFS class names list from Type Table (if template is null, use BFS of java.lang.Object).
         final IServerTypeDesc serverTypeDesc = _typeManager.getServerTypeDesc(template.getClassName());
@@ -3937,7 +4033,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         long leaseFilter = SystemTime.timeMillis();
 
-        if (getCacheManager().isEvictableCachePolicy() && !_cacheManager.isMemorySpace()) {
+        //TODO - tiered storage - impl for hot and cold
+        if ((getCacheManager().isEvictableCachePolicy() && !_cacheManager.isMemorySpace()) || (isTieredStorage() && context.getTemplateTieredState() != TemplateMatchTier.MATCH_HOT)) {
             IScanListIterator<IEntryCacheInfo> toScan =
                     _cacheManager.makeScanableEntriesIter(context, template, serverTypeDesc,
                             0 /*scnFilter*/, leaseFilter /*leaseFilter*/,
@@ -4336,8 +4433,17 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             BlobStoreRefEntryCacheInfo blobStoreRefEntryCacheInfo = ((BlobStoreEntryHolder) ent).getBlobStoreResidentPart();
             BlobStoreOperationOptimizations.isConsiderOptimizedForBlobstore(this, context, tmpl, blobStoreRefEntryCacheInfo);
         }
+
+        if(isTieredStorage()){
+            if(context.getEntryTieredState() == null){
+                context.setEntryTieredState(ent.isHollowEntry() ?
+                        tieredStorageManager.guessEntryTieredState(ent.getServerTypeDesc().getTypeName()):
+                        tieredStorageManager.getEntryTieredState(ent.getEntryData()));
+            }
+        }
+
         boolean needRematch = false;
-        if (needXtnLocked) {
+        if (needXtnLocked) { // TODO - tiered storage - handle tiered storage when adding support for txn
             if (ent.isDeleted()) {
                 throw ENTRY_DELETED_EXCEPTION/*new EntryDeletedException(ent.m_UID)*/;
             }
@@ -4435,9 +4541,20 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 throw ENTRY_DELETED_EXCEPTION/*new EntryDeletedException(ent.m_UID)*/;
             }
             IEntryHolder entry = ent;
-            if (getCacheManager().needReReadAfterEntryLock() &&
-                    (!context.isNonBlockingReadOp() || !context.isMainThread())) {
-                entry = _cacheManager.getEntry(context, ent, true /*tryInsertToCache*/, !context.isNonBlockingReadOp() /*lockeEntry*/, tmpl.isInitiatedEvictionOperation() || tmpl.isMemoryOnlySearch() /*useOnlyCache*/);
+            boolean reRead = false;
+            if(isTieredStorage()){
+                reRead = entry.isHollowEntry() || !context.isNonBlockingReadOp() ;
+                if(reRead){
+                    entry = _cacheManager.getEntry(context, ent, false /*tryInsertToCache*/, !context.isNonBlockingReadOp() /*lockeEntry*/, tmpl.isMemoryOnlySearch() || ent.isTransient() /*useOnlyCache*/);
+                }
+            } else {
+                reRead = getCacheManager().needReReadAfterEntryLock() && (!context.isNonBlockingReadOp() || !context.isMainThread());
+                if(reRead) {
+                    entry = _cacheManager.getEntry(context, ent, true /*tryInsertToCache*/, !context.isNonBlockingReadOp() /*lockeEntry*/, tmpl.isInitiatedEvictionOperation() || tmpl.isMemoryOnlySearch() /*useOnlyCache*/);
+                }
+            }
+
+            if (reRead) {
                 if (entry == null && tmpl.isInitiatedEvictionOperation())
                     throw NO_MATCH_EXCEPTION;
                 if (entry == null)
@@ -4453,7 +4570,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             if ((tmpl.isFifoSearch()) && !context.isNonBlockingReadOp() && entry.isMaybeUnderXtn())
                 return true;
 
-            if (!needRematch && !tmpl.isMatchByID()) {
+            if (!needRematch && (!tmpl.isMatchByID() || ent.isHollowEntry())) {
                 if (context.getLastRawMatchSnapshot() == null || context.getLastRawmatchTemplate() != tmpl || context.getLastRawmatchEntry() != entry)
                     needRematch = true;
                 if (!needRematch && (context.getLastRawMatchSnapshot() != entry.getTxnEntryData() ||
@@ -5388,13 +5505,14 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                               boolean ofReplicatableClass, EntryRemoveReasonCodes removeReason,
                               boolean disableReplication, boolean disableProcessorCall, boolean disableSADelete)
             throws SAException {
+        //TODO - tiered storage - handle lease expiration
         boolean fromLeaseExpiration = removeReason == EntryRemoveReasonCodes.LEASE_CANCEL || removeReason == EntryRemoveReasonCodes.LEASE_EXPIRED;
         // check for before-remove filter
         if ((fromLeaseExpiration || _general_purpose_remove_filters) && _filterManager._isFilter[FilterOperationCodes.BEFORE_REMOVE])
             _filterManager.invokeFilters(FilterOperationCodes.BEFORE_REMOVE, null, entry);
 
         boolean noRealRemoveFromSpace = fromLeaseExpiration && isExpiredEntryStayInSpace(entry);
-
+        //TODO - tiered storage - decide replication of time based eviction and retention
         disableReplication = disableReplication || (removeReason == EntryRemoveReasonCodes.LEASE_EXPIRED && !_leaseManager.replicateLeaseExpirationEventsForEntries());
         // mark entry as deleted
         if (!noRealRemoveFromSpace) {
@@ -7188,7 +7306,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     }
 
     public boolean isExpiredEntryStayInSpace(IEntryHolder entry) {
-        return (_cacheManager.isEvictableCachePolicy() && !entry.isTransient() && !_cacheManager.isMemorySpace());
+        return  (_cacheManager.isTieredStorage() && !entry.isTransient()) || (_cacheManager.isEvictableCachePolicy() && !entry.isTransient() && !_cacheManager.isMemorySpace());
     }
 
     public boolean isFailOverDuringRecovery() {

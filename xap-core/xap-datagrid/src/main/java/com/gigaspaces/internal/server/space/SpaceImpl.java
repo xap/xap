@@ -87,6 +87,12 @@ import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPe
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryHelper;
 import com.gigaspaces.internal.server.space.recovery.strategy.SpaceRecoverStrategy;
 import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
+import com.gigaspaces.internal.server.space.tiered_storage.CachePredicate;
+import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageManager;
+import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageUtils;
+import com.gigaspaces.internal.server.storage.EntryTieredMetaData;
+import com.gigaspaces.internal.server.storage.IEntryData;
+import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.service.ServiceRegistrationException;
 import com.gigaspaces.internal.space.responses.SpaceResponseInfo;
 import com.gigaspaces.internal.transaction.DefaultTransactionUniqueId;
@@ -124,12 +130,15 @@ import com.j_spaces.core.Constants.LookupManager;
 import com.j_spaces.core.LeaseManager;
 import com.j_spaces.core.Constants.*;
 import com.j_spaces.core.admin.*;
+import com.j_spaces.core.cache.context.Context;
+import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.*;
 import com.j_spaces.core.cluster.ClusterPolicy;
 import com.j_spaces.core.cluster.ClusterXML;
 import com.j_spaces.core.cluster.startup.ReplicationStartupManager;
 import com.j_spaces.core.exception.*;
 import com.j_spaces.core.filters.*;
+import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.core.server.processor.UpdateOrWriteBusPacket;
 import com.j_spaces.core.service.AbstractService;
 import com.j_spaces.core.service.Service;
@@ -2429,6 +2438,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         } finally {
             endPacketOperation();
         }
+    }
+
+    public Map<Object, EntryTieredMetaData> getEntriesTieredMetaDataByIds(String typeName, Object[] ids) throws Exception {
+        return TieredStorageUtils.getEntriesTieredMetaDataByIds(getEngine(), typeName, ids);
     }
 
     public GSEventRegistration notify(ITemplatePacket template, Transaction txn, long lease, SpaceContext sc,

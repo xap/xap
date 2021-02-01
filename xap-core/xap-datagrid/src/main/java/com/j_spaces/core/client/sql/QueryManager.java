@@ -93,6 +93,10 @@ public class QueryManager implements IQueryManager {
         }
     }
 
+    public ReadQueryParser getReadQueryParser() {
+        return _readQueryParser;
+    }
+
     @Override
     public int countClear(CountClearProxyActionInfo actionInfo) {
         SQLQuery<?> sqlQuery = ((SQLQueryTemplatePacket) actionInfo.queryPacket).getQuery();

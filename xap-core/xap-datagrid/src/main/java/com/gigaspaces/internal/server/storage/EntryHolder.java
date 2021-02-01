@@ -420,5 +420,8 @@ public class EntryHolder extends AbstractSpaceItem implements IEntryHolder {
         return null;
     }
 
-
+    @Override
+    public boolean isHollowEntry() {
+        return this._entryData == null;
+    }
 }
