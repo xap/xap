@@ -100,8 +100,6 @@ public class WriteSelectorThread extends AbstractSelectorThread {
     }
 
     public void removeWriteInterest(SelectionKey key) {
-        if (key != null) {
-            key.cancel();
-        }
+        key.cancel();
     }
 }

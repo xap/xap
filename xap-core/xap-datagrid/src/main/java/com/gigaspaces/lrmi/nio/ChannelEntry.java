@@ -214,8 +214,10 @@ public class ChannelEntry implements IWriteInterestManager {
     }
 
     public void removeWriteInterest(boolean restoreReadInterest) {
-        _writeSelectorThread.removeWriteInterest(_writeSelectionKey);
-        _writeSelectionKey = null;
+        if(_writeSelectionKey != null) {
+            _writeSelectorThread.removeWriteInterest(_writeSelectionKey);
+            _writeSelectionKey = null;
+        }
 
         if (restoreReadInterest)
             returnSocket(); // reregister socket for read events
