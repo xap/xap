@@ -6,12 +6,15 @@ import com.gigaspaces.internal.query.ICustomQuery;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.TemplatePacket;
+import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.EqualValueRange;
+import com.j_spaces.jdbc.builder.range.InRange;
 import com.j_spaces.jdbc.builder.range.Range;
 import com.j_spaces.jdbc.builder.range.SegmentRange;
 
 import java.util.List;
+import java.util.Set;
 
 public class CriteriaRangePredicate implements CachePredicate {
     private final String typeName;
@@ -32,20 +35,26 @@ public class CriteriaRangePredicate implements CachePredicate {
 
     @Override
     public boolean evaluate(ITemplatePacket packet) {
-        int index = ((PropertyInfo) packet.getTypeDescriptor().getFixedProperty(criteria.getPath())).getOriginalIndex();
         if (packet.getCustomQuery() != null) {
             ICustomQuery customQuery = packet.getCustomQuery();
             return evalCustomQuery(customQuery);
-        } else if (packet instanceof TemplatePacket) {
-            TemplatePacket templatePacket = (TemplatePacket) packet;
-            return criteria.getPredicate().execute(packet.getFieldValue(index));
-        } else if (hasMatchCodes(packet)) {
-            Object fieldValue = packet.getFieldValue(index);
-            if (fieldValue == null) {
+        } else {
+            SpacePropertyDescriptor property = packet.getTypeDescriptor().getFixedProperty(criteria.getPath());
+            if(property == null){
                 return true;
-            } else {
-                Range range = ((QueryTemplatePacket) packet).getRanges().get(criteria.getPath());
-                return evalRange(range);
+            }
+            int index = ((PropertyInfo) property).getOriginalIndex();
+            if (packet instanceof TemplatePacket) {
+                TemplatePacket templatePacket = (TemplatePacket) packet;
+                return criteria.getPredicate().execute(packet.getFieldValue(index));
+            } else if (hasMatchCodes(packet)) {
+                Object fieldValue = packet.getFieldValue(index);
+                if (fieldValue == null) {
+                    return true;
+                } else {
+                    Range range = ((QueryTemplatePacket) packet).getRanges().get(criteria.getPath());
+                    return evalRange(range);
+                }
             }
         }
         return false;
@@ -82,12 +91,14 @@ public class CriteriaRangePredicate implements CachePredicate {
 
     private boolean evalRange(Range queryValueRange) {
         if (criteria.isEqualValueRange()) {
-            if (!(queryValueRange.isEqualValueRange())) {
-                return false;
+            if ((queryValueRange.isEqualValueRange())) {
+                EqualValueRange valueRange = (EqualValueRange) queryValueRange;
+                return criteria.getPath().equals(valueRange.getPath()) &&
+                        criteria.getPredicate().execute(valueRange.getValue());
+            } else if(queryValueRange instanceof InRange){
+                Set inValues = ((InRange) queryValueRange).getInValues();
+                return inValues.size() == 1 && criteria.getPredicate().execute(inValues.toArray()[0]);
             }
-            EqualValueRange valueRange = (EqualValueRange) queryValueRange;
-            return criteria.getPath().equals(valueRange.getPath()) &&
-                    ((EqualValueRange) criteria).getValue().equals(valueRange.getValue());
         } else if (criteria.isSegmentRange()) {
             if (queryValueRange.isEqualValueRange()) {
                 return criteria.getPredicate().execute(((EqualValueRange) queryValueRange).getValue());
@@ -103,6 +114,24 @@ public class CriteriaRangePredicate implements CachePredicate {
                         && querySegmentRange.getMin() == null && querySegmentRange.getMax() != null) {
                     return criteria.getPredicate().execute(querySegmentRange.getMax());
                 }
+            } else if(queryValueRange instanceof InRange){
+                for (Object val : ((InRange) queryValueRange).getInValues()) {
+                    if(!criteria.getPredicate().execute(val)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        } else if(criteria instanceof InRange){
+            if (queryValueRange.isEqualValueRange()) {
+                return criteria.getPredicate().execute(((EqualValueRange) queryValueRange).getValue());
+            } else if(queryValueRange instanceof InRange){
+                for (Object val : ((InRange) queryValueRange).getInValues()) {
+                    if(!criteria.getPredicate().execute(val)) {
+                        return false;
+                    }
+                }
+                return true;
             }
         }
         return false;
