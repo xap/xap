@@ -34,13 +34,12 @@ import com.gigaspaces.metadata.SpaceMetadataException;
 import com.j_spaces.core.AbstractIdsQueryPacket;
 import com.j_spaces.core.UnknownTypeException;
 import com.j_spaces.core.exception.internal.ProxyInternalSpaceException;
-
 import net.jini.core.transaction.Transaction;
 
 @com.gigaspaces.api.InternalApi
 public class ReadTakeByIdsProxyActionInfo extends CommonProxyActionInfo {
     public final Object[] ids;
-    public final Object routing;
+    public Object routing;
     public Object[] routings;
     public final String className;
     public final boolean isTake;
@@ -122,8 +121,17 @@ public class ReadTakeByIdsProxyActionInfo extends CommonProxyActionInfo {
                 routings = new Object[ids.length];
                 for (int i = 0; i < ids.length; i++)
                     routings[i] = SpaceUidFactory.extractPartitionId((String) ids[i]);
-            } else
+            } else {
                 routings = ids;
+            }
+        }
+
+        // GS-14415 , In case ids.length equals 1, use 'routing' instead of 'routings'.
+        // This will construct IdsQueryPacket instead of IdsMultiRoutingQueryPacket, and therefore the
+        // PartitionedClusterExecutionType will be SINGLE, this will speed up the performance.
+        if(ids.length == 1 && routings != null && routings.length == 1 && routing == null) {
+            routing = routings[0];
+            routings = null;
         }
 
         validateReadModifiers(spaceProxy);
