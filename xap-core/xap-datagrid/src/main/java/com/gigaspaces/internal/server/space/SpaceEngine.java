@@ -87,6 +87,7 @@ import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.StorageConsistencyModes;
 import com.gigaspaces.internal.server.space.replication.SpaceReplicationInitializer;
 import com.gigaspaces.internal.server.space.replication.SpaceReplicationManager;
+import com.gigaspaces.internal.server.space.tiered_storage.*;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.SynchronizationStorageAdapter;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridSAException;
@@ -122,6 +123,7 @@ import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.blobStore.storage.preFetch.BlobStorePreFetchIteratorBasedHandler;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.client.*;
+import com.j_spaces.core.client.sql.ReadQueryParser;
 import com.j_spaces.core.cluster.*;
 import com.j_spaces.core.exception.internal.EngineInternalSpaceException;
 import com.j_spaces.core.exception.internal.ProxyInternalSpaceException;
@@ -133,6 +135,9 @@ import com.j_spaces.core.filters.ReplicationStatistics.ReplicationMode;
 import com.j_spaces.core.sadapter.*;
 import com.j_spaces.core.server.processor.*;
 import com.j_spaces.core.transaction.TransactionHandler;
+import com.j_spaces.jdbc.AbstractDMLQuery;
+import com.j_spaces.jdbc.builder.QueryTemplatePacket;
+import com.j_spaces.jdbc.builder.range.Range;
 import com.j_spaces.kernel.ClassLoaderHelper;
 import com.j_spaces.kernel.*;
 import com.j_spaces.kernel.list.CircularNumerator;
@@ -155,6 +160,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.Xid;
 import java.rmi.RemoteException;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -269,6 +275,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     private final int _resultsSizeLimit;
     private final int _resultsSizeLimitMemoryCheckBatchSize;
 
+    private TieredStorageManager tieredStorageManager;
+
     public SpaceEngine(SpaceImpl spaceImpl) throws CreateException, RemoteException {
         _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE + "." + spaceImpl.getNodeName());
         _operationLogger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_ENGINE_OPERATIONS + "." + spaceImpl.getNodeName());
@@ -366,6 +374,69 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             registerSpaceMetrics(_metricRegistrator);
         _serverIteratorsManager = new ServerIteratorsManager(_spaceImpl.getPartitionId());
         spaceImpl.registerToClusterInfoChangedEvent(this);
+        try {
+            initTieredStorageManager(spaceImpl);
+        } catch (SAException e) {
+            throw new CreateException("Failed to initialize internal RDBMS", e);
+        }
+    }
+
+
+    public void initTieredStorageManager(SpaceImpl space) throws RemoteException, SAException {
+        Object tieredStorage = this._clusterInfo.getCustomComponent("TieredStorage");
+        if(tieredStorage != null ){
+            TieredStorageConfig storage = (TieredStorageConfig) tieredStorage;
+            HashMap<String, TimePredicate> retentionRules = new HashMap<>();
+            HashMap<String, CachePredicate> cacheRules = new HashMap<>();
+            for (Map.Entry<String, TieredStorageTableConfig> entry : storage.getTables().entrySet()) {
+                try {
+                    IDirectSpaceProxy directProxy = space.getSpaceProxy().getDirectProxy();
+                    TieredStorageTableConfig tableConfig = entry.getValue();
+                    //TODO - validate
+                    if(tableConfig.getTimeColumn() != null ){
+                        if(tableConfig.getPeriod() != null){
+                            cacheRules.put(tableConfig.getName(), new TimePredicate(tableConfig.getName(),tableConfig.getTimeColumn(), tableConfig.getPeriod(), tableConfig.isTransient()));
+                        }
+
+                        if(tableConfig.getRetention() != null){
+                            retentionRules.put(tableConfig.getName(), new TimePredicate(tableConfig.getName(),tableConfig.getTimeColumn(), tableConfig.getRetention(), tableConfig.isTransient()));
+                        }
+                    }
+
+                    if(tableConfig.getCriteria() != null) {
+                        if(tableConfig.getCriteria().equalsIgnoreCase(AllPredicate.ALL_KEY_WORD)){
+                            cacheRules.put(tableConfig.getName(), new AllPredicate(tableConfig.isTransient()));
+                        }else {
+                            ReadQueryParser parser = new ReadQueryParser();
+                            AbstractDMLQuery sqlQuery = parser.parseSqlQuery(new SQLQuery(tableConfig.getName(), tableConfig.getCriteria()), directProxy);
+                            QueryTemplatePacket template = sqlQuery.getExpTree().getTemplate();
+                            HashMap<String, Range> ranges = template.getRanges();
+                            if (ranges.size() > 1) {
+                                throw new IllegalArgumentException("currently only single range is supported");
+                            }
+                            Iterator<String> iterator = ranges.keySet().iterator();
+                            if (iterator.hasNext()) {
+                                Range range = ranges.get(iterator.next());
+                                cacheRules.put(template.getTypeName(), new CriteriaRangePredicate(template.getTypeName(), range, tableConfig.isTransient()));
+                            }
+                        }
+                    }
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            MockRDBMS rdbms = new MockRDBMS();
+            rdbms.initialize();
+
+            this.tieredStorageManager = new TieredStorageManagerImpl(retentionRules, cacheRules, rdbms);
+        }
+    }
+
+
+    public TieredStorageManager getTieredStorageManager() {
+        return tieredStorageManager;
     }
 
     private void blobStoreOverrideConfig(SpaceImpl spaceImpl) {
@@ -825,6 +896,19 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         WriteEntryResult writeResult = null;
         EntryAlreadyInSpaceException entryInSpaceEx = null;
         try {
+            if(tieredStorageManager != null) {
+                String typeName = eHolder.getServerTypeDesc().getTypeName();
+                CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
+                if(cacheRule == null || !cacheRule.isTransient()) {
+                    InternalRDBMS storage = tieredStorageManager.getInternalStorage();
+                    storage.insertEntry(entryPacket);
+                }
+
+                if(cacheRule == null || !cacheRule.evaluate(eHolder.getEntryData())){
+                    return new WriteEntryResult(null, 1, Long.MAX_VALUE);
+                }
+
+            }
             context.cacheViewEntryDataIfNeeded(eHolder.getEntryData(), entryPacket);
             writeResult = _coreProcessor.handleDirectWriteSA(context, eHolder, serverTypeDesc, fromReplication,
                     origin, reInsertedEntry, packetUid != null,
@@ -1221,6 +1305,22 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         tHolder.getAnswerHolder().setServerTypeDesc(typeDesc);
         tHolder.setNonBlockingRead(isNonBlockingReadForOperation(tHolder));
         tHolder.setID(template.getID());
+
+
+        IEntryHolder entr;
+        if(tieredStorageManager != null) {
+            String typeName = typeDesc.getTypeName();
+            CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
+            if(cacheRule == null || !cacheRule.evaluate(template)) {
+                InternalRDBMS storage = tieredStorageManager.getInternalStorage();
+                try {
+                    context.setOperationAnswer(tHolder, storage.getEntry(typeName, template), null);
+                } catch (SAException e) {
+                    context.setOperationAnswer(tHolder, null, e);
+                }
+                return tHolder.getAnswerHolder();
+            }
+        }
 
         if (take) // call  filters for take
         {

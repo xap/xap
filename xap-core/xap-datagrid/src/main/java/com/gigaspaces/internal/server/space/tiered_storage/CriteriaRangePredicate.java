@@ -1,4 +1,4 @@
-package com.gigaspaces.internal.server.space.smart_cache;
+package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.query.AbstractCompundCustomQuery;
@@ -19,10 +19,12 @@ import java.util.Set;
 public class CriteriaRangePredicate implements CachePredicate {
     private final String typeName;
     private final Range criteria;
+    public final boolean isTransient;
 
-    public CriteriaRangePredicate(String typeName, Range criteria) {
+    public CriteriaRangePredicate(String typeName, Range criteria, boolean isTransient) {
         this.typeName = typeName;
         this.criteria = criteria;
+        this.isTransient = isTransient;
     }
 
     public String getTypeName() {
@@ -46,6 +48,8 @@ public class CriteriaRangePredicate implements CachePredicate {
             int index = ((PropertyInfo) property).getOriginalIndex();
             if (packet instanceof TemplatePacket) {
                 TemplatePacket templatePacket = (TemplatePacket) packet;
+                return criteria.getPredicate().execute(packet.getFieldValue(index));
+            } else if(packet.isIdQuery() && packet.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(criteria.getPath())){
                 return criteria.getPredicate().execute(packet.getFieldValue(index));
             } else if (hasMatchCodes(packet)) {
                 Object fieldValue = packet.getFieldValue(index);
@@ -139,7 +143,12 @@ public class CriteriaRangePredicate implements CachePredicate {
 
     @Override
     public boolean evaluate(IEntryData entryData) {
-        return false; //TODO
+        return criteria.getPredicate().execute(entryData.getFixedPropertyValue(entryData.getSpaceTypeDescriptor().getFixedPropertyPosition(criteria.getPath())));
+    }
+
+    @Override
+    public boolean isTransient() {
+        return isTransient;
     }
 
     @Override
