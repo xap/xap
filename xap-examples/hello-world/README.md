@@ -40,8 +40,11 @@ This will start an embedded data-grid followed by write and read of Message enti
 ### output
 ```
 Created embedded data-grid: myDataGrid
+
 write - 'Hello'
+
 write - 'World!'
+
 read - ['Hello', 'World!']
 ```
 
@@ -67,11 +70,12 @@ If you're using the open source package, you'll need to use the standalone clust
 
 ### Deploying a data grid
 
-To start the service grid locally with a single container, run the `gs.(sh|bat)` as follows:
+To start the service grid locally with a single container, run the `bin/gs.(sh|bat)` as follows:
 
 - gs.(sh|bat) host run-agent --auto --containers=1
 
 To deploy a data grid called `myDataGrid`, run:
+
 - gs.(sh|bat) space deploy myDataGrid
 
 ![helloworld-1r](images/remote.png)
@@ -85,8 +89,11 @@ This will connect your  client to your remote data-grid followed by write and re
 ### output
 ```
 Connected to remote data-grid: myDataGrid
+
 write - 'Hello'
+
 write - 'World!'
+
 read - ['Hello', 'World!']
 ```
 
@@ -117,19 +124,24 @@ Use the same commands, but specify 4 containers (1 per instance), and add the `-
 
 ## Starting standalone data grid instance/s (without Service Grid)
 
-Without the Service Grid, you will need to run the following commands from the ${GS_HOME}/bin directory.
+Without the Service Grid, you will need to run the following commands using `bin/gs.(sh|bat)`
 
 ### Single data grid instance
+
 -  gs.(sh|bat) space run --lus myDataGrid
 
 ### Data grid with 2 partitions
+
+-  gs.(sh|bat) space run --lus --partitions=2 myDataGrid
+
+#### Manually load each instance separately
 
 Each partition instance loads separately, as follows:
 
 1. Specify `--partitions=2` for two partitions
 2. Specify `--instances=1_1` or `--instances=2_1` for each partition instance
 
-From the ${GS_HOME}/bin directory, run (in 2 seperate terminals):
+From the ${GS_HOME}/bin directory, run (in 2 separate terminals):
 
 -  gs.(sh|bat) space run --lus --partitions=2 **--instances=1_1** myDataGrid
 -  gs.(sh|bat) space run --lus --partitions=2 **--instances=2_1** myDataGrid
@@ -137,6 +149,10 @@ From the ${GS_HOME}/bin directory, run (in 2 seperate terminals):
 This will simulate a data-grid of 2 partitioned instances (without backups).
 
 ### Data grid with 2 highly available partitions (with backups for each partition)
+
+-  gs.(sh|bat) space run --lus --partitions=2 --ha myDataGrid
+
+#### Manually load each instance separately
 
 Each partition instance can be assigned a backup, as follows:
 
