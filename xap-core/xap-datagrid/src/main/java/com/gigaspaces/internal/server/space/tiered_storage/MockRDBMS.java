@@ -1,7 +1,8 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
-import com.gigaspaces.internal.transport.IEntryPacket;
-import com.gigaspaces.internal.transport.ITemplatePacket;
+import com.gigaspaces.internal.server.storage.IEntryHolder;
+import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 
@@ -10,7 +11,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MockRDBMS implements InternalRDBMS {
-    private Map<Object, IEntryPacket> data;
+    private Map<Object, IEntryHolder> data;
     private AtomicInteger readCount = new AtomicInteger(0);
     private AtomicInteger writeCount = new AtomicInteger(0);
 
@@ -20,42 +21,34 @@ public class MockRDBMS implements InternalRDBMS {
     }
 
     @Override
-    public void insertEntry(IEntryPacket entryPacket) throws SAException {
+    public void insertEntry(IEntryHolder entryHolder) throws SAException {
         writeCount.incrementAndGet();
-        data.put(entryPacket.getID(), entryPacket);
+        data.put(entryHolder.getEntryId(), entryHolder);
     }
 
     @Override
-    public void updateEntry(IEntryPacket updatedEntry) throws SAException {
-
-    }
-
-    @Override
-    public void removeEntry(IEntryPacket entryPacket) throws SAException {
+    public void updateEntry(IEntryHolder updatedEntry) throws SAException {
 
     }
 
     @Override
-    public IEntryPacket getEntry(String className, ITemplatePacket template) throws SAException {
+    public void removeEntry(IEntryHolder entryPacket) throws SAException {
+
+    }
+
+    @Override
+    public IEntryHolder getEntry(String className, ITemplateHolder templateHolder) throws SAException {
+        return null;
+    }
+
+    @Override
+    public IEntryHolder getEntry(String className, Object id) throws SAException {
         readCount.incrementAndGet();
-        if (template.isIdQuery()) {
-            return data.get(template.getID());
-        }
-        return null;
+        return data.get(id);
     }
 
     @Override
-    public ISAdapterIterator initialLoad(Map<String, CachePredicate> cacheRules) throws SAException {
-        return null;
-    }
-
-    @Override
-    public Map<String, IEntryPacket> getEntries(String typeName, ITemplatePacket template) throws SAException {
-        return null;
-    }
-
-    @Override
-    public ISAdapterIterator<IEntryPacket> makeEntriesIter(String typeName, ITemplatePacket template) throws SAException {
+    public ISAdapterIterator<IEntryCacheInfo> makeEntriesIter(String typeName, ITemplateHolder templateHolder) throws SAException {
         return null;
     }
 
@@ -72,7 +65,7 @@ public class MockRDBMS implements InternalRDBMS {
         return writeCount.get();
     }
 
-    public Map<Object, IEntryPacket> getData() {
+    public Map<Object, IEntryHolder> getData() {
         return data;
     }
 }

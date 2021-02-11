@@ -243,6 +243,10 @@ public class Context {
 
     private boolean _fromClustered;
 
+    private TieredState entryTieredState;
+
+    private TieredState templateTieredState;
+
     public Context() {
     }
 
@@ -477,6 +481,8 @@ public class Context {
         _backupOnly=false;
         viewEntryData = null;
         _fromClustered = false;
+        entryTieredState = null;
+        templateTieredState = null;
     }
 
     public void setOnMatchUid(String uid)
@@ -1311,5 +1317,31 @@ public class Context {
             setFromGateway(sc.isFromGateway());
             setFromClustered(sc.isClustered());
         }
+    }
+
+    public TieredState getEntryTieredState() {
+        return entryTieredState;
+    }
+
+    public Context setEntryTieredState(TieredState entryTieredState) {
+        this.entryTieredState = entryTieredState;
+        return this;
+    }
+
+    public TieredState getTemplateTieredState() {
+        return templateTieredState;
+    }
+
+    public Context setTemplateTieredState(TieredState templateTieredState) {
+        this.templateTieredState = templateTieredState;
+        return this;
+    }
+
+    public boolean isHotEntry(){
+        return entryTieredState == TieredState.NOT_TIERED || entryTieredState == TieredState.TIERED_HOT || entryTieredState == TieredState.TIERED_HOT_AND_COLD;
+    }
+
+    public boolean isColdEntry(){
+        return entryTieredState == TieredState.TIERED_COLD || entryTieredState == TieredState.TIERED_HOT_AND_COLD;
     }
 }

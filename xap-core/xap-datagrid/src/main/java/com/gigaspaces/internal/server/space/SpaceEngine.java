@@ -122,6 +122,7 @@ import com.j_spaces.core.cache.blobStore.optimizations.BlobStoreOperationOptimiz
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.blobStore.storage.preFetch.BlobStorePreFetchIteratorBasedHandler;
 import com.j_spaces.core.cache.context.Context;
+import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.*;
 import com.j_spaces.core.client.sql.ReadQueryParser;
 import com.j_spaces.core.cluster.*;
@@ -899,15 +900,25 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             if(tieredStorageManager != null) {
                 String typeName = eHolder.getServerTypeDesc().getTypeName();
                 CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
-                if(cacheRule == null || !cacheRule.isTransient()) {
-                    InternalRDBMS storage = tieredStorageManager.getInternalStorage();
-                    storage.insertEntry(entryPacket);
+                if(cacheRule == null) {
+                    context.setEntryTieredState(TieredState.TIERED_COLD);
+                } else if(cacheRule.evaluate(eHolder.getEntryData())){
+                    if(cacheRule.isTransient()){
+                        context.setEntryTieredState(TieredState.TIERED_HOT);
+                    } else {
+                        context.setEntryTieredState(TieredState.TIERED_HOT_AND_COLD);
+                    }
+                } else {
+                    if(cacheRule.isTransient()){
+                        _logger.warn("tried to write transient type but doesnt fit cache rule");
+                        return  new WriteEntryResult();
+                    } else {
+                        context.setEntryTieredState(TieredState.TIERED_COLD);
+                    }
                 }
 
-                if(cacheRule == null || !cacheRule.evaluate(eHolder.getEntryData())){
-                    return new WriteEntryResult(null, 1, Long.MAX_VALUE);
-                }
-
+            } else {
+                context.setEntryTieredState(TieredState.NOT_TIERED);
             }
             context.cacheViewEntryDataIfNeeded(eHolder.getEntryData(), entryPacket);
             writeResult = _coreProcessor.handleDirectWriteSA(context, eHolder, serverTypeDesc, fromReplication,
@@ -1311,15 +1322,21 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         if(tieredStorageManager != null) {
             String typeName = typeDesc.getTypeName();
             CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
-            if(cacheRule == null || !cacheRule.evaluate(template)) {
-                InternalRDBMS storage = tieredStorageManager.getInternalStorage();
-                try {
-                    context.setOperationAnswer(tHolder, storage.getEntry(typeName, template), null);
-                } catch (SAException e) {
-                    context.setOperationAnswer(tHolder, null, e);
+            if(cacheRule == null){
+                context.setTemplateTieredState(TieredState.TIERED_COLD);
+            } else {
+                if(template.isIdQuery()){
+                    context.setTemplateTieredState(TieredState.TIERED_HOT_AND_COLD);
+                } else {
+                    if(!cacheRule.evaluate(template)){
+                        context.setTemplateTieredState(TieredState.TIERED_COLD);
+                    } else {
+                        context.setTemplateTieredState(TieredState.TIERED_HOT);
+                    }
                 }
-                return tHolder.getAnswerHolder();
             }
+        } else {
+            context.setTemplateTieredState(TieredState.NOT_TIERED);
         }
 
         if (take) // call  filters for take
@@ -3686,7 +3703,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         //optimize performance for read-by-id
         if (template.getID() != null && template.getExtendedMatchCodes() == null) {
-            IScanListIterator<IEntryCacheInfo> toScan = _cacheManager.getEntryByUniqueId(serverTypeDesc, template.getID(), template);
+            IScanListIterator<IEntryCacheInfo> toScan = _cacheManager.getEntryByUniqueId(context, serverTypeDesc, template.getID(), template);
             if (toScan != null && !toScan.isIterator()) {
                 res = getMatchedEntryAndOperateSA_Entry(context,
                         template, makeWaitForInfo,
@@ -3702,7 +3719,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         if (context.getReadByIdsInfo() != null) {//read by ids, try using the entries prefetched earlier
             if (context.getReadByIdsInfo().getPos() == -1)
                 //prefetch all
-                context.getReadByIdsInfo().setEntries(_cacheManager.getEntriesByUniqueIds(serverTypeDesc, context.getReadByIdsInfo().getIds(), template));
+                context.getReadByIdsInfo().setEntries(_cacheManager.getEntriesByUniqueIds(context, serverTypeDesc, context.getReadByIdsInfo().getIds(), template));
 
             if (context.getReadByIdsInfo().getEntries()[context.getReadByIdsInfo().incrementPos()] != null) {
                 res =

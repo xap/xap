@@ -85,6 +85,7 @@ import com.j_spaces.core.cache.blobStore.sadapter.IBlobStoreStorageAdapter;
 import com.j_spaces.core.cache.blobStore.storage.BlobStoreHashMock;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.IndexMetricsContext;
+import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.cache.fifoGroup.FifoGroupCacheImpl;
 import com.j_spaces.core.client.*;
 import com.j_spaces.core.cluster.ClusterPolicy;
@@ -1366,8 +1367,13 @@ public class CacheManager extends AbstractCacheManager
 
         IEntryCacheInfo pE = null;
 
-        pE = insertEntryToCache(context, entryHolder, true /* newEntry */,
-                typeData, true /*pin*/, InitialLoadOrigin.NON /*fromInitialLoad*/);
+        if(context.isHotEntry()) {
+            pE = insertEntryToCache(context, entryHolder, true /* newEntry */,
+                    typeData, true /*pin*/, InitialLoadOrigin.NON /*fromInitialLoad*/);
+        } else {
+            pE = EntryCacheInfoFactory.createEntryCacheInfo(entryHolder);
+            context.setWriteResult(new WriteEntryResult(pE.getUID(), 0, 0));
+        }
 
         if (pE == _entryAlreadyInSpaceIndication) {
             throw new EntryAlreadyInSpaceException(entryHolder.getUID(), entryHolder.getClassName());
@@ -1377,7 +1383,13 @@ public class CacheManager extends AbstractCacheManager
             try {
                 if (entryHolder.isBlobStoreEntry() && isDirectPersistencyEmbeddedtHandlerUsed() && context.isActiveBlobStoreBulk())
                     context.setForBulkInsert(entryHolder);
-                _storageAdapter.insertEntry(context, entryHolder, origin, shouldReplicate);
+
+                if(context.isColdEntry()){
+                    _engine.getTieredStorageManager().getInternalStorage().insertEntry(entryHolder);
+                } else {
+                    _storageAdapter.insertEntry(context, entryHolder, origin, shouldReplicate);
+                }
+
                 //If should be sent to cluster
                 if (shouldReplicate && !context.isDelayedReplicationForbulkOpUsed())
                     handleInsertEntryReplication(context, entryHolder);
@@ -1691,8 +1703,13 @@ public class CacheManager extends AbstractCacheManager
             if (pEntry != null)
                 return pEntry.getEntryHolder(this);
         } //if (pEntry != null)
-        if (!isEvictableCachePolicy() || _isMemorySA)
-            return null;   //no relevant entry found
+        if (!isEvictableCachePolicy() || _isMemorySA) {
+            if(context.getTemplateTieredState()  != TieredState.TIERED_HOT_AND_COLD && context.getTemplateTieredState() != TieredState.TIERED_COLD) {
+                return null;   //no relevant entry found
+            } else if (context.getTemplateTieredState() == TieredState.NOT_TIERED) {
+                return null;   //no relevant entry found
+            }
+        }
 
         if (useOnlyCache)
             return null;
@@ -1704,8 +1721,14 @@ public class CacheManager extends AbstractCacheManager
         if (!lockedEntry && context.getPrefetchedNonBlobStoreEntries() != null)
             entry = context.getPrefetchedNonBlobStoreEntries().get(entryHolder.getUID());
             //use space uid
-        else
-            entry = _storageAdapter.getEntry(context, entryHolder.getUID(), entryHolder.getClassName(), entryHolder);
+        else {
+
+            if(_engine.getTieredStorageManager() != null){
+                entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(entryHolder.getClassName(), entryHolder.getEntryId());
+            } else {
+                entry = _storageAdapter.getEntry(context, entryHolder.getUID(), entryHolder.getClassName(), entryHolder);
+            }
+        }
 
         if (entry == null)
             return null;
@@ -4041,37 +4064,54 @@ public class CacheManager extends AbstractCacheManager
         return refpos;
     }
 
-    public IEntryCacheInfo getEntryByUniqueId(IServerTypeDesc currServerTypeDesc, Object templateValue, ITemplateHolder template) {
+    public IEntryCacheInfo getEntryByUniqueId(Context context, IServerTypeDesc currServerTypeDesc, Object templateValue, ITemplateHolder template) {
         TypeData typeData = _typeDataMap.get(currServerTypeDesc);
 
         // If template is FIFO but type is not FIFO, do not search it:
         if (template.isFifoSearch() && !typeData.isFifoSupport())
             return null;
 
-        // If template has no fields of type has no indexes, skip index optimization:
-        if (!typeData.hasIndexes())
-            return null;
+        if(context.getTemplateTieredState() != TieredState.TIERED_COLD) {
+            // If template has no fields of type has no indexes, skip index optimization:
+            if (!typeData.hasIndexes())
+                return null;
 
-        int latestIndexToConsider = typeData.getLastIndexCreationNumber();
+            int latestIndexToConsider = typeData.getLastIndexCreationNumber();
 
-        // If type contains a primary key definition, check it first:
-        TypeDataIndex<IStoredList<IEntryCacheInfo>> primaryKey = typeData.getIdField();
-        if (primaryKey != null && latestIndexToConsider >= primaryKey.getIndexCreationNumber()) {
-            if (typeData.disableIdIndexForEntries(primaryKey))
-                return getPEntryByUid(typeData.generateUid(templateValue));
+            // If type contains a primary key definition, check it first:
+            TypeDataIndex<IStoredList<IEntryCacheInfo>> primaryKey = typeData.getIdField();
+            if (primaryKey != null && latestIndexToConsider >= primaryKey.getIndexCreationNumber()) {
+                if (typeData.disableIdIndexForEntries(primaryKey))
+                    return getPEntryByUid(typeData.generateUid(templateValue));
 
-            IStoredList<IEntryCacheInfo> res = primaryKey.getUniqueEntriesStore().get(templateValue);
-            if (res != null && !res.isMultiObjectCollection())
-                return res.getObjectFromHead();
+                IStoredList<IEntryCacheInfo> res = primaryKey.getUniqueEntriesStore().get(templateValue);
+                if (res != null && !res.isMultiObjectCollection())
+                    return res.getObjectFromHead();
+            }
         }
+
+        if(_engine.getTieredStorageManager() != null){
+            if(context.getTemplateTieredState() == TieredState.TIERED_COLD ||
+                    context.getTemplateTieredState() == TieredState.TIERED_HOT_AND_COLD){
+                try {
+                    IEntryHolder entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(currServerTypeDesc.getTypeName(), templateValue);
+                    if (entry != null) {
+                        return EntryCacheInfoFactory.createEntryCacheInfo(entry);
+                    }
+                } catch (SAException e){
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
         return null;
     }
 
 
-    public IEntryCacheInfo[] getEntriesByUniqueIds(IServerTypeDesc currServerTypeDesc, Object[] ids, ITemplateHolder template) {
+    public IEntryCacheInfo[] getEntriesByUniqueIds(Context context, IServerTypeDesc currServerTypeDesc, Object[] ids, ITemplateHolder template) {
         IEntryCacheInfo[] res = new IEntryCacheInfo[ids.length];
         for (int i = 0; i < ids.length; i++) {
-            res[i] = getEntryByUniqueId(currServerTypeDesc, ids[i], template);
+            res[i] = getEntryByUniqueId(context, currServerTypeDesc, ids[i], template);
         }
         return res;
     }
