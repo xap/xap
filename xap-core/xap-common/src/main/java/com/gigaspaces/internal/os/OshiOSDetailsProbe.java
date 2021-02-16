@@ -51,6 +51,7 @@ public class OshiOSDetailsProbe implements OSDetailsProbe  {
             OSDetails.OSNetInterfaceDetails nicDetails = OSDetails.OSNetInterfaceDetails.of(networkIF.queryNetworkInterface());
             if (nicDetails != null)
                 result.add(nicDetails);
+
         }
         return result.toArray(new OSDetails.OSNetInterfaceDetails[0]);
     }
