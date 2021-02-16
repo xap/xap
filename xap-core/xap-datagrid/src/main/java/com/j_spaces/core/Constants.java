@@ -947,4 +947,9 @@ public interface Constants {
 
     }
 
+    public interface TieredStorage {
+        String CACHE_MANAGER_TIERED_STORAGE_LOCKS_SIZE_PROP = "engine.TieredStorageLocksSize";
+        String CACHE_MANAGER_TIERED_STORAGE_LOCKS_SIZE_DEFAULT = "10000";
+    }
+
 }

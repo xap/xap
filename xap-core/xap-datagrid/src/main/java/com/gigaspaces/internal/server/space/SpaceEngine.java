@@ -315,8 +315,16 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         _directProxy = spaceImpl.getSingleProxy();
 
-        final TypeDescFactory typeDescFactory = new TypeDescFactory(_directProxy);
-        _typeManager = new SpaceTypeManager(typeDescFactory, _configReader);
+        try {
+            initTieredStorageManager(spaceImpl);
+            final TypeDescFactory typeDescFactory = new TypeDescFactory(_directProxy);
+            _typeManager = new SpaceTypeManager(typeDescFactory, _configReader, tieredStorageManager);
+            if (isTieredStorage()) {
+                tieredStorageManager.getInternalStorage().initialize(_typeManager);
+            }
+        } catch (SAException e) {
+            throw new CreateException("Failed to initialize internal RDBMS", e);
+        }
 
         _partitionId = _clusterInfo.getPartitionOfMember(_fullSpaceName);
 
@@ -375,11 +383,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             registerSpaceMetrics(_metricRegistrator);
         _serverIteratorsManager = new ServerIteratorsManager(_spaceImpl.getPartitionId());
         spaceImpl.registerToClusterInfoChangedEvent(this);
-        try {
-            initTieredStorageManager(spaceImpl);
-        } catch (SAException e) {
-            throw new CreateException("Failed to initialize internal RDBMS", e);
-        }
     }
 
 
@@ -428,8 +431,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 }
             }
 
-            MockRDBMS rdbms = new MockRDBMS();
-            rdbms.initialize();
+//            InternalRDBMS rdbms = new MockRDBMS();
+            InternalRDBMS rdbms = new SqliteRDBMS();
 
             this.tieredStorageManager = new TieredStorageManagerImpl(retentionRules, cacheRules, rdbms);
         }
@@ -900,10 +903,12 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             if(tieredStorageManager != null) {
                 String typeName = eHolder.getServerTypeDesc().getTypeName();
                 CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
+                eHolder.setTransient(false);
                 if(cacheRule == null) {
                     context.setEntryTieredState(TieredState.TIERED_COLD);
                 } else if(cacheRule.evaluate(eHolder.getEntryData())){
                     if(cacheRule.isTransient()){
+                        eHolder.setTransient(true);
                         context.setEntryTieredState(TieredState.TIERED_HOT);
                     } else {
                         context.setEntryTieredState(TieredState.TIERED_HOT_AND_COLD);
@@ -3671,6 +3676,14 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         this._spaceImpl.removeClusterInfoChangedListener(this);
 
         _dataTypesMetricRegistrators.clear();
+
+        if(isTieredStorage()){
+            tieredStorageManager.getInternalStorage().shutDown();
+        }
+    }
+
+    private boolean isTieredStorage() {
+        return tieredStorageManager != null;
     }
 
 
@@ -7305,7 +7318,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     }
 
     public boolean isExpiredEntryStayInSpace(IEntryHolder entry) {
-        return (_cacheManager.isEvictableCachePolicy() && !entry.isTransient() && !_cacheManager.isMemorySpace());
+        return  (_cacheManager.isTieredStorage() && !entry.isTransient()) || (_cacheManager.isEvictableCachePolicy() && !entry.isTransient() && !_cacheManager.isMemorySpace());
     }
 
     public boolean isFailOverDuringRecovery() {

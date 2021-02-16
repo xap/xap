@@ -1,5 +1,7 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
+import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.j_spaces.core.cache.IEntryCacheInfo;
@@ -11,19 +13,24 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MockRDBMS implements InternalRDBMS {
-    private Map<Object, IEntryHolder> data;
+    private Map<String,Map<Object, IEntryHolder>> data;
     private AtomicInteger readCount = new AtomicInteger(0);
     private AtomicInteger writeCount = new AtomicInteger(0);
 
     @Override
-    public void initialize() throws SAException {
+    public void initialize(SpaceTypeManager typeManager) throws SAException {
         data = new HashMap<>();
+    }
+
+    @Override
+    public void createTable(ITypeDesc typeDesc) {
+        data.put(typeDesc.getTypeName(), new HashMap<>());
     }
 
     @Override
     public void insertEntry(IEntryHolder entryHolder) throws SAException {
         writeCount.incrementAndGet();
-        data.put(entryHolder.getEntryId(), entryHolder);
+        data.get(entryHolder.getServerTypeDesc().getTypeName()).put(entryHolder.getEntryId(), entryHolder);
     }
 
     @Override
@@ -42,9 +49,9 @@ public class MockRDBMS implements InternalRDBMS {
     }
 
     @Override
-    public IEntryHolder getEntry(String className, Object id) throws SAException {
+    public IEntryHolder getEntry(String typeName, Object id) throws SAException {
         readCount.incrementAndGet();
-        return data.get(id);
+        return data.get(typeName).get(id);
     }
 
     @Override
@@ -53,7 +60,7 @@ public class MockRDBMS implements InternalRDBMS {
     }
 
     @Override
-    public void shutDown() throws SAException {
+    public void shutDown() {
 
     }
 
@@ -65,7 +72,7 @@ public class MockRDBMS implements InternalRDBMS {
         return writeCount.get();
     }
 
-    public Map<Object, IEntryHolder> getData() {
-        return data;
+    public Map<Object, IEntryHolder> getData(String typeName) {
+        return data.get(typeName);
     }
 }

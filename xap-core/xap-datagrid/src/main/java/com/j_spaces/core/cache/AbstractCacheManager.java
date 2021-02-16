@@ -71,6 +71,8 @@ abstract public class AbstractCacheManager {
         return getCachePolicy() == CACHE_POLICY_ALL_IN_CACHE;
     }
 
+    public abstract boolean isTieredStorage();
+
     public boolean isPluggedEvictionPolicy() {
         return getCachePolicy() == CACHE_POLICY_PLUGGED_EVICTION;
     }

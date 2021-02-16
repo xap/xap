@@ -469,9 +469,9 @@ public class CacheManager extends AbstractCacheManager
         _evictionStrategy = createEvictionStrategy(configReader, properties);
 
         //create the lock manager
-        _lockManager = isBlobStoreCachePolicy() ? new BlobStoreLockManager() : ((isAllInCachePolicy() ?
-                new AllInCacheLockManager<IEntryHolder>() :
-                new BasicEvictableLockManager<IEntryHolder>(configReader)));
+        _lockManager = isBlobStoreCachePolicy() ? new BlobStoreLockManager() :
+                (isTieredStorage() ? new TieredStorageLockManager<>(configReader) :
+                        (isAllInCachePolicy() ? new AllInCacheLockManager<>() : new BasicEvictableLockManager<>(configReader)));
 
 		/* get min extd' index activation size  */
         _minExtendedIndexActivationSize = configReader.getIntSpaceProperty(
@@ -1347,6 +1347,11 @@ public class CacheManager extends AbstractCacheManager
         return _evictionStrategy.evict(evictionQuota);
     }
 
+    @Override
+    public boolean isTieredStorage() {
+        return _engine.getTieredStorageManager() != null;
+    }
+
 
     /**
      * insert an entry to the space.
@@ -1724,7 +1729,7 @@ public class CacheManager extends AbstractCacheManager
         else {
 
             if(_engine.getTieredStorageManager() != null){
-                entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(entryHolder.getClassName(), entryHolder.getEntryId());
+                entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(entryHolder.getServerTypeDesc().getTypeName(), entryHolder.getEntryId());
             } else {
                 entry = _storageAdapter.getEntry(context, entryHolder.getUID(), entryHolder.getClassName(), entryHolder);
             }
