@@ -1,5 +1,5 @@
 package com.j_spaces.core.cache.context;
 
 public enum TieredState {
-    NOT_TIERED, TIERED_HOT, TIERED_HOT_AND_COLD, TIERED_COLD;
+    TIERED_HOT, TIERED_HOT_AND_COLD, TIERED_COLD;
 }

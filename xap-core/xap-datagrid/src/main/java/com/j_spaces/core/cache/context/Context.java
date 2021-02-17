@@ -1338,7 +1338,7 @@ public class Context {
     }
 
     public boolean isHotEntry(){
-        return entryTieredState == TieredState.NOT_TIERED || entryTieredState == TieredState.TIERED_HOT || entryTieredState == TieredState.TIERED_HOT_AND_COLD;
+        return entryTieredState == TieredState.TIERED_HOT || entryTieredState == TieredState.TIERED_HOT_AND_COLD;
     }
 
     public boolean isColdEntry(){

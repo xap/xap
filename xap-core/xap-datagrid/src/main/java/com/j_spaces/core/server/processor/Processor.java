@@ -243,7 +243,7 @@ public class Processor implements IConsumerObject<BusPacket<Processor>> {
     }
 
     private boolean needReadBeforeWriteToSpace(Context context) {
-        return (_cacheManager.isTieredStorage() && context.getTemplateTieredState() != TieredState.TIERED_COLD )|| (_cacheManager.isEvictableCachePolicy() && !_cacheManager.isMemorySpace());
+        return (_cacheManager.isTieredStorage() && context.getEntryTieredState() != TieredState.TIERED_COLD )|| (_cacheManager.isEvictableCachePolicy() && !_cacheManager.isMemorySpace());
     }
 
     private void insertToSpaceLoop(Context context, IEntryHolder entry, IServerTypeDesc typeDesc, boolean fromReplication, boolean origin,

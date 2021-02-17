@@ -1372,10 +1372,21 @@ public class CacheManager extends AbstractCacheManager
 
         IEntryCacheInfo pE = null;
 
-        if(context.isHotEntry()) {
+        if(isTieredStorage()){
+            if(context.getEntryTieredState() == null){
+                throw new IllegalStateException("trying to write entry in tiered mode but context.getEntryTieredState() == null, uid = "+entryHolder.getUID());
+            }
+            if(context.isColdEntry() && entryHolder.getXidOriginatedTransaction() == null) {
+                _engine.getTieredStorageManager().getInternalStorage().insertEntry(entryHolder);
+            }
+
+
+        }
+
+        if((isTieredStorage() && context.isHotEntry()) || !isTieredStorage()) {
             pE = insertEntryToCache(context, entryHolder, true /* newEntry */,
                     typeData, true /*pin*/, InitialLoadOrigin.NON /*fromInitialLoad*/);
-        } else {
+        } else {//(isTieredStorage() && !context.isHotEntry())
             pE = EntryCacheInfoFactory.createEntryCacheInfo(entryHolder);
             context.setWriteResult(new WriteEntryResult(pE.getUID(), 0, 0));
         }
@@ -1389,9 +1400,7 @@ public class CacheManager extends AbstractCacheManager
                 if (entryHolder.isBlobStoreEntry() && isDirectPersistencyEmbeddedtHandlerUsed() && context.isActiveBlobStoreBulk())
                     context.setForBulkInsert(entryHolder);
 
-                if(context.isColdEntry()){
-                    _engine.getTieredStorageManager().getInternalStorage().insertEntry(entryHolder);
-                } else {
+                if(!isTieredStorage()) {
                     _storageAdapter.insertEntry(context, entryHolder, origin, shouldReplicate);
                 }
 
@@ -1711,7 +1720,7 @@ public class CacheManager extends AbstractCacheManager
         if (!isEvictableCachePolicy() || _isMemorySA) {
             if(context.getTemplateTieredState()  != TieredState.TIERED_HOT_AND_COLD && context.getTemplateTieredState() != TieredState.TIERED_COLD) {
                 return null;   //no relevant entry found
-            } else if (context.getTemplateTieredState() == TieredState.NOT_TIERED) {
+            } else if (!isTieredStorage()) {
                 return null;   //no relevant entry found
             }
         }

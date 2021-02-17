@@ -922,8 +922,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                     }
                 }
 
-            } else {
-                context.setEntryTieredState(TieredState.NOT_TIERED);
             }
             context.cacheViewEntryDataIfNeeded(eHolder.getEntryData(), entryPacket);
             writeResult = _coreProcessor.handleDirectWriteSA(context, eHolder, serverTypeDesc, fromReplication,
@@ -1340,8 +1338,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                     }
                 }
             }
-        } else {
-            context.setTemplateTieredState(TieredState.NOT_TIERED);
         }
 
         if (take) // call  filters for take
