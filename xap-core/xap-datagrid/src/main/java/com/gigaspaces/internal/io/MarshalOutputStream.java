@@ -100,9 +100,13 @@ public class MarshalOutputStream
      *                              <code>null</code>
      **/
     public MarshalOutputStream(OutputStream out, boolean optimize) throws IOException {
+        this(out, optimize, new Context());
+    }
+
+    public MarshalOutputStream(OutputStream out, boolean optimize, Context context) throws IOException {
         super(out);
         _optimize = optimize;
-        _context = new Context();
+        _context = context;
     }
 
     /**

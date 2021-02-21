@@ -118,6 +118,8 @@ import com.gigaspaces.security.service.SecurityInterceptor;
 import com.gigaspaces.server.space.suspend.SuspendType;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.time.SystemTime;
+import com.gigaspaces.transport.PocSettings;
+import com.gigaspaces.transport.server.NioServer;
 import com.gigaspaces.utils.Pair;
 import com.j_spaces.core.*;
 import com.j_spaces.core.Constants.LookupManager;
@@ -240,6 +242,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     private final String _puName;
     private final boolean _scalable;
+    private final NioServer nioServer;
     private SpaceClusterInfo _clusterInfo;
     private SpaceConfig _spaceConfig;
     private SpaceEngine _engine;
@@ -346,6 +349,14 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             initSpaceStartupStateManager();
 
         _broadcastTableHandler = new BroadcastTableHandler(this);
+        if (PocSettings.enabled) {
+            try {
+                nioServer = new NioServer(this);
+            } catch (IOException e) {
+                throw new CreateException("Failed to create nio server", e);
+            }
+        } else
+            nioServer = null;
     }
 
     private ZKCollocatedClientConfig createZKCollocatedClientConfig() {
@@ -722,6 +733,13 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     }
 
     private void close() {
+        try {
+            if (nioServer != null)
+                nioServer.close();
+        } catch (IOException e) {
+            _logger.warn("Failed to close nio server", e);
+        }
+
         // close by proper way all generic workers
         if (_workerManager != null) {
             _workerManager.shutdown();

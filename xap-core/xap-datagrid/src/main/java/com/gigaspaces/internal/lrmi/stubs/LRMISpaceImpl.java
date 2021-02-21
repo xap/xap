@@ -52,6 +52,9 @@ import com.gigaspaces.management.space.LocalViewDetails;
 import com.gigaspaces.management.transport.ITransportConnection;
 import com.gigaspaces.security.service.RemoteSecuredService;
 import com.gigaspaces.server.space.suspend.SuspendType;
+import com.gigaspaces.transport.NioChannel;
+import com.gigaspaces.transport.PocSettings;
+import com.gigaspaces.transport.client.NioConnectionPool;
 import com.j_spaces.core.DropClassException;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.SpaceContext;
@@ -75,7 +78,11 @@ import net.jini.core.transaction.server.TransactionManager;
 import net.jini.id.Uuid;
 
 import org.jini.rio.boot.SpaceInstanceRemoteClassLoaderInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +99,12 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
         implements IRemoteSpace, IInternalRemoteJSpaceAdmin, Service {
     static final long serialVersionUID = 2L;
 
+    private static final NioConnectionPool connectionPool = new NioConnectionPool();
+    private static final Logger logger = LoggerFactory.getLogger(LRMISpaceImpl.class);
+
     private transient Uuid _spaceUuid; //cache at client side to avoid remote calls
+
+    private static final boolean nioEnabled = PocSettings.enabled;
 
     // NOTE, here just for externalizable
     public LRMISpaceImpl() {
@@ -103,6 +115,10 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
      */
     public LRMISpaceImpl(IRemoteSpace directRefObj, IRemoteSpace dynamicProxy) {
         super(directRefObj, dynamicProxy);
+        if (nioEnabled)
+            logger.info("Created (nio enabled, {})", PocSettings.dump());
+        else
+            logger.info("Created (nio disabled)");
     }
 
     @Override
@@ -605,7 +621,27 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     @Override
     public <T extends RemoteOperationResult> T executeOperation(RemoteOperationRequest<T> request)
             throws RemoteException {
-        return getProxy().executeOperation(request);
+        if (nioEnabled) {
+            //logger.debug("Proxy is executing {}", request);
+            NioChannel connection = null;
+            try {
+                connection = connectionPool.getOrCreate();
+                ByteBuffer requestBuffer = connection.serialize(request);
+                connection.writeBlocking(requestBuffer);
+                ByteBuffer reponseBuffer = connection.readBlocking();
+                T response = (T) connection.deserialize(reponseBuffer);
+                return response;
+            } catch (IOException | ClassNotFoundException e) {
+                logger.error("Failed to execute request", e);
+                System.exit(1);
+                throw new RemoteException("Failed to execute request", e);
+            } finally {
+                if (connection != null)
+                    connectionPool.release(connection);
+            }
+        } else {
+            return getProxy().executeOperation(request);
+        }
     }
 
     @Override
