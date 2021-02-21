@@ -3924,17 +3924,31 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         boolean replicatedFromCentralDB = isReplicatedFromCentralDB(context);
 
-        //if update/take/takeIE arrives from central-db replication only retrieve from pure cache
-        boolean cacheOnly = (replicatedFromCentralDB && (template.getTemplateOperation() == SpaceOperations.UPDATE
-                || template.getTemplateOperation() == SpaceOperations.TAKE_IE
-                || template.getTemplateOperation() == SpaceOperations.TAKE))
-                || template.isInitiatedEvictionOperation() || template.isMemoryOnlySearch();
-        IEntryHolder entry = _cacheManager.getEntry(context, uid, template.getClassName(),
-                template, true /*tryInsertToCache*/, false /*lockedEntry*/, cacheOnly);
+        IEntryHolder entry = null;
+        if(_cacheManager.isTieredStorage()){
+            if(tieredStorageManager.getCacheRule(template.getServerTypeDesc().getTypeName()).isTransient()){
+                template.setTransient(true);
+            }
+            if(template.isReadOperation() && template.getXidOriginated() == null){
+                entry = _cacheManager.getEntry(context, uid, template.getClassName(),
+                        template, false /*tryInsertToCache*/, false /*lockedEntry*/, template.isTransient());
+            } else {
+                entry = EntryHolderFactory.createTieredStorageHollowEntry(template.getServerTypeDesc(), uid, template.isTransient());
+            }
+        } else {
+            //if update/take/takeIE arrives from central-db replication only retrieve from pure cache
+            boolean cacheOnly = (replicatedFromCentralDB && (template.getTemplateOperation() == SpaceOperations.UPDATE
+                    || template.getTemplateOperation() == SpaceOperations.TAKE_IE
+                    || template.getTemplateOperation() == SpaceOperations.TAKE))
+                    || template.isInitiatedEvictionOperation() || template.isMemoryOnlySearch();
+            entry = _cacheManager.getEntry(context, uid, template.getClassName(),
+                    template, true /*tryInsertToCache*/, false /*lockedEntry*/, cacheOnly);
+        }
+
 
         boolean exceptionIfNoEntry = false;
         if (template.isMatchByID()) {
-            if (entry != null) {
+            if (entry != null && !entry.isHollowEntry()) {
                 ITransactionalEntryData ed = entry.getTxnEntryData();
                 context.setRawmatchResult(ed, ed.getOtherUpdateUnderXtnEntry() != null ? MatchResult.MASTER_AND_SHADOW : MatchResult.MASTER, entry, template);
 
@@ -4463,7 +4477,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             BlobStoreOperationOptimizations.isConsiderOptimizedForBlobstore(this, context, tmpl, blobStoreRefEntryCacheInfo);
         }
         boolean needRematch = false;
-        if (needXtnLocked) {
+        if (needXtnLocked) { // TODO - handle tiered storage when adding support for txn
             if (ent.isDeleted()) {
                 throw ENTRY_DELETED_EXCEPTION/*new EntryDeletedException(ent.m_UID)*/;
             }
@@ -4561,9 +4575,20 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 throw ENTRY_DELETED_EXCEPTION/*new EntryDeletedException(ent.m_UID)*/;
             }
             IEntryHolder entry = ent;
-            if (getCacheManager().needReReadAfterEntryLock() &&
-                    (!context.isNonBlockingReadOp() || !context.isMainThread())) {
-                entry = _cacheManager.getEntry(context, ent, true /*tryInsertToCache*/, !context.isNonBlockingReadOp() /*lockeEntry*/, tmpl.isInitiatedEvictionOperation() || tmpl.isMemoryOnlySearch() /*useOnlyCache*/);
+            boolean reRead = false;
+            if(isTieredStorage()){
+                reRead = entry.isHollowEntry() || !context.isNonBlockingReadOp() ;
+                if(reRead){
+                    entry = _cacheManager.getEntry(context, ent, false /*tryInsertToCache*/, !context.isNonBlockingReadOp() /*lockeEntry*/, tmpl.isMemoryOnlySearch() || ent.isTransient() /*useOnlyCache*/);
+                }
+            } else {
+                reRead = getCacheManager().needReReadAfterEntryLock() && (!context.isNonBlockingReadOp() || !context.isMainThread());
+                if(reRead) {
+                    entry = _cacheManager.getEntry(context, ent, true /*tryInsertToCache*/, !context.isNonBlockingReadOp() /*lockeEntry*/, tmpl.isInitiatedEvictionOperation() || tmpl.isMemoryOnlySearch() /*useOnlyCache*/);
+                }
+            }
+
+            if (reRead) {
                 if (entry == null && tmpl.isInitiatedEvictionOperation())
                     throw NO_MATCH_EXCEPTION;
                 if (entry == null)
@@ -4579,7 +4604,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             if ((tmpl.isFifoSearch()) && !context.isNonBlockingReadOp() && entry.isMaybeUnderXtn())
                 return true;
 
-            if (!needRematch && !tmpl.isMatchByID()) {
+            if (!needRematch && (!tmpl.isMatchByID() || ent.isHollowEntry())) {
                 if (context.getLastRawMatchSnapshot() == null || context.getLastRawmatchTemplate() != tmpl || context.getLastRawmatchEntry() != entry)
                     needRematch = true;
                 if (!needRematch && (context.getLastRawMatchSnapshot() != entry.getTxnEntryData() ||

@@ -45,6 +45,7 @@ import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.IStorageConsistency;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.StorageConsistencyModes;
+import com.gigaspaces.internal.server.space.tiered_storage.CachePredicate;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridStorageAdapter;
 import com.gigaspaces.internal.transport.ITemplatePacket;
@@ -1464,7 +1465,9 @@ public class CacheManager extends AbstractCacheManager
         IEntryData originalData = entry.getEntryData();
         try {
 
-            if (entry.isBlobStoreEntry()) {
+            if(isTieredStorage()){
+                pEntry = getPEntryByUid(entry.getUID());
+            } else if (entry.isBlobStoreEntry()) {
                 pEntry = ((IBlobStoreEntryHolder) entry).getBlobStoreResidentPart();
                 context.setBlobStoreOriginalEntryInfo(originalData, ((IBlobStoreEntryHolder) entry).getBlobStoreVersion());
             } else if (isAllInCachePolicy())
@@ -1472,11 +1475,59 @@ public class CacheManager extends AbstractCacheManager
 
             IEntryData newEntryData = template.getUpdatedEntry().getEntryData();
 
-            pEntry = updateEntryInCache(context, pEntry, pEntry != null ? pEntry.getEntryHolder(this) : entry, newEntryData, newEntryData.getExpirationTime(), template.getOperationModifiers());
-            new_eh = pEntry.getEntryHolder(this);
-            if (entry.isBlobStoreEntry() && isDirectPersistencyEmbeddedtHandlerUsed() && context.isActiveBlobStoreBulk())
-                context.setForBulkUpdate(new_eh, originalData, template.getMutators());
-            _storageAdapter.updateEntry(context, new_eh, shouldReplicate, origin, context.getPartialUpdatedValuesIndicators());
+            if (isTieredStorage()) {
+                if (UpdateModifiers.isPartialUpdate(template.getOperationModifiers())) {
+                    handlePartialUpdate(context, originalData, newEntryData);
+                }
+
+                IEntryHolder cold_eh = EntryHolderFactory.createEntryHolder(entry.getServerTypeDesc(), (ITransactionalEntryData) newEntryData, entry.getUID(), entry.isTransient());
+                if(!entry.isTransient()){
+                    _engine.getTieredStorageManager().getInternalStorage().updateEntry(cold_eh);
+                }
+
+
+                String typeName = newEntryData.getSpaceTypeDescriptor().getTypeName();
+                CachePredicate cacheRule = _engine.getTieredStorageManager().getCacheRule(typeName);
+                if(cacheRule == null) {
+                    context.setEntryTieredState(TieredState.TIERED_COLD);
+                } else if(cacheRule.evaluate(newEntryData)){
+                    if(cacheRule.isTransient()){
+                        context.setEntryTieredState(TieredState.TIERED_HOT);
+                    } else {
+                        context.setEntryTieredState(TieredState.TIERED_HOT_AND_COLD);
+                    }
+                } else {
+                    context.setEntryTieredState(TieredState.TIERED_COLD);
+                }
+
+
+                if(pEntry != null){ //old is hot or transient
+                    if(context.isHotEntry()){
+                        pEntry = updateEntryInCache(context, pEntry,  pEntry.getEntryHolder(this) , newEntryData, newEntryData.getExpirationTime(), template.getOperationModifiers());
+                    } else {
+                        boolean removed = removeEntryFromCache(entry, false, true, pEntry, RecentDeleteCodes.NONE);
+                        pEntry = null;
+                    }
+                } else {
+                    if(context.isHotEntry()){
+                        pEntry = insertEntryToCache(context, cold_eh, false, getTypeData(cold_eh.getServerTypeDesc()), false,  InitialLoadOrigin.NON);
+                    }
+                }
+
+                if(pEntry != null){
+                    new_eh = pEntry.getEntryHolder(this);
+                } else {
+                    new_eh = cold_eh;
+                }
+
+            } else {
+                pEntry = updateEntryInCache(context, pEntry, pEntry != null ? pEntry.getEntryHolder(this) : entry, newEntryData, newEntryData.getExpirationTime(), template.getOperationModifiers());
+                new_eh = pEntry.getEntryHolder(this);
+                if (entry.isBlobStoreEntry() && isDirectPersistencyEmbeddedtHandlerUsed() && context.isActiveBlobStoreBulk())
+                    context.setForBulkUpdate(new_eh, originalData, template.getMutators());
+                _storageAdapter.updateEntry(context, new_eh, shouldReplicate, origin, context.getPartialUpdatedValuesIndicators());
+            }
+
 
             if (shouldReplicate && !context.isDelayedReplicationForbulkOpUsed())
                 handleUpdateEntryReplication(context, new_eh, originalData, template.getMutators());
@@ -3758,22 +3809,7 @@ public class CacheManager extends AbstractCacheManager
             //if partial update- insert the correct values to new fields array
             context.setPartialUpdatedValuesIndicators(null);
             if (partial_update) {
-                int numOfFields = originalEntryData.getNumOfFixedProperties();
-                boolean[] partialUpdatedValuesIndicators = new boolean[numOfFields];
-                boolean anyPartial = false;
-                for (int i = 0; i < numOfFields; i++) {//handle partial update
-                    if (newEntryData.getFixedPropertyValue(i) == null) {
-                        newEntryData.setFixedPropertyValue(i, originalEntryData.getFixedPropertyValue(i)); //supplement
-                        partialUpdatedValuesIndicators[i] = true;
-                        anyPartial = _partialUpdateReplication;
-                    }
-                }
-
-                if (newEntryData.getDynamicProperties() == null)
-                    newEntryData.setDynamicProperties(originalEntryData.getDynamicProperties());
-
-                if (anyPartial)
-                    context.setPartialUpdatedValuesIndicators(partialUpdatedValuesIndicators);
+                handlePartialUpdate(context, originalEntryData, newEntryData);
             }
 
             //in case of sequence number verify it havent been changed
@@ -3818,6 +3854,25 @@ public class CacheManager extends AbstractCacheManager
         } finally {
             pEntry.getEntryHolder(this).setunStable(false);
         }
+    }
+
+    private void handlePartialUpdate(Context context, IEntryData originalEntryData, IEntryData newEntryData) {
+        int numOfFields = originalEntryData.getNumOfFixedProperties();
+        boolean[] partialUpdatedValuesIndicators = new boolean[numOfFields];
+        boolean anyPartial = false;
+        for (int i = 0; i < numOfFields; i++) {//handle partial update
+            if (newEntryData.getFixedPropertyValue(i) == null) {
+                newEntryData.setFixedPropertyValue(i, originalEntryData.getFixedPropertyValue(i)); //supplement
+                partialUpdatedValuesIndicators[i] = true;
+                anyPartial = _partialUpdateReplication;
+            }
+        }
+
+        if (newEntryData.getDynamicProperties() == null)
+            newEntryData.setDynamicProperties(originalEntryData.getDynamicProperties());
+
+        if (anyPartial)
+            context.setPartialUpdatedValuesIndicators(partialUpdatedValuesIndicators);
     }
 
 

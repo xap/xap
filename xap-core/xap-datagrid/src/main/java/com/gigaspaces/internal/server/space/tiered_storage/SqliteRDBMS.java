@@ -125,7 +125,22 @@ public class SqliteRDBMS implements InternalRDBMS {
 
     @Override
     public void updateEntry(IEntryHolder updatedEntry) throws SAException {
-        System.out.println("");
+        ITypeDesc typeDesc = updatedEntry.getEntryData().getSpaceTypeDescriptor();
+        String typeName = typeDesc.getTypeName();
+        StringBuilder stringBuilder = new StringBuilder("UPDATE '").append(typeName).append("' SET ");
+        for (PropertyInfo property : typeDesc.getProperties()) {
+            Object propertyValue = updatedEntry.getEntryData().getFixedPropertyValue(property.getOriginalIndex());
+            stringBuilder.append("'").append(property.getName()).append("' = ").append(getValueString(property, propertyValue)).append(",");
+        }
+        stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+        stringBuilder.append(";");
+        String sqlQuery = stringBuilder.toString();
+        System.out.println(sqlQuery);
+        try {
+            executeUpdate(sqlQuery);
+        } catch (SQLException e) {
+           throw new SAException(e);
+        }
     }
 
     @Override

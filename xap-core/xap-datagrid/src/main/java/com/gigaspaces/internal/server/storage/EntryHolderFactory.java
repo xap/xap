@@ -143,4 +143,9 @@ public class EntryHolderFactory {
 
         return new UserTypeEntryData(entryPacket.toObject(entryType), entryTypeDesc, version, lease, entryXtnInfo);
     }
+
+    public static IEntryHolder createTieredStorageHollowEntry(IServerTypeDesc typeDesc, String uid, boolean isTransient){
+        return new EntryHolder(typeDesc, uid, SystemTime.timeMillis(), isTransient, null);
+    }
+
 }
