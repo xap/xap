@@ -2,8 +2,6 @@ package com.gigaspaces.transport;
 
 import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.GSByteArrayOutputStream;
-import com.gigaspaces.internal.io.MarshalInputStream;
-import com.gigaspaces.internal.io.MarshalOutputStream;
 import com.gigaspaces.logger.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,13 +20,15 @@ public class NioChannel {
     private static final boolean CUSTOM_MARSHAL = PocSettings.customMarshal;
 
     private final SocketChannel socketChannel;
-    private final MarshalOutputStream.Context mosContext = CUSTOM_MARSHAL ? new MarshalOutputStream.Context() : null;
-    private final MarshalInputStream.Context misContext = CUSTOM_MARSHAL ? MarshalInputStream.createContext() : null;
+    private final LightMarshalOutputStream.Context mosContext;
+    private final LightMarshalInputStream.Context misContext;
     private final ByteBuffer headerBuffer = ByteBuffer.allocateDirect(LENGTH_SIZE);
     private NonBlockingReadContext nbrContext;
 
     public NioChannel(SocketChannel socketChannel) {
         this.socketChannel = socketChannel;
+        mosContext = CUSTOM_MARSHAL ? new LightMarshalOutputStream.Context() : null;
+        misContext = CUSTOM_MARSHAL ? new LightMarshalInputStream.Context() : null;
     }
 
     public SocketChannel getSocketChannel() {
@@ -134,11 +134,11 @@ public class NioChannel {
     }
 
     private ObjectOutputStream newObjectOutputStream(GSByteArrayOutputStream bos) throws IOException {
-        return CUSTOM_MARSHAL ? new MarshalOutputStream(bos, true, mosContext) : new ObjectOutputStream(bos);
+        return CUSTOM_MARSHAL ? new LightMarshalOutputStream(bos, mosContext) : new ObjectOutputStream(bos);
     }
 
     private ObjectInputStream newObjectInputStream(GSByteArrayInputStream bis) throws IOException {
-        return CUSTOM_MARSHAL ? new MarshalInputStream(bis, misContext) : new ObjectInputStream(bis);
+        return CUSTOM_MARSHAL ? new LightMarshalInputStream(bis, misContext) : new ObjectInputStream(bis);
     }
 
     private static class NonBlockingReadContext {

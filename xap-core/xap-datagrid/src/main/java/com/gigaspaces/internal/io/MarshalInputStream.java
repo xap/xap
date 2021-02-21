@@ -46,7 +46,8 @@ import org.slf4j.LoggerFactory;
  **/
 @com.gigaspaces.api.InternalApi
 public class MarshalInputStream
-        extends AnnotatedObjectInputStream {
+        extends AnnotatedObjectInputStream
+        implements IMarshalInputStream {
     private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_MARSHAL);
     private static final int CODE_DISABLED = -1;
     private static final int CODE_NULL = 0;
@@ -89,8 +90,9 @@ public class MarshalInputStream
     }
 
     /**
-     * Reads a repetitive object which was written by {@link MarshalOutputStream#writeRepetitiveObject}.
+     * Reads a repetitive object which was written by {@link IMarshalOutputStream#writeRepetitiveObject}.
      */
+    @Override
     public Object readRepetitiveObject()
             throws IOException, ClassNotFoundException {
         // Read object code:

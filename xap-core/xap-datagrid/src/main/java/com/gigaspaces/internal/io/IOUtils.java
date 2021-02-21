@@ -465,8 +465,8 @@ public class IOUtils {
      * repetitive (i.e space names, class names)
      */
     public static void writeRepetitiveString(ObjectOutput out, String s) throws IOException {
-        if (out instanceof MarshalOutputStream)
-            ((MarshalOutputStream) out).writeRepetitiveObject(s);
+        if (out instanceof IMarshalOutputStream)
+            ((IMarshalOutputStream) out).writeRepetitiveObject(s);
         else
             writeString(out, s);
     }
@@ -475,8 +475,8 @@ public class IOUtils {
      * Read strings that were Shrinked using {@link #writeRepetitiveString(ObjectOutput, String)}
      */
     public static String readRepetitiveString(ObjectInput in) throws IOException, ClassNotFoundException {
-        if (in instanceof MarshalInputStream)
-            return (String) ((MarshalInputStream) in).readRepetitiveObject();
+        if (in instanceof IMarshalInputStream)
+            return (String) ((IMarshalInputStream) in).readRepetitiveObject();
 
         return readString(in);
     }
@@ -694,8 +694,8 @@ public class IOUtils {
      * them will affect the next repetitiveRead/Write
      */
     public static void writeRepetitiveObject(ObjectOutput out, Object obj) throws IOException {
-        if (out instanceof MarshalOutputStream)
-            ((MarshalOutputStream) out).writeRepetitiveObject(obj);
+        if (out instanceof IMarshalOutputStream)
+            ((IMarshalOutputStream) out).writeRepetitiveObject(obj);
         else
             writeObject(out, obj);
     }
@@ -720,8 +720,8 @@ public class IOUtils {
      * kept in underlying map, changing them will affect the next repetitiveRead/Write
      */
     public static <T> T readRepetitiveObject(ObjectInput in) throws IOException, ClassNotFoundException {
-        if (in instanceof MarshalInputStream)
-            return (T) ((MarshalInputStream) in).readRepetitiveObject();
+        if (in instanceof IMarshalInputStream)
+            return (T) ((IMarshalInputStream) in).readRepetitiveObject();
 
         return (T) readObject(in);
     }

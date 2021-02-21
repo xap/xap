@@ -63,7 +63,8 @@ import org.slf4j.LoggerFactory;
  **/
 @com.gigaspaces.api.InternalApi
 public class MarshalOutputStream
-        extends AnnotatedObjectOutputStream {
+        extends AnnotatedObjectOutputStream
+        implements IMarshalOutputStream {
     private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI_MARSHAL);
     private static final int CODE_DISABLED = -1;
     private static final int CODE_NULL = 0;
@@ -118,6 +119,7 @@ public class MarshalOutputStream
      * you are writing is using a PU resource it will not be released when the PU is terminated, and
      * will cause a leak.
      */
+    @Override
     public void writeRepetitiveObject(Object obj)
             throws IOException {
         // If object is null, write null code:
