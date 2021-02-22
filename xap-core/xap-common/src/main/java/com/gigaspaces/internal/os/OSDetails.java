@@ -339,10 +339,11 @@ public class OSDetails implements Externalizable {
         }
 
         public OSVendorDetails(String vendor, String vendorCodeName, String vendorName, String vendorVersion) {
-            this.vendor = vendor;
-            this.vendorCodeName = vendorCodeName;
-            this.vendorName = vendorName;
-            this.vendorVersion = vendorVersion;
+            final String NA = "N/A";
+            this.vendor = vendor != null ? vendor : NA;
+            this.vendorCodeName = vendorCodeName != null ? vendorCodeName : NA;
+            this.vendorName = vendorName != null ? vendorName : NA;
+            this.vendorVersion = vendorVersion!= null ? vendorVersion : NA;
         }
 
         public String getVendor() {
