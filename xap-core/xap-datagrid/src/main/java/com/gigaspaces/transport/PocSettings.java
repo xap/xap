@@ -3,7 +3,7 @@ package com.gigaspaces.transport;
 import com.gigaspaces.internal.utils.GsEnv;
 
 public class PocSettings {
-    public static final boolean enabled = GsEnv.propertyBoolean("com.gs.nio.enabled").get(true);
+    public static final boolean enabled = GsEnv.propertyBoolean("com.gs.nio.enabled").get(false);
     public static final String host = GsEnv.property("com.gs.nio.host").get("localhost");
     public static final int port = GsEnv.propertyInt("com.gs.nio.port").get(8080);
     public static final boolean customMarshal = GsEnv.propertyBoolean("com.gs.nio.custom-marshal").get(true);
