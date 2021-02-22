@@ -104,7 +104,7 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
 
     private transient Uuid _spaceUuid; //cache at client side to avoid remote calls
 
-    private static final boolean nioEnabled = PocSettings.enabled;
+    private boolean nioEnabled;
 
     // NOTE, here just for externalizable
     public LRMISpaceImpl() {
@@ -115,6 +115,7 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
      */
     public LRMISpaceImpl(IRemoteSpace directRefObj, IRemoteSpace dynamicProxy) {
         super(directRefObj, dynamicProxy);
+        this.nioEnabled = !isDirect() && PocSettings.enabled;
         if (nioEnabled)
             logger.info("Created (nio enabled, {})", PocSettings.dump());
         else
