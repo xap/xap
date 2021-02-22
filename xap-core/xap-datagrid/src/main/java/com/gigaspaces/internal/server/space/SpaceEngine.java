@@ -3931,9 +3931,9 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             }
             if(template.isReadOperation() && template.getXidOriginated() == null){
                 entry = _cacheManager.getEntry(context, uid, template.getClassName(),
-                        template, false /*tryInsertToCache*/, false /*lockedEntry*/, template.isTransient());
+                        template, false /*tryInsertToCache*/, false /*lockedEntry*/, template.isMemoryOnlySearch() || template.isTransient());
             } else {
-                entry = EntryHolderFactory.createTieredStorageHollowEntry(template.getServerTypeDesc(), uid, template.isTransient());
+                entry = EntryHolderFactory.createTieredStorageHollowEntry(context, template.getServerTypeDesc(), uid, template.isTransient(), template.getEntryId());
             }
         } else {
             //if update/take/takeIE arrives from central-db replication only retrieve from pure cache
@@ -4476,6 +4476,14 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             BlobStoreRefEntryCacheInfo blobStoreRefEntryCacheInfo = ((BlobStoreEntryHolder) ent).getBlobStoreResidentPart();
             BlobStoreOperationOptimizations.isConsiderOptimizedForBlobstore(this, context, tmpl, blobStoreRefEntryCacheInfo);
         }
+
+        if(isTieredStorage()){
+            if(context.getEntryTieredState() == null){
+                context.setEntryTieredState(ent.isHollowEntry() ? tieredStorageManager.guessEntryTieredState(ent.getServerTypeDesc().getTypeName()):
+                        tieredStorageManager.getEntryTieredState(ent.getEntryData()));
+            }
+        }
+
         boolean needRematch = false;
         if (needXtnLocked) { // TODO - handle tiered storage when adding support for txn
             if (ent.isDeleted()) {

@@ -243,9 +243,11 @@ public class Context {
 
     private boolean _fromClustered;
 
-    private TieredState entryTieredState;
 
+    //tiered storage
+    private TieredState entryTieredState;
     private TieredState templateTieredState;
+    private Object suppliedEntryIdForColdTier;
 
     public Context() {
     }
@@ -483,6 +485,7 @@ public class Context {
         _fromClustered = false;
         entryTieredState = null;
         templateTieredState = null;
+        suppliedEntryIdForColdTier = null;
     }
 
     public void setOnMatchUid(String uid)
@@ -1343,5 +1346,13 @@ public class Context {
 
     public boolean isColdEntry(){
         return entryTieredState == TieredState.TIERED_COLD || entryTieredState == TieredState.TIERED_HOT_AND_COLD;
+    }
+
+    public Object getSuppliedEntryIdForColdTier() {
+        return suppliedEntryIdForColdTier;
+    }
+
+    public void setSuppliedEntryIdForColdTier(Object suppliedEntryIdForColdTier) {
+        this.suppliedEntryIdForColdTier = suppliedEntryIdForColdTier;
     }
 }

@@ -1,5 +1,8 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
+import com.gigaspaces.internal.server.storage.IEntryData;
+import com.j_spaces.core.cache.context.TieredState;
+
 import java.util.Map;
 
 public class TieredStorageManagerImpl implements TieredStorageManager {
@@ -37,4 +40,34 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     public InternalRDBMS getInternalStorage() {
         return this.internalDiskStorage;
     }
+
+    @Override
+    public TieredState getEntryTieredState(IEntryData entryData) {
+        String typeName = entryData.getSpaceTypeDescriptor().getTypeName();
+        CachePredicate cacheRule = getCacheRule(typeName);
+        if (cacheRule == null) {
+            return TieredState.TIERED_COLD;
+        } else if (cacheRule.evaluate(entryData)) {
+            if (cacheRule.isTransient()) {
+                return TieredState.TIERED_HOT;
+            } else {
+                return TieredState.TIERED_HOT_AND_COLD;
+            }
+        } else {
+            return TieredState.TIERED_COLD;
+        }
+    }
+
+    @Override
+    public TieredState guessEntryTieredState(String typeName) {
+        CachePredicate cacheRule = getCacheRule(typeName);
+        if (cacheRule == null) {
+            return TieredState.TIERED_COLD;
+        } else if (cacheRule.isTransient()) {
+            return TieredState.TIERED_HOT;
+        } else {
+            return TieredState.TIERED_HOT_AND_COLD;
+        }
+    }
+
 }

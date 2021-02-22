@@ -3,7 +3,9 @@ package com.gigaspaces.internal.server.space.tiered_storage;
 import com.gigaspaces.internal.io.FileUtils;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.metadata.ITypeIntrospector;
 import com.gigaspaces.internal.metadata.PropertyInfo;
+import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.EntryHolder;
 import com.gigaspaces.internal.server.storage.FlatEntryData;
@@ -13,6 +15,7 @@ import com.gigaspaces.internal.utils.concurrent.ReentrantSimpleLock;
 import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.j_spaces.core.cache.IEntryCacheInfo;
+import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.client.EntryAlreadyInSpaceException;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
@@ -24,6 +27,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.*;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,7 +89,7 @@ public class SqliteRDBMS implements InternalRDBMS {
     }
 
     @Override
-    public void insertEntry(IEntryHolder entryHolder) throws SAException {
+    public void insertEntry(Context context, IEntryHolder entryHolder) throws SAException {
         ITypeDesc typeDesc = entryHolder.getEntryData().getSpaceTypeDescriptor();
         String typeName = typeDesc.getTypeName();
         StringBuilder stringBuilder = new StringBuilder("INSERT INTO '").append(typeName).append("' (");
@@ -114,25 +118,26 @@ public class SqliteRDBMS implements InternalRDBMS {
         writeCount.incrementAndGet();
     }
 
-    private String getValueString(SpacePropertyDescriptor property, Object propertyValue) {
-        if (property.getType().equals(String.class)) {
-            return "\"" + propertyValue + "\"";
-        } else {
-            return propertyValue.toString();
-        }
-    }
-
-
     @Override
-    public void updateEntry(IEntryHolder updatedEntry) throws SAException {
+    public void updateEntry(Context context, IEntryHolder updatedEntry) throws SAException {
         ITypeDesc typeDesc = updatedEntry.getEntryData().getSpaceTypeDescriptor();
         String typeName = typeDesc.getTypeName();
         StringBuilder stringBuilder = new StringBuilder("UPDATE '").append(typeName).append("' SET ");
+        PropertyInfo idProperty = null;
         for (PropertyInfo property : typeDesc.getProperties()) {
+            if(property.getName().equalsIgnoreCase(typeDesc.getIdPropertyName())){
+                idProperty = property;
+            }
             Object propertyValue = updatedEntry.getEntryData().getFixedPropertyValue(property.getOriginalIndex());
             stringBuilder.append("'").append(property.getName()).append("' = ").append(getValueString(property, propertyValue)).append(",");
         }
+
+        if(idProperty == null){
+             throw new SAException("could not find id property ("+typeDesc.getIdPropertyName()+") in "+ Arrays.toString(typeDesc.getProperties()));
+        }
         stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+        stringBuilder.append(" WHERE ").append(typeDesc.getIdPropertyName()).append(" = ")
+                .append(getValueString(idProperty, updatedEntry.getEntryData().getFixedPropertyValue(idProperty.getOriginalIndex())));
         stringBuilder.append(";");
         String sqlQuery = stringBuilder.toString();
         System.out.println(sqlQuery);
@@ -144,17 +149,17 @@ public class SqliteRDBMS implements InternalRDBMS {
     }
 
     @Override
-    public void removeEntry(IEntryHolder entryPacket) throws SAException {
+    public void removeEntry(Context context, IEntryHolder entryPacket) throws SAException {
 
     }
 
     @Override
-    public IEntryHolder getEntry(String typeName, ITemplateHolder templateHolder) throws SAException {
+    public IEntryHolder getEntry(Context context, String typeName, ITemplateHolder templateHolder) throws SAException {
         return null;
     }
 
     @Override
-    public IEntryHolder getEntry(String typeName, Object id) throws SAException {
+    public IEntryHolder getEntry(Context context, String typeName, Object id) throws SAException {
         ITypeDesc typeDesc = typeManager.getTypeDesc(typeName);
         String idPropertyName = typeDesc.getIdPropertyName();
         String sqlQuery = "Select * from '" + typeDesc.getTypeName() + "' " +
@@ -169,8 +174,9 @@ public class SqliteRDBMS implements InternalRDBMS {
                     values[i] = getPropertyValue(resultSet, properties[i]);
                 }
                 FlatEntryData data = new FlatEntryData(values, null, typeDesc.getEntryTypeDesc(EntryType.DOCUMENT_JAVA), 0, Lease.FOREVER, null);
+                String uid = SpaceUidFactory.createUidFromTypeAndId(typeDesc, id);
                 readCount.incrementAndGet();
-                return new EntryHolder(typeManager.getServerTypeDesc(typeName), null, 0, false, data);
+                return new EntryHolder(typeManager.getServerTypeDesc(typeName), uid, 0, false, data);
             } else {
                 return null;
             }
@@ -180,9 +186,8 @@ public class SqliteRDBMS implements InternalRDBMS {
         }
     }
 
-
     @Override
-    public ISAdapterIterator<IEntryCacheInfo> makeEntriesIter(String typeName, ITemplateHolder templateHolder) throws
+    public ISAdapterIterator<IEntryCacheInfo> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder) throws
             SAException {
         return null;
     }
@@ -200,6 +205,14 @@ public class SqliteRDBMS implements InternalRDBMS {
     @Override
     public int getReadCount() {
         return readCount.get();
+    }
+
+    private String getValueString(SpacePropertyDescriptor property, Object propertyValue) {
+        if (property.getType().equals(String.class)) {
+            return "\"" + propertyValue + "\"";
+        } else {
+            return propertyValue.toString();
+        }
     }
 
     private Connection connectToDB(String jdbcDriver, String dbUrl, String user, String password, SQLiteConfig config) throws ClassNotFoundException, SQLException {

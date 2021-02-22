@@ -5,6 +5,7 @@ import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.j_spaces.core.cache.IEntryCacheInfo;
+import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 
@@ -19,21 +20,21 @@ public interface InternalRDBMS {
      *
      * @param entryHolder entry to insert
      */
-    void insertEntry(IEntryHolder entryHolder) throws SAException;
+    void insertEntry(Context context,  IEntryHolder entryHolder) throws SAException;
 
     /**
      * updates an entry.
      *
      * @param updatedEntry new content, same UID and class
      */
-    void updateEntry(IEntryHolder updatedEntry) throws SAException;
+    void updateEntry(Context context, IEntryHolder updatedEntry) throws SAException;
 
     /**
      * Removes an entry from the  internalDiskStorage
      *
      * @param entryPacket entry to remove
      */
-    void removeEntry(IEntryHolder entryPacket) throws SAException;
+    void removeEntry(Context context, IEntryHolder entryPacket) throws SAException;
 
 
     /**
@@ -44,11 +45,11 @@ public interface InternalRDBMS {
      *                       order to pass primary key fields when GS uid is not saved in an external DB
      * @return IEntryPacket
      */
-    IEntryHolder getEntry(String typeName, ITemplateHolder templateHolder) throws SAException;
+    IEntryHolder getEntry(Context context, String typeName, ITemplateHolder templateHolder) throws SAException;
 
-    IEntryHolder getEntry(String typeName, Object id) throws SAException;
+    IEntryHolder getEntry(Context context, String typeName, Object id) throws SAException;
 
-    ISAdapterIterator<IEntryCacheInfo> makeEntriesIter(String typeName, ITemplateHolder templateHolder) throws SAException;
+    ISAdapterIterator<IEntryCacheInfo> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder) throws SAException;
 
     void shutDown();
 

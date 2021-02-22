@@ -1378,7 +1378,7 @@ public class CacheManager extends AbstractCacheManager
                 throw new IllegalStateException("trying to write entry in tiered mode but context.getEntryTieredState() == null, uid = "+entryHolder.getUID());
             }
             if(context.isColdEntry() && entryHolder.getXidOriginatedTransaction() == null) {
-                _engine.getTieredStorageManager().getInternalStorage().insertEntry(entryHolder);
+                _engine.getTieredStorageManager().getInternalStorage().insertEntry(context, entryHolder);
             }
 
 
@@ -1482,7 +1482,7 @@ public class CacheManager extends AbstractCacheManager
 
                 IEntryHolder cold_eh = EntryHolderFactory.createEntryHolder(entry.getServerTypeDesc(), (ITransactionalEntryData) newEntryData, entry.getUID(), entry.isTransient());
                 if(!entry.isTransient()){
-                    _engine.getTieredStorageManager().getInternalStorage().updateEntry(cold_eh);
+                    _engine.getTieredStorageManager().getInternalStorage().updateEntry(context, cold_eh);
                 }
 
 
@@ -1534,6 +1534,14 @@ public class CacheManager extends AbstractCacheManager
         } catch (Exception ex) {
             if (ex instanceof DuplicateIndexValueException)
                 throw (RuntimeException) ex; //mending inconsistent state already tried in update-references
+
+            if(isTieredStorage()) {
+                if (ex instanceof SAException)
+                    throw (SAException) ex;
+
+                throw new RuntimeException(ex);
+            }
+
 
             try {
                 if (entry.getEntryData().getVersion() == template.getUpdatedEntry().getEntryData().getVersion()) {//when RuntimeException is thrown we revert the references to the before update situation
@@ -1769,7 +1777,7 @@ public class CacheManager extends AbstractCacheManager
                 return pEntry.getEntryHolder(this);
         } //if (pEntry != null)
         if (!isEvictableCachePolicy() || _isMemorySA) {
-            if(context.getTemplateTieredState()  != TieredState.TIERED_HOT_AND_COLD && context.getTemplateTieredState() != TieredState.TIERED_COLD) {
+            if(context.getEntryTieredState()  != TieredState.TIERED_HOT_AND_COLD && context.getEntryTieredState() != TieredState.TIERED_COLD) {
                 return null;   //no relevant entry found
             } else if (!isTieredStorage()) {
                 return null;   //no relevant entry found
@@ -1789,7 +1797,8 @@ public class CacheManager extends AbstractCacheManager
         else {
 
             if(_engine.getTieredStorageManager() != null){
-                entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(entryHolder.getServerTypeDesc().getTypeName(), entryHolder.getEntryId());
+                entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(context, entryHolder.getServerTypeDesc().getTypeName(),
+                        entryHolder.isHollowEntry() ? context.getSuppliedEntryIdForColdTier() : entryHolder.getEntryId());
             } else {
                 entry = _storageAdapter.getEntry(context, entryHolder.getUID(), entryHolder.getClassName(), entryHolder);
             }
@@ -4140,7 +4149,7 @@ public class CacheManager extends AbstractCacheManager
         if (template.isFifoSearch() && !typeData.isFifoSupport())
             return null;
 
-        if(context.getTemplateTieredState() != TieredState.TIERED_COLD) {
+        if(context.getTemplateTieredState() != TieredState.TIERED_COLD) {//TODO - what if template tiered state == null
             // If template has no fields of type has no indexes, skip index optimization:
             if (!typeData.hasIndexes())
                 return null;
@@ -4160,10 +4169,12 @@ public class CacheManager extends AbstractCacheManager
         }
 
         if(_engine.getTieredStorageManager() != null){
-            if(context.getTemplateTieredState() == TieredState.TIERED_COLD ||
-                    context.getTemplateTieredState() == TieredState.TIERED_HOT_AND_COLD){
+            if(ReadModifiers.isMemoryOnlySearch(template.getOperationModifiers())){
+                return null;
+            }
+            if(context.getTemplateTieredState() == TieredState.TIERED_COLD || context.getTemplateTieredState() == TieredState.TIERED_HOT_AND_COLD){
                 try {
-                    IEntryHolder entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(currServerTypeDesc.getTypeName(), templateValue);
+                    IEntryHolder entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(context, currServerTypeDesc.getTypeName(), templateValue);
                     if (entry != null) {
                         return EntryCacheInfoFactory.createEntryCacheInfo(entry);
                     }

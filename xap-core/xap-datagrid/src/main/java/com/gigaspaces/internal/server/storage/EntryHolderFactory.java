@@ -29,6 +29,7 @@ import com.j_spaces.core.XtnEntry;
 import com.j_spaces.core.cache.EntryCacheInfoFactory;
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.blobStore.BlobStoreEntryHolder;
+import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.server.transaction.EntryXtnInfo;
 import com.j_spaces.kernel.IObjectInfo;
 import com.j_spaces.kernel.IStoredList;
@@ -144,7 +145,8 @@ public class EntryHolderFactory {
         return new UserTypeEntryData(entryPacket.toObject(entryType), entryTypeDesc, version, lease, entryXtnInfo);
     }
 
-    public static IEntryHolder createTieredStorageHollowEntry(IServerTypeDesc typeDesc, String uid, boolean isTransient){
+    public static IEntryHolder createTieredStorageHollowEntry(Context context, IServerTypeDesc typeDesc, String uid, boolean isTransient, Object entryId){
+        context.setSuppliedEntryIdForColdTier(entryId);
         return new EntryHolder(typeDesc, uid, SystemTime.timeMillis(), isTransient, null);
     }
 
