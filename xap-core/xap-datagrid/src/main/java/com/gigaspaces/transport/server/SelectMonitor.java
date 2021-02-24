@@ -56,11 +56,13 @@ public abstract class SelectMonitor implements Runnable, Closeable {
                         it.remove();
                         try {
                             onReady(key);
-                        } catch (ClosedChannelException e) {
-                            logger.warn("Channel {} is closed, cancelling key", key.channel(), e);
-                            key.cancel();
                         } catch (IOException e) {
-                            logger.error("Failed to process key from channel {}", key.channel(), e);
+                            if (e.getMessage().equals("An existing connection was forcibly closed by the remote host")) {
+                                logger.warn("Channel {} is closed, cancelling key", key.channel(), e);
+                                key.cancel();
+                            } else {
+                                logger.error("Failed to process key from channel {}", key.channel(), e);
+                            }
                         }
                     }
                 }

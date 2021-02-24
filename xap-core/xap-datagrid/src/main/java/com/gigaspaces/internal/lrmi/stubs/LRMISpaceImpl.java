@@ -82,6 +82,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.ObjectInput;
 import java.nio.ByteBuffer;
 import java.rmi.RemoteException;
 import java.util.List;
@@ -115,6 +116,10 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
      */
     public LRMISpaceImpl(IRemoteSpace directRefObj, IRemoteSpace dynamicProxy) {
         super(directRefObj, dynamicProxy);
+        initialize();
+    }
+
+    private void initialize() {
         this.nioEnabled = !isDirect() && PocSettings.enabled;
         if (nioEnabled)
             logger.info("Created (nio enabled, {})", PocSettings.dump());
@@ -699,5 +704,11 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     @Override
     public void updateClusterInfo() throws RemoteException {
         ((IInternalRemoteJSpaceAdmin) getProxy()).updateClusterInfo();
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        initialize();
     }
 }
