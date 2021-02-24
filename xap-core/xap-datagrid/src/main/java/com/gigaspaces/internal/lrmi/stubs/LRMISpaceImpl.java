@@ -55,6 +55,9 @@ import com.gigaspaces.server.space.suspend.SuspendType;
 import com.gigaspaces.transport.NioChannel;
 import com.gigaspaces.transport.PocSettings;
 import com.gigaspaces.transport.client.NioConnectionPool;
+import com.gigaspaces.transport.client.NioConnectionPoolDynamic;
+import com.gigaspaces.transport.client.NioConnectionPoolFixed;
+import com.gigaspaces.transport.client.NioConnectionPoolThreadLocal;
 import com.j_spaces.core.DropClassException;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.SpaceContext;
@@ -100,7 +103,9 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
         implements IRemoteSpace, IInternalRemoteJSpaceAdmin, Service {
     static final long serialVersionUID = 2L;
 
-    private static final NioConnectionPool connectionPool = new NioConnectionPool();
+    private static final NioConnectionPool connectionPool = PocSettings.clientConnectionPoolDynamic
+            ? new NioConnectionPoolDynamic()
+            : new NioConnectionPoolThreadLocal();
     private static final Logger logger = LoggerFactory.getLogger(LRMISpaceImpl.class);
 
     private transient Uuid _spaceUuid; //cache at client side to avoid remote calls
@@ -631,7 +636,7 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
             //logger.debug("Proxy is executing {}", request);
             NioChannel connection = null;
             try {
-                connection = connectionPool.getOrCreate();
+                connection = connectionPool.acquire();
                 ByteBuffer requestBuffer = connection.serialize(request);
                 connection.writeBlocking(requestBuffer);
                 ByteBuffer reponseBuffer = connection.readBlocking();
