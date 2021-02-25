@@ -1227,4 +1227,9 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
     public boolean isClear() {
         return _batchOerationContext != null && _batchOerationContext.isClear();
     }
+
+    @Override
+    public TemplateEntryData getTemplateEntryData() {
+        return _templateData;
+    }
 }

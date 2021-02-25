@@ -1324,25 +1324,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         tHolder.setNonBlockingRead(isNonBlockingReadForOperation(tHolder));
         tHolder.setID(template.getID());
 
-        //TODO - remove after implementing com.gigaspaces.internal.server.space.tiered_storage.CachePredicate.evaluate(com.gigaspaces.internal.server.storage.ITemplateHolder)
-        if(tieredStorageManager != null) {
-            String typeName = typeDesc.getTypeName();
-            CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
-            if(cacheRule == null){
-                context.setTemplateTieredState(TieredState.TIERED_COLD);
-            } else {
-                if(template.isIdQuery()){
-                    context.setTemplateTieredState(TieredState.TIERED_HOT_AND_COLD);
-                } else {
-                    if(!cacheRule.evaluate(template)){
-                        context.setTemplateTieredState(TieredState.TIERED_COLD);
-                    } else {
-                        context.setTemplateTieredState(TieredState.TIERED_HOT);
-                    }
-                }
-            }
-        }
-
         IEntryHolder entr;
 
         if (take) // call  filters for take
@@ -2730,26 +2711,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             context.setOperationID(template.getOperationID());
             tHolder.setReRegisterLeaseOnUpdate(lease != UPDATE_NO_LEASE);
             context.applyOperationContext(sc);
-
-
-            //TODO - remove after implementing com.gigaspaces.internal.server.space.tiered_storage.CachePredicate.evaluate(com.gigaspaces.internal.server.storage.ITemplateHolder)
-            if(isTieredStorage() && context.getTemplateTieredState() == null) {
-                String typeName = typeDesc.getTypeName();
-                CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
-                if(cacheRule == null){
-                    context.setTemplateTieredState(TieredState.TIERED_COLD);
-                } else {
-                    if(template.isIdQuery()){
-                        context.setTemplateTieredState(TieredState.TIERED_HOT_AND_COLD);
-                    } else {
-                        if(!cacheRule.evaluate(template)){
-                            context.setTemplateTieredState(TieredState.TIERED_COLD);
-                        } else {
-                            context.setTemplateTieredState(TieredState.TIERED_HOT);
-                        }
-                    }
-                }
-            }
 
             _coreProcessor.handleDirectChangeSA(context, tHolder, fromReplication, origin);
 

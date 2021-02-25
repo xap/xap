@@ -1,26 +1,26 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
+import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.query.AbstractCompundCustomQuery;
 import com.gigaspaces.internal.query.ICustomQuery;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.gigaspaces.internal.server.storage.TemplateEntryData;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.TemplatePacket;
 import com.gigaspaces.metadata.SpacePropertyDescriptor;
+import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
-import com.j_spaces.jdbc.builder.range.EqualValueRange;
-import com.j_spaces.jdbc.builder.range.InRange;
-import com.j_spaces.jdbc.builder.range.Range;
-import com.j_spaces.jdbc.builder.range.SegmentRange;
+import com.j_spaces.jdbc.builder.range.*;
 
 import java.util.List;
 import java.util.Set;
 
 public class CriteriaRangePredicate implements CachePredicate {
+    public final boolean isTransient;
     private final String typeName;
     private final Range criteria;
-    public final boolean isTransient;
 
     public CriteriaRangePredicate(String typeName, Range criteria, boolean isTransient) {
         this.typeName = typeName;
@@ -37,19 +37,63 @@ public class CriteriaRangePredicate implements CachePredicate {
     }
 
     @Override
+    public boolean evaluate(ITemplateHolder template) {
+        if (template.getCustomQuery() != null) {
+            ICustomQuery customQuery = template.getCustomQuery();
+            return evalCustomQuery(customQuery);
+        } else {
+            ITypeDesc typeDesc = template.getServerTypeDesc().getTypeDesc();
+            int index = ((PropertyInfo) typeDesc.getFixedProperty(criteria.getPath())).getOriginalIndex();
+            TemplateEntryData entryData = template.getTemplateEntryData();
+            if (template.getExtendedMatchCodes() == null) {//by template
+                return criteria.getPredicate().execute(entryData.getFixedPropertyValue(index));
+            } else if (template.isIdQuery() && typeDesc.getIdPropertyName().equalsIgnoreCase(criteria.getPath())) {
+                return criteria.getPredicate().execute(entryData.getFixedPropertyValue(index));
+            } else if (template.getExtendedMatchCodes() != null) {
+                Object fieldValue = entryData.getFixedPropertyValue(index);
+                if (fieldValue == null) {
+                    return true;
+                } else {
+                    return evalRange(getRange(entryData.getExtendedMatchCodes()[index], criteria.getPath(), fieldValue));
+                }
+            }
+        }
+        return false;
+    }
+
+    private Range getRange(int matchCode, String path, Object fieldValue) {
+        switch (matchCode) {
+            case TemplateMatchCodes.EQ:
+                return new EqualValueRange(path, fieldValue);
+            case TemplateMatchCodes.NE:
+                return new NotEqualValueRange(path, fieldValue);
+            case TemplateMatchCodes.LT:
+                return new SegmentRange(path, null, true, (Comparable<?>) fieldValue, false);
+            case TemplateMatchCodes.LE:
+                return new SegmentRange(path, null, true, (Comparable<?>) fieldValue, true);
+            case TemplateMatchCodes.GT:
+                return new SegmentRange(path, (Comparable<?>) fieldValue, true, null, false);
+            case TemplateMatchCodes.GE:
+                return new SegmentRange(path, (Comparable<?>) fieldValue, true, null, true);
+            default:
+                throw new IllegalArgumentException("match codes with code "+matchCode);
+        }
+    }
+
+    @Override
     public boolean evaluate(ITemplatePacket packet) {
         if (packet.getCustomQuery() != null) {
             ICustomQuery customQuery = packet.getCustomQuery();
             return evalCustomQuery(customQuery);
         } else {
             SpacePropertyDescriptor property = packet.getTypeDescriptor().getFixedProperty(criteria.getPath());
-            if(property == null){
+            if (property == null) {
                 return true;
             }
             int index = ((PropertyInfo) property).getOriginalIndex();
             if (packet instanceof TemplatePacket) {
                 return criteria.getPredicate().execute(packet.getFieldValue(index));
-            } else if(packet.isIdQuery() && packet.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(criteria.getPath())){
+            } else if (packet.isIdQuery() && packet.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(criteria.getPath())) {
                 return criteria.getPredicate().execute(packet.getFieldValue(index));
             } else if (hasMatchCodes(packet)) {
                 Object fieldValue = packet.getFieldValue(index);
@@ -99,7 +143,7 @@ public class CriteriaRangePredicate implements CachePredicate {
                 EqualValueRange valueRange = (EqualValueRange) queryValueRange;
                 return criteria.getPath().equals(valueRange.getPath()) &&
                         criteria.getPredicate().execute(valueRange.getValue());
-            } else if(queryValueRange instanceof InRange){
+            } else if (queryValueRange instanceof InRange) {
                 Set inValues = ((InRange) queryValueRange).getInValues();
                 return inValues.size() == 1 && criteria.getPredicate().execute(inValues.toArray()[0]);
             }
@@ -118,20 +162,20 @@ public class CriteriaRangePredicate implements CachePredicate {
                         && querySegmentRange.getMin() == null && querySegmentRange.getMax() != null) {
                     return criteria.getPredicate().execute(querySegmentRange.getMax());
                 }
-            } else if(queryValueRange instanceof InRange){
+            } else if (queryValueRange instanceof InRange) {
                 for (Object val : ((InRange) queryValueRange).getInValues()) {
-                    if(!criteria.getPredicate().execute(val)) {
+                    if (!criteria.getPredicate().execute(val)) {
                         return false;
                     }
                 }
                 return true;
             }
-        } else if(criteria instanceof InRange){
+        } else if (criteria instanceof InRange) {
             if (queryValueRange.isEqualValueRange()) {
                 return criteria.getPredicate().execute(((EqualValueRange) queryValueRange).getValue());
-            } else if(queryValueRange instanceof InRange){
+            } else if (queryValueRange instanceof InRange) {
                 for (Object val : ((InRange) queryValueRange).getInValues()) {
-                    if(!criteria.getPredicate().execute(val)) {
+                    if (!criteria.getPredicate().execute(val)) {
                         return false;
                     }
                 }
@@ -151,10 +195,6 @@ public class CriteriaRangePredicate implements CachePredicate {
         return isTransient;
     }
 
-    @Override
-    public boolean evaluate(ITemplateHolder template) {
-        return false; //TODO
-    }
 
     @Override
     public String toString() {
