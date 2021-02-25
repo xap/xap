@@ -27,7 +27,13 @@ to an existing (remote) data-grid (by specifying its name).
 
 # Running The Example
 
-This example is a standard maven project - you can open it in your IDE of choice by importing `examples/hello-world/pom.xml` as maven.
+This example is a standard maven project - Use maven to execute the main class:
+
+`mvn exec:java -Dexec.mainClass=HelloWorld -Dexec.args="-name myDataGrid -mode embedded"`
+
+Alternatively, if you have an IDE available, import the sources as a maven project using the POM: 
+
+`examples/hello-world/pom.xml`
 
 The `HelloWorld` main class accepts the following arguments: `-name` {data-grid name} `-mode` {embedded | remote}
 
@@ -63,8 +69,9 @@ A data grid requires a cluster manager. The following cluster managers are avail
 * Kubernetes
 * ElasticGrid
 
-The Service Grid is recommended for beginners, which is what we'll show here. 
-If you're using the open source package, you'll need to use the standalone cluster manager, which is discussed later in this page.  
+The "Service Grid" is recommended for beginners, which is what we'll show here. 
+If you're using the open source package, you'll need to use the "Standalone" cluster manager, 
+which is discussed later in this page.  
 
 *Tip*: The cluster manager includes a web-based UI which is started at http://localhost:8090
 
