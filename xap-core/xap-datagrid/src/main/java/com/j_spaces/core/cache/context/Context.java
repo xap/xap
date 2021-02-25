@@ -1335,9 +1335,8 @@ public class Context {
         return templateTieredState;
     }
 
-    public Context setTemplateTieredState(TieredState templateTieredState) {
+    public void setTemplateTieredState(TieredState templateTieredState) {
         this.templateTieredState = templateTieredState;
-        return this;
     }
 
     public boolean isHotEntry(){

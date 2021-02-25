@@ -1,6 +1,7 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.server.storage.IEntryData;
+import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.j_spaces.core.cache.context.TieredState;
 
 public interface TieredStorageManager {
@@ -16,6 +17,8 @@ public interface TieredStorageManager {
     TieredState getEntryTieredState(IEntryData entryData);
 
     TieredState guessEntryTieredState(String typeName);
+
+    TieredState guessTemplateTier(ITemplateHolder templateHolder);
 
     // For the future when we would want to support warm layer
     //    CachePredicate getCacheRule(String typeName, String tier);

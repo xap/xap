@@ -3685,21 +3685,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             throws TransactionException, TemplateDeletedException,
             SAException {
         if(isTieredStorage() && context.getTemplateTieredState() == null) {
-            String typeName = template.getServerTypeDesc().getTypeName();
-            CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
-            if(cacheRule == null){
-                context.setTemplateTieredState(TieredState.TIERED_COLD);
-            } else {
-                if(template.isIdQuery()){
-                    context.setTemplateTieredState(TieredState.TIERED_HOT_AND_COLD);
-                } else {
-                    if(!cacheRule.evaluate(template)){
-                        context.setTemplateTieredState(TieredState.TIERED_COLD);
-                    } else {
-                        context.setTemplateTieredState(TieredState.TIERED_HOT);
-                    }
-                }
-            }
+            context.setTemplateTieredState(tieredStorageManager.guessTemplateTier(template));
         }
 
 
@@ -4485,7 +4471,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         if(isTieredStorage()){
             if(context.getEntryTieredState() == null){
-                context.setEntryTieredState(ent.isHollowEntry() ? tieredStorageManager.guessEntryTieredState(ent.getServerTypeDesc().getTypeName()):
+                context.setEntryTieredState(ent.isHollowEntry() ?
+                        tieredStorageManager.guessEntryTieredState(ent.getServerTypeDesc().getTypeName()):
                         tieredStorageManager.getEntryTieredState(ent.getEntryData()));
             }
         }
