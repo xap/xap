@@ -1,6 +1,7 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.server.storage.IEntryData;
+import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 
 import java.time.Duration;
@@ -43,6 +44,11 @@ public class TimePredicate implements CachePredicate {
     @Override
     public boolean isTransient() {
         return isTransient;
+    }
+
+    @Override
+    public boolean evaluate(ITemplateHolder template) {
+        return false; //TODO
     }
 
     @Override

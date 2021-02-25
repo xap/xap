@@ -4,6 +4,7 @@ import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.query.AbstractCompundCustomQuery;
 import com.gigaspaces.internal.query.ICustomQuery;
 import com.gigaspaces.internal.server.storage.IEntryData;
+import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.TemplatePacket;
 import com.gigaspaces.metadata.SpacePropertyDescriptor;
@@ -47,7 +48,6 @@ public class CriteriaRangePredicate implements CachePredicate {
             }
             int index = ((PropertyInfo) property).getOriginalIndex();
             if (packet instanceof TemplatePacket) {
-                TemplatePacket templatePacket = (TemplatePacket) packet;
                 return criteria.getPredicate().execute(packet.getFieldValue(index));
             } else if(packet.isIdQuery() && packet.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(criteria.getPath())){
                 return criteria.getPredicate().execute(packet.getFieldValue(index));
@@ -149,6 +149,11 @@ public class CriteriaRangePredicate implements CachePredicate {
     @Override
     public boolean isTransient() {
         return isTransient;
+    }
+
+    @Override
+    public boolean evaluate(ITemplateHolder template) {
+        return false; //TODO
     }
 
     @Override
