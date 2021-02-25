@@ -17,6 +17,8 @@
 package com.j_spaces.core;
 
 import com.gigaspaces.client.transaction.ITransactionManagerProvider.TransactionManagerType;
+import com.gigaspaces.internal.server.space.tiered_storage.AllPredicate;
+import com.gigaspaces.internal.server.space.tiered_storage.CachePredicate;
 import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.core.client.SpaceURL;
 import com.j_spaces.kernel.SystemProperties;
@@ -950,6 +952,7 @@ public interface Constants {
     public interface TieredStorage {
         String CACHE_MANAGER_TIERED_STORAGE_LOCKS_SIZE_PROP = "engine.TieredStorageLocksSize";
         String CACHE_MANAGER_TIERED_STORAGE_LOCKS_SIZE_DEFAULT = "10000";
+        CachePredicate TRANSIENT_ALL_CACHE_PREDICATE = new AllPredicate(true);
     }
 
 }

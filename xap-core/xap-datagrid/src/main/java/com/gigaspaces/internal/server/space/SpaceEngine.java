@@ -396,7 +396,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 try {
                     IDirectSpaceProxy directProxy = space.getSpaceProxy().getDirectProxy();
                     TieredStorageTableConfig tableConfig = entry.getValue();
-                    //TODO - validate
+                    //TODO - validate transient has null criteria && period
                     if(tableConfig.getTimeColumn() != null ){
                         if(tableConfig.getPeriod() != null){
                             cacheRules.put(tableConfig.getName(), new TimePredicate(tableConfig.getName(),tableConfig.getTimeColumn(), tableConfig.getPeriod(), tableConfig.isTransient()));
@@ -424,6 +424,10 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                                 cacheRules.put(template.getTypeName(), new CriteriaRangePredicate(template.getTypeName(), range, tableConfig.isTransient()));
                             }
                         }
+                    }
+
+                    if(tableConfig.isTransient()){
+                        cacheRules.put(tableConfig.getName(), Constants.TieredStorage.TRANSIENT_ALL_CACHE_PREDICATE);
                     }
 
                 } catch (SQLException e) {
@@ -1320,8 +1324,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         tHolder.setNonBlockingRead(isNonBlockingReadForOperation(tHolder));
         tHolder.setID(template.getID());
 
-
-        IEntryHolder entr;
+        //TODO - remove after implementing com.gigaspaces.internal.server.space.tiered_storage.CachePredicate.evaluate(com.gigaspaces.internal.server.storage.ITemplateHolder)
         if(tieredStorageManager != null) {
             String typeName = typeDesc.getTypeName();
             CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
@@ -1339,6 +1342,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 }
             }
         }
+
+        IEntryHolder entr;
 
         if (take) // call  filters for take
         {
@@ -2725,6 +2730,27 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             context.setOperationID(template.getOperationID());
             tHolder.setReRegisterLeaseOnUpdate(lease != UPDATE_NO_LEASE);
             context.applyOperationContext(sc);
+
+
+            //TODO - remove after implementing com.gigaspaces.internal.server.space.tiered_storage.CachePredicate.evaluate(com.gigaspaces.internal.server.storage.ITemplateHolder)
+            if(isTieredStorage() && context.getTemplateTieredState() == null) {
+                String typeName = typeDesc.getTypeName();
+                CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
+                if(cacheRule == null){
+                    context.setTemplateTieredState(TieredState.TIERED_COLD);
+                } else {
+                    if(template.isIdQuery()){
+                        context.setTemplateTieredState(TieredState.TIERED_HOT_AND_COLD);
+                    } else {
+                        if(!cacheRule.evaluate(template)){
+                            context.setTemplateTieredState(TieredState.TIERED_COLD);
+                        } else {
+                            context.setTemplateTieredState(TieredState.TIERED_HOT);
+                        }
+                    }
+                }
+            }
+
             _coreProcessor.handleDirectChangeSA(context, tHolder, fromReplication, origin);
 
             answerSetByThisThread = context.isOpResultByThread();
@@ -3697,6 +3723,25 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                                                     boolean useSCN)
             throws TransactionException, TemplateDeletedException,
             SAException {
+        if(isTieredStorage() && context.getTemplateTieredState() == null) {
+            String typeName = template.getServerTypeDesc().getTypeName();
+            CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
+            if(cacheRule == null){
+                context.setTemplateTieredState(TieredState.TIERED_COLD);
+            } else {
+                if(template.isIdQuery()){
+                    context.setTemplateTieredState(TieredState.TIERED_HOT_AND_COLD);
+                } else {
+                    if(!cacheRule.evaluate(template)){
+                        context.setTemplateTieredState(TieredState.TIERED_COLD);
+                    } else {
+                        context.setTemplateTieredState(TieredState.TIERED_HOT);
+                    }
+                }
+            }
+        }
+
+
         // is it an operation by id ?? if so search only for specific entry
         if (template.getUidToOperateBy() != null)
             return getEntryByIdAndOperateSA(context, template,
