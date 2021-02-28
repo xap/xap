@@ -4478,7 +4478,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         }
 
         boolean needRematch = false;
-        if (needXtnLocked) { // TODO - handle tiered storage when adding support for txn
+        if (needXtnLocked) { // TODO - tiered storage - handle tiered storage when adding support for txn
             if (ent.isDeleted()) {
                 throw ENTRY_DELETED_EXCEPTION/*new EntryDeletedException(ent.m_UID)*/;
             }

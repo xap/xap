@@ -4177,7 +4177,7 @@ public class CacheManager extends AbstractCacheManager
         if (template.isFifoSearch() && !typeData.isFifoSupport())
             return null;
 
-        if(context.getTemplateTieredState() != TieredState.TIERED_COLD) {//TODO - what if template tiered state == null
+        if(context.getTemplateTieredState() != TieredState.TIERED_COLD) {//TODO - tiered storage - what if template tiered state == null
             // If template has no fields of type has no indexes, skip index optimization:
             if (!typeData.hasIndexes())
                 return null;

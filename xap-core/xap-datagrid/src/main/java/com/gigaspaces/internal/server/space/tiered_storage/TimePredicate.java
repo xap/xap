@@ -33,12 +33,12 @@ public class TimePredicate implements CachePredicate {
 
     @Override
     public boolean evaluate(ITemplatePacket packet) {
-        return false; //TODO
+        return false; //TODO - tiered storage
     }
 
     @Override
     public boolean evaluate(IEntryData entryData) {
-        return false; //TODO
+        return false; //TODO - tiered storage
     }
 
     @Override
@@ -48,7 +48,7 @@ public class TimePredicate implements CachePredicate {
 
     @Override
     public boolean evaluate(ITemplateHolder template) {
-        return false; //TODO
+        return false; //TODO - tiered storage
     }
 
     @Override
