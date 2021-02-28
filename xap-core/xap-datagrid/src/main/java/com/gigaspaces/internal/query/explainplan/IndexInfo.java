@@ -145,6 +145,7 @@ public class IndexInfo implements Externalizable {
                (isUsable() ? "" : ", UNUSABLE");
     }
 
+
     protected String getCriteriaDesc() {
         return operator + "(" + name + ", " + value + ")";
     }

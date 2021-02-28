@@ -27,11 +27,18 @@ import java.io.ObjectOutput;
  * @since 12.0.1
  */
 @ExperimentalApi
-public class ExplainPlanContext implements Externalizable{
+public class ExplainPlanContext {
 
     private SingleExplainPlan singleExplainPlan;
     private IndexChoiceNode fatherNode;
     private IndexChoiceNode match;
+
+    /**
+     * Doesn't continue to the phase of processing the entries
+     * used in cases of explain plan when we want to enter the space
+     * to gather information regarding the execution, i.e. inspected and chosen indexes and their size
+     */
+    private boolean dryRun;
 
     public ExplainPlanContext() {
     }
@@ -60,17 +67,12 @@ public class ExplainPlanContext implements Externalizable{
         this.match = match;
     }
 
-    @Override
-    public void writeExternal(ObjectOutput objectOutput) throws IOException {
-        objectOutput.writeObject(this.singleExplainPlan);
-        objectOutput.writeObject(this.fatherNode);
-        objectOutput.writeObject(this.match);
+    public void setDryRun(boolean dryRun) {
+        this.dryRun = dryRun;
     }
 
-    @Override
-    public void readExternal(ObjectInput objectInput) throws IOException, ClassNotFoundException {
-        this.singleExplainPlan = (SingleExplainPlan) objectInput.readObject();
-        this.fatherNode = (IndexChoiceNode) objectInput.readObject();
-        this.match = (IndexChoiceNode) objectInput.readObject();
+    public boolean isDryRun() {
+        return dryRun;
     }
+
 }

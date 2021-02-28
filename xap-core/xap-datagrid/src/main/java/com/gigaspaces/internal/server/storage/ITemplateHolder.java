@@ -22,6 +22,7 @@ import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.query.EntryHolderAggregatorContext;
 import com.gigaspaces.internal.query.ICustomQuery;
 import com.gigaspaces.internal.query.RegexCache;
+import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.server.space.BatchQueryOperationContext;
 import com.gigaspaces.internal.server.space.FifoSearch;
 import com.gigaspaces.internal.server.space.MatchResult;
@@ -283,4 +284,6 @@ public interface ITemplateHolder extends ISpaceItem, IEntryHolder {
     boolean isClear();
 
     TemplateEntryData getTemplateEntryData();
+
+    SingleExplainPlan getExplainPlan();
 }

@@ -2149,8 +2149,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         updateObjectTypeReadCounts(typeDesc, template);
 
-        if (tHolder instanceof TemplateHolder && ((TemplateHolder) tHolder).getExplainPlan() != null) {
-            return new Pair(counter, ((TemplateHolder) tHolder).getExplainPlan());
+        if (tHolder.getExplainPlan() != null) {
+            return new Pair(counter, tHolder.getExplainPlan());
         }
         return new Pair(counter, null);
     }
@@ -4218,6 +4218,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 template.getServerIteratorInfo().setScanListIterator(null);
             }
         }
+
         else
             getMatchedEntriesAndOperateSA_Scan(context,
                     template,

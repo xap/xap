@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -51,6 +52,28 @@ public class QueryJunctionNode implements QueryOperationNode{
     @Override
     public String toString() {
         return name;
+    }
+
+    @Override
+    public String getPrettifiedString() {
+        StringBuilder result = new StringBuilder();
+        final boolean surroundParentheses = name.equalsIgnoreCase("AND");
+        final Iterator<QueryOperationNode> iterator = subTrees.iterator();
+        if (surroundParentheses) {
+            result.append("(");
+        }
+        while (iterator.hasNext()) {
+            QueryOperationNode node = iterator.next();
+            result.append(node.getPrettifiedString());
+            if (iterator.hasNext()) {
+                result.append(" " + name + " ");
+            }
+        }
+        if (surroundParentheses) {
+            result.append(")");
+        }
+
+        return result.toString();
     }
 
     @Override

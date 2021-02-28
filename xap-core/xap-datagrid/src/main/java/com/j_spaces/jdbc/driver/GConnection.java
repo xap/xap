@@ -19,11 +19,13 @@ package com.j_spaces.jdbc.driver;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.router.SpaceProxyRouter;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
+import com.gigaspaces.internal.utils.ValidationUtils;
 import com.gigaspaces.jdbc.request.RequestPacketV3;
 import com.gigaspaces.security.directory.DefaultCredentialsProvider;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.admin.IRemoteJSpaceAdmin;
 import com.j_spaces.core.client.BasicTypeInfo;
+import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.SpaceFinder;
 import com.j_spaces.jdbc.*;
 import com.j_spaces.jdbc.batching.BatchResponsePacket;
@@ -58,12 +60,12 @@ public class GConnection implements Connection {
     public static final String JDBC_GIGASPACES_URL = "jdbc:gigaspaces:url:";
     private static final long EXECUTE_RETRY_TIMEOUT = 60 * 1000l;
 
-    private String url;
-    private ISpaceProxy space;
+    private final String url;
+    private final ISpaceProxy space;
     private IQueryProcessor qp;
     private ConnectionContext context;
     private Integer readModifiers;
-    private Properties properties;
+    private final Properties properties;
     private Boolean useNewDriver = false;
 
     private GConnection(IJSpace space, Properties properties) throws SQLException {
@@ -73,9 +75,7 @@ public class GConnection implements Connection {
             this.properties = properties;
             initialize(space.getDirectProxy().getRemoteJSpace());
         } catch (Exception e) {
-            SQLException se = new SQLException("Connect to space failed:[ " + space.getURL().getURL() + "]");
-            se.initCause(e);
-            throw se;
+            throw new SQLException("Connect to space failed:[ " + space.getURL().getURL() + "]", e);
         }
     }
 
@@ -93,9 +93,7 @@ public class GConnection implements Connection {
             this.properties = properties;
             initialize(space.getDirectProxy().getRemoteJSpace());
         } catch (Exception e) {
-            SQLException se = new SQLException("Error creating connection; Cause: " + e, "GSP", -137);
-            se.initCause(e);
-            throw se;
+            throw new SQLException("Error creating connection; Cause: " + e, "GSP", -137, e);
         }
     }
 
@@ -106,7 +104,7 @@ public class GConnection implements Connection {
             readModifiers = modifiersProp == null ? null : Integer.valueOf(modifiersProp.toString());
 
             Object useNewDriverProp = properties.get(USE_NEW_DRIVER);
-            useNewDriver = useNewDriverProp == null ? false : Boolean.valueOf(useNewDriverProp.toString());
+            useNewDriver = useNewDriverProp != null && Boolean.parseBoolean(useNewDriverProp.toString());
 
             String username = properties.getProperty(ConnectionContext.USER);
             String password = properties.getProperty(ConnectionContext.PASSWORD);
@@ -231,8 +229,7 @@ public class GConnection implements Connection {
             result = new ResultEntry(columns, columns, tables, valuesArray);
 
         } catch (RemoteException e) {
-            SQLException sqe = new SQLException(e.getMessage());
-            sqe.initCause(e);
+            SQLException sqe = new SQLException(e.getMessage(), e);
             throw sqe;
         }
         return new GResultSet(null, result);
@@ -294,9 +291,7 @@ public class GConnection implements Connection {
         try {
             return qp.getSession(context).isAutoCommit();
         } catch (RemoteException e) {
-            SQLException se = new SQLException("Error in calling getAutoCommit() on QueryProcessor. ");
-            se.initCause(e);
-            throw se;
+            throw new SQLException("Error in calling getAutoCommit() on QueryProcessor. ", e);
         }
     }
 

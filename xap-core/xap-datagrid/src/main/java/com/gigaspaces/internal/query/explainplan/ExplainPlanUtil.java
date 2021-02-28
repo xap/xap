@@ -203,5 +203,8 @@ public class ExplainPlanUtil {
         return res;
     }
 
+    public static boolean notEmpty(String str) {
+        return str != null && !str.isEmpty();
+    }
 
 }

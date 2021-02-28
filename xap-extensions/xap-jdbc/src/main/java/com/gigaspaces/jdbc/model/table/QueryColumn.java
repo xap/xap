@@ -1,6 +1,6 @@
 package com.gigaspaces.jdbc.model.table;
 
-public class QueryColumn {
+public class QueryColumn implements Comparable {
     private final String name;
     private final String alias;
     private final boolean isVisible;
@@ -21,5 +21,13 @@ public class QueryColumn {
 
     public boolean isVisible() {
         return isVisible;
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        if (o instanceof QueryColumn) {
+            return name.compareTo(((QueryColumn) o).getName());
+        }
+        return 0;
     }
 }

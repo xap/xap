@@ -33,21 +33,21 @@ import java.util.Map;
 @ExperimentalApi
 public class ExplainPlanImpl implements ExplainPlan {
 
-    private final SQLQuery<?> query;
-    private final Map<String,SingleExplainPlan> plans = new HashMap<String, SingleExplainPlan>();
-    private final IntegerObjectMap<String> indexInfoDescCache = CollectionsFactory.getInstance().createIntegerObjectMap();
+    protected final SQLQuery<?> query;
+    protected final Map<String, SingleExplainPlan> plans = new HashMap<>();
+    protected final IntegerObjectMap<Integer> indexInfoDescCache = CollectionsFactory.getInstance().createIntegerObjectMap();
 
     /**
      * @param query can be null
      */
-    public ExplainPlanImpl(SQLQuery query) {
+    public ExplainPlanImpl(SQLQuery<?> query) {
         this.query = query;
     }
 
     public static ExplainPlanImpl fromQueryPacket(Object query) {
         ExplainPlanImpl result = null;
         if (query instanceof QueryTemplatePacket) {
-            result = (ExplainPlanImpl) ((QueryTemplatePacket)query).getExplainPlan();
+            result = (ExplainPlanImpl) ((QueryTemplatePacket) query).getExplainPlan();
         }
         if (result != null) {
             result.reset();
@@ -83,7 +83,7 @@ public class ExplainPlanImpl implements ExplainPlan {
     }
 
     protected void append(TextReportFormatter report) {
-        report.line("Query: " + query );
+        report.line("Query: " + query);
         if (plans.isEmpty()) {
             report.line("Not executed yet");
         } else {
@@ -170,17 +170,17 @@ public class ExplainPlanImpl implements ExplainPlan {
         append(report, scanningInfo);
         report.line("Index scan report:");
         report.indent();
-        for (int i = list.size()-1 ; i >= 0 ; i--) {
+        for (int i = list.size() - 1; i >= 0; i--) {
             IndexChoiceNode node = list.get(i);
             report.line(node.getName());
             report.indent();
             report.line("Inspected: ");
             report.indent();
             for (IndexInfo option : node.getOptions()) {
-                report.line("[" + getOptionDesc(option) + "] " + option.toString());
+                report.line("[@" + getOptionDesc(option) + "] " + option.toString());
             }
             report.unindent();
-            report.line("Selected: " + "[" + getOptionDesc(node.getChosen()) + "] " + getSelectedDesc(node.getChosen()));
+            report.line("Selected: " + "[@" + getOptionDesc(node.getChosen()) + "] " + getSelectedDesc(node.getChosen()));
             report.unindent();
         }
         report.unindent();
@@ -197,7 +197,7 @@ public class ExplainPlanImpl implements ExplainPlan {
             StringBuilder sb = new StringBuilder();
             for (IndexInfo option : options) {
                 sb.append(sb.length() == 0 ? "Union [" : ", ");
-                sb.append(getOptionDesc(option));
+                sb.append("@").append(getOptionDesc(option));
             }
             sb.append("]");
             return sb.toString();
@@ -212,13 +212,14 @@ public class ExplainPlanImpl implements ExplainPlan {
         report.line("Matched entries: " + matched);
     }
 
-    private String getOptionDesc(IndexInfo indexInfo) {
+    protected int getOptionDesc(IndexInfo indexInfo) {
         final int id = System.identityHashCode(indexInfo);
-        String desc = indexInfoDescCache.get(id);
+        Integer desc = indexInfoDescCache.get(id);
         if (desc == null) {
-            desc = "@" + (indexInfoDescCache.size() + 1);
+            desc = (indexInfoDescCache.size() + 1);
             indexInfoDescCache.put(id, desc);
         }
         return desc;
     }
+
 }

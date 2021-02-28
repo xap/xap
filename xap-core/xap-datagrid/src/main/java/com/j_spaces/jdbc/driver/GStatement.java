@@ -415,8 +415,7 @@ public class GStatement implements Statement {
     protected void buildResultSet(ResponsePacket response) {
         ResultEntry entry = response.getResultEntry();
         if( response instanceof ExplainPlanResponsePacket ){
-            resultSet = new ExplainPlanGResultSet(this, entry,
-                        ((ExplainPlanResponsePacket)response).getExplainPlan() );
+            resultSet = new ExplainPlanGResultSet(this, entry, ((ExplainPlanResponsePacket)response).getExplainPlan() );
         }
         else {
             resultSet = new GResultSet(this, entry);

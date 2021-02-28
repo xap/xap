@@ -254,6 +254,12 @@ public class Modifiers {
      */
     public static final int BACKUP_ONLY = 1 << 29;
 
+    /**
+     * Allows the query to fill the Explain plan without returning results and scanning the indexes
+     * @since 16.0
+     */
+    public static final int DRY_RUN = 1 << 30;
+
     public static boolean contains(int modifiers, int setting) {
         return (modifiers & setting) != 0;
     }

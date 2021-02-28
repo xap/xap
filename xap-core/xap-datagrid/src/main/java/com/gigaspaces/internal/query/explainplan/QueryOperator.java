@@ -23,21 +23,34 @@ import com.gigaspaces.api.ExperimentalApi;
  */
 @ExperimentalApi
 public enum QueryOperator {
-    EQ,
-    NE,
-    GT,
-    GE,
-    LT,
-    LE,
-    IS_NULL,
-    NOT_NULL,
-    REGEX,
-    CONTAINS_TOKEN,
-    NOT_REGEX,
-    IN,
-    RELATION,
-    INTERSECTS,
-    WITHIN,
-    NOT_SUPPORTED,
-    BETWEEN
+    EQ("="),
+    NE("!="),
+    GT(">"),
+    GE(">="),
+    LT("<"),
+    LE("<="),
+    IS_NULL("IS_NULL"),
+    NOT_NULL("NOT_NULL"),
+    REGEX("REGEX"),
+    CONTAINS_TOKEN("CONTAINS_TOKEN"),
+    NOT_REGEX("NOT_REGEX"),
+    IN("IN"),
+    RELATION("RELATION"),
+    INTERSECTS("INTERSECTS"),
+    WITHIN("WITHIN"),
+    NOT_SUPPORTED("NOT_SUPPORTED"),
+    BETWEEN("=");
+
+    private final String str;
+
+    QueryOperator(String str) {
+        this.str = str;
+
+    }
+
+    @Override
+    public String toString() {
+        return str;
+    }
 }
+

@@ -2,13 +2,13 @@ package com.gigaspaces.jdbc.model.table;
 
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.query.explainplan.ExplainPlanImpl;
+import com.gigaspaces.internal.query.explainplan.ExplainPlanV3;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ProjectionTemplate;
-import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.exceptions.TypeNotFoundException;
 import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
+import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.client.Modifiers;
@@ -19,9 +19,8 @@ import com.j_spaces.jdbc.query.IQueryResultSet;
 import com.j_spaces.jdbc.query.QueryTableData;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ConcreteTableContainer extends TableContainer {
     private final IJSpace space;
@@ -29,6 +28,7 @@ public class ConcreteTableContainer extends TableContainer {
     private final ITypeDesc typeDesc;
     private final int maxResults = Integer.MAX_VALUE;
 
+    private final List<String> allColumnNamesSorted;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
     private final String name;
     private final String alias;
@@ -45,6 +45,8 @@ public class ConcreteTableContainer extends TableContainer {
         }
 
         queryTemplatePacket = createQueryTemplatePacket(name);
+        allColumnNamesSorted = Arrays.asList(typeDesc.getPropertiesNames());
+        allColumnNamesSorted.sort(String::compareTo);
     }
 
     private QueryTemplatePacket createQueryTemplatePacket(String tableName) {
@@ -65,9 +67,15 @@ public class ConcreteTableContainer extends TableContainer {
 
             ExplainPlan explainPlanImpl = null;
             if (explainPlan) {
-                explainPlanImpl = new ExplainPlanImpl(null);
+                // Using LinkedHashMap to keep insertion order from the ArrayList
+                final Map<String, String> visibleColumnsAndAliasMap = visibleColumns.stream().collect(Collectors.toMap
+                        (QueryColumn::getName, queryColumn -> queryColumn.getAlias() == null ? "" :  queryColumn.getAlias()
+                                , (oldValue, newValue) -> newValue, LinkedHashMap::new));
+
+                explainPlanImpl = new ExplainPlanV3(name, alias, visibleColumnsAndAliasMap, space.getName());
                 queryTemplatePacket.setExplainPlan(explainPlanImpl);
                 modifiers = Modifiers.add(modifiers, Modifiers.EXPLAIN_PLAN);
+                modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
 
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, maxResults, modifiers);
@@ -94,7 +102,7 @@ public class ConcreteTableContainer extends TableContainer {
 
     @Override
     public List<String> getAllColumnNames() {
-        return Arrays.asList(typeDesc.getPropertiesNames());
+        return allColumnNamesSorted;
     }
 
     @Override

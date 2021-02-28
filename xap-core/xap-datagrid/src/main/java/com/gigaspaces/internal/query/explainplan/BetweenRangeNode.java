@@ -70,6 +70,16 @@ public class BetweenRangeNode extends RangeNode{
                "])";
     }
 
+    @Override
+    public String getPrettifiedString() {
+        return "(" + minValue + " " +
+                (includeMin ? QueryOperator.LE.toString() : QueryOperator.LT.toString()) +
+                " " + (getFunctionName() != null ? getFunctionName() : getFieldName()) + " " +
+                (includeMax ? QueryOperator.LE.toString() : QueryOperator.LT.toString()) +
+                " " + maxValue +
+                ")";
+    }
+
     public boolean isIncludeMin() {
         return includeMin;
     }

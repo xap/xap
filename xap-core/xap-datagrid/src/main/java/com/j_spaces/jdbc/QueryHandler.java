@@ -93,17 +93,16 @@ public class QueryHandler {
                 query.setSession(session);
                 query.setSecurityInterceptor(securityInterceptor);
 
-                if( query instanceof SelectQuery &&
-                    request.getModifiers() != null &&
-                    Modifiers.contains( request.getModifiers(), Modifiers.EXPLAIN_PLAN ) &&
-                    ( ( SelectQuery )query ).getExplainPlan() == null ){
+                if (query instanceof SelectQuery &&
+                        request.getModifiers() != null &&
+                        Modifiers.contains(request.getModifiers(), Modifiers.EXPLAIN_PLAN) &&
+                        ((SelectQuery) query).getExplainPlan() == null) {
 
-                    ( ( SelectQuery )query ).setExplainPlan( new ExplainPlanImpl( null ) );
+                    ((SelectQuery) query).setExplainPlan(new ExplainPlanImpl(null));
                 }
-                response = query.executeOnSpace(space,
-                        session.getTransaction());
-                if( query instanceof AbstractDMLQuery && ((AbstractDMLQuery)query ).getExplainPlan() != null ){
-                    response = new ExplainPlanResponsePacket( response, ((AbstractDMLQuery)query ).getExplainPlan().toString() );
+                response = query.executeOnSpace(space, session.getTransaction());
+                if (query instanceof AbstractDMLQuery && ((AbstractDMLQuery) query).getExplainPlan() != null) {
+                    response = new ExplainPlanResponsePacket(response, ((AbstractDMLQuery) query).getExplainPlan().toString());
                 }
 
                 session.setUnderTransaction(request.getStatement());
@@ -157,8 +156,10 @@ public class QueryHandler {
                     Class<?> clazz = Class.forName("com.gigaspaces.jdbc.QueryHandler");
                     Object newQueryHandler = clazz.newInstance();
                     response = (ResponsePacket) clazz.getDeclaredMethod("handle", String.class, IJSpace.class).invoke(newQueryHandler, request.getStatement(), space);
-                } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
+                } catch (InvocationTargetException e) {
                     throw new SQLException("Unable to execute query", e.getCause());
+                } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | ClassNotFoundException e) {
+                    throw new SQLException("Unable to execute query", e);
                 }
                 break;
             case PREPARED_WITH_VALUES:

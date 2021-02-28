@@ -54,4 +54,5 @@ public class TextReportFormatter {
         indents--;
         return this;
     }
+
 }

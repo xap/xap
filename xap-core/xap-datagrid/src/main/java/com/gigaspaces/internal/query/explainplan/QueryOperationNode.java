@@ -28,4 +28,9 @@ import java.util.List;
 public interface QueryOperationNode extends Externalizable{
 
     List<QueryOperationNode> getChildren();
+
+    /**
+     * @since GS-14433, 16.0
+     */
+    String getPrettifiedString();
 }
