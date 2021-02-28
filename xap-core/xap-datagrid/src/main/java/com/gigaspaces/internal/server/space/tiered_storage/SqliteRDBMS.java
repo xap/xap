@@ -1,22 +1,19 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
-import com.gigaspaces.internal.io.FileUtils;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
+import com.gigaspaces.internal.query.ICustomQuery;
 import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
-import com.gigaspaces.internal.server.storage.EntryHolder;
-import com.gigaspaces.internal.server.storage.FlatEntryData;
-import com.gigaspaces.internal.server.storage.IEntryHolder;
-import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.utils.concurrent.ReentrantSimpleLock;
-import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.EntryAlreadyInSpaceException;
+import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 import net.jini.core.lease.Lease;
@@ -24,20 +21,25 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteException;
 
 import java.io.File;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.gigaspaces.internal.server.space.tiered_storage.SqliteUtils.*;
 
 public class SqliteRDBMS implements InternalRDBMS {
     private static final String JDBC_DRIVER = "org.sqlite.JDBC";
     private static final String USER = "gs";
     private static final String PASS = "gigaspaces";
-    private String PATH = "/tmp/sqlite_db";
-    private String DB_URL = "jdbc:sqlite:" + PATH;
+    private static final String DB_NAME = "sqlite_db";
+    private static final String PATH = "/tmp";
+    private static final String DB_URL = "jdbc:sqlite:" + PATH +"/"+ DB_NAME;;
     private Connection connection;
     private ReentrantSimpleLock modifierLock = new ReentrantSimpleLock();
     private AtomicInteger readCount = new AtomicInteger(0);
@@ -96,14 +98,18 @@ public class SqliteRDBMS implements InternalRDBMS {
         for (PropertyInfo property : typeDesc.getProperties()) {
             stringBuilder.append("'").append(property.getName()).append("' ").append(",");
         }
-        stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+        if (stringBuilder.charAt(stringBuilder.length() - 1) == ',') {
+            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+        }
         stringBuilder.append(") ");
         stringBuilder.append(" VALUES (");
         for (PropertyInfo property : typeDesc.getProperties()) {
             Object propertyValue = entryHolder.getEntryData().getFixedPropertyValue(property.getOriginalIndex());
             stringBuilder.append(getValueString(property, propertyValue)).append(",");
         }
-        stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+        if (stringBuilder.charAt(stringBuilder.length() - 1) == ',') {
+            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+        }
         stringBuilder.append(");");
         String sqlQuery = stringBuilder.toString();
         System.out.println(sqlQuery);
@@ -135,7 +141,9 @@ public class SqliteRDBMS implements InternalRDBMS {
         if (idProperty == null) {
             throw new SAException("could not find id property (" + typeDesc.getIdPropertyName() + ") in " + Arrays.toString(typeDesc.getProperties()));
         }
-        stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+        if (stringBuilder.charAt(stringBuilder.length() - 1) == ',') {
+            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+        }
         stringBuilder.append(" WHERE ").append(typeDesc.getIdPropertyName()).append(" = ")
                 .append(getValueString(idProperty, updatedEntry.getEntryData().getFixedPropertyValue(idProperty.getOriginalIndex())));
         stringBuilder.append(";");
@@ -155,11 +163,11 @@ public class SqliteRDBMS implements InternalRDBMS {
         String sqlQuery = "DELETE FROM '" + typeDesc.getTypeName() + "' " +
                 "WHERE " + idPropertyName + " = " + getValueString(typeDesc.getFixedProperty(idPropertyName), entryHolder.getEntryId()) + ";";
         System.out.println(sqlQuery);
-        try{
+        try {
             int changedRows = executeUpdate(sqlQuery);
             return changedRows == 1;
         } catch (SQLException e) {
-            throw new SAException("todo", e);
+            throw new SAException("Failed to delete entry - type = "+typeDesc.getTypeName()+" , id = "+entryHolder.getEntryId(), e);
         }
     }
 
@@ -167,7 +175,7 @@ public class SqliteRDBMS implements InternalRDBMS {
     public IEntryHolder getEntry(Context context, String typeName, Object id) throws SAException {
         ITypeDesc typeDesc = typeManager.getTypeDesc(typeName);
         String idPropertyName = typeDesc.getIdPropertyName();
-        String sqlQuery = "Select * from '" + typeDesc.getTypeName() + "' " +
+        String sqlQuery = "SELECT * FROM '" + typeDesc.getTypeName() + "' " +
                 "WHERE " + idPropertyName + " = " + getValueString(typeDesc.getFixedProperty(idPropertyName), id) + ";";
         System.out.println(sqlQuery);
         ResultSet resultSet = executeQuery(sqlQuery);
@@ -179,7 +187,8 @@ public class SqliteRDBMS implements InternalRDBMS {
                     values[i] = getPropertyValue(resultSet, properties[i]);
                 }
                 FlatEntryData data = new FlatEntryData(values, null, typeDesc.getEntryTypeDesc(EntryType.DOCUMENT_JAVA), 0, Lease.FOREVER, null);
-                String uid = SpaceUidFactory.createUidFromTypeAndId(typeDesc, id);
+                Object idFromEntry = data.getFixedPropertyValue(((PropertyInfo) typeDesc.getFixedProperty(typeDesc.getIdPropertyName())).getOriginalIndex());
+                String uid = SpaceUidFactory.createUidFromTypeAndId(typeDesc, idFromEntry);
                 readCount.incrementAndGet();
                 return new EntryHolder(typeManager.getServerTypeDesc(typeName), uid, 0, false, data);
             } else {
@@ -192,14 +201,69 @@ public class SqliteRDBMS implements InternalRDBMS {
     }
 
     @Override
-    public ISAdapterIterator<IEntryCacheInfo> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder, TieredState tieredState) throws
-            SAException {
+    public ISAdapterIterator<IEntryCacheInfo> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder, TieredState tieredState) throws SAException {
+        if (templateHolder.getCustomQuery() != null) {
+            ICustomQuery customQuery = templateHolder.getCustomQuery();
+            //TODO - convert customQuery to sql
+            return null;
+        } else {
+            ITypeDesc typeDesc = templateHolder.getServerTypeDesc().getTypeDesc();
+            ;
+            TemplateEntryData entryData = templateHolder.getTemplateEntryData();
+            if (templateHolder.getExtendedMatchCodes() == null) {//by template
+                StringBuilder stringBuilder = new StringBuilder("SELECT * FROM '").append(typeDesc.getTypeName()).append("' WHERE ");
+                for (PropertyInfo property : typeDesc.getProperties()) {
+                    Object value = entryData.getFixedPropertyValue(property.getOriginalIndex());
+                    if (value != null) {
+                        stringBuilder.append(property.getName()).append(" = ").append(getValueString(property, value)).append(" AND ");
+                    }
+                }
+                int lastIndexOf = stringBuilder.lastIndexOf(" AND ");
+                if (lastIndexOf != -1) {
+                    stringBuilder.delete(lastIndexOf, stringBuilder.length() - 1);
+                } else {
+                    stringBuilder.delete(stringBuilder.lastIndexOf(" WHERE"), stringBuilder.length() - 1);
+                }
+                stringBuilder.append(";");
+                String sqlQuery = stringBuilder.toString();
+                System.out.println(sqlQuery);
+                ResultSet resultSet = executeQuery(sqlQuery);
+                return new RDBMSIterator(resultSet, typeDesc, typeManager);
+            } else if (templateHolder.getExtendedMatchCodes() != null) {
+                short[] matchCodes = templateHolder.getExtendedMatchCodes();
+                StringBuilder stringBuilder = new StringBuilder("SELECT * FROM '").append(typeDesc.getTypeName()).append("' WHERE ");
+                for (PropertyInfo property : typeDesc.getProperties()) {
+                    int originalIndex = property.getOriginalIndex();
+                    Object value = entryData.getFixedPropertyValue(originalIndex);
+                    if (value != null) {
+                        stringBuilder.append(property.getName()).append(getMatchCodeString(matchCodes[originalIndex])).append(getValueString(property, value)).append(" AND ");
+                    }
+                }
+                int lastIndexOf = stringBuilder.lastIndexOf(" AND ");
+                if (lastIndexOf != -1) {
+                    stringBuilder.delete(lastIndexOf, stringBuilder.length() - 1);
+                } else {
+                    stringBuilder.delete(stringBuilder.lastIndexOf(" WHERE"), stringBuilder.length() - 1);
+                }
+                stringBuilder.append(";");
+                String sqlQuery = stringBuilder.toString();
+                System.out.println(sqlQuery);
+                ResultSet resultSet = executeQuery(sqlQuery);
+                return new RDBMSIterator(resultSet, typeDesc, typeManager);
+            }
+        }
         return null;
     }
 
     @Override
     public void shutDown() {
-        FileUtils.deleteFileOrDirectoryIfExists(new File(PATH));
+        File folder = new File(PATH);
+        final File[] files = folder.listFiles((dir, name) -> name.matches(DB_NAME+".*"));
+        for (final File file : Objects.requireNonNull(files)) {
+            if (!file.delete()) {
+                System.err.println("Can't remove " + file.getAbsolutePath());
+            }
+        }
     }
 
     @Override
@@ -210,14 +274,6 @@ public class SqliteRDBMS implements InternalRDBMS {
     @Override
     public int getReadCount() {
         return readCount.get();
-    }
-
-    private String getValueString(SpacePropertyDescriptor property, Object propertyValue) {
-        if (property.getType().equals(String.class)) {
-            return "\"" + propertyValue + "\"";
-        } else {
-            return propertyValue.toString();
-        }
     }
 
     private Connection connectToDB(String jdbcDriver, String dbUrl, String user, String password, SQLiteConfig config) throws ClassNotFoundException, SQLException {
@@ -238,7 +294,7 @@ public class SqliteRDBMS implements InternalRDBMS {
         try {
             modifierLock.lock();
             return connection.createStatement().executeUpdate(sqlQuery);
-        }finally {
+        } finally {
             modifierLock.unlock();
         }
     }
@@ -249,70 +305,5 @@ public class SqliteRDBMS implements InternalRDBMS {
         } catch (SQLException e) {
             throw new SAException("failed to create table in internal sqlite RDBMS", e);
         }
-    }
-
-    private String getPropertyType(PropertyInfo property) {
-        Class<?> propertyType = property.getType();
-        if (propertyType.equals(String.class)) {
-            return "VARCHAR";
-        } else if (propertyType.equals(boolean.class) || propertyType.equals(Boolean.class)) {
-            return "BIT";
-        } else if (propertyType.equals(byte.class) || propertyType.equals(Byte.class)) {
-            return "TINYINT";
-        } else if (propertyType.equals(short.class) || propertyType.equals(Short.class)) {
-            return "SMALLINT";
-        } else if (propertyType.equals(int.class) || propertyType.equals(Integer.class)) {
-            return "INTEGER";
-        } else if (propertyType.equals(long.class) || propertyType.equals(Long.class)) {
-            return "BIGINT";
-        } else if (propertyType.equals(BigInteger.class)) {
-            return "BIGINT";
-        } else if (propertyType.equals(BigDecimal.class)) {
-            return "DECIMAL";
-        } else if (propertyType.equals(float.class) || propertyType.equals(Float.class)) {
-            return "REAL";
-        } else if (propertyType.equals(double.class) || propertyType.equals(Double.class)) {
-            return "float";
-        } else if (propertyType.equals(byte[].class) || propertyType.equals(Byte[].class)) {
-            return "BINARY";
-        } else if (propertyType.equals(Timestamp.class)) {
-            return "DATETIME";
-        } else if (propertyType.equals(Time.class)) {
-            return "BIGTIME";
-        }
-        throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
-    }
-
-    private Object getPropertyValue(ResultSet resultSet, PropertyInfo property) throws SQLException {
-        Class<?> propertyType = property.getType();
-        int propertyIndex = property.getOriginalIndex() + 1;
-        if (propertyType.equals(String.class)) {
-            return resultSet.getString(propertyIndex);
-        } else if (propertyType.equals(boolean.class) || propertyType.equals(Boolean.class)) {
-            return resultSet.getBoolean(propertyIndex);
-        } else if (propertyType.equals(byte.class) || propertyType.equals(Byte.class)) {
-            return resultSet.getByte(propertyIndex);
-        } else if (propertyType.equals(short.class) || propertyType.equals(Short.class)) {
-            return resultSet.getShort(propertyIndex);
-        } else if (propertyType.equals(int.class) || propertyType.equals(Integer.class)) {
-            return resultSet.getInt(propertyIndex);
-        } else if (propertyType.equals(long.class) || propertyType.equals(Long.class)) {
-            return resultSet.getLong(propertyIndex);
-        } else if (propertyType.equals(BigInteger.class)) {
-            return resultSet.getLong(propertyIndex);
-        } else if (propertyType.equals(BigDecimal.class)) {
-            return resultSet.getBigDecimal(propertyIndex);
-        } else if (propertyType.equals(float.class) || propertyType.equals(Float.class)) {
-            return resultSet.getFloat(propertyIndex);
-        } else if (propertyType.equals(double.class) || propertyType.equals(Double.class)) {
-            return resultSet.getDouble(propertyIndex);
-        } else if (propertyType.equals(byte[].class) || propertyType.equals(Byte[].class)) {
-            return resultSet.getBytes(propertyIndex);
-        } else if (propertyType.equals(Timestamp.class)) {
-            return resultSet.getTimestamp(propertyIndex);
-        } else if (propertyType.equals(Time.class)) {
-            return resultSet.getTime(propertyIndex);
-        }
-        throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
     }
 }
