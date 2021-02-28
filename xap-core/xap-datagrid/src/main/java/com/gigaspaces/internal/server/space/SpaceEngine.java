@@ -4218,7 +4218,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 template.getServerIteratorInfo().setScanListIterator(null);
             }
         }
-        else
+
+        else // TODO MISHEL Here we iterate over the entries
             getMatchedEntriesAndOperateSA_Scan(context,
                     template,
                     toScan,

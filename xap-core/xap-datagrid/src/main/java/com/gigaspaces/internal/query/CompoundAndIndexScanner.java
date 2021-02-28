@@ -179,11 +179,11 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
 
             if (isExplainPlan){
                 addChosenIndex(context, typeData, fatherNode, choiceNode, shortestIndex != null ? shortestIndex.getIndexName() : "");
-            }
+            }//TODO MISHEL #2 this is where we mark the chosen index
 
             if (trackIndexHits && shortestIndex != null) {
                 context.getIndexMetricsContext().addChosenIndex(shortestIndex);
-            }
+            }//TODO MISHEL #3 this is where we mark indexMetricsContext
 
             return shortestPotentialMatchList;
         }

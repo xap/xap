@@ -1964,6 +1964,10 @@ public class CacheManager extends AbstractCacheManager
         else
             result = typeData == null ? null : getScannableEntriesMinIndexExtended(context, typeData, numOfFields, template);
 
+        if (context.isDryRun()) {
+            return null;
+        }
+
         return result;
     }
 
@@ -4560,6 +4564,7 @@ public class CacheManager extends AbstractCacheManager
             singleExplainPlan.setPartitionId(Integer.toString(getEngine().getPartitionIdOneBased()));
             ExplainPlanContext explainPlanContext = new ExplainPlanContext();
             explainPlanContext.setSingleExplainPlan(singleExplainPlan);
+            context.setDryRun(true);
             context.setExplainPlanContext(explainPlanContext);
         }
 

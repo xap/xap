@@ -123,11 +123,12 @@ public class SingleExplainPlan implements Externalizable {
     }
 
     public Integer getNumberOfScannedEntries(String clazz) {
-        return scanningInfo.get(clazz).getScanned();
+        final ScanningInfo scanningInfo = this.scanningInfo.get(clazz);
+        return scanningInfo == null ? 0 : scanningInfo.getScanned();
     }
 
     public Integer getNumberOfMatchedEntries(String clazz) {
-        return scanningInfo.get(clazz).getMatched();
+        return scanningInfo.getOrDefault(clazz, new ScanningInfo(0,0)).getMatched();
     }
 
     public void incrementScanned(String clazz) {
