@@ -75,13 +75,15 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     public TieredState guessTemplateTier(ITemplateHolder templateHolder) {
         String typeName = templateHolder.getServerTypeDesc().getTypeName();
         CachePredicate cacheRule = getCacheRule(typeName);
-        if(cacheRule == null){
+        if (cacheRule == null) {
             return TieredState.TIERED_COLD;
         } else {
-            if(templateHolder.isIdQuery()){
+            if (cacheRule.isTransient()) {
+                return TieredState.TIERED_HOT;
+            } else if (templateHolder.isIdQuery()) {
                 return TieredState.TIERED_HOT_AND_COLD;
             } else {
-                if(!cacheRule.evaluate(templateHolder)){
+                if (!cacheRule.evaluate(templateHolder)) {
                     return TieredState.TIERED_COLD;
                 } else {
                     return TieredState.TIERED_HOT;

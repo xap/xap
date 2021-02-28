@@ -5540,13 +5540,14 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                               boolean ofReplicatableClass, EntryRemoveReasonCodes removeReason,
                               boolean disableReplication, boolean disableProcessorCall, boolean disableSADelete)
             throws SAException {
+        //TODO - tiered storage - handle lease expiration
         boolean fromLeaseExpiration = removeReason == EntryRemoveReasonCodes.LEASE_CANCEL || removeReason == EntryRemoveReasonCodes.LEASE_EXPIRED;
         // check for before-remove filter
         if ((fromLeaseExpiration || _general_purpose_remove_filters) && _filterManager._isFilter[FilterOperationCodes.BEFORE_REMOVE])
             _filterManager.invokeFilters(FilterOperationCodes.BEFORE_REMOVE, null, entry);
 
         boolean noRealRemoveFromSpace = fromLeaseExpiration && isExpiredEntryStayInSpace(entry);
-
+        //TODO - tiered storage - decide replication of time based eviction and retention
         disableReplication = disableReplication || (removeReason == EntryRemoveReasonCodes.LEASE_EXPIRED && !_leaseManager.replicateLeaseExpirationEventsForEntries());
         // mark entry as deleted
         if (!noRealRemoveFromSpace) {

@@ -3,7 +3,6 @@ package com.gigaspaces.internal.server.space.tiered_storage;
 import com.gigaspaces.internal.io.FileUtils;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.metadata.ITypeIntrospector;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
@@ -16,6 +15,7 @@ import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.context.Context;
+import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.EntryAlreadyInSpaceException;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
@@ -83,7 +83,7 @@ public class SqliteRDBMS implements InternalRDBMS {
                     executeUpdate(sqlQuery);
                 }
             }
-        } catch (SQLException e){
+        } catch (SQLException e) {
             throw new SAException(e);
         }
     }
@@ -111,7 +111,7 @@ public class SqliteRDBMS implements InternalRDBMS {
             executeUpdate(sqlQuery);
         } catch (SQLException e) {
             //TODO - check error code and throw EntryAllReadyInSpace when needed
-            if(e instanceof SQLiteException && ((SQLiteException) e).getResultCode().code == 1555){
+            if (e instanceof SQLiteException && ((SQLiteException) e).getResultCode().code == 1555) {
                 throw new EntryAlreadyInSpaceException(entryHolder.getUID(), typeName);
             }
         }
@@ -125,15 +125,15 @@ public class SqliteRDBMS implements InternalRDBMS {
         StringBuilder stringBuilder = new StringBuilder("UPDATE '").append(typeName).append("' SET ");
         PropertyInfo idProperty = null;
         for (PropertyInfo property : typeDesc.getProperties()) {
-            if(property.getName().equalsIgnoreCase(typeDesc.getIdPropertyName())){
+            if (property.getName().equalsIgnoreCase(typeDesc.getIdPropertyName())) {
                 idProperty = property;
             }
             Object propertyValue = updatedEntry.getEntryData().getFixedPropertyValue(property.getOriginalIndex());
             stringBuilder.append("'").append(property.getName()).append("' = ").append(getValueString(property, propertyValue)).append(",");
         }
 
-        if(idProperty == null){
-             throw new SAException("could not find id property ("+typeDesc.getIdPropertyName()+") in "+ Arrays.toString(typeDesc.getProperties()));
+        if (idProperty == null) {
+            throw new SAException("could not find id property (" + typeDesc.getIdPropertyName() + ") in " + Arrays.toString(typeDesc.getProperties()));
         }
         stringBuilder.deleteCharAt(stringBuilder.length() - 1);
         stringBuilder.append(" WHERE ").append(typeDesc.getIdPropertyName()).append(" = ")
@@ -144,18 +144,23 @@ public class SqliteRDBMS implements InternalRDBMS {
         try {
             executeUpdate(sqlQuery);
         } catch (SQLException e) {
-           throw new SAException(e);
+            throw new SAException(e);
         }
     }
 
     @Override
-    public void removeEntry(Context context, IEntryHolder entryPacket) throws SAException {
-
-    }
-
-    @Override
-    public IEntryHolder getEntry(Context context, String typeName, ITemplateHolder templateHolder) throws SAException {
-        return null;
+    public boolean removeEntry(Context context, IEntryHolder entryHolder) throws SAException {
+        ITypeDesc typeDesc = entryHolder.getServerTypeDesc().getTypeDesc();
+        String idPropertyName = typeDesc.getIdPropertyName();
+        String sqlQuery = "DELETE FROM '" + typeDesc.getTypeName() + "' " +
+                "WHERE " + idPropertyName + " = " + getValueString(typeDesc.getFixedProperty(idPropertyName), entryHolder.getEntryId()) + ";";
+        System.out.println(sqlQuery);
+        try{
+            int changedRows = executeUpdate(sqlQuery);
+            return changedRows == 1;
+        } catch (SQLException e) {
+            throw new SAException("todo", e);
+        }
     }
 
     @Override
@@ -187,7 +192,7 @@ public class SqliteRDBMS implements InternalRDBMS {
     }
 
     @Override
-    public ISAdapterIterator<IEntryCacheInfo> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder) throws
+    public ISAdapterIterator<IEntryCacheInfo> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder, TieredState tieredState) throws
             SAException {
         return null;
     }
@@ -229,10 +234,13 @@ public class SqliteRDBMS implements InternalRDBMS {
         return conn;
     }
 
-    private void executeUpdate(String sqlQuery) throws SQLException {
-        modifierLock.lock();
-        connection.createStatement().executeUpdate(sqlQuery);
-        modifierLock.unlock();
+    private int executeUpdate(String sqlQuery) throws SQLException {
+        try {
+            modifierLock.lock();
+            return connection.createStatement().executeUpdate(sqlQuery);
+        }finally {
+            modifierLock.unlock();
+        }
     }
 
     private ResultSet executeQuery(String sqlQuery) throws SAException {

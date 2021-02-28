@@ -6,6 +6,7 @@ import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.context.Context;
+import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 
@@ -32,27 +33,15 @@ public interface InternalRDBMS {
     /**
      * Removes an entry from the  internalDiskStorage
      *
-     * @param entryPacket entry to remove
+     * @param entryHolder entry to remove
      */
-    void removeEntry(Context context, IEntryHolder entryPacket) throws SAException;
-
-
-    /**
-     * Gets an entry object from internalDiskStorage.
-     *
-     * @param typeName      class of the entry to get
-     * @param templateHolder selection template,may be null, currently used by cacheload/cachestore in
-     *                       order to pass primary key fields when GS uid is not saved in an external DB
-     * @return IEntryPacket
-     */
-    IEntryHolder getEntry(Context context, String typeName, ITemplateHolder templateHolder) throws SAException;
+    boolean removeEntry(Context context, IEntryHolder entryHolder) throws SAException;
 
     IEntryHolder getEntry(Context context, String typeName, Object id) throws SAException;
 
-    ISAdapterIterator<IEntryCacheInfo> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder) throws SAException;
+    ISAdapterIterator<IEntryCacheInfo> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder, TieredState state) throws SAException;
 
     void shutDown();
-
 
     //Temporary for tests
     int getWriteCount();
