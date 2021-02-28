@@ -119,6 +119,7 @@ import com.gigaspaces.server.space.suspend.SuspendType;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.time.SystemTime;
 import com.gigaspaces.transport.PocSettings;
+import com.gigaspaces.transport.netty.NettyServer;
 import com.gigaspaces.transport.server.NioServer;
 import com.gigaspaces.utils.Pair;
 import com.j_spaces.core.*;
@@ -242,7 +243,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     private final String _puName;
     private final boolean _scalable;
-    private final NioServer nioServer;
+    private final Closeable nioServer;
     private SpaceClusterInfo _clusterInfo;
     private SpaceConfig _spaceConfig;
     private SpaceEngine _engine;
@@ -349,14 +350,21 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             initSpaceStartupStateManager();
 
         _broadcastTableHandler = new BroadcastTableHandler(this);
-        if (PocSettings.enabled) {
-            try {
-                nioServer = new NioServer(this);
-            } catch (IOException e) {
-                throw new CreateException("Failed to create nio server", e);
-            }
-        } else
-            nioServer = null;
+        nioServer = createNioServer(this);
+    }
+
+    private Closeable createNioServer(SpaceImpl space) {
+        try {
+        switch (PocSettings.serverType) {
+            case LRMI: return null;
+            case NIO:
+                    return new NioServer(space);
+            case NETTY: return new NettyServer(space);
+            default: throw new IllegalStateException("Unsupported server type: " + PocSettings.serverType);
+        }
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to create transport server", e);
+        }
     }
 
     private ZKCollocatedClientConfig createZKCollocatedClientConfig() {

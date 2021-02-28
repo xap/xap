@@ -2,10 +2,12 @@ package com.gigaspaces.transport;
 
 import com.gigaspaces.internal.io.GSByteArrayOutputStream;
 import com.gigaspaces.logger.Constants;
+import com.gigaspaces.lrmi.LRMIUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
@@ -38,6 +40,11 @@ public class NioChannel {
         //misContext = CUSTOM_MARSHAL ? new LightMarshalInputStream.Context() : null;
         mosContext = new LightMarshalOutputStream.Context();
         misContext = new LightMarshalInputStream.Context();
+        try {
+            LRMIUtilities.initNewSocketProperties(socketChannel);
+        } catch (SocketException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public boolean tryAcquire() {

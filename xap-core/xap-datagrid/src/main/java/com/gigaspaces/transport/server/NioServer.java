@@ -24,7 +24,7 @@ public class NioServer implements Closeable {
         this(space, new InetSocketAddress(PocSettings.host, PocSettings.port), PocSettings.serverReaderPoolSize);
     }
     public NioServer(SpaceImpl space, InetSocketAddress address, int readersPoolSize) throws IOException {
-        logger.info("Creating NioServer for space {} at address {} [readers: {}]", space.getNodeName(), address, readersPoolSize);
+        logger.info("Creating NioServer (address {}, readers: {}, lrmiExecutor: {}", address, readersPoolSize, PocSettings.serverLrmiExecutor);
         this.space = space;
 
         ssc = ServerSocketChannel.open();

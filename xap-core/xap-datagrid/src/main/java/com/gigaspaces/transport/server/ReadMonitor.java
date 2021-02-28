@@ -4,17 +4,19 @@ import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.lrmi.LRMIRuntime;
 import com.gigaspaces.transport.NioChannel;
+import com.gigaspaces.transport.PocSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 public class ReadMonitor extends SelectMonitor {
     private final SpaceImpl space;
-    private final ExecutorService executorService = LRMIRuntime.getRuntime().getThreadPool();
+    private final Executor executorService = PocSettings.serverLrmiExecutor ? LRMIRuntime.getRuntime().getThreadPool() : null;
 
     public ReadMonitor(NioServer server, int id) throws IOException {
         super("read-" + id);
@@ -26,7 +28,11 @@ public class ReadMonitor extends SelectMonitor {
         NioChannel nioChannel = (NioChannel) key.attachment();
         ByteBuffer requestBuffer = nioChannel.readNonBlocking();
         if (requestBuffer != null) {
-            executorService.submit(new SpaceOperationTask(requestBuffer, space, nioChannel));
+            SpaceOperationTask task = new SpaceOperationTask(requestBuffer, space, nioChannel);
+            if (executorService != null)
+                executorService.execute(task);
+            else
+                task.run();
         }
     }
 

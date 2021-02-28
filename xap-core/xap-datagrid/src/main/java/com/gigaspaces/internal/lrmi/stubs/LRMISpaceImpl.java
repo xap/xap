@@ -125,7 +125,7 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     }
 
     private void initialize() {
-        this.nioEnabled = !isDirect() && PocSettings.enabled;
+        this.nioEnabled = !isDirect() && PocSettings.isEnabled();
         if (nioEnabled)
             logger.info("Created (nio enabled, {})", PocSettings.dump());
         else
