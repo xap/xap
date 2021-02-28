@@ -17,6 +17,8 @@ package com.gigaspaces.internal.query.explainplan;
 
 import com.gigaspaces.internal.utils.StringUtils;
 
+import java.util.List;
+
 /**
  * @author Niv Ingberg
  * @since 12.0.1
@@ -45,6 +47,38 @@ public class TextReportFormatter {
         return this;
     }
 
+    public TextReportFormatter inline(String s) {
+        sb.append(s);
+        return this;
+    }
+
+    public TextReportFormatter inline(List<String> list) {
+        for (String s : list) {
+            inline(s);
+        }
+        return this;
+    }
+
+    public TextReportFormatter line(List<String> strings) {
+        int i = 0;
+        indent();
+        if (strings.size() > 1) {
+            line(strings.get(0));
+            ++i;
+            indent();
+        }
+
+        for (;i < strings.size(); i++) {
+            line(strings.get(i));
+        }
+
+        if (strings.size()> 1) {
+            unindent();
+        }
+        unindent();
+        return this;
+    }
+
     public TextReportFormatter indent() {
         indents++;
         return this;
@@ -52,6 +86,13 @@ public class TextReportFormatter {
 
     public TextReportFormatter unindent() {
         indents--;
+        return this;
+    }
+
+    public TextReportFormatter newLine() {
+        sb.append(StringUtils.NEW_LINE);
+        for (int i=0 ; i < indents ; i++)
+            sb.append('\t');
         return this;
     }
 }

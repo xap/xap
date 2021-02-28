@@ -28,4 +28,6 @@ import java.util.List;
 public interface QueryOperationNode extends Externalizable{
 
     List<QueryOperationNode> getChildren();
+
+    String toStringV2();
 }

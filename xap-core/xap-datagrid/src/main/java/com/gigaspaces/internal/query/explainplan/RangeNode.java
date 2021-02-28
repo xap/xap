@@ -91,6 +91,13 @@ public class RangeNode implements QueryOperationNode{
     }
 
     @Override
+    public String toStringV2() {
+        return '(' + (functionName != null ? functionName : fieldName) +
+                " " + operator.toString() + " " + value +
+                ')';
+    }
+
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeObject(fieldName);
         out.writeObject(value);

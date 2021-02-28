@@ -80,7 +80,7 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
     private static final long serialVersionUID = 1L;
 
     private QueryTableData _table;
-    // template ranges per field
+    // template ranges per field TODO mishel contains the where
     private HashMap<String, Range> _ranges = new HashMap<String, Range>();
     private boolean _isAlwaysEmpty;
     private Set<String> _multipleUids;

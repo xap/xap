@@ -34,7 +34,7 @@ import java.util.List;
 @ExperimentalApi
 public class ExplainPlanUtil {
 
-    public static final String REPORT_START = "******************** Explain plan report ********************";
+    public static final String  REPORT_START = "******************** Explain plan report ********************";
     public static final String REPORT_END = "*************************************************************";
 
     public static IndexInfo createIndexInfo(AbstractQueryIndex abstractIndexScanner, TypeDataIndex index, TypeData typeData, int size, boolean usable) {

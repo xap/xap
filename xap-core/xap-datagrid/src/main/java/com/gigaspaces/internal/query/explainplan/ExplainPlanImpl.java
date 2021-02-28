@@ -22,9 +22,7 @@ import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yael nahon
@@ -77,8 +75,18 @@ public class ExplainPlanImpl implements ExplainPlan {
     public String toString() {
         TextReportFormatter report = new TextReportFormatter();
         report.line(ExplainPlanUtil.REPORT_START);
-        append(report);
+        final Map<String, Object> plan = CreateV2Plan(report);
+//        append(report);
         report.line(ExplainPlanUtil.REPORT_END);
+        return report.toString();
+    }
+
+    public String toStringV2() {
+        TextReportFormatter report = new TextReportFormatter();
+        report.line(ExplainPlanUtil.REPORT_START);
+        final Map<String, Object> plan = CreateV2Plan(report);
+        report.line(ExplainPlanUtil.REPORT_END);
+//        return PlanFormatter.format(plan);
         return report.toString();
     }
 
@@ -91,6 +99,30 @@ public class ExplainPlanImpl implements ExplainPlan {
             appendDetailed(report);
         }
     }
+
+    protected Map<String, Object> CreateV2Plan(TextReportFormatter report) {
+        String queryString;
+        String filters = "";
+        if (query == null) {
+            queryString = "";//TODO get the query
+//            filters = getFiltersV2();
+        } else {
+            queryString = this.query.toString();
+            filters = this.query.getQuery();
+            report.line("TableScan: " + query.getTypeName());
+        }
+
+        if (plans.isEmpty()) {
+            report.line("Not executed yet");
+            return Collections.singletonMap(queryString, "Not executed yet");
+        }
+        return Collections.singletonMap(queryString, appendDetailedV2(report, filters));
+    }
+
+//    private String getFiltersV2() {
+//        getAllPlans()
+//
+//    }
 
     protected void appendSummary(TextReportFormatter report) {
         report.line("Execution Information Summary:");
@@ -125,6 +157,26 @@ public class ExplainPlanImpl implements ExplainPlan {
         report.unindent();
     }
 
+    protected List<Map> appendDetailedV2(TextReportFormatter report, String filters) {
+        indexInfoDescCache.clear();
+        final List<Map> partitionsPlan = new ArrayList<>();
+        if (!filters.isEmpty()) {
+            final String filterKey = "Filter: ";
+            report.line(filterKey + filters);
+            partitionsPlan.add(Collections.singletonMap(filterKey, filters));
+        } else {
+            report.inline("Query Filter Tree:");
+            appendV2(report, plans.values().iterator().next().getRoot());
+            report.newLine();
+        }
+
+        for (Map.Entry<String, SingleExplainPlan> entry : plans.entrySet()) {
+            partitionsPlan.add(appendPartitionPlanV2(report, entry.getKey(), entry.getValue()));
+        }
+        report.unindent();
+        return partitionsPlan;
+    }
+
     protected void append(TextReportFormatter report, QueryOperationNode node) {
         report.line(node.toString());
         report.indent();
@@ -132,6 +184,24 @@ public class ExplainPlanImpl implements ExplainPlan {
             append(report, subNode);
         }
         report.unindent();
+    }
+
+    protected void appendV2(TextReportFormatter report, QueryOperationNode node) {
+
+        if (node instanceof QueryJunctionNode) {
+            report.indent();
+            report.newLine();
+            report.inline(node.toStringV2());
+        } else {
+            report.inline(node.toStringV2()+" ");
+        }
+        for (QueryOperationNode subNode : node.getChildren()) {
+            appendV2(report, subNode);
+        }
+
+        if (node instanceof QueryJunctionNode) {
+            report.unindent();
+        }
     }
 
     protected void append(TextReportFormatter report, String partitionId, SingleExplainPlan singleExplainPlan) {
@@ -162,6 +232,31 @@ public class ExplainPlanImpl implements ExplainPlan {
         }
     }
 
+    protected Map<String, Object> appendPartitionPlanV2(TextReportFormatter report, String partitionId, SingleExplainPlan singleExplainPlan) {
+        final String partitionIdString = "Partition Id: " + partitionId;
+        report.line(partitionIdString);
+        final Map<String, List<IndexChoiceNode>> indexesInfo = singleExplainPlan.getIndexesInfo();
+        final Map<String, Object> partitionPlan = new HashMap<>();
+        if (indexesInfo.isEmpty()) {
+            report.line("Index Information: NO INDEX USED");
+            partitionPlan.put(partitionIdString, "Index Information: NO INDEX USED");
+        } else if (indexesInfo.size() == 1) {
+            Map.Entry<String, List<IndexChoiceNode>> entry = indexesInfo.entrySet().iterator().next();
+            report.indent();
+            final Map<String, Object> indexInspections = appendIndexInspectionV2(report, null, entry.getValue());
+            report.unindent();
+            partitionPlan.put(partitionIdString, indexInspections);
+        } else {
+            report.indent();
+            for (Map.Entry<String, List<IndexChoiceNode>> entry : indexesInfo.entrySet()) {
+                final Map<String, Object> indexInspections = appendIndexInspectionV2(report, entry.getKey(), entry.getValue());
+                //TODO handle this case
+            }
+            report.unindent();
+        }
+        return partitionPlan;
+    }
+
     protected void append(TextReportFormatter report, String typeName, List<IndexChoiceNode> list, ScanningInfo scanningInfo) {
         if (typeName != null) {
             report.line("Type name: " + typeName);
@@ -188,6 +283,39 @@ public class ExplainPlanImpl implements ExplainPlan {
             report.unindent();
     }
 
+    protected Map<String, Object> appendIndexInspectionV2(TextReportFormatter report, String typeName, List<IndexChoiceNode> list) {
+        Map<String, Object> operatorAndPartitionIndexInspected = new HashMap<>();
+
+        int i = list.size()-1;
+        if (list.get(0).getChosen() instanceof UnionIndexInfo) {
+            i = 0;
+        }
+
+        for (; i >= 0 ; i--) {
+            IndexChoiceNode node = list.get(i);
+            final List<String> selectedDescV2 = getSelectedDescV2(node.getChosen());
+            report.line(selectedDescV2);
+            List<String> selected = new ArrayList<>(selectedDescV2);
+            final String selectedKey = "Selected: ";
+            Map<String, Object> operatorAndIndexInspection = (Map<String, Object>) operatorAndPartitionIndexInspected.get(node.getName());
+            if (operatorAndIndexInspection == null) {
+                operatorAndIndexInspection = new HashMap<>();
+                operatorAndIndexInspection.put(selectedKey, new ArrayList<>());
+            }
+
+            final List<String> selectedTotal = (List<String>) operatorAndIndexInspection.get(selectedKey);
+            if (selectedTotal == null) {
+                operatorAndIndexInspection.put(selectedKey, selected);
+            } else {
+                selectedTotal.addAll(selected);
+            }
+
+            operatorAndPartitionIndexInspected.put(node.getName(), operatorAndIndexInspection);
+        }
+        report.unindent();
+        return operatorAndPartitionIndexInspected;
+    }
+
     private String getSelectedDesc(IndexInfo indexInfo) {
         if (indexInfo == null) return "N/A";
         if (indexInfo instanceof UnionIndexInfo) {
@@ -203,6 +331,24 @@ public class ExplainPlanImpl implements ExplainPlan {
             return sb.toString();
         }
         return indexInfo.toString();
+    }
+
+
+    private List<String> getSelectedDescV2(IndexInfo indexInfo) {
+        final List<String> unitedIndexes = new ArrayList<>();
+        if (indexInfo == null) return Collections.singletonList("N/A");
+        if (indexInfo instanceof UnionIndexInfo) {
+            final List<IndexInfo> options = ((UnionIndexInfo) indexInfo).getOptions();
+            if (options.size() == 0)
+                return Collections.singletonList("Union []");
+
+            unitedIndexes.add("Selected Union: ");
+            for (IndexInfo option : options) {
+                unitedIndexes.add("[" + getOptionDesc(option) + "] " + option.toStringV2());
+            }
+            return unitedIndexes;
+        }
+        return Collections.singletonList("Selected: " + indexInfo.toStringV2());
     }
 
     protected void append(TextReportFormatter report, ScanningInfo scanningInfo) {

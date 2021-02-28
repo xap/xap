@@ -54,6 +54,11 @@ public class QueryJunctionNode implements QueryOperationNode{
     }
 
     @Override
+    public String toStringV2() {
+        return name + ": ";
+    }
+
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeObject(name);
         out.writeInt(subTrees.size());
