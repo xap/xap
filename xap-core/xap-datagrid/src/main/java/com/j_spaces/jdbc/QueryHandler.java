@@ -100,8 +100,7 @@ public class QueryHandler {
 
                     ( ( SelectQuery )query ).setExplainPlan( new ExplainPlanImpl( null ) );
                 }
-                response = query.executeOnSpace(space,
-                        session.getTransaction());
+                response = query.executeOnSpace(space, session.getTransaction());
                 if( query instanceof AbstractDMLQuery && ((AbstractDMLQuery)query ).getExplainPlan() != null ){
                     response = new ExplainPlanResponsePacket( response, ((AbstractDMLQuery)query ).getExplainPlan().toString() );
                 }

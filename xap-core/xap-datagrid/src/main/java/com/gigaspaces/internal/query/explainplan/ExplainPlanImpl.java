@@ -75,7 +75,7 @@ public class ExplainPlanImpl implements ExplainPlan {
     public String toString() {
         TextReportFormatter report = new TextReportFormatter();
         report.line(ExplainPlanUtil.REPORT_START);
-        final Map<String, Object> plan = CreateV2Plan(report);
+        final Map<String, Object> plan = createV2Plan(report);
 //        append(report);
         report.line(ExplainPlanUtil.REPORT_END);
         return report.toString();
@@ -84,7 +84,7 @@ public class ExplainPlanImpl implements ExplainPlan {
     public String toStringV2() {
         TextReportFormatter report = new TextReportFormatter();
         report.line(ExplainPlanUtil.REPORT_START);
-        final Map<String, Object> plan = CreateV2Plan(report);
+        final Map<String, Object> plan = createV2Plan(report);
         report.line(ExplainPlanUtil.REPORT_END);
 //        return PlanFormatter.format(plan);
         return report.toString();
@@ -100,7 +100,7 @@ public class ExplainPlanImpl implements ExplainPlan {
         }
     }
 
-    protected Map<String, Object> CreateV2Plan(TextReportFormatter report) {
+    protected Map<String, Object> createV2Plan(TextReportFormatter report) {
         String queryString;
         String filters = "";
         if (query == null) {
@@ -187,20 +187,13 @@ public class ExplainPlanImpl implements ExplainPlan {
     }
 
     protected void appendV2(TextReportFormatter report, QueryOperationNode node) {
-
         if (node instanceof QueryJunctionNode) {
             report.indent();
             report.newLine();
-            report.inline(node.toStringV2());
-        } else {
-            report.inline(node.toStringV2()+" ");
-        }
-        for (QueryOperationNode subNode : node.getChildren()) {
-            appendV2(report, subNode);
-        }
-
-        if (node instanceof QueryJunctionNode) {
+            report.inline(node.printTree());
             report.unindent();
+        } else {
+            report.line("Error: wrong instance");
         }
     }
 

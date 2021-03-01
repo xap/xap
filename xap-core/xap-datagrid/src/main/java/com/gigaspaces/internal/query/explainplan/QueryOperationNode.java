@@ -29,5 +29,5 @@ public interface QueryOperationNode extends Externalizable{
 
     List<QueryOperationNode> getChildren();
 
-    String toStringV2();
+    String printTree();
 }

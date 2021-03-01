@@ -70,6 +70,16 @@ public class BetweenRangeNode extends RangeNode{
                "])";
     }
 
+    @Override
+    public String printTree() {
+        return "(" + minValue + " " +
+                (includeMin ? QueryOperator.GE.getValueOnTheLeftOperator() : QueryOperator.GT.getValueOnTheLeftOperator()) +
+                " " + (getFunctionName() != null ? getFunctionName() : getFieldName()) + " " +
+                (includeMax ? QueryOperator.LE.getValueOnTheRightOperator() : QueryOperator.LT.getValueOnTheRightOperator()) +
+                " " + maxValue +
+                ")";
+    }
+
     public boolean isIncludeMin() {
         return includeMin;
     }
