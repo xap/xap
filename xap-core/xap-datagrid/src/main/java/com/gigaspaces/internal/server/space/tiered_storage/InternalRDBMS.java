@@ -12,7 +12,7 @@ import com.j_spaces.core.sadapter.SAException;
 
 public interface InternalRDBMS {
 
-    void initialize(SpaceTypeManager typeManager) throws SAException;
+    void initialize(String fullSpaceName, SpaceTypeManager typeManager) throws SAException;
 
     void createTable(ITypeDesc typeDesc) throws SAException;
 

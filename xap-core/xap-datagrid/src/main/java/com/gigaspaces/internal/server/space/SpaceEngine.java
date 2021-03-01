@@ -320,7 +320,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             final TypeDescFactory typeDescFactory = new TypeDescFactory(_directProxy);
             _typeManager = new SpaceTypeManager(typeDescFactory, _configReader, tieredStorageManager);
             if (isTieredStorage()) {
-                tieredStorageManager.getInternalStorage().initialize(_typeManager);
+                tieredStorageManager.getInternalStorage().initialize(_fullSpaceName, _typeManager);
             }
         } catch (SAException e) {
             throw new CreateException("Failed to initialize internal RDBMS", e);

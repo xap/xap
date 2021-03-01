@@ -13,10 +13,11 @@ import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.EntryAlreadyInSpaceException;
-import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 import net.jini.core.lease.Lease;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteException;
 
@@ -34,24 +35,27 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.gigaspaces.internal.server.space.tiered_storage.SqliteUtils.*;
 
 public class SqliteRDBMS implements InternalRDBMS {
+    private static Logger logger = LoggerFactory.getLogger(InternalRDBMS.class);
     private static final String JDBC_DRIVER = "org.sqlite.JDBC";
     private static final String USER = "gs";
     private static final String PASS = "gigaspaces";
-    private static final String DB_NAME = "sqlite_db";
     private static final String PATH = "/tmp";
-    private static final String DB_URL = "jdbc:sqlite:" + PATH +"/"+ DB_NAME;;
+    private String dbName;
     private Connection connection;
     private ReentrantSimpleLock modifierLock = new ReentrantSimpleLock();
     private AtomicInteger readCount = new AtomicInteger(0);
     private AtomicInteger writeCount = new AtomicInteger(0);
     private SpaceTypeManager typeManager;
-
     @Override
-    public void initialize(SpaceTypeManager typeManager) throws SAException {
+    public void initialize(String fullSpaceName, SpaceTypeManager typeManager) throws SAException {
         try {
-            org.sqlite.SQLiteConfig config = new org.sqlite.SQLiteConfig();
-            connection = connectToDB(JDBC_DRIVER, DB_URL, USER, PASS, config);
+            //TODO - tiered storage - validate not exist / clear db / initial load in v2
             this.typeManager = typeManager;
+            this.dbName = "sqlite_db"+"_"+fullSpaceName;
+            org.sqlite.SQLiteConfig config = new org.sqlite.SQLiteConfig();
+            String dbUrl = "jdbc:sqlite:" + PATH + "/" + dbName;
+            connection = connectToDB(JDBC_DRIVER, dbUrl, USER, PASS, config);
+            logger.info("Successfully created db {}",dbName);
         } catch (ClassNotFoundException | SQLException e) {
             throw new SAException("failed to initialize internal sqlite RDBMS", e);
         }
@@ -67,7 +71,7 @@ public class SqliteRDBMS implements InternalRDBMS {
         stringBuilder.append("PRIMARY KEY (").append(typeDesc.getIdPropertyName()).append(")");
         stringBuilder.append(");");
         String sqlQuery = stringBuilder.toString();
-        System.out.println("Query = " + sqlQuery);
+        logger.trace("Running create table query: {}",sqlQuery);
         try {
             executeUpdate(sqlQuery);
 
@@ -81,7 +85,7 @@ public class SqliteRDBMS implements InternalRDBMS {
                     stringBuilder.append("INDEX '").append(index.getName()).append("'");
                     stringBuilder.append(" ON '").append(typeName).append("' ('").append(index.getName()).append("');");
                     sqlQuery = stringBuilder.toString();
-                    System.out.println(sqlQuery);
+                    logger.trace("Running create index query: {}", sqlQuery);
                     executeUpdate(sqlQuery);
                 }
             }
@@ -112,11 +116,11 @@ public class SqliteRDBMS implements InternalRDBMS {
         }
         stringBuilder.append(");");
         String sqlQuery = stringBuilder.toString();
-        System.out.println(sqlQuery);
+        logger.trace("Running insert query: {}", sqlQuery);
         try {
             executeUpdate(sqlQuery);
         } catch (SQLException e) {
-            //TODO - check error code and throw EntryAllReadyInSpace when needed
+            //TODO - tiered storage - check error code and throw EntryAllReadyInSpace when needed
             if (e instanceof SQLiteException && ((SQLiteException) e).getResultCode().code == 1555) {
                 throw new EntryAlreadyInSpaceException(entryHolder.getUID(), typeName);
             }
@@ -148,7 +152,7 @@ public class SqliteRDBMS implements InternalRDBMS {
                 .append(getValueString(idProperty, updatedEntry.getEntryData().getFixedPropertyValue(idProperty.getOriginalIndex())));
         stringBuilder.append(";");
         String sqlQuery = stringBuilder.toString();
-        System.out.println(sqlQuery);
+        logger.trace("Running update query: {}", sqlQuery);
         try {
             executeUpdate(sqlQuery);
         } catch (SQLException e) {
@@ -162,7 +166,7 @@ public class SqliteRDBMS implements InternalRDBMS {
         String idPropertyName = typeDesc.getIdPropertyName();
         String sqlQuery = "DELETE FROM '" + typeDesc.getTypeName() + "' " +
                 "WHERE " + idPropertyName + " = " + getValueString(typeDesc.getFixedProperty(idPropertyName), entryHolder.getEntryId()) + ";";
-        System.out.println(sqlQuery);
+        logger.trace("Running delete query: {}", sqlQuery);
         try {
             int changedRows = executeUpdate(sqlQuery);
             return changedRows == 1;
@@ -177,7 +181,7 @@ public class SqliteRDBMS implements InternalRDBMS {
         String idPropertyName = typeDesc.getIdPropertyName();
         String sqlQuery = "SELECT * FROM '" + typeDesc.getTypeName() + "' " +
                 "WHERE " + idPropertyName + " = " + getValueString(typeDesc.getFixedProperty(idPropertyName), id) + ";";
-        System.out.println(sqlQuery);
+        logger.trace("Running select query: {}", sqlQuery);
         ResultSet resultSet = executeQuery(sqlQuery);
         try {
             if (resultSet.next()) {
@@ -204,7 +208,7 @@ public class SqliteRDBMS implements InternalRDBMS {
     public ISAdapterIterator<IEntryCacheInfo> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder, TieredState tieredState) throws SAException {
         if (templateHolder.getCustomQuery() != null) {
             ICustomQuery customQuery = templateHolder.getCustomQuery();
-            //TODO - convert customQuery to sql
+            //TODO - tiered storage - convert customQuery to sql
             return null;
         } else {
             ITypeDesc typeDesc = templateHolder.getServerTypeDesc().getTypeDesc();
@@ -226,7 +230,7 @@ public class SqliteRDBMS implements InternalRDBMS {
                 }
                 stringBuilder.append(";");
                 String sqlQuery = stringBuilder.toString();
-                System.out.println(sqlQuery);
+                logger.trace("Running select query: {}", sqlQuery);
                 ResultSet resultSet = executeQuery(sqlQuery);
                 return new RDBMSIterator(resultSet, typeDesc, typeManager);
             } else if (templateHolder.getExtendedMatchCodes() != null) {
@@ -247,7 +251,7 @@ public class SqliteRDBMS implements InternalRDBMS {
                 }
                 stringBuilder.append(";");
                 String sqlQuery = stringBuilder.toString();
-                System.out.println(sqlQuery);
+                logger.trace("Running select query: {}", sqlQuery);
                 ResultSet resultSet = executeQuery(sqlQuery);
                 return new RDBMSIterator(resultSet, typeDesc, typeManager);
             }
@@ -257,13 +261,15 @@ public class SqliteRDBMS implements InternalRDBMS {
 
     @Override
     public void shutDown() {
+        logger.info("Trying to delete db {}",dbName);
         File folder = new File(PATH);
-        final File[] files = folder.listFiles((dir, name) -> name.matches(DB_NAME+".*"));
+        final File[] files = folder.listFiles((dir, name) -> name.matches(dbName +".*"));
         for (final File file : Objects.requireNonNull(files)) {
             if (!file.delete()) {
-                System.err.println("Can't remove " + file.getAbsolutePath());
+                logger.error("Can't remove " + file.getAbsolutePath());
             }
         }
+        logger.info("Successfully deleted db {}",dbName);
     }
 
     @Override
@@ -279,14 +285,12 @@ public class SqliteRDBMS implements InternalRDBMS {
     private Connection connectToDB(String jdbcDriver, String dbUrl, String user, String password, SQLiteConfig config) throws ClassNotFoundException, SQLException {
         Connection conn = null;
         Class.forName(jdbcDriver);
-        System.out.println("Connecting to database...");
         config.setPragma(SQLiteConfig.Pragma.JOURNAL_MODE, "wal");
         config.setPragma(SQLiteConfig.Pragma.CACHE_SIZE, "5000");
         Properties properties = config.toProperties();
         properties.setProperty("user", user);
         properties.setProperty("password", password);
         conn = DriverManager.getConnection(dbUrl, properties);
-        System.out.println("Creating table in given database...");
         return conn;
     }
 
