@@ -3665,7 +3665,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         }
     }
 
-    private boolean isTieredStorage() {
+    public boolean isTieredStorage() {
         return tieredStorageManager != null;
     }
 
