@@ -47,9 +47,8 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     @Override
     public void visit(SubSelect subSelect) {
         QueryExecutor subQueryExecutor = new QueryExecutor(space);
-        subSelect.getSelectBody().accept(subQueryExecutor);
         try {
-            tables.add(new TempTableContainer(subQueryExecutor.execute(), subSelect.getAlias() == null ? null : subSelect.getAlias().getName()));
+            tables.add(new TempTableContainer(subQueryExecutor.execute(subSelect.getSelectBody()), subSelect.getAlias() == null ? null : subSelect.getAlias().getName()));
         } catch (SQLException e) {
             e.printStackTrace();
             throw new IllegalArgumentException("TODO");
@@ -82,7 +81,9 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
 
     }
 
-    public QueryResult execute() throws SQLException {
+    public QueryResult execute(SelectBody selectBody) throws SQLException {
+        selectBody.accept(this);
+
         if (tables.size() == 1) { //Simple Query
             return tables.get(0).getResult();
         }

@@ -17,11 +17,10 @@ public class Test {
         GigaSpace gigaSpace = new GigaSpaceConfigurer(new EmbeddedSpaceConfigurer("demo")).gigaSpace();
 
         gigaSpace.write(new MyPojo("yohana", 30));
-
         try (Connection connection = GConnection.getInstance(gigaSpace.getSpace())) {
 //            ResultSet res = connection.createStatement().executeQuery("select name, name as koko from com.gigaspaces.jdbc.MyPojo");
 //            DumpUtils.dump(res);
-            ResultSet res = connection.createStatement().executeQuery("select name, name as koko from (Select name, name as koko from com.gigaspaces.jdbc.MyPojo)");
+            ResultSet res = connection.createStatement().executeQuery("select name, name as name2 from com.gigaspaces.jdbc.MyPojo");
             DumpUtils.dump(res);
 
         }

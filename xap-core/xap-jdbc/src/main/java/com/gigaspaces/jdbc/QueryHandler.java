@@ -20,9 +20,8 @@ public class QueryHandler {
         try {
             Statement statement = CCJSqlParserUtil.parse(query);
             QueryExecutor qE = new QueryExecutor(space);
-            ((Select) statement).getSelectBody().accept(qE);
+            QueryResult res = qE.execute(((Select) statement).getSelectBody());
 
-            QueryResult res = qE.execute();
             ResponsePacket packet = new ResponsePacket();
             packet.setResultEntry(convertEntriesToResultArrays(res));
             return packet;
