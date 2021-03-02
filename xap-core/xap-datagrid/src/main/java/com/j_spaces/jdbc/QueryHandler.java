@@ -21,6 +21,7 @@ import com.gigaspaces.client.transaction.TransactionManagerProviderFactory;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.exceptions.BatchQueryException;
 import com.gigaspaces.internal.query.explainplan.ExplainPlanImpl;
+import com.gigaspaces.jdbc.request.RequestPacketV3;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.security.service.SecurityInterceptor;
 import com.j_spaces.core.IJSpace;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 
@@ -135,6 +137,34 @@ public class QueryHandler {
                 session.setUnderTransaction(request.getStatement());
                 commitForcedTransaction(dmlQuery, session);
                 break;
+            default:
+                throw new SQLException("Unknown execution type [" + request.getType() + "]", "GSP", -117);
+        }
+        return response;
+    }
+
+    private ResponsePacket handleRequest(RequestPacketV3 request, QuerySession session)
+            throws LeaseDeniedException, RemoteException, SQLException,
+            TransactionException {
+        ResponsePacket response;
+
+        //see RequestPacket documentation for types
+        ISpaceProxy space = getSpace(session.isUseRegularSpace());
+
+        switch (request.getType()) {
+            case STATEMENT:
+                try {
+                    Class<?> clazz = Class.forName("com.gigaspaces.jdbc.QueryHandler");
+                    Object newQueryHandler = clazz.newInstance();
+                    response = (ResponsePacket) clazz.getDeclaredMethod("handle", String.class, IJSpace.class).invoke(newQueryHandler, request.getStatement(), space);
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
+                    throw new SQLException("Unable to execute query", e.getCause());
+                }
+                break;
+            case PREPARED_WITH_VALUES:
+            case PREPARED_STATEMENT:
+            case PREPARED_VALUES_BATCH:
+                throw new UnsupportedOperationException("Unsupported");
             default:
                 throw new SQLException("Unknown execution type [" + request.getType() + "]", "GSP", -117);
         }
@@ -269,6 +299,21 @@ public class QueryHandler {
      * @return response packet
      */
     public ResponsePacket visit(RequestPacket request, QuerySession session)
+            throws LeaseDeniedException, RemoteException,
+            TransactionException, SQLException {
+        try {
+            return handleRequest(request, session);
+        } catch (BatchQueryException ex) {
+            SQLException sqlEx = new SQLException("Failed to execute SQL command.");
+            sqlEx.initCause(ex);
+            throw sqlEx;
+        }
+    }
+
+    /**
+     * @return response packet for V3
+     */
+    public ResponsePacket visit(RequestPacketV3 request, QuerySession session)
             throws LeaseDeniedException, RemoteException,
             TransactionException, SQLException {
         try {

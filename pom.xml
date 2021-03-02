@@ -67,6 +67,7 @@
         <module>xap-dist</module>
         <module>xap-extensions/xap-reporter</module>
         <module>xap-extensions/xap-kafka</module>
+        <module>xap-extensions/xap-jdbc</module>
     </modules>
 
     <dependencies>

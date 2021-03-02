@@ -19,6 +19,7 @@ package com.j_spaces.jdbc.driver;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.router.SpaceProxyRouter;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
+import com.gigaspaces.jdbc.request.RequestPacketV3;
 import com.gigaspaces.security.directory.DefaultCredentialsProvider;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.admin.IRemoteJSpaceAdmin;
@@ -52,6 +53,7 @@ import java.util.concurrent.Executor;
 public class GConnection implements Connection {
 
     public static final String READ_MODIFIERS = "readModifiers";
+    public static final String USE_NEW_DRIVER = "useNewDriver";
     public static final String JDBC_GIGASPACES = "jdbc:gigaspaces:";
     public static final String JDBC_GIGASPACES_URL = "jdbc:gigaspaces:url:";
     private static final long EXECUTE_RETRY_TIMEOUT = 60 * 1000l;
@@ -62,6 +64,7 @@ public class GConnection implements Connection {
     private ConnectionContext context;
     private Integer readModifiers;
     private Properties properties;
+    private Boolean useNewDriver = false;
 
     private GConnection(IJSpace space, Properties properties) throws SQLException {
         try {
@@ -101,6 +104,9 @@ public class GConnection implements Connection {
             // NOTE: we explicitly use get() instead of getProperty() since the value might not be a string...
             Object modifiersProp = properties.get(READ_MODIFIERS);
             readModifiers = modifiersProp == null ? null : Integer.valueOf(modifiersProp.toString());
+
+            Object useNewDriverProp = properties.get(USE_NEW_DRIVER);
+            useNewDriver = useNewDriverProp == null ? false : Boolean.valueOf(useNewDriverProp.toString());
 
             String username = properties.getProperty(ConnectionContext.USER);
             String password = properties.getProperty(ConnectionContext.PASSWORD);
@@ -620,7 +626,7 @@ public class GConnection implements Connection {
      * @return The ResponsePacket received from the QueryProcessor
      */
     public ResponsePacket sendStatement(String statement) throws SQLException {
-        RequestPacket packet = new RequestPacket();
+        RequestPacket packet = useNewDriver ? new RequestPacketV3() : new RequestPacket();
         packet.setModifiers(readModifiers);
         packet.setType(RequestPacket.Type.STATEMENT);
         packet.setStatement(statement);
@@ -742,5 +748,9 @@ public class GConnection implements Connection {
 
     public int getNetworkTimeout() throws SQLException {
         throw new UnsupportedOperationException();
+    }
+
+    public Boolean useNewDriver() {
+        return useNewDriver;
     }
 }

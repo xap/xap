@@ -398,10 +398,12 @@ public class GStatement implements Statement {
     public ResultSet executeQuery(String sql) throws SQLException {
         init();
 
-        if (!sql.trim().toUpperCase().startsWith("SELECT") &&
-                !sql.toUpperCase().startsWith("CALL"))
-            throw new SQLException("Cannot call anything but SELECT with executeQuery. Use executeUpdate instead",
-                    "GSP", -143);
+        if (!connection.useNewDriver()) {
+            if (!sql.trim().toUpperCase().startsWith("SELECT") &&
+                    !sql.toUpperCase().startsWith("CALL"))
+                throw new SQLException("Cannot call anything but SELECT with executeQuery. Use executeUpdate instead",
+                        "GSP", -143);
+        }
 
         ResponsePacket response = connection.sendStatement(sql);
         //query was sent and checked
