@@ -145,6 +145,9 @@ public class IndexInfo implements Externalizable {
                (isUsable() ? "" : ", UNUSABLE");
     }
 
+    /**
+     * @since GS-14433, 16.0
+     */
     public String toStringV2() {
         return getCriteriaDesc() +
                ", Size=" + getSizeDesc() +

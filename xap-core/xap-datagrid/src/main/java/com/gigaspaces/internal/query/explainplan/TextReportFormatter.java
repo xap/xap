@@ -52,13 +52,6 @@ public class TextReportFormatter {
         return this;
     }
 
-    public TextReportFormatter inline(List<String> list) {
-        for (String s : list) {
-            inline(s);
-        }
-        return this;
-    }
-
     public TextReportFormatter line(List<String> strings) {
         int i = 0;
         indent();
@@ -89,10 +82,4 @@ public class TextReportFormatter {
         return this;
     }
 
-    public TextReportFormatter newLine() {
-        sb.append(StringUtils.NEW_LINE);
-        for (int i=0 ; i < indents ; i++)
-            sb.append('\t');
-        return this;
-    }
 }
