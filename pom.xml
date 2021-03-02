@@ -42,6 +42,7 @@
         <module>xap-core/xap-trove</module>
         <module>xap-core/xap-datagrid</module>
         <module>xap-core/xap-openspaces</module>
+        <module>xap-core/xap-jdbc</module>
         <module>xap-examples/hello-world</module>
         <module>xap-examples/hola-mundo</module>
         <module>xap-extensions/xap-scala</module>

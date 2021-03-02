@@ -52,6 +52,7 @@ import java.util.concurrent.Executor;
 public class GConnection implements Connection {
 
     public static final String READ_MODIFIERS = "readModifiers";
+    public static final String USE_OLD_DRIVER = "oldDriver";
     public static final String JDBC_GIGASPACES = "jdbc:gigaspaces:";
     public static final String JDBC_GIGASPACES_URL = "jdbc:gigaspaces:url:";
     private static final long EXECUTE_RETRY_TIMEOUT = 60 * 1000l;
@@ -62,6 +63,7 @@ public class GConnection implements Connection {
     private ConnectionContext context;
     private Integer readModifiers;
     private Properties properties;
+    private Boolean useOldDriver = false;
 
     private GConnection(IJSpace space, Properties properties) throws SQLException {
         try {
@@ -101,6 +103,9 @@ public class GConnection implements Connection {
             // NOTE: we explicitly use get() instead of getProperty() since the value might not be a string...
             Object modifiersProp = properties.get(READ_MODIFIERS);
             readModifiers = modifiersProp == null ? null : Integer.valueOf(modifiersProp.toString());
+
+            Object useOldDriverProp = properties.get(USE_OLD_DRIVER);
+            useOldDriver = useOldDriverProp == null ? false : Boolean.valueOf(useOldDriverProp.toString());
 
             String username = properties.getProperty(ConnectionContext.USER);
             String password = properties.getProperty(ConnectionContext.PASSWORD);
@@ -622,7 +627,7 @@ public class GConnection implements Connection {
     public ResponsePacket sendStatement(String statement) throws SQLException {
         RequestPacket packet = new RequestPacket();
         packet.setModifiers(readModifiers);
-        packet.setType(RequestPacket.Type.STATEMENT);
+        packet.setType(useOldDriver ? RequestPacket.Type.STATEMENT : RequestPacket.Type.GS_STATEMENT);
         packet.setStatement(statement);
         return writeRequestPacket(packet);
     }

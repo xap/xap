@@ -48,7 +48,8 @@ public class RequestPacket implements Serializable {
 
 
     public static enum Type {
-        @Deprecated LOGIN, STATEMENT, PREPARED_STATEMENT, PREPARED_WITH_VALUES, PREPARED_VALUES_BATCH
+        @Deprecated LOGIN, STATEMENT, PREPARED_STATEMENT, PREPARED_WITH_VALUES, PREPARED_VALUES_BATCH,
+        GS_STATEMENT
     }
 
 

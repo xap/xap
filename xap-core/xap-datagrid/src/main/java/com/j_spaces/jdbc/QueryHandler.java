@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 
@@ -135,6 +136,15 @@ public class QueryHandler {
                 session.setUnderTransaction(request.getStatement());
                 commitForcedTransaction(dmlQuery, session);
                 break;
+            case GS_STATEMENT:
+                try {
+                    Class<?> clazz = Class.forName("com.gigaspaces.jdbc.QueryHandler");
+                    Object newQueryHandler = clazz.newInstance();
+                    return (ResponsePacket) clazz.getDeclaredMethod("handle", String.class, IJSpace.class).invoke(newQueryHandler, request.getStatement(), space);
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                    throw new SQLException("Unknown execution type [" + request.getType() + "]", "GSP", e);
+                }
             default:
                 throw new SQLException("Unknown execution type [" + request.getType() + "]", "GSP", -117);
         }
