@@ -89,6 +89,7 @@ import com.gigaspaces.internal.server.space.recovery.strategy.SpaceRecoverStrate
 import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
 import com.gigaspaces.internal.server.space.tiered_storage.CachePredicate;
 import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageManager;
+import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageUtils;
 import com.gigaspaces.internal.server.storage.EntryTieredMetaData;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
@@ -129,6 +130,7 @@ import com.j_spaces.core.Constants.LookupManager;
 import com.j_spaces.core.LeaseManager;
 import com.j_spaces.core.Constants.*;
 import com.j_spaces.core.admin.*;
+import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.*;
 import com.j_spaces.core.cluster.ClusterPolicy;
@@ -2439,54 +2441,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     }
 
     public Map<Object, EntryTieredMetaData> getEntriesTieredMetaDataByIds(String typeName, Object[] ids) throws Exception {
-        Map<Object, EntryTieredMetaData> entryTieredMetaDataMap =  new HashMap<>();
-        if (!getEngine().isTieredStorage()) {
-            throw new Exception("Tiered storage undefined");
-        }
-        for (Object id : ids) {
-            entryTieredMetaDataMap.put(id, getEntryTieredMetaDataById(typeName, id));
-        }
-        return entryTieredMetaDataMap;
-    }
-
-    private EntryTieredMetaData getEntryTieredMetaDataById(String typeName, Object id) {
-        EntryTieredMetaData entryTieredMetaData = new EntryTieredMetaData();
-        IServerTypeDesc typeDesc = getEngine().getTypeManager().getServerTypeDesc(typeName);
-        IEntryHolder hotEntryHolder = getEngine().getCacheManager().getEntryByIdFromPureCache(id, typeDesc);
-        IEntryHolder coldEntryHolder = null;
-        if (getEngine().isTieredStorage()) {
-            try {
-                coldEntryHolder = getEngine().getTieredStorageManager().getInternalStorage().getEntry(getEngine().getCacheManager().getCacheContext(), typeDesc.getTypeName(), id);
-            } catch (SAException e) { //entry doesn't exist in cold tier
-                _logger.info(e.getMessage(), e);
-            }
-        }
-
-        if (hotEntryHolder != null){
-            if (coldEntryHolder == null){
-                entryTieredMetaData.setTieredState(TieredState.TIERED_HOT);
-            } else {
-                entryTieredMetaData.setTieredState(TieredState.TIERED_HOT_AND_COLD);
-                entryTieredMetaData.setIdenticalToCache(isIdenticalToCache(hotEntryHolder.getEntryData(),(coldEntryHolder.getEntryData())));
-            }
-        } else {
-            if (coldEntryHolder != null) {
-                entryTieredMetaData.setTieredState(TieredState.TIERED_COLD);
-            } //else- entry doesn't exist
-        }
-        return entryTieredMetaData;
-    }
-
-    private boolean isIdenticalToCache(IEntryData hotEntry, IEntryData coldEntry){
-        if(hotEntry.getNumOfFixedProperties() != coldEntry.getNumOfFixedProperties()){
-            return false;
-        }
-        for(int i = 0; i < hotEntry.getNumOfFixedProperties(); ++i){
-            if(!hotEntry.getFixedPropertiesValues()[i].equals(coldEntry.getFixedPropertiesValues()[i])){
-                return false;
-            }
-        }
-        return true;
+        return TieredStorageUtils.getEntriesTieredMetaDataByIds(getEngine(), typeName, ids);
     }
 
     public GSEventRegistration notify(ITemplatePacket template, Transaction txn, long lease, SpaceContext sc,
