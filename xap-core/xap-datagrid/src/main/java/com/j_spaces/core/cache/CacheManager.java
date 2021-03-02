@@ -4564,7 +4564,9 @@ public class CacheManager extends AbstractCacheManager
             singleExplainPlan.setPartitionId(Integer.toString(getEngine().getPartitionIdOneBased()));
             ExplainPlanContext explainPlanContext = new ExplainPlanContext();
             explainPlanContext.setSingleExplainPlan(singleExplainPlan);
-            context.setDryRun(true);
+            if (Modifiers.contains(template.getOperationModifiers(), Modifiers.DRY_RUN)) {
+                context.setDryRun(true);
+            }
             context.setExplainPlanContext(explainPlanContext);
         }
 

@@ -135,4 +135,8 @@ public class ValidationUtils {
 
         return strBuffer.toString();
     }
+
+    public static boolean isOldExplainPlan() {
+        return Boolean.parseBoolean(System.getProperty(Constants.USE_OLD_EXPLAIN_PLAN_PROPERTY));
+    }
 }

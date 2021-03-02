@@ -20,6 +20,7 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
 import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.gigaspaces.internal.transport.ITemplatePacket;
+import com.gigaspaces.internal.utils.ValidationUtils;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.client.ClientUIDHandler;
 import com.j_spaces.core.client.Modifiers;
@@ -64,6 +65,9 @@ public abstract class QueryProxyActionInfo extends CommonProxyActionInfo {
         this._query = query;
         if (query instanceof SQLQuery && ((SQLQuery)query).getExplainPlan() != null) {
             super.modifiers = Modifiers.add(super.modifiers, Modifiers.EXPLAIN_PLAN);
+            if (!ValidationUtils.isOldExplainPlan()) {
+                super.modifiers = Modifiers.add(super.modifiers, Modifiers.DRY_RUN);
+            }
         }
 
         this.isSqlQuery = preProcessQuery();

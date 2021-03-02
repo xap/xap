@@ -96,7 +96,7 @@ public class QueryHandler {
                 if( query instanceof SelectQuery &&
                     request.getModifiers() != null &&
                     Modifiers.contains( request.getModifiers(), Modifiers.EXPLAIN_PLAN ) &&
-                    ( ( SelectQuery )query ).getExplainPlan() == null ){
+                    ( ( SelectQuery )query ).getExplainPlan() == null ) {
 
                     ( ( SelectQuery )query ).setExplainPlan( new ExplainPlanImpl( null ) );
                 }

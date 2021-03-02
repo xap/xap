@@ -19,11 +19,13 @@ package com.j_spaces.jdbc.driver;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.router.SpaceProxyRouter;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
+import com.gigaspaces.internal.utils.ValidationUtils;
 import com.gigaspaces.jdbc.request.RequestPacketV3;
 import com.gigaspaces.security.directory.DefaultCredentialsProvider;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.admin.IRemoteJSpaceAdmin;
 import com.j_spaces.core.client.BasicTypeInfo;
+import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.SpaceFinder;
 import com.j_spaces.jdbc.*;
 import com.j_spaces.jdbc.batching.BatchResponsePacket;
@@ -103,7 +105,14 @@ public class GConnection implements Connection {
         if (properties != null) {
             // NOTE: we explicitly use get() instead of getProperty() since the value might not be a string...
             Object modifiersProp = properties.get(READ_MODIFIERS);
-            readModifiers = modifiersProp == null ? null : Integer.valueOf(modifiersProp.toString());
+            if (modifiersProp == null) {
+                readModifiers = null;
+            } else {
+                readModifiers = Integer.valueOf(modifiersProp.toString());
+                if (!ValidationUtils.isOldExplainPlan()) {
+                    readModifiers = Modifiers.add(readModifiers, Modifiers.DRY_RUN);
+                }
+            }
 
             Object useNewDriverProp = properties.get(USE_NEW_DRIVER);
             useNewDriver = useNewDriverProp == null ? false : Boolean.valueOf(useNewDriverProp.toString());

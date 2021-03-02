@@ -19,6 +19,7 @@ import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.IntegerObjectMap;
 import com.gigaspaces.internal.utils.Constants;
+import com.gigaspaces.internal.utils.ValidationUtils;
 import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
@@ -33,7 +34,7 @@ import java.util.*;
 public class ExplainPlanImpl implements ExplainPlan {
 
     private final SQLQuery<?> query;
-    private final Map<String,SingleExplainPlan> plans = new HashMap<String, SingleExplainPlan>();
+    private final Map<String, SingleExplainPlan> plans = new HashMap<>();
     private final IntegerObjectMap<String> indexInfoDescCache = CollectionsFactory.getInstance().createIntegerObjectMap();
 
     /**
@@ -46,7 +47,7 @@ public class ExplainPlanImpl implements ExplainPlan {
     public static ExplainPlanImpl fromQueryPacket(Object query) {
         ExplainPlanImpl result = null;
         if (query instanceof QueryTemplatePacket) {
-            result = (ExplainPlanImpl) ((QueryTemplatePacket)query).getExplainPlan();
+            result = (ExplainPlanImpl) ((QueryTemplatePacket) query).getExplainPlan();
         }
         if (result != null) {
             result.reset();
@@ -77,7 +78,7 @@ public class ExplainPlanImpl implements ExplainPlan {
         Map<String, Object> plan = Collections.emptyMap();
         TextReportFormatter report = new TextReportFormatter();
         report.line(ExplainPlanUtil.REPORT_START);
-        if (Boolean.parseBoolean(System.getProperty(Constants.USE_OLD_EXPLAIN_PLAN_PROPERTY))) {
+        if (ValidationUtils.isOldExplainPlan()) {
             append(report);
         } else {
             plan = createPlan(report);
@@ -88,7 +89,7 @@ public class ExplainPlanImpl implements ExplainPlan {
     }
 
     protected void append(TextReportFormatter report) {
-        report.line("Query: " + query );
+        report.line("Query: " + query);
         if (plans.isEmpty()) {
             report.line("Not executed yet");
         } else {
@@ -99,8 +100,9 @@ public class ExplainPlanImpl implements ExplainPlan {
 
     /**
      * Creates the new explain plan in case GS_OLD_EXPLAIN_PLAN wasn't set to true
+     *
      * @return JSON structured plan
-     * @since GS-14433, 16.0
+     * @since 16.0, GS-14433
      */
     protected Map<String, Object> createPlan(TextReportFormatter report) {
         String queryString;
@@ -160,7 +162,7 @@ public class ExplainPlanImpl implements ExplainPlan {
     }
 
     /**
-     * @since GS-14433, 16.0
+     * @since 16.0, GS-14433
      */
     protected List<Map> appendScanDetails(TextReportFormatter report) {
         indexInfoDescCache.clear();
@@ -187,7 +189,7 @@ public class ExplainPlanImpl implements ExplainPlan {
     }
 
     /**
-     * @since GS-14433, 16.0
+     * @since 16.0, GS-14433
      */
     protected String appendQueryFilterTree(TextReportFormatter report, QueryOperationNode node) {
         final String nodeTreeOutput = node.printTree();
@@ -228,12 +230,12 @@ public class ExplainPlanImpl implements ExplainPlan {
     }
 
     /**
-     * @since GS-14433, 16.0
+     * @since 16.0, GS-14433
      */
     protected Map<String, Object> appendPartitionPlan(TextReportFormatter report, String partitionId, SingleExplainPlan singleExplainPlan) {
         final String partitionIdString = "Partition Id: " + partitionId;
         report.line(partitionIdString);
-        
+
         final Map<String, List<IndexChoiceNode>> indexesInfo = singleExplainPlan.getIndexesInfo();
         final Map<String, Object> partitionPlan = new HashMap<>();
         final Map<String, Object> tablePlan = new HashMap<>();
@@ -264,7 +266,7 @@ public class ExplainPlanImpl implements ExplainPlan {
         append(report, scanningInfo);
         report.line("Index scan report:");
         report.indent();
-        for (int i = list.size()-1 ; i >= 0 ; i--) {
+        for (int i = list.size() - 1; i >= 0; i--) {
             IndexChoiceNode node = list.get(i);
             report.line(node.getName());
             report.indent();
@@ -283,17 +285,17 @@ public class ExplainPlanImpl implements ExplainPlan {
     }
 
     /**
-     * @since GS-14433, 16.0
+     * @since 16.0, GS-14433
      */
     protected List<Map> appendIndexInspectionPerTable(TextReportFormatter report, List<IndexChoiceNode> indexChoices) {
         List<Map> operatorsInspectionList = new ArrayList<>();
 
-        int i = indexChoices.size()-1;
+        int i = indexChoices.size() - 1;
         if (indexChoices.get(0).getChosen() instanceof UnionIndexInfo) {
             i = 0;
         }
 
-        for (; i >= 0 ; i--) {
+        for (; i >= 0; i--) {
             IndexChoiceNode node = indexChoices.get(i);
             final List<String> selected = getSelectedIndexesDescription(node.getChosen());
             report.line(selected);
@@ -321,7 +323,7 @@ public class ExplainPlanImpl implements ExplainPlan {
     }
 
     /**
-     * @since GS-14433, 16.0
+     * @since 16.0, GS-14433
      */
     private List<String> getSelectedIndexesDescription(IndexInfo indexInfo) {
         final List<String> unitedIndexes = new ArrayList<>();

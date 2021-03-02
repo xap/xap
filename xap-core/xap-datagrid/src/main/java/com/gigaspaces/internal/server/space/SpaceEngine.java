@@ -4219,7 +4219,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             }
         }
 
-        else // TODO MISHEL Here we iterate over the entries
+        else
             getMatchedEntriesAndOperateSA_Scan(context,
                     template,
                     toScan,
