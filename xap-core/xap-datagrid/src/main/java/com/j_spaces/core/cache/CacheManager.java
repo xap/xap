@@ -4559,11 +4559,10 @@ public class CacheManager extends AbstractCacheManager
      * are no matches.
      */
     public Object getEntriesMinIndexExtended(Context context, TypeData entryType, int numOfFields, ITemplateHolder template) {
-        if (template instanceof TemplateHolder && (((TemplateHolder) template).getExplainPlan() != null)) {
-            SingleExplainPlan singleExplainPlan = ((TemplateHolder) template).getExplainPlan();
-            singleExplainPlan.setPartitionId(Integer.toString(getEngine().getPartitionIdOneBased()));
+        if (template.getExplainPlan() != null) {
+            template.getExplainPlan().setPartitionId(Integer.toString(getEngine().getPartitionIdOneBased()));
             ExplainPlanContext explainPlanContext = new ExplainPlanContext();
-            explainPlanContext.setSingleExplainPlan(singleExplainPlan);
+            explainPlanContext.setSingleExplainPlan(template.getExplainPlan());
             if (Modifiers.contains(template.getOperationModifiers(), Modifiers.DRY_RUN)) {
                 context.setDryRun(true);
             }

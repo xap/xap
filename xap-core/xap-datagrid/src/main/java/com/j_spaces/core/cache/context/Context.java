@@ -490,6 +490,7 @@ public class Context {
         _backupOnly=false;
         viewEntryData = null;
         _fromClustered = false;
+        dryRun = false;
         entryTieredState = null;
         templateTieredState = null;
         suppliedEntryIdForColdTier = null;

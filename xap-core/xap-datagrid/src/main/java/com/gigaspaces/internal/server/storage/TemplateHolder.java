@@ -1219,6 +1219,7 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
 
     }
 
+    @Override
     public SingleExplainPlan getExplainPlan() {
         return _singleExplainPlan;
     }
