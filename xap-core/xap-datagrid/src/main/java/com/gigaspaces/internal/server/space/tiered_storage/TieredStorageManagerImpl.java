@@ -1,28 +1,44 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
+import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.j_spaces.core.Constants;
 import com.j_spaces.core.cache.context.TieredState;
+import com.j_spaces.core.client.SQLQuery;
+import com.j_spaces.core.client.sql.ReadQueryParser;
+import com.j_spaces.jdbc.AbstractDMLQuery;
+import com.j_spaces.jdbc.builder.QueryTemplatePacket;
+import com.j_spaces.jdbc.builder.range.Range;
 
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class TieredStorageManagerImpl implements TieredStorageManager {
-    private Map<String, TimePredicate> retentionRules;
-    private Map<String, CachePredicate> hotCacheRules;
+    private IDirectSpaceProxy spaceProxy;
+    private TieredStorageConfig storageConfig;
+    private Map<String, TimePredicate> retentionRules = new HashMap<>();
+    private Map<String, CachePredicate> hotCacheRules = new HashMap<>();
+
     private InternalRDBMS internalDiskStorage;
 
     public TieredStorageManagerImpl() {
 
     }
 
-    public TieredStorageManagerImpl(Map<String, TimePredicate> retentionRules, Map<String, CachePredicate> hotCacheRules, InternalRDBMS internalDiskStorage) {
-        this.retentionRules = retentionRules;
-        this.hotCacheRules = hotCacheRules;
+    public TieredStorageManagerImpl(TieredStorageConfig storageConfig, InternalRDBMS internalDiskStorage, IDirectSpaceProxy proxy) {
         this.internalDiskStorage = internalDiskStorage;
+        this.storageConfig = storageConfig;
+        this.spaceProxy = proxy;
     }
 
     @Override
     public CachePredicate getCacheRule(String typeName) {
+        if(hotCacheRules.get(typeName) == null && storageConfig.getTables().get(typeName) != null){
+            initCacheRule(storageConfig.getTables().get(typeName), spaceProxy);
+        }
         return hotCacheRules.get(typeName);
     }
 
@@ -91,6 +107,52 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
             }
         }
     }
+
+
+    private void initCacheRule(TieredStorageTableConfig tableConfig, IDirectSpaceProxy proxy) {
+        //TODO - validate transient has null criteria && period
+        if(tableConfig.getTimeColumn() != null ){
+            if(tableConfig.getPeriod() != null){
+                hotCacheRules.put(tableConfig.getName(), new TimePredicate(tableConfig.getName(),tableConfig.getTimeColumn(), tableConfig.getPeriod(), tableConfig.isTransient()));
+            }
+
+            if(tableConfig.getRetention() != null){
+                retentionRules.put(tableConfig.getName(), new TimePredicate(tableConfig.getName(),tableConfig.getTimeColumn(), tableConfig.getRetention(), tableConfig.isTransient()));
+            }
+        }
+
+        if(tableConfig.getCriteria() != null) {
+            if(tableConfig.getCriteria().equalsIgnoreCase(AllPredicate.ALL_KEY_WORD)){
+                hotCacheRules.put(tableConfig.getName(), new AllPredicate(tableConfig.isTransient()));
+            }else {
+                ReadQueryParser parser = new ReadQueryParser();
+                AbstractDMLQuery sqlQuery = null;
+                try {
+                    sqlQuery = parser.parseSqlQuery(new SQLQuery(tableConfig.getName(), tableConfig.getCriteria()), proxy);
+                } catch (SQLException e) {
+                    throw new RuntimeException("failed to parse criteria cache rule '"+tableConfig.getCriteria()+"'", e);
+                }
+                QueryTemplatePacket template = sqlQuery.getExpTree().getTemplate();
+                HashMap<String, Range> ranges = template.getRanges();
+                if (ranges.size() > 1) {
+                    throw new IllegalArgumentException("currently only single range is supported");
+                }
+                Iterator<String> iterator = ranges.keySet().iterator();
+                if (iterator.hasNext()) {
+                    Range range = ranges.get(iterator.next());
+                    hotCacheRules.put(template.getTypeName(), new CriteriaRangePredicate(template.getTypeName(), range, tableConfig.isTransient()));
+                }
+
+            }
+        }
+
+        if(tableConfig.isTransient()){
+            hotCacheRules.put(tableConfig.getName(), Constants.TieredStorage.TRANSIENT_ALL_CACHE_PREDICATE);
+        }
+    }
+
+
+
 
 
 }

@@ -161,13 +161,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.Xid;
 import java.rmi.RemoteException;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.Engine.*;
+import static com.j_spaces.core.Constants.TieredStorage.*;
 
 @com.gigaspaces.api.InternalApi
 public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedListener {
@@ -323,7 +323,9 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 tieredStorageManager.getInternalStorage().initialize(_fullSpaceName, _typeManager);
             }
         } catch (SAException e) {
-            throw new CreateException("Failed to initialize internal RDBMS", e);
+            throw new CreateException("Failed to initialize InternalRDBMS", e);
+        } catch (IllegalAccessException | InstantiationException | ClassNotFoundException e) {
+            throw new CreateException("Failed to instantiate InternalRDBMS class");
         }
 
         _partitionId = _clusterInfo.getPartitionOfMember(_fullSpaceName);
@@ -386,59 +388,13 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     }
 
 
-    public void initTieredStorageManager(SpaceImpl space) throws RemoteException, SAException {
+    private void initTieredStorageManager(SpaceImpl space) throws RemoteException, IllegalAccessException, InstantiationException, ClassNotFoundException {
         Object tieredStorage = this._clusterInfo.getCustomComponent("TieredStorage");
         if(tieredStorage != null ){
-            TieredStorageConfig storage = (TieredStorageConfig) tieredStorage;
-            HashMap<String, TimePredicate> retentionRules = new HashMap<>();
-            HashMap<String, CachePredicate> cacheRules = new HashMap<>();
-            for (Map.Entry<String, TieredStorageTableConfig> entry : storage.getTables().entrySet()) {
-                try {
-                    IDirectSpaceProxy directProxy = space.getSpaceProxy().getDirectProxy();
-                    TieredStorageTableConfig tableConfig = entry.getValue();
-                    //TODO - validate transient has null criteria && period
-                    if(tableConfig.getTimeColumn() != null ){
-                        if(tableConfig.getPeriod() != null){
-                            cacheRules.put(tableConfig.getName(), new TimePredicate(tableConfig.getName(),tableConfig.getTimeColumn(), tableConfig.getPeriod(), tableConfig.isTransient()));
-                        }
-
-                        if(tableConfig.getRetention() != null){
-                            retentionRules.put(tableConfig.getName(), new TimePredicate(tableConfig.getName(),tableConfig.getTimeColumn(), tableConfig.getRetention(), tableConfig.isTransient()));
-                        }
-                    }
-
-                    if(tableConfig.getCriteria() != null) {
-                        if(tableConfig.getCriteria().equalsIgnoreCase(AllPredicate.ALL_KEY_WORD)){
-                            cacheRules.put(tableConfig.getName(), new AllPredicate(tableConfig.isTransient()));
-                        }else {
-                            ReadQueryParser parser = new ReadQueryParser();
-                            AbstractDMLQuery sqlQuery = parser.parseSqlQuery(new SQLQuery(tableConfig.getName(), tableConfig.getCriteria()), directProxy);
-                            QueryTemplatePacket template = sqlQuery.getExpTree().getTemplate();
-                            HashMap<String, Range> ranges = template.getRanges();
-                            if (ranges.size() > 1) {
-                                throw new IllegalArgumentException("currently only single range is supported");
-                            }
-                            Iterator<String> iterator = ranges.keySet().iterator();
-                            if (iterator.hasNext()) {
-                                Range range = ranges.get(iterator.next());
-                                cacheRules.put(template.getTypeName(), new CriteriaRangePredicate(template.getTypeName(), range, tableConfig.isTransient()));
-                            }
-                        }
-                    }
-
-                    if(tableConfig.isTransient()){
-                        cacheRules.put(tableConfig.getName(), Constants.TieredStorage.TRANSIENT_ALL_CACHE_PREDICATE);
-                    }
-
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-
-//            InternalRDBMS rdbms = new MockRDBMS();
-            InternalRDBMS rdbms = new SqliteRDBMS();
-
-            this.tieredStorageManager = new TieredStorageManagerImpl(retentionRules, cacheRules, rdbms);
+            TieredStorageConfig storageConfig = (TieredStorageConfig) tieredStorage;
+            String className = System.getProperty(TIERED_STORAGE_INTERNAL_RDBMS_CLASS_PROP, TIERED_STORAGE_INTERNAL_RDBMS_CLASS_DEFAULT);
+            InternalRDBMS rdbms = ClassLoaderHelper.newInstance(className);
+            this.tieredStorageManager = new TieredStorageManagerImpl(storageConfig, rdbms, space.getSpaceProxy().getDirectProxy());
         }
     }
 

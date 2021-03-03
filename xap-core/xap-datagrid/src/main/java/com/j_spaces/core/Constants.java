@@ -950,8 +950,10 @@ public interface Constants {
     }
 
     public interface TieredStorage {
-        String CACHE_MANAGER_TIERED_STORAGE_LOCKS_SIZE_PROP = "engine.TieredStorageLocksSize";
+        String CACHE_MANAGER_TIERED_STORAGE_LOCKS_SIZE_PROP = "engine.TieredStorage.LocksSize";
         String CACHE_MANAGER_TIERED_STORAGE_LOCKS_SIZE_DEFAULT = "10000";
+        String TIERED_STORAGE_INTERNAL_RDBMS_CLASS_PROP = "engine.TieredStorage.RDBMSClass";
+        String TIERED_STORAGE_INTERNAL_RDBMS_CLASS_DEFAULT = "com.gigaspaces.internal.server.space.tiered_storage.SqliteRDBMS";
         CachePredicate TRANSIENT_ALL_CACHE_PREDICATE = new AllPredicate(true);
     }
 
