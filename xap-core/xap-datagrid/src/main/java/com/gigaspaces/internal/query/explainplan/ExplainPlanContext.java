@@ -33,6 +33,13 @@ public class ExplainPlanContext implements Externalizable{
     private IndexChoiceNode fatherNode;
     private IndexChoiceNode match;
 
+    /**
+     * Doesn't continue to the phase of processing the entries
+     * used in cases of explain plan when we want to enter the space
+     * to gather information regarding the execution, i.e. inspected and chosen indexes and their size
+     */
+    private boolean dryRun;
+
     public ExplainPlanContext() {
     }
 
@@ -58,6 +65,14 @@ public class ExplainPlanContext implements Externalizable{
 
     public void setMatch(IndexChoiceNode match) {
         this.match = match;
+    }
+
+    public void setDryRun(boolean dryRun) {
+        this.dryRun = dryRun;
+    }
+
+    public boolean isDryRun() {
+        return dryRun;
     }
 
     @Override

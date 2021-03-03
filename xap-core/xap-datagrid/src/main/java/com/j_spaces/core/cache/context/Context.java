@@ -1224,14 +1224,6 @@ public class Context {
         }//if (!skipAnswerTable)
     }
 
-    public void setDryRun(boolean dryRun) {
-        this.dryRun = dryRun;
-    }
-
-    public boolean isDryRun() {
-        return dryRun;
-    }
-
     private void copyFieldsArray(IEntryPacket entryPacket) {
         if (entryPacket.isHybrid()) {
             ((HybridEntryPacket) entryPacket).getPropertiesHolder().copyFieldsArray();

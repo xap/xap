@@ -1964,7 +1964,7 @@ public class CacheManager extends AbstractCacheManager
         else
             result = typeData == null ? null : getScannableEntriesMinIndexExtended(context, typeData, numOfFields, template);
 
-        if (context.isDryRun()) {
+        if (context.getExplainPlanContext().isDryRun()) {
             return null;
         }
 
@@ -4564,7 +4564,8 @@ public class CacheManager extends AbstractCacheManager
             ExplainPlanContext explainPlanContext = new ExplainPlanContext();
             explainPlanContext.setSingleExplainPlan(template.getExplainPlan());
             if (Modifiers.contains(template.getOperationModifiers(), Modifiers.DRY_RUN)) {
-                context.setDryRun(true);
+                explainPlanContext.setDryRun(true);
+//                TODO MISHEL: show Yael the addition of getEP to ITemplateHolder
             }
             context.setExplainPlanContext(explainPlanContext);
         }
