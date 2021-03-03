@@ -16,7 +16,7 @@ import java.util.Map;
 public class TieredStorageUtils {
     public static Map<Object, EntryTieredMetaData> getEntriesTieredMetaDataByIds(SpaceEngine space, String typeName, Object[] ids) throws Exception {
         Map<Object, EntryTieredMetaData> entryTieredMetaDataMap =  new HashMap<>();
-        if (space.isTieredStorage()) {
+        if (!space.isTieredStorage()) {
             throw new Exception("Tiered storage undefined");
         }
         Context context = null;
