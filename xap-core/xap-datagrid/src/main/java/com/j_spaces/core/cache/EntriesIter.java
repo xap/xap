@@ -29,6 +29,7 @@ import com.j_spaces.core.XtnEntry;
 import com.j_spaces.core.XtnStatus;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.blobStore.IBlobStoreRefCacheInfo;
+import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.IStoredList;
@@ -86,7 +87,34 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
         super(context, cacheManager);
 
         _templateServerTypeDesc = serverTypeDesc;
-        _memoryOnly = template.isMemoryOnlySearch() || memoryOnly;
+        _doneWithCache = false;  // start with cache, proceed with SA
+
+        if(_cacheManager.isTieredStorage()){
+            if(context.getTemplateTieredState() == null){
+                context.setTemplateTieredState(_cacheManager.getEngine().getTieredStorageManager().guessTemplateTier(template));
+            }
+
+            if(context.getTemplateTieredState() == TieredState.TIERED_HOT || memoryOnly || template.isMemoryOnlySearch()){
+                _memoryOnly = true;
+            } else {
+                _memoryOnly = false;
+                if(context.getTemplateTieredState() == TieredState.TIERED_COLD){
+                    _doneWithCache = true;
+                }
+
+
+                if(context.getTemplateTieredState() == TieredState.TIERED_HOT_AND_COLD){
+                    _entriesReturned = new HashSet<>();
+                }
+
+            }
+
+            _notRefreshCache = true;
+
+        } else {
+            _memoryOnly = template.isMemoryOnlySearch() || memoryOnly;
+        }
+
         _transientOnly = transientOnly;
         _templateHolder = template;
         _SCNFilter = SCNFilter;
@@ -168,7 +196,6 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
         }//if (m_TemplateHolder.m_FifoTemplate
         //FIFO-------------------------------------------=
 
-        _doneWithCache = false;  // start with cache, proceed with SA
         if (_cacheManager.isEvictableCachePolicy() && !_cacheManager.isMemorySpace())
             _entriesReturned = new HashSet<String>();
 
@@ -180,6 +207,10 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
             // random start
             if (!_templateHolder.isFifoTemplate())
                 _actualClass = getMathRandom(size);
+        }
+
+        if(_cacheManager.isTieredStorage() && _doneWithCache){
+            _saIter = _cacheManager.getEngine().getTieredStorageManager().getInternalStorage().makeEntriesIter(_context, _types[0].getTypeName(), _templateHolder);
         }
 
     }
@@ -214,6 +245,12 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
                     _saIter = _cacheManager.getStorageAdapter().makeEntriesIter(_templateHolder,
                             _SCNFilter, _leaseFilter, _types);
                 }
+
+                if(_cacheManager.isTieredStorage() && _context.getTemplateTieredState() != TieredState.TIERED_HOT && _saIter == null){
+                    //TODO - tiered storage - handle multiple types
+                    _saIter = _cacheManager.getEngine().getTieredStorageManager().getInternalStorage().makeEntriesIter(_context, _types[0].getTypeName(), _templateHolder);
+                }
+
                 return saIterNext();
             }
 
@@ -526,7 +563,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
             if (entryHolder == null)
                 return null;
 
-            if (_entriesReturned.contains(entryHolder.getUID()))
+            if (_entriesReturned != null && _entriesReturned.contains(entryHolder.getUID()))
                 continue;
 
             //Verify that entry read

@@ -4062,6 +4062,11 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             return;
         }
 
+        if(isTieredStorage()){
+            if(context.getTemplateTieredState() == null){
+                context.setTemplateTieredState(getTieredStorageManager().guessTemplateTier(template));
+            }
+        }
 
         // get template BFS class names list from Type Table (if template is null, use BFS of java.lang.Object).
         final IServerTypeDesc serverTypeDesc = _typeManager.getServerTypeDesc(template.getClassName());
@@ -4069,7 +4074,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         long leaseFilter = SystemTime.timeMillis();
 
-        if (getCacheManager().isEvictableCachePolicy() && !_cacheManager.isMemorySpace()) {
+        //TODO - tiered storage - impl for hot and cold
+        if ((getCacheManager().isEvictableCachePolicy() && !_cacheManager.isMemorySpace()) || (isTieredStorage() && context.getTemplateTieredState() != TieredState.TIERED_HOT)) {
             IScanListIterator<IEntryCacheInfo> toScan =
                     _cacheManager.makeScanableEntriesIter(context, template, serverTypeDesc,
                             0 /*scnFilter*/, leaseFilter /*leaseFilter*/,

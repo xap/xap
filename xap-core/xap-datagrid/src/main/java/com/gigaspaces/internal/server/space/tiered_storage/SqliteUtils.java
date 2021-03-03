@@ -79,7 +79,9 @@ public class SqliteUtils {
     }
 
     public static String getValueString(SpacePropertyDescriptor property, Object propertyValue) {
-        if (property.getType().equals(String.class)) {
+        if(propertyValue == null){
+            return "Null";
+        } else if (property.getType().equals(String.class)) {
             return "\"" + propertyValue + "\"";
         } else {
             return propertyValue.toString();

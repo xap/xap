@@ -72,7 +72,7 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     }
 
     @Override
-    public TieredState guessTemplateTier(ITemplateHolder templateHolder) {
+    public TieredState guessTemplateTier(ITemplateHolder templateHolder) { // TODO - tiered storage - return TemplateMatchTier, hot and cold
         String typeName = templateHolder.getServerTypeDesc().getTypeName();
         CachePredicate cacheRule = getCacheRule(typeName);
         if (cacheRule == null) {

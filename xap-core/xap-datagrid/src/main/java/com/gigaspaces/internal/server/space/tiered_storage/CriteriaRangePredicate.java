@@ -46,7 +46,8 @@ public class CriteriaRangePredicate implements CachePredicate {
             int index = ((PropertyInfo) typeDesc.getFixedProperty(criteria.getPath())).getOriginalIndex();
             TemplateEntryData entryData = template.getTemplateEntryData();
             if (template.getExtendedMatchCodes() == null) {//by template
-                return criteria.getPredicate().execute(entryData.getFixedPropertyValue(index));
+                Object value = entryData.getFixedPropertyValue(index);
+                return value != null && criteria.getPredicate().execute(value);
             } else if (template.isIdQuery() && typeDesc.getIdPropertyName().equalsIgnoreCase(criteria.getPath())) {
                 return criteria.getPredicate().execute(entryData.getFixedPropertyValue(index));
             } else if (template.getExtendedMatchCodes() != null) {
@@ -88,7 +89,7 @@ public class CriteriaRangePredicate implements CachePredicate {
         } else {
             SpacePropertyDescriptor property = packet.getTypeDescriptor().getFixedProperty(criteria.getPath());
             if (property == null) {
-                return true;
+                throw new IllegalStateException("type "+packet.getTypeDescriptor().getTypeName()+" reached CriteriaRangePredicate.evaluate but has no property "+criteria.getPath());
             }
             int index = ((PropertyInfo) property).getOriginalIndex();
             if (packet instanceof TemplatePacket) {

@@ -7,7 +7,7 @@ import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.EntryHolder;
 import com.gigaspaces.internal.server.storage.FlatEntryData;
-import com.j_spaces.core.cache.IEntryCacheInfo;
+import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 import net.jini.core.lease.Lease;
@@ -17,7 +17,7 @@ import java.sql.SQLException;
 
 import static com.gigaspaces.internal.server.space.tiered_storage.SqliteUtils.getPropertyValue;
 
-public class RDBMSIterator implements ISAdapterIterator<IEntryCacheInfo> {
+public class RDBMSIterator implements ISAdapterIterator<IEntryHolder> {
 
     private final ResultSet resultSet;
     private final String typeName;
@@ -32,7 +32,7 @@ public class RDBMSIterator implements ISAdapterIterator<IEntryCacheInfo> {
     }
 
     @Override
-    public IEntryCacheInfo next() throws SAException {
+    public IEntryHolder next() throws SAException {
         try {
             if (resultSet.next()) {
                 PropertyInfo[] properties = typeDesc.getProperties();
@@ -43,7 +43,7 @@ public class RDBMSIterator implements ISAdapterIterator<IEntryCacheInfo> {
                 FlatEntryData data = new FlatEntryData(values, null, typeDesc.getEntryTypeDesc(EntryType.DOCUMENT_JAVA), 0, Lease.FOREVER, null);
                 Object idFromEntry = data.getFixedPropertyValue(((PropertyInfo) typeDesc.getFixedProperty(typeDesc.getIdPropertyName())).getOriginalIndex());
                 String uid = SpaceUidFactory.createUidFromTypeAndId(typeDesc, idFromEntry);
-                return new RDBMSEntryCacheInfo(new EntryHolder(typeManager.getServerTypeDesc(typeName), uid, 0, false, data));
+                return new EntryHolder(typeManager.getServerTypeDesc(typeName), uid, 0, false, data);
             } else {
                 return null;
             }

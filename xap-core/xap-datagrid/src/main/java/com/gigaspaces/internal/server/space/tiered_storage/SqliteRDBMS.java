@@ -9,9 +9,7 @@ import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.utils.concurrent.ReentrantSimpleLock;
 import com.gigaspaces.metadata.index.SpaceIndex;
-import com.j_spaces.core.cache.IEntryCacheInfo;
 import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.EntryAlreadyInSpaceException;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
@@ -35,27 +33,28 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.gigaspaces.internal.server.space.tiered_storage.SqliteUtils.*;
 
 public class SqliteRDBMS implements InternalRDBMS {
-    private static Logger logger = LoggerFactory.getLogger(InternalRDBMS.class);
     private static final String JDBC_DRIVER = "org.sqlite.JDBC";
     private static final String USER = "gs";
     private static final String PASS = "gigaspaces";
     private static final String PATH = "/tmp";
+    private static Logger logger = LoggerFactory.getLogger(InternalRDBMS.class);
     private String dbName;
     private Connection connection;
     private ReentrantSimpleLock modifierLock = new ReentrantSimpleLock();
     private AtomicInteger readCount = new AtomicInteger(0);
     private AtomicInteger writeCount = new AtomicInteger(0);
     private SpaceTypeManager typeManager;
+
     @Override
     public void initialize(String fullSpaceName, SpaceTypeManager typeManager) throws SAException {
         try {
             //TODO - tiered storage - validate not exist / clear db / initial load in v2
             this.typeManager = typeManager;
-            this.dbName = "sqlite_db"+"_"+fullSpaceName;
+            this.dbName = "sqlite_db" + "_" + fullSpaceName;
             org.sqlite.SQLiteConfig config = new org.sqlite.SQLiteConfig();
             String dbUrl = "jdbc:sqlite:" + PATH + "/" + dbName;
             connection = connectToDB(JDBC_DRIVER, dbUrl, USER, PASS, config);
-            logger.info("Successfully created db {}",dbName);
+            logger.info("Successfully created db {}", dbName);
         } catch (ClassNotFoundException | SQLException e) {
             throw new SAException("failed to initialize internal sqlite RDBMS", e);
         }
@@ -71,7 +70,7 @@ public class SqliteRDBMS implements InternalRDBMS {
         stringBuilder.append("PRIMARY KEY (").append(typeDesc.getIdPropertyName()).append(")");
         stringBuilder.append(");");
         String sqlQuery = stringBuilder.toString();
-        logger.trace("Running create table query: {}",sqlQuery);
+        logger.trace("Running create table query: {}", sqlQuery);
         try {
             executeUpdate(sqlQuery);
 
@@ -171,7 +170,7 @@ public class SqliteRDBMS implements InternalRDBMS {
             int changedRows = executeUpdate(sqlQuery);
             return changedRows == 1;
         } catch (SQLException e) {
-            throw new SAException("Failed to delete entry - type = "+typeDesc.getTypeName()+" , id = "+entryHolder.getEntryId(), e);
+            throw new SAException("Failed to delete entry - type = " + typeDesc.getTypeName() + " , id = " + entryHolder.getEntryId(), e);
         }
     }
 
@@ -205,7 +204,7 @@ public class SqliteRDBMS implements InternalRDBMS {
     }
 
     @Override
-    public ISAdapterIterator<IEntryCacheInfo> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder, TieredState tieredState) throws SAException {
+    public ISAdapterIterator<IEntryHolder> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder) throws SAException {
         if (templateHolder.getCustomQuery() != null) {
             ICustomQuery customQuery = templateHolder.getCustomQuery();
             //TODO - tiered storage - convert customQuery to sql
@@ -261,15 +260,15 @@ public class SqliteRDBMS implements InternalRDBMS {
 
     @Override
     public void shutDown() {
-        logger.info("Trying to delete db {}",dbName);
+        logger.info("Trying to delete db {}", dbName);
         File folder = new File(PATH);
-        final File[] files = folder.listFiles((dir, name) -> name.matches(dbName +".*"));
+        final File[] files = folder.listFiles((dir, name) -> name.matches(dbName + ".*"));
         for (final File file : Objects.requireNonNull(files)) {
             if (!file.delete()) {
                 logger.error("Can't remove " + file.getAbsolutePath());
             }
         }
-        logger.info("Successfully deleted db {}",dbName);
+        logger.info("Successfully deleted db {}", dbName);
     }
 
     @Override

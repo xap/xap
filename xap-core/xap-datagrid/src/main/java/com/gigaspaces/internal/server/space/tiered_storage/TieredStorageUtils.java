@@ -2,7 +2,6 @@ package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceEngine;
-import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.storage.EntryTieredMetaData;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
@@ -62,7 +61,12 @@ public class TieredStorageUtils {
             return false;
         }
         for(int i = 0; i < hotEntry.getNumOfFixedProperties(); ++i){
-            if(!hotEntry.getFixedPropertiesValues()[i].equals(coldEntry.getFixedPropertiesValues()[i])){
+            Object hotValue = hotEntry.getFixedPropertiesValues()[i];
+            Object coldValue = coldEntry.getFixedPropertiesValues()[i];
+            if(hotValue == null || coldValue == null){
+                return hotValue == coldValue;
+            }
+            if(!hotValue.equals(coldValue)){
                 return false;
             }
         }
