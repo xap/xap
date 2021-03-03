@@ -240,6 +240,10 @@ public class SqliteRDBMS implements InternalRDBMS {
                     Object value = entryData.getFixedPropertyValue(originalIndex);
                     if (value != null) {
                         stringBuilder.append(property.getName()).append(getMatchCodeString(matchCodes[originalIndex])).append(getValueString(property, value)).append(" AND ");
+                        if (entryData.getRangeValue(originalIndex) != null) {
+                            stringBuilder.append(property.getName()).append(SqliteUtils.getMatchCodeString(matchCodes[originalIndex], entryData.getRangeInclusion(originalIndex)))
+                                    .append(getValueString(property, entryData.getRangeValue(originalIndex))).append(" AND ");
+                        }
                     }
                 }
                 int lastIndexOf = stringBuilder.lastIndexOf(" AND ");

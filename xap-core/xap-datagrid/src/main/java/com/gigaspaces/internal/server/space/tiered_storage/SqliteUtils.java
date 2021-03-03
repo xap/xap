@@ -79,7 +79,7 @@ public class SqliteUtils {
     }
 
     public static String getValueString(SpacePropertyDescriptor property, Object propertyValue) {
-        if(propertyValue == null){
+        if (propertyValue == null) {
             return "Null";
         } else if (property.getType().equals(String.class)) {
             return "\"" + propertyValue + "\"";
@@ -91,17 +91,33 @@ public class SqliteUtils {
     public static String getMatchCodeString(short matchCode) {
         switch (matchCode) {
             case TemplateMatchCodes.EQ:
-                return "=";
+                return " = ";
             case TemplateMatchCodes.GT:
-                return ">";
+                return " > ";
             case TemplateMatchCodes.GE:
-                return ">=";
+                return " >= ";
             case TemplateMatchCodes.LT:
-                return "<";
+                return " < ";
             case TemplateMatchCodes.LE:
-                return "<=";
+                return " <= ";
+            case TemplateMatchCodes.NE:
+                return " != ";
             default:
                 throw new IllegalStateException("match code " + matchCode + " no supported");
         }
     }
+
+    public static String getMatchCodeString(short originalMatchCode, boolean inclusion) {
+        switch (originalMatchCode) {
+            case TemplateMatchCodes.GT:
+            case TemplateMatchCodes.GE:
+                return inclusion ? " <= " : " < " ;
+            case TemplateMatchCodes.LT:
+            case TemplateMatchCodes.LE:
+                return inclusion ? " >= " : " > " ;
+            default:
+                throw new IllegalStateException("match code " + originalMatchCode + " no supported");
+        }
+    }
+
 }
