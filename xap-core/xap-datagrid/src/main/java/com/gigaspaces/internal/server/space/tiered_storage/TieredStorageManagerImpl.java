@@ -14,13 +14,13 @@ import com.j_spaces.jdbc.builder.range.Range;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TieredStorageManagerImpl implements TieredStorageManager {
     private IDirectSpaceProxy spaceProxy;
     private TieredStorageConfig storageConfig;
-    private Map<String, TimePredicate> retentionRules = new HashMap<>();
-    private Map<String, CachePredicate> hotCacheRules = new HashMap<>();
+    private ConcurrentHashMap<String, TimePredicate> retentionRules = new ConcurrentHashMap<>(); //TODO - tiered storage - lazy init retention rules
+    private ConcurrentHashMap<String, CachePredicate> hotCacheRules = new ConcurrentHashMap<>();
 
     private InternalRDBMS internalDiskStorage;
 
@@ -35,16 +35,21 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     }
 
     @Override
+    public boolean hasCacheRule(String typeName) {
+        return storageConfig.getTables().get(typeName) != null;
+    }
+
+    @Override
+    public boolean isTransient(String typeName) {
+        return storageConfig.getTables().get(typeName) != null && storageConfig.getTables().get(typeName).isTransient();
+    }
+
+    @Override
     public CachePredicate getCacheRule(String typeName) {
-        if (hotCacheRules.get(typeName) == null) {
-            if (storageConfig.getTables().get(typeName) != null) {
-                initCacheRule(storageConfig.getTables().get(typeName), spaceProxy);
-                return hotCacheRules.get(typeName);
-            } else {
-                return null;
-            }
+        if (hasCacheRule(typeName)) {
+            return hotCacheRules.computeIfAbsent(typeName, typeName1 -> createCacheRule(storageConfig.getTables().get(typeName1), spaceProxy));
         } else {
-            return hotCacheRules.get(typeName);
+            return null;
         }
     }
 
@@ -115,24 +120,21 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     }
 
 
-    private void initCacheRule(TieredStorageTableConfig tableConfig, IDirectSpaceProxy proxy) {
+    private CachePredicate createCacheRule(TieredStorageTableConfig tableConfig, IDirectSpaceProxy proxy) {
         //TODO - validate transient has null criteria && period
-        if (tableConfig.getTimeColumn() != null) {
+        CachePredicate result = null;
+        if (tableConfig.isTransient()) {
+            result = Constants.TieredStorage.TRANSIENT_ALL_CACHE_PREDICATE;
+        } else if (tableConfig.getTimeColumn() != null) {
             if (tableConfig.getPeriod() != null) {
-                hotCacheRules.put(tableConfig.getName(), new TimePredicate(tableConfig.getName(), tableConfig.getTimeColumn(), tableConfig.getPeriod(), tableConfig.isTransient()));
+                return new TimePredicate(tableConfig.getName(), tableConfig.getTimeColumn(), tableConfig.getPeriod(), tableConfig.isTransient());
             }
-
-            if (tableConfig.getRetention() != null) {
-                retentionRules.put(tableConfig.getName(), new TimePredicate(tableConfig.getName(), tableConfig.getTimeColumn(), tableConfig.getRetention(), tableConfig.isTransient()));
-            }
-        }
-
-        if (tableConfig.getCriteria() != null) {
+        } else if (tableConfig.getCriteria() != null) {
             if (tableConfig.getCriteria().equalsIgnoreCase(AllPredicate.ALL_KEY_WORD)) {
-                hotCacheRules.put(tableConfig.getName(), new AllPredicate(tableConfig.isTransient()));
+                result = new AllPredicate(tableConfig.isTransient());
             } else {
                 ReadQueryParser parser = new ReadQueryParser();
-                AbstractDMLQuery sqlQuery = null;
+                AbstractDMLQuery sqlQuery;
                 try {
                     sqlQuery = parser.parseSqlQuery(new SQLQuery(tableConfig.getName(), tableConfig.getCriteria()), proxy);
                 } catch (SQLException e) {
@@ -146,15 +148,16 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
                 Iterator<String> iterator = ranges.keySet().iterator();
                 if (iterator.hasNext()) {
                     Range range = ranges.get(iterator.next());
-                    hotCacheRules.put(template.getTypeName(), new CriteriaRangePredicate(template.getTypeName(), range, tableConfig.isTransient()));
+                    result = new CriteriaRangePredicate(template.getTypeName(), range, tableConfig.isTransient());
                 }
-
             }
         }
 
-        if (tableConfig.isTransient()) {
-            hotCacheRules.put(tableConfig.getName(), Constants.TieredStorage.TRANSIENT_ALL_CACHE_PREDICATE);
+        if (result == null) {
+            throw new IllegalStateException("Failed to create CachePredicate for " + tableConfig);
         }
+
+        return result;
     }
 
 

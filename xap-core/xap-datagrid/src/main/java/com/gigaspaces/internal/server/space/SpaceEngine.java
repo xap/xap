@@ -862,23 +862,25 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         try {
             if(tieredStorageManager != null) {
                 String typeName = eHolder.getServerTypeDesc().getTypeName();
-                CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
                 eHolder.setTransient(false);
-                if(cacheRule == null) {
+                if(!tieredStorageManager.hasCacheRule(typeName)) {
                     context.setEntryTieredState(TieredState.TIERED_COLD);
-                } else if(cacheRule.evaluate(eHolder.getEntryData())){
-                    if(cacheRule.isTransient()){
-                        eHolder.setTransient(true);
-                        context.setEntryTieredState(TieredState.TIERED_HOT);
+                } else{
+                    CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
+                    if(cacheRule.evaluate(eHolder.getEntryData())){
+                        if(cacheRule.isTransient()){
+                            eHolder.setTransient(true);
+                            context.setEntryTieredState(TieredState.TIERED_HOT);
+                        } else {
+                            context.setEntryTieredState(TieredState.TIERED_HOT_AND_COLD);
+                        }
                     } else {
-                        context.setEntryTieredState(TieredState.TIERED_HOT_AND_COLD);
-                    }
-                } else {
-                    if(cacheRule.isTransient()){
-                        _logger.warn("tried to write transient type but doesnt fit cache rule");
-                        return  new WriteEntryResult();
-                    } else {
-                        context.setEntryTieredState(TieredState.TIERED_COLD);
+                        if(cacheRule.isTransient()){
+                            _logger.warn("tried to write transient type but doesnt fit cache rule");
+                            return  new WriteEntryResult();
+                        } else {
+                            context.setEntryTieredState(TieredState.TIERED_COLD);
+                        }
                     }
                 }
 
@@ -3874,7 +3876,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         IEntryHolder entry = null;
         if(_cacheManager.isTieredStorage()){
-            if(tieredStorageManager.getCacheRule(template.getServerTypeDesc().getTypeName()).isTransient()){
+            if(tieredStorageManager.isTransient(template.getServerTypeDesc().getTypeName())){
                 template.setTransient(true);
             }
             if(template.isReadOperation() && template.getXidOriginated() == null){

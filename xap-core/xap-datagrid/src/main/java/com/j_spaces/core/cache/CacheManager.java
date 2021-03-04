@@ -46,6 +46,7 @@ import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPe
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.IStorageConsistency;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.StorageConsistencyModes;
 import com.gigaspaces.internal.server.space.tiered_storage.CachePredicate;
+import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageManager;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridStorageAdapter;
 import com.gigaspaces.internal.transport.ITemplatePacket;
@@ -1481,23 +1482,26 @@ public class CacheManager extends AbstractCacheManager
                 }
 
                 IEntryHolder cold_eh = EntryHolderFactory.createEntryHolder(entry.getServerTypeDesc(), (ITransactionalEntryData) newEntryData, entry.getUID(), entry.isTransient());
+                TieredStorageManager tieredStorageManager = _engine.getTieredStorageManager();
                 if(!entry.isTransient()){
-                    _engine.getTieredStorageManager().getInternalStorage().updateEntry(context, cold_eh);
+                    tieredStorageManager.getInternalStorage().updateEntry(context, cold_eh);
                 }
 
 
                 String typeName = newEntryData.getSpaceTypeDescriptor().getTypeName();
-                CachePredicate cacheRule = _engine.getTieredStorageManager().getCacheRule(typeName);
-                if(cacheRule == null) {
+                if(!tieredStorageManager.hasCacheRule(typeName)) {
                     context.setEntryTieredState(TieredState.TIERED_COLD);
-                } else if(cacheRule.evaluate(newEntryData)){
-                    if(cacheRule.isTransient()){
-                        context.setEntryTieredState(TieredState.TIERED_HOT);
-                    } else {
-                        context.setEntryTieredState(TieredState.TIERED_HOT_AND_COLD);
-                    }
                 } else {
-                    context.setEntryTieredState(TieredState.TIERED_COLD);
+                    CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
+                    if(cacheRule.evaluate(newEntryData)){
+                        if(cacheRule.isTransient()){
+                            context.setEntryTieredState(TieredState.TIERED_HOT);
+                        } else {
+                            context.setEntryTieredState(TieredState.TIERED_HOT_AND_COLD);
+                        }
+                    } else {
+                        context.setEntryTieredState(TieredState.TIERED_COLD);
+                    }
                 }
 
 

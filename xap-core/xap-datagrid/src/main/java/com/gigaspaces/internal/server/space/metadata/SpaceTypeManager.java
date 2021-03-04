@@ -286,9 +286,8 @@ public class SpaceTypeManager {
 
                 if (action == AddTypeDescResultType.CREATED) {
                     serverTypeDesc = createServerTypeDesc(typeDesc, localTypeMap);
-                    if(tieredStorageManager != null &&
-                            (tieredStorageManager.getCacheRule(typeDesc.getTypeName()) == null ||
-                                    !tieredStorageManager.getCacheRule(typeDesc.getTypeName()).isTransient())){
+                    if(tieredStorageManager != null && (!tieredStorageManager.hasCacheRule(typeDesc.getTypeName()) ||
+                                    !tieredStorageManager.isTransient(typeDesc.getTypeName()))){
                         try {
                             tieredStorageManager.getInternalStorage().createTable(typeDesc);
                         } catch (SAException e) {

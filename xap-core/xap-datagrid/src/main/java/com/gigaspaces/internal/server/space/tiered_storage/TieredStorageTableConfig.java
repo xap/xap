@@ -92,4 +92,16 @@ public class TieredStorageTableConfig implements Externalizable {
         this.criteria = IOUtils.readString(in);
         this.isTransient = in.readBoolean();
     }
+
+    @Override
+    public String toString() {
+        return "TieredStorageTableConfig{" +
+                "name='" + name + '\'' +
+                ", timeColumn='" + timeColumn + '\'' +
+                ", retention=" + retention +
+                ", period=" + period +
+                ", criteria='" + criteria + '\'' +
+                ", isTransient=" + isTransient +
+                '}';
+    }
 }

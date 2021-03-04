@@ -6,6 +6,10 @@ import com.j_spaces.core.cache.context.TieredState;
 
 public interface TieredStorageManager {
 
+    boolean hasCacheRule(String typeName); // check if cache rule exist for a specific type
+
+    boolean isTransient(String typeName); // check if a specific type is transient
+
     CachePredicate getCacheRule(String typeName); // get cache rule for a specific type
 
     TimePredicate getRetentionRule(String typeName); // get retention rule for a specific type
