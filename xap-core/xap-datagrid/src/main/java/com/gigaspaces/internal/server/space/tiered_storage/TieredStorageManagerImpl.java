@@ -36,10 +36,16 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
 
     @Override
     public CachePredicate getCacheRule(String typeName) {
-        if(hotCacheRules.get(typeName) == null && storageConfig.getTables().get(typeName) != null){
-            initCacheRule(storageConfig.getTables().get(typeName), spaceProxy);
+        if (hotCacheRules.get(typeName) == null) {
+            if (storageConfig.getTables().get(typeName) != null) {
+                initCacheRule(storageConfig.getTables().get(typeName), spaceProxy);
+                return hotCacheRules.get(typeName);
+            } else {
+                return null;
+            }
+        } else {
+            return hotCacheRules.get(typeName);
         }
-        return hotCacheRules.get(typeName);
     }
 
     @Override
@@ -111,26 +117,26 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
 
     private void initCacheRule(TieredStorageTableConfig tableConfig, IDirectSpaceProxy proxy) {
         //TODO - validate transient has null criteria && period
-        if(tableConfig.getTimeColumn() != null ){
-            if(tableConfig.getPeriod() != null){
-                hotCacheRules.put(tableConfig.getName(), new TimePredicate(tableConfig.getName(),tableConfig.getTimeColumn(), tableConfig.getPeriod(), tableConfig.isTransient()));
+        if (tableConfig.getTimeColumn() != null) {
+            if (tableConfig.getPeriod() != null) {
+                hotCacheRules.put(tableConfig.getName(), new TimePredicate(tableConfig.getName(), tableConfig.getTimeColumn(), tableConfig.getPeriod(), tableConfig.isTransient()));
             }
 
-            if(tableConfig.getRetention() != null){
-                retentionRules.put(tableConfig.getName(), new TimePredicate(tableConfig.getName(),tableConfig.getTimeColumn(), tableConfig.getRetention(), tableConfig.isTransient()));
+            if (tableConfig.getRetention() != null) {
+                retentionRules.put(tableConfig.getName(), new TimePredicate(tableConfig.getName(), tableConfig.getTimeColumn(), tableConfig.getRetention(), tableConfig.isTransient()));
             }
         }
 
-        if(tableConfig.getCriteria() != null) {
-            if(tableConfig.getCriteria().equalsIgnoreCase(AllPredicate.ALL_KEY_WORD)){
+        if (tableConfig.getCriteria() != null) {
+            if (tableConfig.getCriteria().equalsIgnoreCase(AllPredicate.ALL_KEY_WORD)) {
                 hotCacheRules.put(tableConfig.getName(), new AllPredicate(tableConfig.isTransient()));
-            }else {
+            } else {
                 ReadQueryParser parser = new ReadQueryParser();
                 AbstractDMLQuery sqlQuery = null;
                 try {
                     sqlQuery = parser.parseSqlQuery(new SQLQuery(tableConfig.getName(), tableConfig.getCriteria()), proxy);
                 } catch (SQLException e) {
-                    throw new RuntimeException("failed to parse criteria cache rule '"+tableConfig.getCriteria()+"'", e);
+                    throw new RuntimeException("failed to parse criteria cache rule '" + tableConfig.getCriteria() + "'", e);
                 }
                 QueryTemplatePacket template = sqlQuery.getExpTree().getTemplate();
                 HashMap<String, Range> ranges = template.getRanges();
@@ -146,13 +152,10 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
             }
         }
 
-        if(tableConfig.isTransient()){
+        if (tableConfig.isTransient()) {
             hotCacheRules.put(tableConfig.getName(), Constants.TieredStorage.TRANSIENT_ALL_CACHE_PREDICATE);
         }
     }
-
-
-
 
 
 }
