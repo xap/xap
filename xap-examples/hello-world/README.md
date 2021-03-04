@@ -29,7 +29,7 @@ to an existing (remote) data-grid (by specifying its name).
 
 This example is a standard maven project - Use maven to execute the main class:
 
-`mvn exec:java -Dexec.mainClass=HelloWorld -Dexec.args="-name myDataGrid -mode embedded"`
+`mvn compile && mvn exec:java -Dexec.mainClass=HelloWorld -Dexec.args="-name myDataGrid -mode embedded"`
 
 Alternatively, if you have an IDE available, import the sources as a maven project using the POM: 
 
@@ -45,6 +45,7 @@ This will start an embedded data-grid followed by write and read of Message enti
 
 ### output
 ```
+
 Created embedded data-grid: myDataGrid
 
 write - 'Hello'
@@ -52,6 +53,7 @@ write - 'Hello'
 write - 'World!'
 
 read - ['Hello', 'World!']
+
 ```
 
 ![helloworld-1](images/embedded.png)
@@ -89,12 +91,19 @@ To deploy a data grid called `myDataGrid`, run:
 
 Now that we have a remote data-grid, we can connect to it.
 
+Using maven: 
+
+`mvn compile && mvn exec:java -Dexec.mainClass=HelloWorld -Dexec.args="-name myDataGrid -mode remote"`
+
+Using IDE:
+
 Launch the `HelloWorld` main (arguments: `-name` myDataGrid `-mode` remote)
 
 This will connect your  client to your remote data-grid followed by write and read of Message entities.
 
 ### output
 ```
+
 Connected to remote data-grid: myDataGrid
 
 write - 'Hello'
@@ -102,6 +111,7 @@ write - 'Hello'
 write - 'World!'
 
 read - ['Hello', 'World!']
+
 ```
 
 ### Stopping the data grid
