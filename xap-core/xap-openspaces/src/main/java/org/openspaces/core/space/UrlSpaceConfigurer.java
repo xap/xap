@@ -30,6 +30,7 @@ import com.gigaspaces.sync.SpaceSynchronizationEndpoint;
 import com.j_spaces.core.IJSpace;
 
 import org.openspaces.core.cluster.ClusterInfo;
+import org.openspaces.core.config.TieredStorageConfigurer;
 import org.openspaces.core.space.filter.FilterProviderFactory;
 import org.openspaces.core.space.filter.replication.ReplicationFilterProviderFactory;
 import org.springframework.util.StringUtils;
@@ -370,6 +371,10 @@ public class UrlSpaceConfigurer implements SpaceConfigurer {
             space = (IJSpace) urlSpaceFactoryBean.getObject();
         }
         return space;
+    }
+
+    public void tieredStorage(TieredStorageConfigurer tieredStorageConfigurer) {
+        urlSpaceFactoryBean.setCustomComponent(tieredStorageConfigurer);
     }
 
     /**

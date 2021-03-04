@@ -1,10 +1,15 @@
 package org.openspaces.core.config;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageConfig;
 import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageTableConfig;
 import com.gigaspaces.server.SpaceCustomComponent;
 import org.openspaces.core.extension.SpaceCustomComponentFactoryBean;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +17,7 @@ import java.util.Map;
  * @author Yael Nahon
  * @since 16.0
  */
-public class TieredStorageConfigurer implements SpaceCustomComponentFactoryBean {
+public class TieredStorageConfigurer implements SpaceCustomComponentFactoryBean, Externalizable {
 
     private Map<String, TieredStorageTableConfig> tables = new HashMap<>();
 
@@ -27,5 +32,16 @@ public class TieredStorageConfigurer implements SpaceCustomComponentFactoryBean 
             throw new IllegalArgumentException("cannot define a table twice (" + config.getName() + " already defined)");
         }
         return this;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        IOUtils.writeMapStringT(out,tables);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        tables = IOUtils.readMapStringT(in);
+
     }
 }

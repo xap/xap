@@ -624,8 +624,39 @@ public class IOUtils {
         return BootIOUtils.readMapStringString(in);
     }
 
+    public static <T> void writeMapStringT(ObjectOutput out,
+                                                Map<String, T> map) throws IOException {
+        if (map == null)
+            out.writeInt(-1);
+        else {
+            int length = map.size();
+            out.writeInt(length);
+            for (Entry<String, T> entry : map.entrySet()) {
+                writeString(out, entry.getKey());
+                writeObject(out, entry.getValue());
+            }
+        }
+    }
+
+    public static <T> Map<String, T> readMapStringT(ObjectInput in)
+            throws IOException, ClassNotFoundException {
+        Map<String, T> map = null;
+
+        int length = in.readInt();
+        if (length >= 0) {
+            map = new HashMap<>(length);
+            for (int i = 0; i < length; i++) {
+                String key = readString(in);
+                Object value = readObject(in);
+                map.put(key, (T)value);
+            }
+        }
+
+        return map;
+    }
+
     public static void writeMapStringObject(ObjectOutput out,
-                                            Map<String, Object> map) throws IOException {
+                                                Map<String, Object> map) throws IOException {
         if (map == null)
             out.writeInt(-1);
         else {
