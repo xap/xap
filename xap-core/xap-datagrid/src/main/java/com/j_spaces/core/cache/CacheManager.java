@@ -1964,7 +1964,7 @@ public class CacheManager extends AbstractCacheManager
         else
             result = typeData == null ? null : getScannableEntriesMinIndexExtended(context, typeData, numOfFields, template);
 
-        if (context.getExplainPlanContext().isDryRun()) {
+        if (context.getExplainPlanContext() != null && context.getExplainPlanContext().isDryRun()) {
             return null;
         }
 
