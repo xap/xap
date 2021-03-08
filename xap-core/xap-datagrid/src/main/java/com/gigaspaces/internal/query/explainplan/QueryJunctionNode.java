@@ -59,22 +59,22 @@ public class QueryJunctionNode implements QueryOperationNode{
         for (int i = 0; i < subTrees.size()-1; i++) {
             QueryOperationNode node = subTrees.get(i);
             if (name.equalsIgnoreCase("OR")) {
-                result.append("[");
+                result.append("(");
             }
             result.append(node.printTree());
             if (name.equalsIgnoreCase("OR")) {
-                result.append("]");
+                result.append(")");
             }
             result.append(" "+name+" ");
         }
         QueryOperationNode node = subTrees.get(subTrees.size()-1);
         if (name.equalsIgnoreCase("OR")) {
-            result.append("[");
+            result.append("(");
         }
         result.append(node.printTree());
 
         if (name.equalsIgnoreCase("OR")) {
-            result.append("]");
+            result.append(")");
         }
 
         return result.toString();
