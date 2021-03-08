@@ -1,8 +1,8 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.metadata.PropertyInfo;
-import com.gigaspaces.metadata.SpacePropertyDescriptor;
 import com.j_spaces.core.client.TemplateMatchCodes;
+import com.j_spaces.jdbc.builder.range.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -78,10 +78,10 @@ public class SqliteUtils {
         throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
     }
 
-    public static String getValueString(SpacePropertyDescriptor property, Object propertyValue) {
+    public static String getValueString(Object propertyValue) {
         if (propertyValue == null) {
             return "Null";
-        } else if (property.getType().equals(String.class)) {
+        } else if (propertyValue.getClass().equals(String.class)) {
             return "\"" + propertyValue + "\"";
         } else {
             return propertyValue.toString();
@@ -120,4 +120,44 @@ public class SqliteUtils {
         }
     }
 
+    public static String getRangeString(Range range){
+        StringBuilder stringBuilder = new StringBuilder(range.getPath());
+        if (range.isEqualValueRange()) {
+            stringBuilder.append(" = ").append(getValueString(((EqualValueRange) range).getValue()));
+        } else if (range instanceof NotEqualValueRange){
+            stringBuilder.append(" != ").append(getValueString(((NotEqualValueRange) range).getValue()));
+        } else if (range.isSegmentRange()){
+            SegmentRange segmentRange = (SegmentRange) range;
+            Comparable min = segmentRange.getMin();
+            Comparable max = segmentRange.getMax();
+            String includeMinSign = segmentRange.isIncludeMin() ? "= ": " ";
+            String includeMaxSign = segmentRange.isIncludeMax() ? "= ": " ";
+            if (min != null && max == null){
+                stringBuilder.append(" >").append(includeMinSign).append(min);
+            } else if (min == null && max != null){
+                stringBuilder.append(" <").append(includeMaxSign).append(max);
+            }  else { // max != null && min != null
+                stringBuilder.append(" <").append(includeMaxSign).append(max).append(" AND ")
+                        .append(range.getPath()).append(" >").append(includeMinSign).append(min);
+            }
+        } else if (range instanceof InRange) {
+            InRange inRange = (InRange) range;
+            stringBuilder.append(" IN(");
+            for (Object val : inRange.getInValues()) {
+                stringBuilder.append(getValueString(val)).append(",");
+            }
+            int lastIndexOf = stringBuilder.lastIndexOf(",");
+            if (lastIndexOf != -1){
+                stringBuilder.deleteCharAt(lastIndexOf);
+            }
+            stringBuilder.append(")");
+        } else if (range instanceof IsNullRange){
+            stringBuilder.append(" IS NULL");
+        } else if (range instanceof NotNullRange){
+            stringBuilder.append(" IS NOT NULL");
+        } else {
+            throw new IllegalStateException("SQL query of type" + range.getClass().toString() + " is unsupported");
+        }
+        return stringBuilder.toString();
+    }
 }
