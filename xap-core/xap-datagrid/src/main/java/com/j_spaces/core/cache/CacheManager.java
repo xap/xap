@@ -87,6 +87,7 @@ import com.j_spaces.core.cache.blobStore.sadapter.IBlobStoreStorageAdapter;
 import com.j_spaces.core.cache.blobStore.storage.BlobStoreHashMock;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.IndexMetricsContext;
+import com.j_spaces.core.cache.context.TemplateMatchTier;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.cache.fifoGroup.FifoGroupCacheImpl;
 import com.j_spaces.core.client.*;
@@ -4181,7 +4182,7 @@ public class CacheManager extends AbstractCacheManager
         if (template.isFifoSearch() && !typeData.isFifoSupport())
             return null;
 
-        if(context.getTemplateTieredState() != TieredState.TIERED_COLD) {//TODO - tiered storage - what if template tiered state == null
+        if(context.getTemplateTieredState() != TemplateMatchTier.MATCH_COLD) {//TODO - tiered storage - what if template tiered state == null
             // If template has no fields of type has no indexes, skip index optimization:
             if (!typeData.hasIndexes())
                 return null;
@@ -4204,7 +4205,7 @@ public class CacheManager extends AbstractCacheManager
             if(ReadModifiers.isMemoryOnlySearch(template.getOperationModifiers())){
                 return null;
             }
-            if(context.getTemplateTieredState() == TieredState.TIERED_COLD || context.getTemplateTieredState() == TieredState.TIERED_HOT_AND_COLD){
+            if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_COLD || context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
                 try {
                     IEntryHolder entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(context, currServerTypeDesc.getTypeName(), templateValue);
                     if (entry != null) {

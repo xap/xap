@@ -8,6 +8,8 @@ import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 
+import java.util.List;
+
 public interface InternalRDBMS {
 
     void initialize(String fullSpaceName, SpaceTypeManager typeManager) throws SAException;

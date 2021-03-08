@@ -29,6 +29,7 @@ import com.j_spaces.core.XtnEntry;
 import com.j_spaces.core.XtnStatus;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.blobStore.IBlobStoreRefCacheInfo;
+import com.j_spaces.core.cache.context.TemplateMatchTier;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
@@ -94,16 +95,16 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
                 context.setTemplateTieredState(_cacheManager.getEngine().getTieredStorageManager().guessTemplateTier(template));
             }
 
-            if(context.getTemplateTieredState() == TieredState.TIERED_HOT || memoryOnly || template.isMemoryOnlySearch()){
+            if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT|| memoryOnly || template.isMemoryOnlySearch()){
                 _memoryOnly = true;
             } else {
                 _memoryOnly = false;
-                if(context.getTemplateTieredState() == TieredState.TIERED_COLD){
+                if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_COLD){
                     _doneWithCache = true;
                 }
 
 
-                if(context.getTemplateTieredState() == TieredState.TIERED_HOT_AND_COLD){
+                if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
                     _entriesReturned = new HashSet<>();
                 }
 
@@ -210,6 +211,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
         }
 
         if(_cacheManager.isTieredStorage() && _doneWithCache){
+            //TODO - tiered storage - handle null template
             _saIter = _cacheManager.getEngine().getTieredStorageManager().getInternalStorage().makeEntriesIter(_context, _types[0].getTypeName(), _templateHolder);
         }
 
@@ -246,7 +248,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
                             _SCNFilter, _leaseFilter, _types);
                 }
 
-                if(_cacheManager.isTieredStorage() && _context.getTemplateTieredState() != TieredState.TIERED_HOT && _saIter == null){
+                if(_cacheManager.isTieredStorage() && _context.getTemplateTieredState() != TemplateMatchTier.MATCH_HOT && _saIter == null){
                     //TODO - tiered storage - handle multiple types
                     _saIter = _cacheManager.getEngine().getTieredStorageManager().getInternalStorage().makeEntriesIter(_context, _types[0].getTypeName(), _templateHolder);
                 }

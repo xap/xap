@@ -232,4 +232,8 @@ public class EqualValueRange extends SingleValueRange {
         return true;
     }
 
+    @Override
+    public String toString() {
+        return "EqualValueRange{"+getPath()+" = "+getValue()+"}";
+    }
 }

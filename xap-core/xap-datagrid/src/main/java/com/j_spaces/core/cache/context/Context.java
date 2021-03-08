@@ -246,7 +246,7 @@ public class Context {
 
     //tiered storage
     private TieredState entryTieredState;
-    private TieredState templateTieredState;
+    private TemplateMatchTier templateTieredState;
     private Object suppliedEntryIdForColdTier;
 
     public Context() {
@@ -1331,11 +1331,11 @@ public class Context {
         return this;
     }
 
-    public TieredState getTemplateTieredState() {
+    public TemplateMatchTier getTemplateTieredState() {
         return templateTieredState;
     }
 
-    public void setTemplateTieredState(TieredState templateTieredState) {
+    public void setTemplateTieredState(TemplateMatchTier templateTieredState) {
         this.templateTieredState = templateTieredState;
     }
 

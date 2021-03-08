@@ -4,12 +4,15 @@ import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.j_spaces.core.Constants;
+import com.j_spaces.core.cache.context.TemplateMatchTier;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.core.client.sql.ReadQueryParser;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.Range;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -17,6 +20,7 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TieredStorageManagerImpl implements TieredStorageManager {
+    private static Logger logger = LoggerFactory.getLogger(Constants.TieredStorage.TIERED_STORAGE_LOGGER_NAME);
     private IDirectSpaceProxy spaceProxy;
     private TieredStorageConfig storageConfig;
     private ConcurrentHashMap<String, TimePredicate> retentionRules = new ConcurrentHashMap<>(); //TODO - tiered storage - lazy init retention rules
@@ -99,22 +103,23 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     }
 
     @Override
-    public TieredState guessTemplateTier(ITemplateHolder templateHolder) { // TODO - tiered storage - return TemplateMatchTier, hot and cold
+    public TemplateMatchTier guessTemplateTier(ITemplateHolder templateHolder) { // TODO - tiered storage - return TemplateMatchTier, hot and cold
         String typeName = templateHolder.getServerTypeDesc().getTypeName();
         CachePredicate cacheRule = getCacheRule(typeName);
         if (cacheRule == null) {
-            return TieredState.TIERED_COLD;
+            logger.trace("No cache rule for type {}, TemplateMatchTier = MATCH_COLD",typeName);
+            return TemplateMatchTier.MATCH_COLD;
         } else {
             if (cacheRule.isTransient()) {
-                return TieredState.TIERED_HOT;
+                logger.trace("Type {} is transient, TemplateMatchTier = MATCH_HOT",typeName);
+                return TemplateMatchTier.MATCH_HOT;
             } else if (templateHolder.isIdQuery()) {
-                return TieredState.TIERED_HOT_AND_COLD;
+                logger.trace("Id query for type {}, TemplateMatchTier = MATCH_HOT_AND_COLD",typeName);
+                return TemplateMatchTier.MATCH_HOT_AND_COLD;
             } else {
-                if (!cacheRule.evaluate(templateHolder)) {
-                    return TieredState.TIERED_COLD;
-                } else {
-                    return TieredState.TIERED_HOT;
-                }
+                TemplateMatchTier templateMatchTier = cacheRule.evaluate(templateHolder);
+                logger.trace("Query for type {}, TemplateMatchTier = {}",typeName, templateMatchTier);
+                return templateMatchTier;
             }
         }
     }

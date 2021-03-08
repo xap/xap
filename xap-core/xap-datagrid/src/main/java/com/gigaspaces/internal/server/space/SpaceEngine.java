@@ -122,6 +122,7 @@ import com.j_spaces.core.cache.blobStore.optimizations.BlobStoreOperationOptimiz
 import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.blobStore.storage.preFetch.BlobStorePreFetchIteratorBasedHandler;
 import com.j_spaces.core.cache.context.Context;
+import com.j_spaces.core.cache.context.TemplateMatchTier;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.*;
 import com.j_spaces.core.client.sql.ReadQueryParser;
@@ -4033,7 +4034,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         long leaseFilter = SystemTime.timeMillis();
 
         //TODO - tiered storage - impl for hot and cold
-        if ((getCacheManager().isEvictableCachePolicy() && !_cacheManager.isMemorySpace()) || (isTieredStorage() && context.getTemplateTieredState() != TieredState.TIERED_HOT)) {
+        if ((getCacheManager().isEvictableCachePolicy() && !_cacheManager.isMemorySpace()) || (isTieredStorage() && context.getTemplateTieredState() != TemplateMatchTier.MATCH_HOT)) {
             IScanListIterator<IEntryCacheInfo> toScan =
                     _cacheManager.makeScanableEntriesIter(context, template, serverTypeDesc,
                             0 /*scnFilter*/, leaseFilter /*leaseFilter*/,

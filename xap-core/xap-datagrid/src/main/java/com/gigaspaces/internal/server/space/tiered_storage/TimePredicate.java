@@ -3,6 +3,7 @@ package com.gigaspaces.internal.server.space.tiered_storage;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.transport.ITemplatePacket;
+import com.j_spaces.core.cache.context.TemplateMatchTier;
 
 import java.time.Duration;
 
@@ -31,9 +32,15 @@ public class TimePredicate implements CachePredicate {
         return timeColumn;
     }
 
-    @Override
-    public boolean evaluate(ITemplatePacket packet) {
-        return false; //TODO - tiered storage
+    //eviction from hot tier
+    public static long getExpirationTime(long currentTime){
+        //TODO - tiered storage
+        return 0;
+    }
+
+    //For tests
+    public TemplateMatchTier evaluate(ITemplatePacket packet) {
+        return TemplateMatchTier.MATCH_COLD; //TODO - tiered storage
     }
 
     @Override
@@ -47,8 +54,8 @@ public class TimePredicate implements CachePredicate {
     }
 
     @Override
-    public boolean evaluate(ITemplateHolder template) {
-        return false; //TODO - tiered storage
+    public TemplateMatchTier evaluate(ITemplateHolder template) {
+        return TemplateMatchTier.MATCH_COLD; //TODO - tiered storage
     }
 
     @Override
