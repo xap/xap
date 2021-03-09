@@ -95,10 +95,10 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
                 context.setTemplateTieredState(_cacheManager.getEngine().getTieredStorageManager().guessTemplateTier(template));
             }
 
-            if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT|| memoryOnly || template.isMemoryOnlySearch()){
+            if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT || memoryOnly || template.isMemoryOnlySearch()){
                 _memoryOnly = true;
             } else {
-                _memoryOnly = false;
+                _memoryOnly = memoryOnly;
                 if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_COLD){
                     _doneWithCache = true;
                 }
@@ -224,6 +224,11 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
 
     public IEntryHolder next()
             throws SAException {
+
+        if(_cacheManager.isTieredStorage() && _context.getTemplateTieredState() == TemplateMatchTier.MATCH_COLD && _memoryOnly){
+            return null;
+        }
+
         if (_uids != null)
             return next_by_uid();
 
@@ -562,8 +567,11 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
 
         while (true) {
             IEntryHolder entryHolder = _saIter.next();
-            if (entryHolder == null)
+            if (entryHolder == null) {
+                _currentEntryCacheInfo = null;
+                _currentEntryHolder = null;
                 return null;
+            }
 
             if (_entriesReturned != null && _entriesReturned.contains(entryHolder.getUID()))
                 continue;

@@ -2911,7 +2911,7 @@ public class CacheManager extends AbstractCacheManager
 
     public int count(Context context, ITemplateHolder template, final XtnEntry xtnFilter)
             throws SAException {
-        final boolean memoryOnly = isCacheExternalDB() || _isMemorySA || isResidentEntriesCachePolicy() || template.isMemoryOnlySearch();
+        final boolean memoryOnly = isTieredStorage() ? template.isMemoryOnlySearch() : isCacheExternalDB() || _isMemorySA || isResidentEntriesCachePolicy() || template.isMemoryOnlySearch();
         final boolean slaveLeaseManager = _leaseManager.isSlaveLeaseManagerForEntries();
 
         if (xtnFilter != null)

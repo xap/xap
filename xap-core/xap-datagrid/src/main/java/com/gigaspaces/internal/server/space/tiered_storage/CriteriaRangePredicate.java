@@ -41,9 +41,10 @@ public class CriteriaRangePredicate implements CachePredicate {
     @Override
     public TemplateMatchTier evaluate(ITemplateHolder template) {
         TemplateMatchTier templateMatchTier = getTemplateMatchTier(template);
-        if(templateMatchTier == TemplateMatchTier.MATCH_HOT_AND_COLD) {
-            return template.getBatchOperationContext() != null && template.getBatchOperationContext().getMaxEntries() < Integer.MAX_VALUE
-                    ? templateMatchTier : TemplateMatchTier.MATCH_COLD;
+        if (templateMatchTier == TemplateMatchTier.MATCH_HOT_AND_COLD) {
+            return template.isMemoryOnlySearch() ? TemplateMatchTier.MATCH_HOT :
+                    (template.getBatchOperationContext() != null && template.getBatchOperationContext().getMaxEntries() < Integer.MAX_VALUE ?
+                            templateMatchTier : TemplateMatchTier.MATCH_COLD);
         }
         return templateMatchTier;
     }
