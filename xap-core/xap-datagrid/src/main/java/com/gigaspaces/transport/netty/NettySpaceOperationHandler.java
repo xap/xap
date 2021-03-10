@@ -2,11 +2,9 @@ package com.gigaspaces.transport.netty;
 
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.server.space.SpaceImpl;
-import com.gigaspaces.transport.LightMarshalInputStream;
-import com.gigaspaces.transport.LightMarshalOutputStream;
+import com.gigaspaces.transport.serializers.NettyReusableMarshalSerializer;
+import com.gigaspaces.transport.serializers.NettySerializer;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
-import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.slf4j.Logger;
@@ -20,8 +18,7 @@ public class NettySpaceOperationHandler extends ChannelInboundHandlerAdapter {
 
     private final SpaceImpl space;
     private final Executor executor;
-    private final LightMarshalInputStream.Context misContext = new LightMarshalInputStream.Context();
-    private final LightMarshalOutputStream.Context mosContext = new LightMarshalOutputStream.Context();
+    private final NettySerializer serializer = new NettyReusableMarshalSerializer();
 
     public NettySpaceOperationHandler(SpaceImpl space, Executor executor) {
         this.space = space;
@@ -56,7 +53,8 @@ public class NettySpaceOperationHandler extends ChannelInboundHandlerAdapter {
         public void run() {
             Object response;
             try {
-                RemoteOperationRequest<?> request = deserialize(requestBuffer);
+                RemoteOperationRequest<?> request = serializer.deserialize(requestBuffer);
+                requestBuffer.release();
                 response = space.executeOperation(request);
             } catch (Exception e) {
                 logger.info("error: {}", e.toString());
@@ -64,24 +62,10 @@ public class NettySpaceOperationHandler extends ChannelInboundHandlerAdapter {
             }
             try {
                 final ByteBuf responseBuffer = ctx.alloc().buffer();
-                serialize(responseBuffer, response);
+                serializer.serialize(responseBuffer, response);
                 ctx.writeAndFlush(responseBuffer);
             } catch (IOException e) {
                 logger.error("Failed to write result to channel", e);
-            }
-        }
-
-        private RemoteOperationRequest<?> deserialize(ByteBuf buffer) throws IOException, ClassNotFoundException {
-            try (InputStream is = new ByteBufInputStream(buffer, true);
-                 ObjectInputStream ois = new LightMarshalInputStream(is, misContext)) {
-                return (RemoteOperationRequest<?>) ois.readObject();
-            }
-        }
-
-        private void serialize(ByteBuf buffer, Object obj) throws IOException {
-            try (OutputStream os = new ByteBufOutputStream(buffer);
-                 ObjectOutputStream mos = new LightMarshalOutputStream(os, mosContext)) {
-                mos.writeObject(obj);
             }
         }
     }

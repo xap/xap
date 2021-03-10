@@ -1,8 +1,9 @@
 package com.gigaspaces.transport;
 
-import com.gigaspaces.internal.io.GSByteArrayOutputStream;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.LRMIUtilities;
+import com.gigaspaces.transport.serializers.NioReusableMarshalSerializer;
+import com.gigaspaces.transport.serializers.NioSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,12 +19,10 @@ public class NioChannel {
     private static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
     private static final int LENGTH_SIZE = 4;
     private static final long SUSPICIOUS_THRESHOLD = Long.parseLong(System.getProperty("com.gs.lrmi.suspicious-threshold", "20000000"));
-    //private static final boolean CUSTOM_MARSHAL = PocSettings.customMarshal;
     private static final boolean DIRECT_BUFFERS = PocSettings.directBuffers;
 
     private final SocketChannel socketChannel;
-    private final LightMarshalOutputStream.Context mosContext;
-    private final LightMarshalInputStream.Context misContext;
+    private final NioSerializer serializer = new NioReusableMarshalSerializer();
     private final ByteBuffer headerBuffer = ByteBuffer.allocateDirect(LENGTH_SIZE);
     private ByteBuffer nbrDataBuffer;
     private int nbrIterations = 1;
@@ -36,10 +35,6 @@ public class NioChannel {
 
     public NioChannel(SocketChannel socketChannel) {
         this.socketChannel = socketChannel;
-        //mosContext = CUSTOM_MARSHAL ? new LightMarshalOutputStream.Context() : null;
-        //misContext = CUSTOM_MARSHAL ? new LightMarshalInputStream.Context() : null;
-        mosContext = new LightMarshalOutputStream.Context();
-        misContext = new LightMarshalInputStream.Context();
         try {
             LRMIUtilities.initNewSocketProperties(socketChannel);
         } catch (SocketException e) {
@@ -60,28 +55,11 @@ public class NioChannel {
     }
 
     public ByteBuffer serialize(Object obj) throws IOException {
-        try (GSByteArrayOutputStream bos = new GSByteArrayOutputStream()) {
-            bos.setSize(LENGTH_SIZE); // for the stream size
-            try (ObjectOutputStream mos = new LightMarshalOutputStream(bos, mosContext)) {
-                mos.writeObject(obj);
-            }
-
-            int length = bos.size();
-            ByteBuffer buffer = ByteBuffer.wrap(bos.getBuffer());
-            buffer.putInt(length - LENGTH_SIZE);
-            buffer.position(length);
-            buffer.flip();
-            return buffer;
-        }
+        return serializer.serializeWithLength(obj);
     }
 
     public Object deserialize(ByteBuffer buffer) throws IOException, ClassNotFoundException {
-        //try (InputStream is = new GSByteArrayInputStream(buffer.array())) {
-        try (InputStream is = new ByteBufferBackedInputStream(buffer)) {
-            try (ObjectInputStream ois = new LightMarshalInputStream(is, misContext)) {
-                return ois.readObject();
-            }
-        }
+        return serializer.deserialize(buffer);
     }
 
     public void writeBlocking(ByteBuffer buffer) throws IOException {
@@ -172,20 +150,7 @@ public class NioChannel {
     }
 
     public void close() throws IOException {
-        if (mosContext != null)
-            mosContext.close();
-        if (misContext != null)
-            misContext.close();
+        serializer.close();
         socketChannel.close();
     }
-
-    /*
-    private ObjectOutputStream newObjectOutputStream(GSByteArrayOutputStream bos) throws IOException {
-        return CUSTOM_MARSHAL ? new LightMarshalOutputStream(bos, mosContext) : new ObjectOutputStream(bos);
-    }
-
-    private ObjectInputStream newObjectInputStream(InputStream is) throws IOException {
-        return CUSTOM_MARSHAL ? new LightMarshalInputStream(is, misContext) : new ObjectInputStream(is);
-    }
-     */
 }

@@ -357,8 +357,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
         switch (PocSettings.serverType) {
             case LRMI: return null;
-            case NIO:
-                    return new NioServer(space);
+            case NIO: return new NioServer(space);
             case NETTY: return new NettyServer(space);
             default: throw new IllegalStateException("Unsupported server type: " + PocSettings.serverType);
         }
