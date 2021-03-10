@@ -17,14 +17,14 @@ import java.sql.SQLException;
 
 import static com.gigaspaces.internal.server.space.tiered_storage.SqliteUtils.getPropertyValue;
 
-public class RDBMSIterator implements ISAdapterIterator<IEntryHolder> {
+public class SingleTypeRDBMSIterator implements ISAdapterIterator<IEntryHolder> {
 
     private final ResultSet resultSet;
     private final String typeName;
     private final SpaceTypeManager typeManager;
     private final ITypeDesc typeDesc;
 
-    public RDBMSIterator(ResultSet resultSet, ITypeDesc typeDesc, SpaceTypeManager typeManager) {
+    public SingleTypeRDBMSIterator(ResultSet resultSet, ITypeDesc typeDesc, SpaceTypeManager typeManager) {
         this.resultSet = resultSet;
         this.typeManager = typeManager;
         this.typeDesc = typeDesc;

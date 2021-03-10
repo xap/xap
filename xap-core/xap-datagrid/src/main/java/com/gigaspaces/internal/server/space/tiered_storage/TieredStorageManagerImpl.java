@@ -108,7 +108,7 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
         CachePredicate cacheRule = getCacheRule(typeName);
         if (cacheRule == null) {
             logger.trace("No cache rule for type {}, TemplateMatchTier = MATCH_COLD",typeName);
-            return TemplateMatchTier.MATCH_COLD;
+            return templateHolder.isEmptyTemplate() ? TemplateMatchTier.MATCH_HOT_AND_COLD : TemplateMatchTier.MATCH_COLD;
         } else {
             if (cacheRule.isTransient()) {
                 logger.trace("Type {} is transient, TemplateMatchTier = MATCH_HOT",typeName);

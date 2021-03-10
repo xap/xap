@@ -41,6 +41,8 @@ public interface InternalRDBMS {
 
     ISAdapterIterator<IEntryHolder> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder) throws SAException;
 
+    boolean isKnownType(String name);
+
     void shutDown();
 
     //Temporary for tests

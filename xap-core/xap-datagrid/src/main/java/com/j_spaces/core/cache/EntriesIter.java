@@ -21,6 +21,7 @@ import com.gigaspaces.internal.collections.ObjectIntegerMap;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.MatchResult;
+import com.gigaspaces.internal.server.space.tiered_storage.MultiTypedRDBMSISIterator;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.server.storage.ITransactionalEntryData;
@@ -212,7 +213,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
 
         if(_cacheManager.isTieredStorage() && _doneWithCache){
             //TODO - tiered storage - handle null template
-            _saIter = _cacheManager.getEngine().getTieredStorageManager().getInternalStorage().makeEntriesIter(_context, _types[0].getTypeName(), _templateHolder);
+            _saIter = new MultiTypedRDBMSISIterator(_cacheManager.getEngine().getTieredStorageManager().getInternalStorage(), _context, _types, _templateHolder);
         }
 
     }
@@ -255,7 +256,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
 
                 if(_cacheManager.isTieredStorage() && _context.getTemplateTieredState() != TemplateMatchTier.MATCH_HOT && _saIter == null){
                     //TODO - tiered storage - handle multiple types
-                    _saIter = _cacheManager.getEngine().getTieredStorageManager().getInternalStorage().makeEntriesIter(_context, _types[0].getTypeName(), _templateHolder);
+                    _saIter = new MultiTypedRDBMSISIterator(_cacheManager.getEngine().getTieredStorageManager().getInternalStorage(), _context, _types, _templateHolder);
                 }
 
                 return saIterNext();

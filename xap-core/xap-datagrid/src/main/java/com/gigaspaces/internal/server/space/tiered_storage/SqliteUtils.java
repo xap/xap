@@ -1,6 +1,9 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.metadata.PropertyInfo;
+import com.gigaspaces.internal.query.AbstractCompundCustomQuery;
+import com.gigaspaces.internal.query.CompoundAndCustomQuery;
+import com.gigaspaces.internal.query.ICustomQuery;
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.builder.range.*;
 
@@ -10,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.List;
 
 public class SqliteUtils {
 
@@ -159,5 +163,30 @@ public class SqliteUtils {
             throw new IllegalStateException("SQL query of type" + range.getClass().toString() + " is unsupported");
         }
         return stringBuilder.toString();
+    }
+
+    public static String getCustomQueryString(ICustomQuery customQuery) {
+        if (customQuery instanceof AbstractCompundCustomQuery) {
+            String operation;
+            if (customQuery.getClass().equals(CompoundAndCustomQuery.class)) {
+                operation = " AND ";
+            } else {
+                operation = " OR ";
+            }
+            List<ICustomQuery> subQueries = ((AbstractCompundCustomQuery)customQuery).get_subQueries();
+            StringBuilder stringBuilder = new StringBuilder();
+            for (ICustomQuery query :subQueries){
+                stringBuilder.append(getCustomQueryString(query)).append(operation);
+            }
+            int lastIndexOf = stringBuilder.lastIndexOf(operation);
+            if (lastIndexOf != -1) {
+                stringBuilder.delete(lastIndexOf, stringBuilder.length());
+            }
+            return stringBuilder.toString();
+        } else if (customQuery instanceof Range) {
+            return SqliteUtils.getRangeString((Range)customQuery);
+        } else {
+            throw new IllegalArgumentException("SQL query of type" + customQuery.getClass().toString() + " is unsupported");
+        }
     }
 }
