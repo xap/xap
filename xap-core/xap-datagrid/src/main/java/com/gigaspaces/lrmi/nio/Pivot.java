@@ -16,6 +16,7 @@
 
 package com.gigaspaces.lrmi.nio;
 
+import com.gigaspaces.async.Executors;
 import com.gigaspaces.config.lrmi.nio.NIOConfiguration;
 import com.gigaspaces.exception.lrmi.LRMIUnhandledException;
 import com.gigaspaces.exception.lrmi.LRMIUnhandledException.Stage;
@@ -50,6 +51,7 @@ import com.gigaspaces.lrmi.nio.selector.SelectorManager;
 import com.gigaspaces.lrmi.nio.selector.handler.ReadSelectorThread;
 import com.gigaspaces.lrmi.nio.selector.handler.WriteSelectorThread;
 import com.gigaspaces.management.transport.ITransportConnection;
+import com.gigaspaces.transport.PocSettings;
 import com.j_spaces.kernel.ClassLoaderHelper;
 
 import com.j_spaces.kernel.SystemProperties;
@@ -257,7 +259,8 @@ public class Pivot {
                 config.getBindPort(),
                 config.getReadSelectorThreads());
 
-        _threadPool = LRMIRuntime.getRuntime().getThreadPool();
+
+        _threadPool = PocSettings.serverLrmiExecutor ? LRMIRuntime.getRuntime().getThreadPool() : Executors.newDirectExecutor();
         _livenessPriorityThreadPool = LRMIRuntime.getRuntime().getLivenessPriorityThreadPool();
         _monitoringPriorityThreadPool = LRMIRuntime.getRuntime().getMonitoringPriorityThreadPool();
         _customThreadPool = LRMIRuntime.getRuntime().getCustomThreadPool();
