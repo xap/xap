@@ -1,5 +1,8 @@
 package com.gigaspaces.jdbc;
 
+import com.gigaspaces.jdbc.output.ConsoleOutput;
+import com.gigaspaces.jdbc.output.Output;
+
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -7,24 +10,33 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 public class DumpUtils {
     public static List<Row> dump(ResultSet rs) throws SQLException {
         List<Row> result = new ArrayList<>();
         ResultSetMetaData metaData = rs.getMetaData();
+        Output out = new Output();
         String[] columnNames = getHeader(metaData);
-        System.out.println(getHeaderString(metaData));
+        out.addColumns(columnNames);
+
         while (rs.next()) {
             Object[] rowValues = getRow(rs, metaData);
+            out.addRow(Arrays.stream(rowValues).map(String::valueOf).collect(Collectors.toList()));
             result.add(new Row(columnNames, rowValues));
         }
 
+        ConsoleOutput.newline();
+        ConsoleOutput.println(out);
+
+/*
+        System.out.println(getHeaderString(metaData));
         int counter = 0;
         for (Row row : result) {
             System.out.println(rowToString(row.columnValues));
             if (++counter == 10)
                 break;
-        }
+        }*/
 //        System.out.println(rowToString(result.stream().map(x -> x.columnValues).findAny().orElse(new Object[columnNames.length])));
 //        System.out.println(result.stream().map(x->x.columnValues).findAny().map(JdbcTestUtils::rowToString).orElse("| Query returned no data! |"));
 
@@ -38,7 +50,6 @@ public class DumpUtils {
     }
 
     public static String[] getHeader(ResultSetMetaData metaData) throws SQLException {
-        StringJoiner sj = new StringJoiner(" | ", "| ", " |");
         int columnCount = metaData.getColumnCount();
         String[] result = new String[columnCount];
         int Cs=1;

@@ -23,7 +23,6 @@ import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -41,7 +40,7 @@ public class GDriver implements Driver {
     public static final int MAJOR_VERSION = 1;
     public static final int MINOR_VERSION = 1;
     public static final String DRIVER_NAME = "GigaSpaces JDBC Driver";
-    public static boolean registered = false;
+    private static boolean registered = false;
     private static HashMap procTable = null;
     //logger
     final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
@@ -50,7 +49,7 @@ public class GDriver implements Driver {
         registerDriver();
     }
 
-    public static void registerDriver() {
+    private static void registerDriver() {
         //Class.forName will call this, so this is where we register the driver
         if (!registered) {
             if (_logger.isDebugEnabled()) {
@@ -96,8 +95,8 @@ public class GDriver implements Driver {
      *
      * @see java.sql.Driver#acceptsURL(java.lang.String)
      */
-    public boolean acceptsURL(String url) throws SQLException {
-        return (url.startsWith(GConnection.JDBC_GIGASPACES));
+    public boolean acceptsURL(String url) {
+        return (url.startsWith(GConnection.JDBC_GIGASPACES_URL));
     }
 
     /**
@@ -107,7 +106,7 @@ public class GDriver implements Driver {
     public Connection connect(String url, Properties info) throws SQLException {
 
         if (acceptsURL(url))
-            return new GConnection(url, info);
+            return new GConnection(url, info).connect();
 
         return null;
 
@@ -116,8 +115,7 @@ public class GDriver implements Driver {
     /**
      * @see java.sql.Driver#getPropertyInfo(java.lang.String, java.util.Properties)
      */
-    public DriverPropertyInfo[] getPropertyInfo(String url, Properties info)
-            throws SQLException {
+    public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) {
         return null;
     }
 
@@ -129,7 +127,7 @@ public class GDriver implements Driver {
         return procTable;
     }
 
-    public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
+    public java.util.logging.Logger getParentLogger() {
         return java.util.logging.Logger.getLogger(Constants.LOGGER_QUERY);
     }
 }

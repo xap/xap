@@ -20,7 +20,6 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
 import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.gigaspaces.internal.transport.ITemplatePacket;
-import com.gigaspaces.internal.utils.ValidationUtils;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.client.ClientUIDHandler;
 import com.j_spaces.core.client.Modifiers;

@@ -19,13 +19,10 @@ package com.j_spaces.jdbc.driver;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.router.SpaceProxyRouter;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
-import com.gigaspaces.internal.utils.ValidationUtils;
-import com.gigaspaces.jdbc.request.RequestPacketV3;
 import com.gigaspaces.security.directory.DefaultCredentialsProvider;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.admin.IRemoteJSpaceAdmin;
 import com.j_spaces.core.client.BasicTypeInfo;
-import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.SpaceFinder;
 import com.j_spaces.jdbc.*;
 import com.j_spaces.jdbc.batching.BatchResponsePacket;
@@ -55,22 +52,22 @@ import java.util.concurrent.Executor;
 public class GConnection implements Connection {
 
     public static final String READ_MODIFIERS = "readModifiers";
-    public static final String USE_NEW_DRIVER = "useNewDriver";
     public static final String JDBC_GIGASPACES = "jdbc:gigaspaces:";
     public static final String JDBC_GIGASPACES_URL = "jdbc:gigaspaces:url:";
     private static final long EXECUTE_RETRY_TIMEOUT = 60 * 1000l;
 
-    private final String url;
-    private final ISpaceProxy space;
+    private final String connectionString;
+    private final Properties properties;
+    private String spaceUrl;
+    private ISpaceProxy space;
     private IQueryProcessor qp;
     private ConnectionContext context;
     private Integer readModifiers;
-    private final Properties properties;
-    private Boolean useNewDriver = false;
 
-    private GConnection(IJSpace space, Properties properties) throws SQLException {
+    protected GConnection(IJSpace space, Properties properties) throws SQLException {
         try {
-            this.url = JDBC_GIGASPACES_URL + space.getURL().getURL();
+            this.spaceUrl = space.getURL().getURL();
+            this.connectionString = JDBC_GIGASPACES_URL + this.spaceUrl;
             this.space = (ISpaceProxy) space;
             this.properties = properties;
             initialize(space.getDirectProxy().getRemoteJSpace());
@@ -80,21 +77,30 @@ public class GConnection implements Connection {
     }
 
     /**
-     * Create new connection from given url and properties
+     * Create new connection from given connection string and properties
      */
-    public GConnection(String url, Properties properties) throws SQLException {
-        try {
-            if (!url.startsWith(JDBC_GIGASPACES_URL))
-                throw new IllegalArgumentException("Invalid Url [" + url + "] - does not start with " + JDBC_GIGASPACES_URL);
+    public GConnection(String connectionString, Properties properties) {
+        this.connectionString = connectionString;
+        this.properties = properties;
+    }
 
-            this.url = url.substring(JDBC_GIGASPACES_URL.length());
-            //noinspection deprecation
-            this.space = (ISpaceProxy) SpaceFinder.find(this.url);
-            this.properties = properties;
+    protected String validateAndGetSpaceUrl(String connectionString) throws SQLException {
+        if (!connectionString.startsWith(JDBC_GIGASPACES_URL))
+            throw new IllegalArgumentException("Invalid Url [" + connectionString + "] - does not start with " + JDBC_GIGASPACES_URL);
+        return connectionString.substring(JDBC_GIGASPACES_URL.length());
+    }
+
+    public Connection connect() throws SQLException {
+        if (this.space != null) throw new IllegalStateException("Already initialized");
+        this.spaceUrl = validateAndGetSpaceUrl(connectionString);
+        try {
+            this.space = (ISpaceProxy) SpaceFinder.find(this.spaceUrl);
             initialize(space.getDirectProxy().getRemoteJSpace());
         } catch (Exception e) {
             throw new SQLException("Error creating connection; Cause: " + e, "GSP", -137, e);
         }
+        return this;
+
     }
 
     private void initialize(final IRemoteSpace remoteSpace) throws Exception {
@@ -102,9 +108,6 @@ public class GConnection implements Connection {
             // NOTE: we explicitly use get() instead of getProperty() since the value might not be a string...
             Object modifiersProp = properties.get(READ_MODIFIERS);
             readModifiers = modifiersProp == null ? null : Integer.valueOf(modifiersProp.toString());
-
-            Object useNewDriverProp = properties.get(USE_NEW_DRIVER);
-            useNewDriver = useNewDriverProp != null && Boolean.parseBoolean(useNewDriverProp.toString());
 
             String username = properties.getProperty(ConnectionContext.USER);
             String password = properties.getProperty(ConnectionContext.PASSWORD);
@@ -621,7 +624,7 @@ public class GConnection implements Connection {
      * @return The ResponsePacket received from the QueryProcessor
      */
     public ResponsePacket sendStatement(String statement) throws SQLException {
-        RequestPacket packet = useNewDriver ? new RequestPacketV3() : new RequestPacket();
+        RequestPacket packet = new RequestPacket();
         packet.setModifiers(readModifiers);
         packet.setType(RequestPacket.Type.STATEMENT);
         packet.setStatement(statement);
@@ -660,7 +663,7 @@ public class GConnection implements Connection {
      * @return the url of this connection
      */
     public String getUrl() {
-        return url;
+        return connectionString;
     }
 
     public Array createArrayOf(String typeName, Object[] elements)
@@ -745,7 +748,7 @@ public class GConnection implements Connection {
         throw new UnsupportedOperationException();
     }
 
-    public Boolean useNewDriver() {
-        return useNewDriver;
+    public boolean useNewDriver() {
+        return false;
     }
 }

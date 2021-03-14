@@ -286,6 +286,12 @@
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>
+            <dependency>
+                <groupId>org.gigaspaces</groupId>
+                <artifactId>xap-jdbc</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

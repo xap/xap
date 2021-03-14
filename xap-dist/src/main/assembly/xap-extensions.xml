@@ -1,7 +1,7 @@
 <assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
-    <id>xap-cassandra</id>
+    <id>xap-extensions</id>
     <formats>
         <format>dir</format>
     </formats>
@@ -227,7 +227,15 @@
                 <include>com.github.spullara.mustache.java:compiler</include>
             </includes>
         </dependencySet>
-
+        <dependencySet>
+            <useProjectArtifact>false</useProjectArtifact>
+            <outputDirectory>product/lib/platform/jdbc</outputDirectory>
+            <includes>
+                <include>org.gigaspaces:xap-jdbc</include>
+                <include>com.github.jsqlparser:jsqlparser</include>
+            </includes>
+            <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+        </dependencySet>
     </dependencySets>
 
     <fileSets>
