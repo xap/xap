@@ -32,7 +32,7 @@ import java.io.ObjectOutput;
 public abstract class AbstractSpaceRequestInfo implements SpaceRequestInfo, Externalizable, ISwapExternalizable {
     private static final long serialVersionUID = 1L;
 
-    private static final int FROM_GATEWAY = 1 << 0;
+    private static final int FROM_GATEWAY = 1; // 1 << 0 same as 1
     private static final int SPACE_CONTEXT = 1 << 1;
 
     private SpaceContext _spaceContext;
@@ -54,15 +54,16 @@ public abstract class AbstractSpaceRequestInfo implements SpaceRequestInfo, Exte
 
     private int buildFlags() {
         int flags = 0;
-        if (_fromGateway)
+        if (_fromGateway) {
             flags |= FROM_GATEWAY;
-        if (_spaceContext != null)
+        }
+        if (_spaceContext != null) {
             flags |= SPACE_CONTEXT;
+        }
         return flags;
     }
 
     @Override
-
     public SpaceContext getSpaceContext() {
         return _spaceContext;
     }
@@ -83,9 +84,11 @@ public abstract class AbstractSpaceRequestInfo implements SpaceRequestInfo, Exte
     }
 
     private void serialize(ObjectOutput out) throws IOException {
-        out.writeInt(buildFlags());
-        if (_spaceContext != null)
+        final int flags = buildFlags();
+        out.writeInt(flags);
+        if ((flags & SPACE_CONTEXT) != 0) {
             IOUtils.writeObject(out, _spaceContext);
+        }
     }
 
     @Override

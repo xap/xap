@@ -16,16 +16,20 @@
 
 package com.gigaspaces.internal.client.spaceproxy;
 
+import com.gigaspaces.admin.demote.DemoteFailedException;
 import com.gigaspaces.admin.quiesce.QuiesceToken;
 import com.gigaspaces.client.DirectSpaceProxyFactory;
+import com.gigaspaces.executor.SpaceTask;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.CommonProxyActionInfo;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.SnapshotProxyActionInfo;
 import com.gigaspaces.internal.client.spaceproxy.actions.AbstractSpaceProxyActionManager;
 import com.gigaspaces.internal.client.spaceproxy.actions.SpaceProxyImplActionManager;
 import com.gigaspaces.internal.client.spaceproxy.events.SpaceProxyDataEventsManager;
+import com.gigaspaces.internal.client.spaceproxy.executors.SystemTask;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ISpaceProxyTypeManager;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
 import com.gigaspaces.internal.client.spaceproxy.metadata.SpaceProxyTypeManager;
+import com.gigaspaces.internal.client.spaceproxy.operations.ExecuteTaskSpaceOperationRequest;
 import com.gigaspaces.internal.client.spaceproxy.operations.GetEntryTypeDescriptorSpaceOperationRequest;
 import com.gigaspaces.internal.client.spaceproxy.operations.RegisterEntryTypeDescriptorSpaceOperationRequest;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceOperationRequest;
@@ -37,7 +41,6 @@ import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.space.IClusterInfoChangedListener;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
 import com.gigaspaces.internal.server.space.SpaceImpl;
-import com.gigaspaces.admin.demote.DemoteFailedException;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
@@ -46,26 +49,12 @@ import com.gigaspaces.lrmi.LRMIRuntime;
 import com.gigaspaces.metadata.SpaceMetadataException;
 import com.gigaspaces.query.ISpaceQuery;
 import com.gigaspaces.security.directory.CredentialsProvider;
-import com.j_spaces.core.IJSpace;
-import com.j_spaces.core.IJSpaceContainer;
-import com.j_spaces.core.IStubHandler;
-import com.j_spaces.core.OperationID;
-import com.j_spaces.core.SpaceContext;
+import com.j_spaces.core.*;
 import com.j_spaces.core.admin.ContainerConfig;
 import com.j_spaces.core.admin.IInternalRemoteJSpaceAdmin;
 import com.j_spaces.core.admin.IJSpaceContainerAdmin;
 import com.j_spaces.core.admin.JSpaceAdminProxy;
-import com.j_spaces.core.client.ActionListener;
-import com.j_spaces.core.client.EntrySnapshot;
-import com.j_spaces.core.client.IJSpaceProxyListener;
-import com.j_spaces.core.client.IProxySecurityManager;
-import com.j_spaces.core.client.LookupFinder;
-import com.j_spaces.core.client.Modifiers;
-import com.j_spaces.core.client.NullProxySecurityManager;
-import com.j_spaces.core.client.ProxySettings;
-import com.j_spaces.core.client.SpaceProxySecurityManager;
-import com.j_spaces.core.client.SpaceURL;
-import com.j_spaces.core.client.UpdateModifiers;
+import com.j_spaces.core.client.*;
 import com.j_spaces.core.client.sql.IQueryManager;
 import com.j_spaces.core.client.sql.QueryManager;
 import com.j_spaces.jdbc.builder.SQLQueryTemplatePacket;
@@ -73,13 +62,14 @@ import com.j_spaces.kernel.SystemProperties;
 import com.sun.jini.proxy.DefaultProxyPivot;
 import com.sun.jini.proxy.MarshalPivot;
 import com.sun.jini.proxy.MarshalPivotProvider;
-
 import net.jini.admin.Administrable;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 import net.jini.core.transaction.server.ServerTransaction;
 import net.jini.id.Uuid;
 import net.jini.lookup.SameProxyVersionProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -89,9 +79,6 @@ import java.security.SecureRandom;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Provides the functionality of clustered proxy.
@@ -707,6 +694,15 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
                     spaceContext.setQuiesceToken(token);
             }
             spaceRequest.setSpaceContext(spaceContext);
+
+            // for broadcast table operation we need to set SpaceContext inside SpaceRequestInfo before task is
+            // distributed to other partitions.
+            if(spaceRequest instanceof ExecuteTaskSpaceOperationRequest) {
+                SpaceTask<?> task = ((ExecuteTaskSpaceOperationRequest) spaceRequest).getTask();
+                if (task instanceof SystemTask) {
+                    ((SystemTask<?>) task).getSpaceRequestInfo().setSpaceContext(spaceContext);
+                }
+            }
         } catch (com.gigaspaces.security.SecurityException e) {
             spaceRequest.setRemoteOperationExecutionError(e);
             return false;

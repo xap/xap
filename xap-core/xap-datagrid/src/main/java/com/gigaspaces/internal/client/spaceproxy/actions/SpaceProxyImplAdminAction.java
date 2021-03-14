@@ -26,7 +26,6 @@ import com.j_spaces.core.DropClassException;
 import com.j_spaces.core.SpaceContext;
 import com.j_spaces.core.SpaceHealthStatus;
 import com.j_spaces.core.admin.IRemoteJSpaceAdmin;
-
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 

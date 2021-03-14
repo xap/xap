@@ -2706,7 +2706,6 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             SpaceActionExecutor executor = getActionExecutor(systemTask);
             supportsBackup = executor.supportsBackup();
             privilege = executor.getPrivilege();
-            systemTask.getSpaceRequestInfo().setSpaceContext(sc);
         }
 
         beforeTypeOperation(!supportsBackup, sc, privilege, typeName);
