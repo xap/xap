@@ -98,7 +98,7 @@ public class QueryHandler {
                     Modifiers.contains( request.getModifiers(), Modifiers.EXPLAIN_PLAN ) &&
                     ( ( SelectQuery )query ).getExplainPlan() == null ) {
 
-                    ( ( SelectQuery )query ).setExplainPlan( new ExplainPlanImpl( null ) );
+                    ( ( SelectQuery )query ).setExplainPlan( new ExplainPlanImpl( ((SelectQuery) query).getTableName() ) );
                 }
                 response = query.executeOnSpace(space, session.getTransaction());
                 if( query instanceof AbstractDMLQuery && ((AbstractDMLQuery)query ).getExplainPlan() != null ){

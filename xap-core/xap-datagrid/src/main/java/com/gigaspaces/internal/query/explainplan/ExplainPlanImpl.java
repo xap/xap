@@ -18,7 +18,10 @@ package com.gigaspaces.internal.query.explainplan;
 import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.IntegerObjectMap;
-import com.gigaspaces.internal.utils.Constants;
+import com.gigaspaces.internal.query.explainplan.formatter.ExplainPlanFormat;
+import com.gigaspaces.internal.query.explainplan.formatter.IndexChoiceFormat;
+import com.gigaspaces.internal.query.explainplan.formatter.IndexInfoFormat;
+import com.gigaspaces.internal.query.explainplan.formatter.IndexInspectionFormat;
 import com.gigaspaces.internal.utils.ValidationUtils;
 import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.client.SQLQuery;
@@ -34,14 +37,25 @@ import java.util.*;
 public class ExplainPlanImpl implements ExplainPlan {
 
     private final SQLQuery<?> query;
+    private final String tableName;
     private final Map<String, SingleExplainPlan> plans = new HashMap<>();
-    private final IntegerObjectMap<String> indexInfoDescCache = CollectionsFactory.getInstance().createIntegerObjectMap();
+    private final IntegerObjectMap<Integer> indexInfoDescCache = CollectionsFactory.getInstance().createIntegerObjectMap();
 
     /**
      * @param query can be null
      */
     public ExplainPlanImpl(SQLQuery query) {
         this.query = query;
+        this.tableName = query != null ? query.getTypeName() : null;
+    }
+
+    public ExplainPlanImpl(String tableName) {
+        this.tableName = tableName;
+        query = null;
+    }
+
+    public String getTableName() {
+        return tableName;
     }
 
     public static ExplainPlanImpl fromQueryPacket(Object query) {
@@ -75,17 +89,14 @@ public class ExplainPlanImpl implements ExplainPlan {
 
     @Override
     public String toString() {
-        Map<String, Object> plan = Collections.emptyMap();
         TextReportFormatter report = new TextReportFormatter();
-        report.line(ExplainPlanUtil.REPORT_START);
         if (ValidationUtils.isOldExplainPlan()) {
+            report.line(ExplainPlanUtil.REPORT_START);
             append(report);
-        } else {
-            plan = createPlan(report);
+            report.line(ExplainPlanUtil.REPORT_END);
+            return report.toString();
         }
-        System.out.println(plan.size());
-        report.line(ExplainPlanUtil.REPORT_END);
-        return report.toString();
+        return createPlan().toString();
     }
 
     protected void append(TextReportFormatter report) {
@@ -104,28 +115,13 @@ public class ExplainPlanImpl implements ExplainPlan {
      * @return JSON structured plan
      * @since 16.0, GS-14433
      */
-    protected Map<String, Object> createPlan(TextReportFormatter report) {
-        String queryString;
-        String typeName = "";
-        final Map<String, Object> explainPlan = new HashMap<>();
-        if (query == null) {
-            typeName = plans.values().iterator().next().getIndexesInfo().keySet().stream().findFirst().orElse("");
-            queryString = typeName;
-        } else {
-            queryString = this.query.toString();
-            typeName = query.getTypeName();
+    protected ExplainPlanFormat createPlan() {
+        ExplainPlanFormat planFormat = new ExplainPlanFormat();
+        planFormat.setTableName(getTableName());
+        if (!plans.isEmpty()) {
+            appendScanDetails(planFormat);
         }
-        report.line("TableScan: " + typeName);
-        explainPlan.put("TableScan: ", typeName);
-
-        if (plans.isEmpty()) {
-            final String notExecutedYet = Constants.NOT_EXECUTED_YET_ERROR;
-            report.line(notExecutedYet);
-            return Collections.singletonMap(queryString, notExecutedYet);
-        }
-
-        explainPlan.put(queryString, appendScanDetails(report));
-        return explainPlan;
+        return planFormat;
     }
 
     protected void appendSummary(TextReportFormatter report) {
@@ -164,19 +160,13 @@ public class ExplainPlanImpl implements ExplainPlan {
     /**
      * @since 16.0, GS-14433
      */
-    protected List<Map> appendScanDetails(TextReportFormatter report) {
+    protected void appendScanDetails(ExplainPlanFormat planFormat) {
         indexInfoDescCache.clear();
-        final List<Map> partitionsPlan = new ArrayList<>();
-        final String filterKey = Constants.QUERY_FILTER_DESCRIPTION;
-        report.line(filterKey);
-        String queryFilterTree = appendQueryFilterTree(report, plans.values().iterator().next().getRoot());
-        partitionsPlan.add(Collections.singletonMap(filterKey, queryFilterTree));
-
+        String queryFilterTree = getQueryFilterTree(plans.values().iterator().next().getRoot());
+        planFormat.setCriteria(queryFilterTree);
         for (Map.Entry<String, SingleExplainPlan> entry : plans.entrySet()) {
-            partitionsPlan.add(appendPartitionPlan(report, entry.getKey(), entry.getValue()));
+            planFormat.addIndexInspection(getPartitionPlan(entry.getKey(), entry.getValue()));
         }
-        report.unindent();
-        return partitionsPlan;
     }
 
     protected void append(TextReportFormatter report, QueryOperationNode node) {
@@ -191,14 +181,8 @@ public class ExplainPlanImpl implements ExplainPlan {
     /**
      * @since 16.0, GS-14433
      */
-    protected String appendQueryFilterTree(TextReportFormatter report, QueryOperationNode node) {
-        final String nodeTreeOutput = node.printTree();
-        if (node instanceof QueryJunctionNode) {
-            report.indent();
-            report.line(nodeTreeOutput);
-            report.unindent();
-        }
-        return nodeTreeOutput;
+    protected String getQueryFilterTree(QueryOperationNode node) {
+        return node.printTree();
     }
 
     protected void append(TextReportFormatter report, String partitionId, SingleExplainPlan singleExplainPlan) {
@@ -230,32 +214,20 @@ public class ExplainPlanImpl implements ExplainPlan {
     }
 
     /**
+     * @return Index scanning plan for partition
      * @since 16.0, GS-14433
      */
-    protected Map<String, Object> appendPartitionPlan(TextReportFormatter report, String partitionId, SingleExplainPlan singleExplainPlan) {
-        final String partitionIdString = "Partition Id: " + partitionId;
-        report.line(partitionIdString);
-
+    protected IndexInspectionFormat getPartitionPlan(String partitionId, SingleExplainPlan singleExplainPlan) {
+        final IndexInspectionFormat indexInspection = new IndexInspectionFormat();
         final Map<String, List<IndexChoiceNode>> indexesInfo = singleExplainPlan.getIndexesInfo();
-        final Map<String, Object> partitionPlan = new HashMap<>();
-        final Map<String, Object> tablePlan = new HashMap<>();
-        if (indexesInfo.isEmpty()) {
-            report.line(Constants.NO_INDEX_USED_MESSAGE);
-            partitionPlan.put(partitionIdString, Constants.NO_INDEX_USED_MESSAGE);
-            return partitionPlan;
-        }
-
-        report.indent();
-        for (Map.Entry<String, List<IndexChoiceNode>> entry : indexesInfo.entrySet()) {
+        if (indexesInfo.size() == 1) {
+            Map.Entry<String, List<IndexChoiceNode>> entry = indexesInfo.entrySet().iterator().next();
             List<IndexChoiceNode> indexChoices = entry.getValue();
-            String dataTypeName = entry.getKey();
-            final List<Map> indexInspections = appendIndexInspectionPerTable(report, indexChoices);
-            tablePlan.put(dataTypeName, indexInspections);
+            List<IndexChoiceFormat> indexInspections = getIndexInspectionPerTableType(indexChoices);
+            indexInspection.setIndexes(indexInspections);
+            indexInspection.setPartition(partitionId);
         }
-        report.unindent();
-
-        partitionPlan.put(partitionIdString, tablePlan);
-        return partitionPlan;
+        return indexInspection;
     }
 
     protected void append(TextReportFormatter report, String typeName, List<IndexChoiceNode> list, ScanningInfo scanningInfo) {
@@ -287,22 +259,16 @@ public class ExplainPlanImpl implements ExplainPlan {
     /**
      * @since 16.0, GS-14433
      */
-    protected List<Map> appendIndexInspectionPerTable(TextReportFormatter report, List<IndexChoiceNode> indexChoices) {
-        List<Map> operatorsInspectionList = new ArrayList<>();
-
-        int i = indexChoices.size() - 1;
-        if (indexChoices.get(0).getChosen() instanceof UnionIndexInfo) {
-            i = 0;
+    protected List<IndexChoiceFormat> getIndexInspectionPerTableType(List<IndexChoiceNode> indexChoices) {
+        List<IndexChoiceFormat> indexChoiceFormatList = new ArrayList<>();
+        for (IndexChoiceNode node : indexChoices) {
+            final List<IndexInfoFormat> selected = getSelectedIndexesDescription(node.getChosen());
+            final List<IndexInfoFormat> inspected = getInspectedIndexesDescription(node.getOptions());
+            boolean isUnion = node.getChosen() instanceof UnionIndexInfo;
+            final IndexChoiceFormat indexChoiceFormat = new IndexChoiceFormat(node.getName(), isUnion, inspected, selected);
+            indexChoiceFormatList.add(indexChoiceFormat);
         }
-
-        for (; i >= 0; i--) {
-            IndexChoiceNode node = indexChoices.get(i);
-            final List<String> selected = getSelectedIndexesDescription(node.getChosen());
-            report.line(selected);
-            operatorsInspectionList.add(Collections.singletonMap(node.getName(), selected));
-        }
-        report.unindent();
-        return operatorsInspectionList;
+        return indexChoiceFormatList;
     }
 
     private String getSelectedDesc(IndexInfo indexInfo) {
@@ -325,21 +291,37 @@ public class ExplainPlanImpl implements ExplainPlan {
     /**
      * @since 16.0, GS-14433
      */
-    private List<String> getSelectedIndexesDescription(IndexInfo indexInfo) {
-        final List<String> unitedIndexes = new ArrayList<>();
-        if (indexInfo == null) return Collections.singletonList("N/A");
+    private List<IndexInfoFormat> getInspectedIndexesDescription(List<IndexInfo> options) {
+        final List<IndexInfoFormat> indexInfoFormats = new ArrayList<>();
+        for (IndexInfo option : options) {
+            final IndexInfoFormat infoFormat = new IndexInfoFormat(getOptionDesc(option), option.getName(),
+                    option.getValue(), option.getOperator(), option.getSize(), option.getType());
+            indexInfoFormats.add(infoFormat);
+        }
+        return indexInfoFormats;
+    }
+
+    /**
+     * @since 16.0, GS-14433
+     */
+    private List<IndexInfoFormat> getSelectedIndexesDescription(IndexInfo indexInfo) {
+        final List<IndexInfoFormat> indexInfoFormats = new ArrayList<>();
+        if (indexInfo == null) return indexInfoFormats;
         if (indexInfo instanceof UnionIndexInfo) {
             final List<IndexInfo> options = ((UnionIndexInfo) indexInfo).getOptions();
             if (options.size() == 0)
-                return Collections.singletonList("Union []");
+                return null;
 
-            unitedIndexes.add("Selected Union: ");
             for (IndexInfo option : options) {
-                unitedIndexes.add("[" + getOptionDesc(option) + "] " + option.toStringV2());
+                final IndexInfoFormat infoFormat = new IndexInfoFormat(getOptionDesc(option), option.getName(),
+                        option.getValue(), option.getOperator(), option.getSize(), option.getType());
+                indexInfoFormats.add(infoFormat);
             }
-            return unitedIndexes;
+            return indexInfoFormats;
         }
-        return Collections.singletonList("Selected: " + indexInfo.toStringV2());
+        final IndexInfoFormat infoFormat = new IndexInfoFormat(getOptionDesc(indexInfo), indexInfo.getName(),
+                indexInfo.getValue(), indexInfo.getOperator(), indexInfo.getSize(), indexInfo.getType());
+        return Collections.singletonList(infoFormat);
     }
 
     protected void append(TextReportFormatter report, ScanningInfo scanningInfo) {
@@ -349,11 +331,11 @@ public class ExplainPlanImpl implements ExplainPlan {
         report.line("Matched entries: " + matched);
     }
 
-    private String getOptionDesc(IndexInfo indexInfo) {
+    private int getOptionDesc(IndexInfo indexInfo) {
         final int id = System.identityHashCode(indexInfo);
-        String desc = indexInfoDescCache.get(id);
+        Integer desc = indexInfoDescCache.get(id);
         if (desc == null) {
-            desc = "@" + (indexInfoDescCache.size() + 1);
+            desc = (indexInfoDescCache.size() + 1);
             indexInfoDescCache.put(id, desc);
         }
         return desc;
