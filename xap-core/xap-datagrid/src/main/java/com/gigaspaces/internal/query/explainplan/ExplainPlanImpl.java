@@ -41,17 +41,17 @@ public class ExplainPlanImpl implements ExplainPlan {
     private final Map<String, SingleExplainPlan> plans = new HashMap<>();
     private final IntegerObjectMap<Integer> indexInfoDescCache = CollectionsFactory.getInstance().createIntegerObjectMap();
 
-    /**
-     * @param query can be null
-     */
     public ExplainPlanImpl(SQLQuery query) {
         this.query = query;
         this.tableName = query != null ? query.getTypeName() : null;
     }
 
-    public ExplainPlanImpl(String tableName) {
+    /**
+     * @param query can be null
+     */
+    public ExplainPlanImpl(SQLQuery query, String tableName) {
+        this.query = query;
         this.tableName = tableName;
-        query = null;
     }
 
     public String getTableName() {

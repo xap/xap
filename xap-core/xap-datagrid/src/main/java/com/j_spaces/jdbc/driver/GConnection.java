@@ -60,12 +60,12 @@ public class GConnection implements Connection {
     public static final String JDBC_GIGASPACES_URL = "jdbc:gigaspaces:url:";
     private static final long EXECUTE_RETRY_TIMEOUT = 60 * 1000l;
 
-    private String url;
-    private ISpaceProxy space;
+    private final String url;
+    private final ISpaceProxy space;
     private IQueryProcessor qp;
     private ConnectionContext context;
     private Integer readModifiers;
-    private Properties properties;
+    private final Properties properties;
     private Boolean useNewDriver = false;
 
     private GConnection(IJSpace space, Properties properties) throws SQLException {
@@ -75,8 +75,7 @@ public class GConnection implements Connection {
             this.properties = properties;
             initialize(space.getDirectProxy().getRemoteJSpace());
         } catch (Exception e) {
-            SQLException se = new SQLException("Connect to space failed:[ " + space.getURL().getURL() + "]");
-            se.initCause(e);
+            SQLException se = new SQLException("Connect to space failed:[ " + space.getURL().getURL() + "]", e);
             throw se;
         }
     }
@@ -95,8 +94,7 @@ public class GConnection implements Connection {
             this.properties = properties;
             initialize(space.getDirectProxy().getRemoteJSpace());
         } catch (Exception e) {
-            SQLException se = new SQLException("Error creating connection; Cause: " + e, "GSP", -137);
-            se.initCause(e);
+            SQLException se = new SQLException("Error creating connection; Cause: " + e, "GSP", -137, e);
             throw se;
         }
     }
@@ -115,7 +113,7 @@ public class GConnection implements Connection {
             }
 
             Object useNewDriverProp = properties.get(USE_NEW_DRIVER);
-            useNewDriver = useNewDriverProp == null ? false : Boolean.valueOf(useNewDriverProp.toString());
+            useNewDriver = useNewDriverProp != null && Boolean.parseBoolean(useNewDriverProp.toString());
 
             String username = properties.getProperty(ConnectionContext.USER);
             String password = properties.getProperty(ConnectionContext.PASSWORD);
@@ -240,8 +238,7 @@ public class GConnection implements Connection {
             result = new ResultEntry(columns, columns, tables, valuesArray);
 
         } catch (RemoteException e) {
-            SQLException sqe = new SQLException(e.getMessage());
-            sqe.initCause(e);
+            SQLException sqe = new SQLException(e.getMessage(), e);
             throw sqe;
         }
         return new GResultSet(null, result);
@@ -303,8 +300,7 @@ public class GConnection implements Connection {
         try {
             return qp.getSession(context).isAutoCommit();
         } catch (RemoteException e) {
-            SQLException se = new SQLException("Error in calling getAutoCommit() on QueryProcessor. ");
-            se.initCause(e);
+            SQLException se = new SQLException("Error in calling getAutoCommit() on QueryProcessor. ", e);
             throw se;
         }
     }
