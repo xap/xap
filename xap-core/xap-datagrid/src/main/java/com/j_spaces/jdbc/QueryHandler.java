@@ -93,16 +93,16 @@ public class QueryHandler {
                 query.setSession(session);
                 query.setSecurityInterceptor(securityInterceptor);
 
-                if( query instanceof SelectQuery &&
-                    request.getModifiers() != null &&
-                    Modifiers.contains( request.getModifiers(), Modifiers.EXPLAIN_PLAN ) &&
-                    ( ( SelectQuery )query ).getExplainPlan() == null ) {
+                if (query instanceof SelectQuery &&
+                        request.getModifiers() != null &&
+                        Modifiers.contains(request.getModifiers(), Modifiers.EXPLAIN_PLAN) &&
+                        ((SelectQuery) query).getExplainPlan() == null) {
 
-                    ( ( SelectQuery )query ).setExplainPlan( new ExplainPlanImpl( null, ((SelectQuery) query).getTableName()));
+                    ((SelectQuery) query).setExplainPlan(new ExplainPlanImpl(((SelectQuery) query).getTableName(), null));
                 }
                 response = query.executeOnSpace(space, session.getTransaction());
-                if( query instanceof AbstractDMLQuery && ((AbstractDMLQuery)query ).getExplainPlan() != null ){
-                    response = new ExplainPlanResponsePacket( response, ((AbstractDMLQuery)query ).getExplainPlan().toString() );
+                if (query instanceof AbstractDMLQuery && ((AbstractDMLQuery) query).getExplainPlan() != null) {
+                    response = new ExplainPlanResponsePacket(response, ((AbstractDMLQuery) query).getExplainPlan().toString());
                 }
 
                 session.setUnderTransaction(request.getStatement());

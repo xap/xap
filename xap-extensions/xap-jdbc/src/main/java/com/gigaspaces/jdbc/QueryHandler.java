@@ -27,7 +27,7 @@ import java.util.Set;
 
 public class QueryHandler {
 
-    private final Feature[] allowedFeatures = new Feature[] {Feature.select/*, Feature.join, Feature.joinInner, Feature.explain*/};
+    private final Feature[] allowedFeatures = new Feature[] {Feature.select, Feature.explain/*, Feature.join, Feature.joinInner*/};
 
     public ResponsePacket handle(String query, IJSpace space) throws SQLException {
 

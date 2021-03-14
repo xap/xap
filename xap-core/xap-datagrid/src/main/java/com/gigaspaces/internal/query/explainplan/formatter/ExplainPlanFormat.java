@@ -7,12 +7,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.gigaspaces.internal.query.explainplan.ExplainPlanUtil.notEmpty;
+
 public class ExplainPlanFormat {
     private String tableName;
+    private String tableAlias;
     private String criteria;
     private List<IndexInspectionFormat> indexInspectionsPerPartition = new ArrayList<>();
+    private String projectionColumnsWithAlias = null;
+
 
     public ExplainPlanFormat() {
+    }
+
+    public ExplainPlanFormat(String tableName, String tableAlias, String projectionColumnsWithAlias) {
+        this.tableName = tableName;
+        this.tableAlias = tableAlias;
+        this.projectionColumnsWithAlias = projectionColumnsWithAlias;
     }
 
     @Override
@@ -23,10 +34,15 @@ public class ExplainPlanFormat {
     public String toString(boolean verbose) {
         TextReportFormatter formatter = new TextReportFormatter();
         formatter.line(ExplainPlanUtil.REPORT_START);
+        String table = notEmpty(tableAlias) ? tableAlias+"."+tableName : tableName;
         if (isNoIndexUsed()) {
-            formatter.line("FullScan: " + getTableName());
+            formatter.line("FullScan: " + table);
         } else {
-            formatter.line("TableScan: " + getTableName());
+            formatter.line("TableScan: " + table);
+        }
+
+        if (notEmpty(projectionColumnsWithAlias)) {
+            formatter.line("Select: " + projectionColumnsWithAlias);
         }
 
         if (getCriteria() != null) {
@@ -34,6 +50,10 @@ public class ExplainPlanFormat {
         }
 
         for (IndexInspectionFormat inspectionFormat : indexInspectionsPerPartition) {
+            if (inspectionFormat.getIndexes().isEmpty()) {
+                continue;
+            }
+
             formatter.line(String.format("Partition: [%s]", inspectionFormat.getPartition()));
             final IndexChoiceFormat unionIndexChoice = getUnionIndexChoiceIfExists(inspectionFormat.getIndexes());
             formatter.indent();
@@ -98,6 +118,14 @@ public class ExplainPlanFormat {
         return null;
     }
 
+    public String getTableAlias() {
+        return tableAlias;
+    }
+
+    public void setTableAlias(String tableAlias) {
+        this.tableAlias = tableAlias;
+    }
+
     public String getTableName() {
         return tableName;
     }
@@ -128,5 +156,9 @@ public class ExplainPlanFormat {
 
     public static String format(Map<String, Object> plan) {
         return null;
+    }
+
+    public void setProjectionColumnsWithAlias(String projectionColumnsWithAlias) {
+        this.projectionColumnsWithAlias = projectionColumnsWithAlias;
     }
 }

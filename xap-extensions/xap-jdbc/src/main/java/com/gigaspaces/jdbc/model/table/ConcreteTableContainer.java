@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.gigaspaces.internal.query.explainplan.ExplainPlanUtil.notEmpty;
+
 public class ConcreteTableContainer extends TableContainer {
     private final IJSpace space;
     private final QueryTemplatePacket queryTemplatePacket;
@@ -65,9 +67,15 @@ public class ConcreteTableContainer extends TableContainer {
 
             ExplainPlan explainPlanImpl = null;
             if (explainPlan) {
-                explainPlanImpl = new ExplainPlanImpl(null);
+                String columns = "";
+                for (QueryColumn column : visibleColumns) {
+                    columns += column.getName() + (notEmpty(column.getAlias()) ? " as "+column.getAlias()+" " : " ");
+                }
+
+                explainPlanImpl = new ExplainPlanImpl(name, alias, columns.trim());
                 queryTemplatePacket.setExplainPlan(explainPlanImpl);
                 modifiers = Modifiers.add(modifiers, Modifiers.EXPLAIN_PLAN);
+                modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
 
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, maxResults, modifiers);

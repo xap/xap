@@ -18,10 +18,7 @@ package com.gigaspaces.internal.query.explainplan;
 import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.IntegerObjectMap;
-import com.gigaspaces.internal.query.explainplan.formatter.ExplainPlanFormat;
-import com.gigaspaces.internal.query.explainplan.formatter.IndexChoiceFormat;
-import com.gigaspaces.internal.query.explainplan.formatter.IndexInfoFormat;
-import com.gigaspaces.internal.query.explainplan.formatter.IndexInspectionFormat;
+import com.gigaspaces.internal.query.explainplan.formatter.*;
 import com.gigaspaces.internal.utils.ValidationUtils;
 import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.client.SQLQuery;
@@ -38,24 +35,49 @@ public class ExplainPlanImpl implements ExplainPlan {
 
     private final SQLQuery<?> query;
     private final String tableName;
+    private final String tableAlias;
     private final Map<String, SingleExplainPlan> plans = new HashMap<>();
     private final IntegerObjectMap<Integer> indexInfoDescCache = CollectionsFactory.getInstance().createIntegerObjectMap();
+    private String projectionColumns = null;
 
-    public ExplainPlanImpl(SQLQuery query) {
+    public ExplainPlanImpl(SQLQuery<?> query) {
         this.query = query;
         this.tableName = query != null ? query.getTypeName() : null;
+        tableAlias = null;
     }
 
     /**
      * @param query can be null
      */
-    public ExplainPlanImpl(SQLQuery query, String tableName) {
+    public ExplainPlanImpl(SQLQuery<?> query, String tableName) {
         this.query = query;
         this.tableName = tableName;
+        tableAlias = null;
+    }
+
+    public ExplainPlanImpl(String tableName, String tableAlias) {
+        this.query = null;
+        this.tableName = tableName;
+        this.tableAlias = tableAlias;
+    }
+
+    public ExplainPlanImpl(String tableName, String tableAlias, String projectionColumns) {
+        this.query = null;
+        this.tableName = tableName;
+        this.tableAlias = tableAlias;
+        this.projectionColumns = projectionColumns;
     }
 
     public String getTableName() {
         return tableName;
+    }
+
+    public String getTableAlias() {
+        return tableAlias;
+    }
+
+    public String getProjectionColumns() {
+        return projectionColumns;
     }
 
     public static ExplainPlanImpl fromQueryPacket(Object query) {
@@ -116,8 +138,7 @@ public class ExplainPlanImpl implements ExplainPlan {
      * @since 16.0, GS-14433
      */
     protected ExplainPlanFormat createPlan() {
-        ExplainPlanFormat planFormat = new ExplainPlanFormat();
-        planFormat.setTableName(getTableName());
+        ExplainPlanFormat planFormat = new ExplainPlanFormat(getTableName(), getTableAlias(), getProjectionColumns());
         if (!plans.isEmpty()) {
             appendScanDetails(planFormat);
         }
@@ -182,7 +203,7 @@ public class ExplainPlanImpl implements ExplainPlan {
      * @since 16.0, GS-14433
      */
     protected String getQueryFilterTree(QueryOperationNode node) {
-        return node.printTree();
+        return node == null ? null : node.printTree();
     }
 
     protected void append(TextReportFormatter report, String partitionId, SingleExplainPlan singleExplainPlan) {
