@@ -6,9 +6,7 @@ import com.gigaspaces.lrmi.LRMIUtilities;
 import com.gigaspaces.transport.PocSettings;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import org.slf4j.Logger;
@@ -33,16 +31,18 @@ public class NettyServer implements Closeable {
     }
 
     public NettyServer(SpaceImpl space, SocketAddress address) {
+        NettyFactory factory = NettyFactory.getDefault();
         int workers = PocSettings.serverReaderPoolSize;
         boolean lrmiExecutor = PocSettings.serverLrmiExecutor;
-        logger.info("Starting NettyServer (address: {}, workers: {}, lrmiExecutor: {})", address, workers, lrmiExecutor);
+        logger.info("Starting NettyServer (address: {}, channel: {}, workers: {}, lrmiExecutor: {})",
+                address, factory.getServerSocketChannel(), workers, lrmiExecutor);
         // Configure the server.
-        this.bossGroup = new NioEventLoopGroup(1);
-        this.workerGroup = new NioEventLoopGroup(workers);
+        this.bossGroup = factory.createEventLoopGroup(1);
+        this.workerGroup = factory.createEventLoopGroup(workers);
         Executor executor = lrmiExecutor ? LRMIRuntime.getRuntime().getThreadPool() : null;
         ServerBootstrap b = new ServerBootstrap()
                 .group(bossGroup, workerGroup)
-                .channel(NioServerSocketChannel.class)
+                .channel(factory.getServerSocketChannel())
                 .option(ChannelOption.SO_BACKLOG, 100)
                 //.handler(new LoggingHandler(LogLevel.INFO))
                 .childOption(ChannelOption.TCP_NODELAY, LRMIUtilities.TCP_NO_DELAY_MODE)
