@@ -7,6 +7,7 @@ import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.ExpressionVisitorAdapter;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.AllColumns;
+import net.sf.jsqlparser.statement.select.AllTableColumns;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItemVisitorAdapter;
 
@@ -44,14 +45,30 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
 
     @Override
     public void visit(AllColumns columns) {
+        tables.forEach(this::fillSortedQueryColumns);
+    }
+
+    @Override
+    public void visit(AllTableColumns tableNameContainer) {
+        // Sort the columns by name and insert them in that order
         for (TableContainer table : tables) {
-            // Sort the columns by name and insert them in that order
-            table.getAllColumnNames().stream().sorted().forEach(columnName -> {
-                        QueryColumn qc = table.addQueryColumn(columnName, null);
-                        queryColumns.add(qc);
-                    }
-            );
+            final Alias alias = tableNameContainer.getTable().getAlias();
+            final String aliasName = alias == null ? null : alias.getName();
+            final String tableNameOrAlias = table.getTableNameOrAlias();
+            if (tableNameOrAlias.equals(tableNameContainer.getTable().getFullyQualifiedName())
+                    || tableNameOrAlias.equals(aliasName)) {
+
+                fillSortedQueryColumns(table);
+            }
         }
+    }
+
+    private void fillSortedQueryColumns(TableContainer table) {
+        // Sort the columns by name and insert them in that order
+        table.getAllColumnNames().stream().sorted().forEach(columnName -> {
+            QueryColumn qc = table.addQueryColumn(columnName, null);
+            queryColumns.add(qc);
+        });
     }
 
     @Override
