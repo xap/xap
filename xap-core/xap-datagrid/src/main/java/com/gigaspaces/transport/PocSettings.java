@@ -30,6 +30,9 @@ public class PocSettings {
     public enum ServerType {
         LRMI,
         NIO,
-        NETTY
+        NETTY,
+        NETTY_NIO,
+        NETTY_EPOLL,
+        NETTY_IOURING,
     }
 }

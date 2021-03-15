@@ -26,12 +26,12 @@ public class NettyServer implements Closeable {
     private final int lengthBytes = 4; // Number of bytes for length (int == 4 bytes)
     private final Channel channel;
 
-    public NettyServer(SpaceImpl space) {
-        this(space, new InetSocketAddress(PocSettings.host, PocSettings.port));
+    public NettyServer(SpaceImpl space, PocSettings.ServerType serverType) {
+        this(space, new InetSocketAddress(PocSettings.host, PocSettings.port), serverType);
     }
 
-    public NettyServer(SpaceImpl space, SocketAddress address) {
-        NettyFactory factory = NettyFactory.getDefault();
+    public NettyServer(SpaceImpl space, SocketAddress address, PocSettings.ServerType serverType) {
+        NettyFactory factory = NettyFactory.getDefault(serverType);
         int workers = PocSettings.serverReaderPoolSize;
         boolean lrmiExecutor = PocSettings.serverLrmiExecutor;
         logger.info("Starting NettyServer (address: {}, channel: {}, workers: {}, lrmiExecutor: {})",
