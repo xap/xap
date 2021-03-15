@@ -41,7 +41,8 @@ public class ExplainPlanImpl implements ExplainPlan {
     private final String tableAlias;
     private final Map<String, SingleExplainPlan> plans = new HashMap<>();
     private final IntegerObjectMap<Integer> indexInfoDescCache = CollectionsFactory.getInstance().createIntegerObjectMap();
-    private String projectionColumns = null;
+    private String spaceName;
+    private Map<String, String> visibleColumnsAndAliasMap = null;
 
     public ExplainPlanImpl(SQLQuery<?> query) {
         this.query = query;
@@ -64,11 +65,16 @@ public class ExplainPlanImpl implements ExplainPlan {
         this.tableAlias = tableAlias;
     }
 
-    public ExplainPlanImpl(String tableName, String tableAlias, String projectionColumns) {
+    public ExplainPlanImpl(String tableName, String tableAlias, Map<String, String> visibleColumnsAndAliasMap, String spaceName) {
         this.query = null;
         this.tableName = tableName;
         this.tableAlias = tableAlias;
-        this.projectionColumns = projectionColumns;
+        this.visibleColumnsAndAliasMap = visibleColumnsAndAliasMap;
+        this.spaceName = spaceName;
+    }
+
+    public String getSpaceName() {
+        return spaceName;
     }
 
     public String getTableName() {
@@ -79,8 +85,8 @@ public class ExplainPlanImpl implements ExplainPlan {
         return tableAlias;
     }
 
-    public String getProjectionColumns() {
-        return projectionColumns;
+    public Map<String, String> getVisibleColumnsAndAliasMap() {
+        return visibleColumnsAndAliasMap;
     }
 
     public static ExplainPlanImpl fromQueryPacket(Object query) {
@@ -141,7 +147,7 @@ public class ExplainPlanImpl implements ExplainPlan {
      * @since 16.0, GS-14433
      */
     protected ExplainPlanFormat createPlan() {
-        ExplainPlanFormat planFormat = new ExplainPlanFormat(getTableName(), getTableAlias(), getProjectionColumns());
+        ExplainPlanFormat planFormat = new ExplainPlanFormat(getTableName(), getTableAlias(), getVisibleColumnsAndAliasMap(), getSpaceName());
         if (!plans.isEmpty()) {
             appendScanDetails(planFormat);
         }

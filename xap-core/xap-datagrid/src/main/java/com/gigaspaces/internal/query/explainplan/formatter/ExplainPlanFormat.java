@@ -10,20 +10,19 @@ import java.util.Map;
 import static com.gigaspaces.internal.query.explainplan.ExplainPlanUtil.notEmpty;
 
 public class ExplainPlanFormat {
+    private String spaceName;
     private String tableName;
     private String tableAlias;
     private String criteria;
     private List<IndexInspectionFormat> indexInspectionsPerPartition = new ArrayList<>();
-    private String projectionColumnsWithAlias = null;
+    private Map<String, String> visibleColumnsAndAliasMap;
 
 
-    public ExplainPlanFormat() {
-    }
-
-    public ExplainPlanFormat(String tableName, String tableAlias, String projectionColumnsWithAlias) {
+    public ExplainPlanFormat(String tableName, String tableAlias, Map<String, String> visibleColumnsAndAliasMap, String spaceName) {
         this.tableName = tableName;
         this.tableAlias = tableAlias;
-        this.projectionColumnsWithAlias = projectionColumnsWithAlias;
+        this.visibleColumnsAndAliasMap = visibleColumnsAndAliasMap;
+        this.spaceName = spaceName;
     }
 
     @Override
@@ -34,19 +33,28 @@ public class ExplainPlanFormat {
     public String toString(boolean verbose) {
         TextReportFormatter formatter = new TextReportFormatter();
         formatter.line(ExplainPlanUtil.REPORT_START);
-        String table = notEmpty(tableAlias) ? tableAlias+"."+tableName : tableName;
+        String table = notEmpty(tableAlias) ? tableAlias : tableName;
+        table = notEmpty(spaceName) ? spaceName + "." + table : table;
         if (isNoIndexUsed()) {
             formatter.line("FullScan: " + table);
         } else {
             formatter.line("TableScan: " + table);
         }
 
-        if (notEmpty(projectionColumnsWithAlias)) {
-            formatter.line("Select: " + projectionColumnsWithAlias);
+        String columns = "";
+        for (Map.Entry<String, String> column : visibleColumnsAndAliasMap.entrySet()) {
+            columns += column.getKey() + (notEmpty(column.getValue()) ? " as "+column.getValue()+", " : ", ");
+        }
+        if (columns.length() > 2) {
+            columns = columns.substring(0, columns.length() - 2); //trim ', '
         }
 
-        if (getCriteria() != null) {
-            formatter.line("Criteria: " + getCriteria());
+        if (notEmpty(columns)) {
+            formatter.line("Select: " + columns);
+        }
+
+        if (notEmpty(criteria)) {
+            formatter.line("Criteria: " + criteria);
         }
 
         for (IndexInspectionFormat inspectionFormat : indexInspectionsPerPartition) {
@@ -154,11 +162,4 @@ public class ExplainPlanFormat {
         return indexInspectionsPerPartition.add(indexInspection);
     }
 
-    public static String format(Map<String, Object> plan) {
-        return null;
-    }
-
-    public void setProjectionColumnsWithAlias(String projectionColumnsWithAlias) {
-        this.projectionColumnsWithAlias = projectionColumnsWithAlias;
-    }
 }

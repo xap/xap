@@ -45,10 +45,12 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
     @Override
     public void visit(AllColumns columns) {
         for (TableContainer table : tables) {
-            for (String columnName : table.getAllColumnNames()) {
-                QueryColumn qc = table.addQueryColumn(columnName, null);
-                queryColumns.add(qc);
-            }
+            // Sort the columns by name and insert them in that order
+            table.getAllColumnNames().stream().sorted().forEach(columnName -> {
+                        QueryColumn qc = table.addQueryColumn(columnName, null);
+                        queryColumns.add(qc);
+                    }
+            );
         }
     }
 
