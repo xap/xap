@@ -57,6 +57,8 @@ public class RemoteOperationsExecutorProxy {
             LRMIInvocationContext.enableCallbackModeForNextInvocation();
         if (request.isDedicatedPoolRequired())
             LRMIInvocationContext.enableCustomPriorityForNextInvocation();
+        if (request.isDirectExecutionEnabled())
+            LRMIInvocationContext.enableDirectPriorityForNextInvocation();
         return _executor.executeOperation(request);
     }
 
@@ -67,6 +69,8 @@ public class RemoteOperationsExecutorProxy {
                 LRMIInvocationContext.enableCallbackModeForNextInvocation();
             if (request.isDedicatedPoolRequired())
                 LRMIInvocationContext.enableCustomPriorityForNextInvocation();
+            if (request.isDirectExecutionEnabled())
+                LRMIInvocationContext.enableDirectPriorityForNextInvocation();
             FutureContext.setFutureListener(listener);
             _executor.executeOperationAsync(request);
         } finally {

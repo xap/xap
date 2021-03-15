@@ -115,6 +115,40 @@ public class RequestPacket implements IPacket {
         return _requestObj;
     }
 
+    public static OperationPriority decodePriority(byte flags) {
+        // Test DIRECT first, because it's a combination of liveness and monitoring
+        if ((flags & BitMap.IS_DIRECT_PRIORITY) >= BitMap.IS_DIRECT_PRIORITY)
+            return OperationPriority.DIRECT;
+        if ((flags & BitMap.IS_LIVENESS_PRIORITY) != 0)
+            return OperationPriority.LIVENESS;
+        if ((flags & BitMap.IS_MONITORING_PRIORITY) != 0)
+            return OperationPriority.MONITORING;
+        if ((flags & BitMap.IS_CUSTOM_PRIORITY) != 0)
+            return OperationPriority.CUSTOM;
+
+        return OperationPriority.REGULAR;
+    }
+
+    public static byte encodePriority(OperationPriority priority, byte flags) {
+        switch (priority) {
+            case LIVENESS:
+                flags |= BitMap.IS_LIVENESS_PRIORITY;
+                break;
+            case MONITORING:
+                flags |= BitMap.IS_MONITORING_PRIORITY;
+                break;
+            case CUSTOM:
+                flags = (byte) (flags | BitMap.IS_CUSTOM_PRIORITY);
+                break;
+            case DIRECT:
+                flags |= BitMap.IS_DIRECT_PRIORITY;
+                break;
+            case REGULAR:
+                break;
+        }
+        return flags;
+    }
+
     /**
      * @param in request the input stream, MarshalInputStream is passed to allow changing the
      *           default classloader.
@@ -139,15 +173,7 @@ public class RequestPacket implements IPacket {
             objectId = in.readLong();
             methodOrderId = in.readInt();
             remoteClassLoaderId = in.readLong();
-            if ((flags & BitMap.IS_LIVENESS_PRIORITY) != 0)
-                operationPriority = OperationPriority.LIVENESS;
-            else if ((flags & BitMap.IS_MONITORING_PRIORITY) != 0)
-                operationPriority = OperationPriority.MONITORING;
-            else if ((flags & BitMap.IS_CUSTOM_PRIORITY) != 0)
-                operationPriority = OperationPriority.CUSTOM;
-            else
-                operationPriority = OperationPriority.REGULAR;
-
+            operationPriority = decodePriority(flags);
             if (operationPriority == OperationPriority.CUSTOM) {
                 //Place holder for having named dedicated thread pools
                 IOUtils.readRepetitiveString(in);
@@ -296,6 +322,7 @@ public class RequestPacket implements IPacket {
         byte IS_CALLBACK = 1 << 2;
         byte IS_LIVENESS_PRIORITY = 1 << 3;
         byte IS_MONITORING_PRIORITY = 1 << 4;
+        byte IS_DIRECT_PRIORITY = IS_LIVENESS_PRIORITY | IS_MONITORING_PRIORITY;
         byte IS_CUSTOM_PRIORITY = 1 << 5;
     }
 
@@ -310,20 +337,7 @@ public class RequestPacket implements IPacket {
         if (isCallBack) {
             flags |= BitMap.IS_CALLBACK;
         }
-        switch (operationPriority) {
-            case REGULAR:
-                break;
-            case MONITORING:
-                flags |= BitMap.IS_MONITORING_PRIORITY;
-                break;
-            case LIVENESS:
-                flags |= BitMap.IS_LIVENESS_PRIORITY;
-                break;
-            case CUSTOM:
-                flags |= BitMap.IS_CUSTOM_PRIORITY;
-                break;
-        }
-        return flags;
+        return encodePriority(operationPriority, flags);
     }
 
     /**
@@ -361,14 +375,6 @@ public class RequestPacket implements IPacket {
     public static OperationPriority getOperationPriorityFromBytes(byte[] bytes) {
         if (bytes.length < 4)
             throw new IllegalStateException("Incoming invocation request is not of known format, byte array length is too small - " + bytes.length);
-        byte flags = bytes[3];
-        if ((flags & BitMap.IS_LIVENESS_PRIORITY) != 0)
-            return OperationPriority.LIVENESS;
-        if ((flags & BitMap.IS_MONITORING_PRIORITY) != 0)
-            return OperationPriority.MONITORING;
-        if ((flags & BitMap.IS_CUSTOM_PRIORITY) != 0)
-            return OperationPriority.CUSTOM;
-
-        return OperationPriority.REGULAR;
+        return decodePriority(bytes[3]);
     }
 }

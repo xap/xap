@@ -60,4 +60,5 @@ public interface RemoteOperationRequest<TResult extends RemoteOperationResult> e
 
     boolean isDedicatedPoolRequired();
 
+    boolean isDirectExecutionEnabled();
 }

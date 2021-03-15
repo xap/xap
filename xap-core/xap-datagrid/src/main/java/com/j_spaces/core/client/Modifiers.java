@@ -80,11 +80,12 @@ public class Modifiers {
     public static final int DIRTY_READ = 1 << 5;
 
     /**
-     * If set, performs a full matching, but the returned value will not contain the values for the
-     * template's null fields, good for remote performance. Partial read is not supported for
-     * <code>java.io.Externalizable</code> entries. Operations: Read, Take
-     **/
-    public static final int RESERVED_PARTIAL_READ = 1 << 6;
+     * Indicates operation should run directly on i/o thread, instead of being submitted to the operations thread pool.
+     * This is useful for short, non-blocking operations (e.g. readById), but risky for long or non-blocking operations.
+     * NOTE: This is an experimental API, subject to breaking changes in future releases.
+     * @since 16.0
+     */
+    public static final int RUN_ON_IO_THREAD = 1 << 6;
 
     /**
      * If set, The match Collection will contain an instance of Entry UID of read or take

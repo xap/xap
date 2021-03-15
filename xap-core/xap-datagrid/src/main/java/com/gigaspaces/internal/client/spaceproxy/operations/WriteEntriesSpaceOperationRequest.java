@@ -33,6 +33,7 @@ import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.utils.Textualizer;
 import com.j_spaces.core.LeaseContext;
+import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.UpdateModifiers;
 
 import net.jini.core.lease.Lease;
@@ -262,6 +263,11 @@ public class WriteEntriesSpaceOperationRequest extends SpaceScatterGatherOperati
 
     public int getModifiers() {
         return _modifiers;
+    }
+
+    @Override
+    public boolean isDirectExecutionEnabled() {
+        return Modifiers.contains(_modifiers, Modifiers.RUN_ON_IO_THREAD);
     }
 
     public long getTimeOut() {

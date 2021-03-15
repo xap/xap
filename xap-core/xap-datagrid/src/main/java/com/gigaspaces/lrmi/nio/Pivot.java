@@ -16,6 +16,7 @@
 
 package com.gigaspaces.lrmi.nio;
 
+import com.gigaspaces.async.Executors;
 import com.gigaspaces.config.lrmi.nio.NIOConfiguration;
 import com.gigaspaces.exception.lrmi.LRMIUnhandledException;
 import com.gigaspaces.exception.lrmi.LRMIUnhandledException.Stage;
@@ -240,6 +241,7 @@ public class Pivot {
     final private Executor _livenessPriorityThreadPool;
     final private Executor _monitoringPriorityThreadPool;
     final private Executor _customThreadPool;
+    final private Executor _directExecutor;
     final private SelectorManager _selectorManager;
 
     //default response handler used by the response context.
@@ -261,7 +263,7 @@ public class Pivot {
         _livenessPriorityThreadPool = LRMIRuntime.getRuntime().getLivenessPriorityThreadPool();
         _monitoringPriorityThreadPool = LRMIRuntime.getRuntime().getMonitoringPriorityThreadPool();
         _customThreadPool = LRMIRuntime.getRuntime().getCustomThreadPool();
-
+        _directExecutor = Executors.newDirectExecutor();
         _protocolValidationEnabled = config.isProtocolValidationEnabled();
     }
 
@@ -440,31 +442,24 @@ public class Pivot {
             task = new ChannelEntryTask(this, channelEntry, stream);
         }
         //We are using the selector thread indication of priority because it is safer because the channel system priority is not volatile
-        executeAccordingToPriority(operationPriority, task);
+        getExecutor(operationPriority).execute(task);
     }
 
     public void requestPending(ChannelEntry channel, ReplyPacket<?> respPacket, IResponseContext responseContext) {
         // called by the service, should use its context class loader for invocation
         // This is a thread from the pool and it will have the channel system property state updated as it goes throw volatile
-        executeAccordingToPriority(responseContext.getOperationPriority(), new ReplyTask(this, channel, respPacket, responseContext));
+        getExecutor(responseContext.getOperationPriority()).execute(new ReplyTask(this, channel, respPacket, responseContext));
     }
 
-    private void executeAccordingToPriority(OperationPriority operationPriority, Runnable command) {
-        // dispatch Bus Packet to Worker Threads (called by read selector thread, context irrelevant)
+    private Executor getExecutor(OperationPriority operationPriority) {
         switch (operationPriority) {
-            case CUSTOM:
-                //Currently we have custom thread pool for space tasks and notifications, in the future we could have a named custom pool
-                _customThreadPool.execute(command);
-                break;
-            case LIVENESS:
-                _livenessPriorityThreadPool.execute(command);
-                break;
-            case MONITORING:
-                _monitoringPriorityThreadPool.execute(command);
-                break;
-            case REGULAR:
-                _threadPool.execute(command);
-                break;
+            //Currently we have custom thread pool for space tasks and notifications, in the future we could have a named custom pool
+            case CUSTOM: return _customThreadPool;
+            case LIVENESS: return _livenessPriorityThreadPool;
+            case MONITORING: return _monitoringPriorityThreadPool;
+            case REGULAR: return _threadPool;
+            case DIRECT: return _directExecutor;
+            default: throw new IllegalArgumentException("Unknown priority: " + operationPriority);
         }
     }
 

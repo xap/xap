@@ -624,6 +624,9 @@ public class CPeer extends BaseClientPeer {
         if (currentContext.isCustomPriorityEnabled())
             return OperationPriority.CUSTOM;
 
+        if (currentContext.isDirectPriorityEnabled())
+            return OperationPriority.DIRECT;
+
         return OperationPriority.REGULAR;
     }
 

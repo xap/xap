@@ -183,6 +183,11 @@ public class ReadTakeEntriesUidsSpaceOperationRequest extends SpaceOperationRequ
     }
 
     @Override
+    public boolean isDirectExecutionEnabled() {
+        return Modifiers.contains(_modifiers, Modifiers.RUN_ON_IO_THREAD);
+    }
+
+    @Override
     public boolean processUnknownTypeException(List<Integer> positions) {
         if (_template.isSerializeTypeDesc())
             return false;
