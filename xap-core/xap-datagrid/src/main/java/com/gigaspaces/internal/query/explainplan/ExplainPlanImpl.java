@@ -18,7 +18,10 @@ package com.gigaspaces.internal.query.explainplan;
 import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.IntegerObjectMap;
-import com.gigaspaces.internal.query.explainplan.formatter.*;
+import com.gigaspaces.internal.query.explainplan.formatter.ExplainPlanFormat;
+import com.gigaspaces.internal.query.explainplan.formatter.IndexChoiceFormat;
+import com.gigaspaces.internal.query.explainplan.formatter.IndexInfoFormat;
+import com.gigaspaces.internal.query.explainplan.formatter.IndexInspectionFormat;
 import com.gigaspaces.internal.utils.ValidationUtils;
 import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.client.SQLQuery;
@@ -266,10 +269,10 @@ public class ExplainPlanImpl implements ExplainPlan {
             report.line("Inspected: ");
             report.indent();
             for (IndexInfo option : node.getOptions()) {
-                report.line("[" + getOptionDesc(option) + "] " + option.toString());
+                report.line("[@" + getOptionDesc(option) + "] " + option.toString());
             }
             report.unindent();
-            report.line("Selected: " + "[" + getOptionDesc(node.getChosen()) + "] " + getSelectedDesc(node.getChosen()));
+            report.line("Selected: " + "[@" + getOptionDesc(node.getChosen()) + "] " + getSelectedDesc(node.getChosen()));
             report.unindent();
         }
         report.unindent();
@@ -301,7 +304,7 @@ public class ExplainPlanImpl implements ExplainPlan {
             StringBuilder sb = new StringBuilder();
             for (IndexInfo option : options) {
                 sb.append(sb.length() == 0 ? "Union [" : ", ");
-                sb.append(getOptionDesc(option));
+                sb.append("@").append(getOptionDesc(option));
             }
             sb.append("]");
             return sb.toString();
