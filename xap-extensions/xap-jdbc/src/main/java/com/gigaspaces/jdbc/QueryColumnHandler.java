@@ -59,6 +59,7 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                     || tableNameOrAlias.equals(aliasName)) {
 
                 fillSortedQueryColumns(table);
+                break;
             }
         }
     }

@@ -4565,7 +4565,6 @@ public class CacheManager extends AbstractCacheManager
             explainPlanContext.setSingleExplainPlan(template.getExplainPlan());
             if (Modifiers.contains(template.getOperationModifiers(), Modifiers.DRY_RUN)) {
                 explainPlanContext.setDryRun(true);
-//                TODO MISHEL: show Yael the addition of getEP to ITemplateHolder
             }
             context.setExplainPlanContext(explainPlanContext);
         }
