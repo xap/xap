@@ -65,9 +65,6 @@ public abstract class QueryProxyActionInfo extends CommonProxyActionInfo {
         this._query = query;
         if (query instanceof SQLQuery && ((SQLQuery)query).getExplainPlan() != null) {
             super.modifiers = Modifiers.add(super.modifiers, Modifiers.EXPLAIN_PLAN);
-            if (!ValidationUtils.isOldExplainPlan()) {
-                super.modifiers = Modifiers.add(super.modifiers, Modifiers.DRY_RUN);
-            }
         }
 
         this.isSqlQuery = preProcessQuery();

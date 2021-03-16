@@ -249,13 +249,6 @@ public class Context {
     private TemplateMatchTier templateTieredState;
     private Object suppliedEntryIdForColdTier;
 
-    /**
-     * Doesn't continue to the phase of processing the entries
-     * used in cases of explain plan when we want to enter the space
-     * to gather information regarding the execution, i.e. inspected and chosen indexes and their size
-     */
-    private boolean dryRun = false;
-
     public Context() {
     }
 
@@ -490,7 +483,6 @@ public class Context {
         _backupOnly=false;
         viewEntryData = null;
         _fromClustered = false;
-        dryRun = false;
         entryTieredState = null;
         templateTieredState = null;
         suppliedEntryIdForColdTier = null;

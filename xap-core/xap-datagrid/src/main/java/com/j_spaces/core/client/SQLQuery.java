@@ -204,7 +204,7 @@ public class SQLQuery<T> implements ISpaceQuery<T>, Serializable {
 
     @ExperimentalApi
     public SQLQuery<T> withExplainPlan() {
-        _explainPlan = new ExplainPlanImpl(this);
+        _explainPlan = new ExplainPlanImpl(this, false);
         return this;
     }
 

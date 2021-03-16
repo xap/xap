@@ -75,8 +75,7 @@ public class GConnection implements Connection {
             this.properties = properties;
             initialize(space.getDirectProxy().getRemoteJSpace());
         } catch (Exception e) {
-            SQLException se = new SQLException("Connect to space failed:[ " + space.getURL().getURL() + "]", e);
-            throw se;
+            throw new SQLException("Connect to space failed:[ " + space.getURL().getURL() + "]", e);
         }
     }
 
@@ -94,8 +93,7 @@ public class GConnection implements Connection {
             this.properties = properties;
             initialize(space.getDirectProxy().getRemoteJSpace());
         } catch (Exception e) {
-            SQLException se = new SQLException("Error creating connection; Cause: " + e, "GSP", -137, e);
-            throw se;
+            throw new SQLException("Error creating connection; Cause: " + e, "GSP", -137, e);
         }
     }
 
@@ -103,14 +101,7 @@ public class GConnection implements Connection {
         if (properties != null) {
             // NOTE: we explicitly use get() instead of getProperty() since the value might not be a string...
             Object modifiersProp = properties.get(READ_MODIFIERS);
-            if (modifiersProp == null) {
-                readModifiers = null;
-            } else {
-                readModifiers = Integer.valueOf(modifiersProp.toString());
-                if (!ValidationUtils.isOldExplainPlan()) {
-                    readModifiers = Modifiers.add(readModifiers, Modifiers.DRY_RUN);
-                }
-            }
+            readModifiers = modifiersProp == null ? null : Integer.valueOf(modifiersProp.toString());
 
             Object useNewDriverProp = properties.get(USE_NEW_DRIVER);
             useNewDriver = useNewDriverProp != null && Boolean.parseBoolean(useNewDriverProp.toString());
@@ -300,8 +291,7 @@ public class GConnection implements Connection {
         try {
             return qp.getSession(context).isAutoCommit();
         } catch (RemoteException e) {
-            SQLException se = new SQLException("Error in calling getAutoCommit() on QueryProcessor. ", e);
-            throw se;
+            throw new SQLException("Error in calling getAutoCommit() on QueryProcessor. ", e);
         }
     }
 

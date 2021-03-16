@@ -22,7 +22,6 @@ import com.gigaspaces.internal.query.explainplan.formatter.ExplainPlanFormat;
 import com.gigaspaces.internal.query.explainplan.formatter.IndexChoiceFormat;
 import com.gigaspaces.internal.query.explainplan.formatter.IndexInfoFormat;
 import com.gigaspaces.internal.query.explainplan.formatter.IndexInspectionFormat;
-import com.gigaspaces.internal.utils.ValidationUtils;
 import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
@@ -39,26 +38,30 @@ public class ExplainPlanImpl implements ExplainPlan {
     private final SQLQuery<?> query;
     private final String tableName;
     private final String tableAlias;
+    private final boolean useNewFormat;
     private final Map<String, SingleExplainPlan> plans = new HashMap<>();
     private final IntegerObjectMap<Integer> indexInfoDescCache = CollectionsFactory.getInstance().createIntegerObjectMap();
-    private String spaceName;
     private Map<String, String> visibleColumnsAndAliasMap = null;
+    private String spaceName;
 
     /**
      * @param query can be null
      */
-    public ExplainPlanImpl(SQLQuery<?> query) {
+    public ExplainPlanImpl(SQLQuery<?> query, boolean useNewFormat) {
         this.query = query;
         this.tableName = query != null ? query.getTypeName() : null;
+        this.useNewFormat = useNewFormat;
         tableAlias = null;
+
     }
 
-    public ExplainPlanImpl(String tableName, String tableAlias, Map<String, String> visibleColumnsAndAliasMap, String spaceName) {
-        this.query = null;
+    public ExplainPlanImpl(String tableName, String tableAlias, Map<String, String> visibleColumnsAndAliasMap, String spaceName, boolean useNewFormat) {
         this.tableName = tableName;
         this.tableAlias = tableAlias;
         this.visibleColumnsAndAliasMap = visibleColumnsAndAliasMap;
         this.spaceName = spaceName;
+        this.useNewFormat = useNewFormat;
+        this.query = null;
     }
 
     public String getSpaceName() {
@@ -97,6 +100,10 @@ public class ExplainPlanImpl implements ExplainPlan {
         return plans;
     }
 
+    public boolean isUseNewFormat() {
+        return useNewFormat;
+    }
+
     public void reset() {
         plans.clear();
         indexInfoDescCache.clear();
@@ -108,14 +115,15 @@ public class ExplainPlanImpl implements ExplainPlan {
 
     @Override
     public String toString() {
-        TextReportFormatter report = new TextReportFormatter();
-        if (ValidationUtils.isOldExplainPlan()) {
-            report.line(ExplainPlanUtil.REPORT_START);
-            append(report);
-            report.line(ExplainPlanUtil.REPORT_END);
-            return report.toString();
+        if (isUseNewFormat()) {
+            return createPlan().toString();
         }
-        return createPlan().toString();
+
+        TextReportFormatter report = new TextReportFormatter();
+        report.line(ExplainPlanUtil.REPORT_START);
+        append(report);
+        report.line(ExplainPlanUtil.REPORT_END);
+        return report.toString();
     }
 
     protected void append(TextReportFormatter report) {
