@@ -41,11 +41,12 @@ public enum QueryOperator {
     NOT_SUPPORTED("NOT_SUPPORTED"),
     BETWEEN("=");
 
-    private String valueOnTheRightOperator;
-    private String valueOnTheLeftOperator;
+    private final String valueOnTheRightOperator;
+    private final String valueOnTheLeftOperator;
 
     QueryOperator(String valueOnTheRightOperator) {
         this.valueOnTheRightOperator = valueOnTheRightOperator;
+        this.valueOnTheLeftOperator = valueOnTheRightOperator;
 
     }
 

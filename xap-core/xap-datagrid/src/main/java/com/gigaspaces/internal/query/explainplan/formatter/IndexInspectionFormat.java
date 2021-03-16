@@ -5,7 +5,7 @@ import java.util.List;
 
 public class IndexInspectionFormat {
     private String partition;
-    private List<IndexChoiceFormat> indexes = new ArrayList<>();//currently there is no index per type, will be added by need.
+    private List<IndexChoiceFormat> indexes = new ArrayList<>();
 
     public IndexInspectionFormat() {
     }

@@ -64,8 +64,7 @@ public class ConcreteTableContainer extends TableContainer {
 
             ExplainPlan explainPlanImpl = null;
             if (explainPlan) {
-                // Using LinkedHashMap to keep insertion order from the ArrayList,
-                // either of the requested columns or when selecting 'all' we sort them by the name in ascending order
+                // Using LinkedHashMap to keep insertion order from the ArrayList
                 final Map<String, String> visibleColumnsAndAliasMap = visibleColumns.stream().collect(Collectors.toMap
                         (QueryColumn::getName, queryColumn -> queryColumn.getAlias() == null ? "" :  queryColumn.getAlias()
                                 , (oldValue, newValue) -> newValue, LinkedHashMap::new));

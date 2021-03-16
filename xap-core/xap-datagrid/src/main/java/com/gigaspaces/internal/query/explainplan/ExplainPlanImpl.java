@@ -44,25 +44,13 @@ public class ExplainPlanImpl implements ExplainPlan {
     private String spaceName;
     private Map<String, String> visibleColumnsAndAliasMap = null;
 
+    /**
+     * @param query can be null
+     */
     public ExplainPlanImpl(SQLQuery<?> query) {
         this.query = query;
         this.tableName = query != null ? query.getTypeName() : null;
         tableAlias = null;
-    }
-
-    /**
-     * @param query can be null
-     */
-    public ExplainPlanImpl(SQLQuery<?> query, String tableName) {
-        this.query = query;
-        this.tableName = tableName;
-        tableAlias = null;
-    }
-
-    public ExplainPlanImpl(String tableName, String tableAlias) {
-        this.query = null;
-        this.tableName = tableName;
-        this.tableAlias = tableAlias;
     }
 
     public ExplainPlanImpl(String tableName, String tableAlias, Map<String, String> visibleColumnsAndAliasMap, String spaceName) {

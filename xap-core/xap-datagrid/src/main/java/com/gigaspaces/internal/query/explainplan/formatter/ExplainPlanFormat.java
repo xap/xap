@@ -41,17 +41,20 @@ public class ExplainPlanFormat {
             formatter.line("TableScan: " + table);
         }
 
-        String columns = "";
-        for (Map.Entry<String, String> column : visibleColumnsAndAliasMap.entrySet()) {
-            columns += column.getKey() + (notEmpty(column.getValue()) ? " as "+column.getValue()+", " : ", ");
-        }
-        if (columns.length() > 2) {
-            columns = columns.substring(0, columns.length() - 2); //trim ', '
+        if (visibleColumnsAndAliasMap != null) {
+            String columns = "";
+            for (Map.Entry<String, String> column : visibleColumnsAndAliasMap.entrySet()) {
+                columns += column.getKey() + (notEmpty(column.getValue()) ? " as "+column.getValue()+", " : ", ");
+            }
+            if (columns.length() > 2) {
+                columns = columns.substring(0, columns.length() - 2); //trim ', '
+            }
+
+            if (notEmpty(columns)) {
+                formatter.line("Select: " + columns);
+            }
         }
 
-        if (notEmpty(columns)) {
-            formatter.line("Select: " + columns);
-        }
 
         if (notEmpty(criteria)) {
             formatter.line("Criteria: " + criteria);
