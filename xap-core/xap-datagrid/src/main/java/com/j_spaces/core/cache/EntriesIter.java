@@ -254,7 +254,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
                             _SCNFilter, _leaseFilter, _types);
                 }
 
-                if(_cacheManager.isTieredStorage() && _context.getTemplateTieredState() != TemplateMatchTier.MATCH_HOT && _saIter == null){
+                if(_cacheManager.isTieredStorage() && _context.getTemplateTieredState() != TemplateMatchTier.MATCH_HOT && _saIter == null && !_memoryOnly){
                     //TODO - tiered storage - handle multiple types
                     _saIter = new MultiTypedRDBMSISIterator(_cacheManager.getEngine().getTieredStorageManager().getInternalStorage(), _context, _types, _templateHolder);
                 }

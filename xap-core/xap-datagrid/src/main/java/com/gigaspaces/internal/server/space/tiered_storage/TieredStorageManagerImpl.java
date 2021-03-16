@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TieredStorageManagerImpl implements TieredStorageManager {
-    private static Logger logger = LoggerFactory.getLogger(Constants.TieredStorage.TIERED_STORAGE_LOGGER_NAME);
+    private Logger logger;
     private IDirectSpaceProxy spaceProxy;
     private TieredStorageConfig storageConfig;
     private ConcurrentHashMap<String, TimePredicate> retentionRules = new ConcurrentHashMap<>(); //TODO - tiered storage - lazy init retention rules
@@ -32,7 +32,8 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
 
     }
 
-    public TieredStorageManagerImpl(TieredStorageConfig storageConfig, InternalRDBMS internalDiskStorage, IDirectSpaceProxy proxy) {
+    public TieredStorageManagerImpl(TieredStorageConfig storageConfig, InternalRDBMS internalDiskStorage, IDirectSpaceProxy proxy, String fullSpaceName) {
+        this.logger =  LoggerFactory.getLogger(Constants.TieredStorage.getLoggerName(fullSpaceName));
         this.internalDiskStorage = internalDiskStorage;
         this.storageConfig = storageConfig;
         this.spaceProxy = proxy;

@@ -395,7 +395,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             TieredStorageConfig storageConfig = (TieredStorageConfig) tieredStorage;
             String className = System.getProperty(TIERED_STORAGE_INTERNAL_RDBMS_CLASS_PROP, TIERED_STORAGE_INTERNAL_RDBMS_CLASS_DEFAULT);
             InternalRDBMS rdbms = ClassLoaderHelper.newInstance(className);
-            this.tieredStorageManager = new TieredStorageManagerImpl(storageConfig, rdbms, space.getSpaceProxy().getDirectProxy());
+            this.tieredStorageManager = new TieredStorageManagerImpl(storageConfig, rdbms, space.getSpaceProxy().getDirectProxy(), _fullSpaceName);
         }
     }
 
@@ -3692,7 +3692,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             }
         }
 
-        if (getCacheManager().isEvictableCachePolicy() && !_cacheManager.isMemorySpace()) {
+        if ((getCacheManager().isEvictableCachePolicy() && !_cacheManager.isMemorySpace()) || (isTieredStorage() && context.getTemplateTieredState() != TemplateMatchTier.MATCH_HOT)) {
             IScanListIterator<IEntryCacheInfo> toScan =
                     _cacheManager.makeScanableEntriesIter(context, template, serverTypeDesc,
                             scnFilter, leaseFilter, isMemoryOnlyOperation(template) /*memoryonly*/);
@@ -4033,7 +4033,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         long leaseFilter = SystemTime.timeMillis();
 
-        //TODO - tiered storage - impl for hot and cold
+
         if ((getCacheManager().isEvictableCachePolicy() && !_cacheManager.isMemorySpace()) || (isTieredStorage() && context.getTemplateTieredState() != TemplateMatchTier.MATCH_HOT)) {
             IScanListIterator<IEntryCacheInfo> toScan =
                     _cacheManager.makeScanableEntriesIter(context, template, serverTypeDesc,
