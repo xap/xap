@@ -27,10 +27,10 @@ public class ExplainPlanInfo {
 
 
     public ExplainPlanInfo(ExplainPlanV3 explainPlan) {
-            tableName = explainPlan.getTableName();
-            tableAlias = explainPlan.getTableAlias();
-            visibleColumnsAndAliasMap = explainPlan.getVisibleColumnsAndAliasMap();
-            spaceName = explainPlan.getSpaceName();
+        tableName = explainPlan.getTableName();
+        tableAlias = explainPlan.getTableAlias();
+        visibleColumnsAndAliasMap = explainPlan.getVisibleColumnsAndAliasMap();
+        spaceName = explainPlan.getSpaceName();
     }
 
     @Override

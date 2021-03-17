@@ -56,22 +56,22 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
      * @return JSON structured plan
      */
     private ExplainPlanInfo createPlan() {
-        ExplainPlanInfo planFormat = new ExplainPlanInfo(this);
+        ExplainPlanInfo planInfo = new ExplainPlanInfo(this);
         if (!plans.isEmpty()) {
-            appendScanDetails(planFormat);
+            appendScanDetails(planInfo);
         }
-        return planFormat;
+        return planInfo;
     }
 
     /**
-     * Fill the planFormat with the criteria and the index inspections
+     * Fill the planInfo with the criteria and the index inspections
      */
-    private void appendScanDetails(ExplainPlanInfo planFormat) {
+    private void appendScanDetails(ExplainPlanInfo planInfo) {
         indexInfoDescCache.clear();
         String queryFilterTree = getQueryFilterTree(plans.values().iterator().next().getRoot());
-        planFormat.setCriteria(queryFilterTree);
+        planInfo.setCriteria(queryFilterTree);
         for (Map.Entry<String, SingleExplainPlan> entry : plans.entrySet()) {
-            planFormat.addIndexInspection(getPartitionPlan(entry.getKey(), entry.getValue()));
+            planInfo.addIndexInspection(getPartitionPlan(entry.getKey(), entry.getValue()));
         }
     }
 
@@ -120,7 +120,8 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
      */
     private List<IndexInfoDetail> getInspectedIndexesDescription(List<IndexInfo> options) {
         final List<IndexInfoDetail> indexInfoDetails = new ArrayList<>();
-        for (IndexInfo option : options) {
+        for (int i = options.size() - 1; i >= 0; i--) {
+            final IndexInfo option = options.get(i);
             final IndexInfoDetail infoFormat = new IndexInfoDetail(getOptionDesc(option), option);
             indexInfoDetails.add(infoFormat);
         }
@@ -139,7 +140,8 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
             if (options.size() == 0)
                 return null;
 
-            for (IndexInfo option : options) {
+            for (int i = options.size() - 1; i >= 0; i--) {
+                final IndexInfo option = options.get(i);
                 final IndexInfoDetail infoFormat = new IndexInfoDetail(getOptionDesc(option), option);
                 indexInfoDetails.add(infoFormat);
             }

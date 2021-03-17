@@ -18,15 +18,13 @@ package com.gigaspaces.internal.query.explainplan;
 import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.IntegerObjectMap;
-import com.gigaspaces.internal.query.explainplan.model.ExplainPlanInfo;
-import com.gigaspaces.internal.query.explainplan.model.IndexChoiceDetail;
-import com.gigaspaces.internal.query.explainplan.model.IndexInfoDetail;
-import com.gigaspaces.internal.query.explainplan.model.IndexInspectionDetail;
 import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author yael nahon
@@ -45,7 +43,6 @@ public class ExplainPlanImpl implements ExplainPlan {
     public ExplainPlanImpl(SQLQuery<?> query) {
         this.query = query;
     }
-
 
 
     public static ExplainPlanImpl fromQueryPacket(Object query) {
