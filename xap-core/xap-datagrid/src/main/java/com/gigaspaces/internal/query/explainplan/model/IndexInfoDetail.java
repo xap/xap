@@ -1,9 +1,10 @@
-package com.gigaspaces.internal.query.explainplan.formatter;
+package com.gigaspaces.internal.query.explainplan.model;
 
+import com.gigaspaces.internal.query.explainplan.IndexInfo;
 import com.gigaspaces.internal.query.explainplan.QueryOperator;
 import com.gigaspaces.metadata.index.SpaceIndexType;
 
-public class IndexInfoFormat {
+public class IndexInfoDetail {
     private Integer id;
     private String name;
     private Object value;
@@ -11,16 +12,14 @@ public class IndexInfoFormat {
     private Integer size;
     private SpaceIndexType type;
 
-    public IndexInfoFormat() {
-    }
 
-    public IndexInfoFormat(Integer id, String name, Object value, QueryOperator operator, Integer size, SpaceIndexType type) {
+    public IndexInfoDetail(Integer id, IndexInfo option) {
         this.id = id;
-        this.name = name;
-        this.value = value;
-        this.operator = operator;
-        this.size = size;
-        this.type = type;
+        name = option.getName();
+        value = option.getValue();
+        operator = option.getOperator();
+        size = option.getSize();
+        type = option.getType();
     }
 
     public Integer getId() {
@@ -73,8 +72,8 @@ public class IndexInfoFormat {
 
     @Override
     public String toString() {
-        return String.format("[#%s] (%s %s %s), Size=%s, IndexType=%s"
-                , getId(), getName(), getOperator().getValueOnTheRightOperator()
+        return String.format("[#%s] (%s %s %s), IndexSize=%s, IndexType=%s"
+                , getId(), getName(), getOperator().toString()
                 , getValue(), getSize(), getType());
     }
 }

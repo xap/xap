@@ -45,7 +45,7 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
 
     @Override
     public void visit(AllColumns columns) {
-        tables.forEach(this::fillSortedQueryColumns);
+        tables.forEach(this::fillQueryColumns);
     }
 
     @Override
@@ -58,15 +58,14 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
             if (tableNameOrAlias.equals(tableNameContainer.getTable().getFullyQualifiedName())
                     || tableNameOrAlias.equals(aliasName)) {
 
-                fillSortedQueryColumns(table);
+                fillQueryColumns(table);
                 break;
             }
         }
     }
 
-    private void fillSortedQueryColumns(TableContainer table) {
-        // Sort the columns by name and insert them in that order
-        table.getAllColumnNames().stream().sorted().forEach(columnName -> {
+    private void fillQueryColumns(TableContainer table) {
+        table.getAllColumnNames().forEach(columnName -> {
             QueryColumn qc = table.addQueryColumn(columnName, null);
             queryColumns.add(qc);
         });

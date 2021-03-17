@@ -71,11 +71,11 @@ public class BetweenRangeNode extends RangeNode{
     }
 
     @Override
-    public String printTree() {
+    public String getPrettifiedString() {
         return "(" + minValue + " " +
-                (includeMin ? QueryOperator.GE.getValueOnTheLeftOperator() : QueryOperator.GT.getValueOnTheLeftOperator()) +
+                (includeMin ? QueryOperator.LE.toString() : QueryOperator.LT.toString()) +
                 " " + (getFunctionName() != null ? getFunctionName() : getFieldName()) + " " +
-                (includeMax ? QueryOperator.LE.getValueOnTheRightOperator() : QueryOperator.LT.getValueOnTheRightOperator()) +
+                (includeMax ? QueryOperator.LE.toString() : QueryOperator.LT.toString()) +
                 " " + maxValue +
                 ")";
     }

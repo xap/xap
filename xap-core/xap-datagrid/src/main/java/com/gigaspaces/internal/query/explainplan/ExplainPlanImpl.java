@@ -18,15 +18,13 @@ package com.gigaspaces.internal.query.explainplan;
 import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.IntegerObjectMap;
-import com.gigaspaces.internal.query.explainplan.formatter.ExplainPlanFormat;
-import com.gigaspaces.internal.query.explainplan.formatter.IndexChoiceFormat;
-import com.gigaspaces.internal.query.explainplan.formatter.IndexInfoFormat;
-import com.gigaspaces.internal.query.explainplan.formatter.IndexInspectionFormat;
 import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author yael nahon
@@ -35,50 +33,17 @@ import java.util.*;
 @ExperimentalApi
 public class ExplainPlanImpl implements ExplainPlan {
 
-    private final SQLQuery<?> query;
-    private final String tableName;
-    private final String tableAlias;
-    private final boolean useNewFormat;
-    private final Map<String, SingleExplainPlan> plans = new HashMap<>();
-    private final IntegerObjectMap<Integer> indexInfoDescCache = CollectionsFactory.getInstance().createIntegerObjectMap();
-    private Map<String, String> visibleColumnsAndAliasMap = null;
-    private String spaceName;
+    protected final SQLQuery<?> query;
+    protected final Map<String, SingleExplainPlan> plans = new HashMap<>();
+    protected final IntegerObjectMap<Integer> indexInfoDescCache = CollectionsFactory.getInstance().createIntegerObjectMap();
 
     /**
      * @param query can be null
      */
-    public ExplainPlanImpl(SQLQuery<?> query, boolean useNewFormat) {
+    public ExplainPlanImpl(SQLQuery<?> query) {
         this.query = query;
-        this.tableName = query != null ? query.getTypeName() : null;
-        this.useNewFormat = useNewFormat;
-        tableAlias = null;
-
     }
 
-    public ExplainPlanImpl(String tableName, String tableAlias, Map<String, String> visibleColumnsAndAliasMap, String spaceName, boolean useNewFormat) {
-        this.tableName = tableName;
-        this.tableAlias = tableAlias;
-        this.visibleColumnsAndAliasMap = visibleColumnsAndAliasMap;
-        this.spaceName = spaceName;
-        this.useNewFormat = useNewFormat;
-        this.query = null;
-    }
-
-    public String getSpaceName() {
-        return spaceName;
-    }
-
-    public String getTableName() {
-        return tableName;
-    }
-
-    public String getTableAlias() {
-        return tableAlias;
-    }
-
-    public Map<String, String> getVisibleColumnsAndAliasMap() {
-        return visibleColumnsAndAliasMap;
-    }
 
     public static ExplainPlanImpl fromQueryPacket(Object query) {
         ExplainPlanImpl result = null;
@@ -100,10 +65,6 @@ public class ExplainPlanImpl implements ExplainPlan {
         return plans;
     }
 
-    public boolean isUseNewFormat() {
-        return useNewFormat;
-    }
-
     public void reset() {
         plans.clear();
         indexInfoDescCache.clear();
@@ -115,10 +76,6 @@ public class ExplainPlanImpl implements ExplainPlan {
 
     @Override
     public String toString() {
-        if (isUseNewFormat()) {
-            return createPlan().toString();
-        }
-
         TextReportFormatter report = new TextReportFormatter();
         report.line(ExplainPlanUtil.REPORT_START);
         append(report);
@@ -134,20 +91,6 @@ public class ExplainPlanImpl implements ExplainPlan {
             appendSummary(report);
             appendDetailed(report);
         }
-    }
-
-    /**
-     * Creates the new explain plan in case GS_OLD_EXPLAIN_PLAN wasn't set to true
-     *
-     * @return JSON structured plan
-     * @since 16.0, GS-14433
-     */
-    protected ExplainPlanFormat createPlan() {
-        ExplainPlanFormat planFormat = new ExplainPlanFormat(getTableName(), getTableAlias(), getVisibleColumnsAndAliasMap(), getSpaceName());
-        if (!plans.isEmpty()) {
-            appendScanDetails(planFormat);
-        }
-        return planFormat;
     }
 
     protected void appendSummary(TextReportFormatter report) {
@@ -183,17 +126,6 @@ public class ExplainPlanImpl implements ExplainPlan {
         report.unindent();
     }
 
-    /**
-     * @since 16.0, GS-14433
-     */
-    protected void appendScanDetails(ExplainPlanFormat planFormat) {
-        indexInfoDescCache.clear();
-        String queryFilterTree = getQueryFilterTree(plans.values().iterator().next().getRoot());
-        planFormat.setCriteria(queryFilterTree);
-        for (Map.Entry<String, SingleExplainPlan> entry : plans.entrySet()) {
-            planFormat.addIndexInspection(getPartitionPlan(entry.getKey(), entry.getValue()));
-        }
-    }
 
     protected void append(TextReportFormatter report, QueryOperationNode node) {
         report.line(node.toString());
@@ -204,12 +136,6 @@ public class ExplainPlanImpl implements ExplainPlan {
         report.unindent();
     }
 
-    /**
-     * @since 16.0, GS-14433
-     */
-    protected String getQueryFilterTree(QueryOperationNode node) {
-        return node == null ? null : node.printTree();
-    }
 
     protected void append(TextReportFormatter report, String partitionId, SingleExplainPlan singleExplainPlan) {
         report.line("Partition Id: " + partitionId);
@@ -239,23 +165,6 @@ public class ExplainPlanImpl implements ExplainPlan {
         }
     }
 
-    /**
-     * @return Index scanning plan for partition
-     * @since 16.0, GS-14433
-     */
-    protected IndexInspectionFormat getPartitionPlan(String partitionId, SingleExplainPlan singleExplainPlan) {
-        final IndexInspectionFormat indexInspection = new IndexInspectionFormat();
-        final Map<String, List<IndexChoiceNode>> indexesInfo = singleExplainPlan.getIndexesInfo();
-        if (indexesInfo.size() == 1) {
-            Map.Entry<String, List<IndexChoiceNode>> entry = indexesInfo.entrySet().iterator().next();
-            List<IndexChoiceNode> indexChoices = entry.getValue();
-            List<IndexChoiceFormat> indexInspections = getIndexInspectionPerTableType(indexChoices);
-            indexInspection.setIndexes(indexInspections);
-            indexInspection.setPartition(partitionId);
-        }
-        return indexInspection;
-    }
-
     protected void append(TextReportFormatter report, String typeName, List<IndexChoiceNode> list, ScanningInfo scanningInfo) {
         if (typeName != null) {
             report.line("Type name: " + typeName);
@@ -282,21 +191,6 @@ public class ExplainPlanImpl implements ExplainPlan {
             report.unindent();
     }
 
-    /**
-     * @since 16.0, GS-14433
-     */
-    protected List<IndexChoiceFormat> getIndexInspectionPerTableType(List<IndexChoiceNode> indexChoices) {
-        List<IndexChoiceFormat> indexChoiceFormatList = new ArrayList<>();
-        for (IndexChoiceNode node : indexChoices) {
-            final List<IndexInfoFormat> selected = getSelectedIndexesDescription(node.getChosen());
-            final List<IndexInfoFormat> inspected = getInspectedIndexesDescription(node.getOptions());
-            boolean isUnion = node.getChosen() instanceof UnionIndexInfo;
-            final IndexChoiceFormat indexChoiceFormat = new IndexChoiceFormat(node.getName(), isUnion, inspected, selected);
-            indexChoiceFormatList.add(indexChoiceFormat);
-        }
-        return indexChoiceFormatList;
-    }
-
     private String getSelectedDesc(IndexInfo indexInfo) {
         if (indexInfo == null) return "N/A";
         if (indexInfo instanceof UnionIndexInfo) {
@@ -314,42 +208,6 @@ public class ExplainPlanImpl implements ExplainPlan {
         return indexInfo.toString();
     }
 
-    /**
-     * @since 16.0, GS-14433
-     */
-    private List<IndexInfoFormat> getInspectedIndexesDescription(List<IndexInfo> options) {
-        final List<IndexInfoFormat> indexInfoFormats = new ArrayList<>();
-        for (IndexInfo option : options) {
-            final IndexInfoFormat infoFormat = new IndexInfoFormat(getOptionDesc(option), option.getName(),
-                    option.getValue(), option.getOperator(), option.getSize(), option.getType());
-            indexInfoFormats.add(infoFormat);
-        }
-        return indexInfoFormats;
-    }
-
-    /**
-     * @since 16.0, GS-14433
-     */
-    private List<IndexInfoFormat> getSelectedIndexesDescription(IndexInfo indexInfo) {
-        final List<IndexInfoFormat> indexInfoFormats = new ArrayList<>();
-        if (indexInfo == null) return indexInfoFormats;
-        if (indexInfo instanceof UnionIndexInfo) {
-            final List<IndexInfo> options = ((UnionIndexInfo) indexInfo).getOptions();
-            if (options.size() == 0)
-                return null;
-
-            for (IndexInfo option : options) {
-                final IndexInfoFormat infoFormat = new IndexInfoFormat(getOptionDesc(option), option.getName(),
-                        option.getValue(), option.getOperator(), option.getSize(), option.getType());
-                indexInfoFormats.add(infoFormat);
-            }
-            return indexInfoFormats;
-        }
-        final IndexInfoFormat infoFormat = new IndexInfoFormat(getOptionDesc(indexInfo), indexInfo.getName(),
-                indexInfo.getValue(), indexInfo.getOperator(), indexInfo.getSize(), indexInfo.getType());
-        return Collections.singletonList(infoFormat);
-    }
-
     protected void append(TextReportFormatter report, ScanningInfo scanningInfo) {
         Integer scanned = scanningInfo != null ? scanningInfo.getScanned() : 0;
         Integer matched = scanningInfo != null ? scanningInfo.getMatched() : 0;
@@ -357,7 +215,7 @@ public class ExplainPlanImpl implements ExplainPlan {
         report.line("Matched entries: " + matched);
     }
 
-    private int getOptionDesc(IndexInfo indexInfo) {
+    protected int getOptionDesc(IndexInfo indexInfo) {
         final int id = System.identityHashCode(indexInfo);
         Integer desc = indexInfoDescCache.get(id);
         if (desc == null) {
@@ -366,4 +224,5 @@ public class ExplainPlanImpl implements ExplainPlan {
         }
         return desc;
     }
+
 }

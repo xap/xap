@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -54,30 +55,29 @@ public class QueryJunctionNode implements QueryOperationNode{
     }
 
     @Override
-    public String printTree() {
+    public String getPrettifiedString() {
         StringBuilder result = new StringBuilder();
-        for (int i = 0; i < subTrees.size()-1; i++) {
-            QueryOperationNode node = subTrees.get(i);
-            if (name.equalsIgnoreCase("OR")) {
-                result.append("(");
+        final boolean surroundParentheses = name.equalsIgnoreCase("OR");
+        final Iterator<QueryOperationNode> iterator = subTrees.iterator();
+        while (iterator.hasNext()) {
+            QueryOperationNode node = iterator.next();
+            appendNode(result, node, surroundParentheses);
+            if (iterator.hasNext()) {
+                result.append(" "+name+" ");
             }
-            result.append(node.printTree());
-            if (name.equalsIgnoreCase("OR")) {
-                result.append(")");
-            }
-            result.append(" "+name+" ");
-        }
-        QueryOperationNode node = subTrees.get(subTrees.size()-1);
-        if (name.equalsIgnoreCase("OR")) {
-            result.append("(");
-        }
-        result.append(node.printTree());
-
-        if (name.equalsIgnoreCase("OR")) {
-            result.append(")");
         }
 
         return result.toString();
+    }
+
+    private void appendNode(StringBuilder result, QueryOperationNode node, boolean surroundParentheses) {
+        if (surroundParentheses) {
+            result.append("(");
+        }
+        result.append(node.getPrettifiedString());
+        if (surroundParentheses) {
+            result.append(")");
+        }
     }
 
     @Override

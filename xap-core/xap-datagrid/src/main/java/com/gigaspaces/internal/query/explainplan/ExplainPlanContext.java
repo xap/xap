@@ -70,7 +70,7 @@ public class ExplainPlanContext implements Externalizable{
     public void setDryRun(boolean dryRun) {
         this.dryRun = dryRun;
     }
-//TODO MISHEL: ask when do we serialize this object
+
     public boolean isDryRun() {
         return dryRun;
     }

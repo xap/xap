@@ -91,9 +91,9 @@ public class RangeNode implements QueryOperationNode{
     }
 
     @Override
-    public String printTree() {
+    public String getPrettifiedString() {
         return '(' + (functionName != null ? functionName : fieldName) +
-                " " + operator.getValueOnTheRightOperator() + " " + value +
+                " " + operator.toString() + " " + value +
                 ')';
     }
 

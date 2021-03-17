@@ -2,7 +2,7 @@ package com.gigaspaces.jdbc.model.table;
 
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.query.explainplan.ExplainPlanImpl;
+import com.gigaspaces.internal.query.explainplan.ExplainPlanV3;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ProjectionTemplate;
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
@@ -28,6 +28,7 @@ public class ConcreteTableContainer extends TableContainer {
     private final ITypeDesc typeDesc;
     private final int maxResults = Integer.MAX_VALUE;
 
+    private List<String> allColumnNamesSorted;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
     private final String name;
     private final String alias;
@@ -44,6 +45,8 @@ public class ConcreteTableContainer extends TableContainer {
         }
 
         queryTemplatePacket = createQueryTemplatePacket(name);
+        allColumnNamesSorted = Arrays.asList(typeDesc.getPropertiesNames());
+        allColumnNamesSorted.sort(String::compareTo);
     }
 
     private QueryTemplatePacket createQueryTemplatePacket(String tableName) {
@@ -69,7 +72,7 @@ public class ConcreteTableContainer extends TableContainer {
                         (QueryColumn::getName, queryColumn -> queryColumn.getAlias() == null ? "" :  queryColumn.getAlias()
                                 , (oldValue, newValue) -> newValue, LinkedHashMap::new));
 
-                explainPlanImpl = new ExplainPlanImpl(name, alias, visibleColumnsAndAliasMap, space.getName(), true);
+                explainPlanImpl = new ExplainPlanV3(name, alias, visibleColumnsAndAliasMap, space.getName());
                 queryTemplatePacket.setExplainPlan(explainPlanImpl);
                 modifiers = Modifiers.add(modifiers, Modifiers.EXPLAIN_PLAN);
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
@@ -99,7 +102,7 @@ public class ConcreteTableContainer extends TableContainer {
 
     @Override
     public List<String> getAllColumnNames() {
-        return Arrays.asList(typeDesc.getPropertiesNames());
+        return allColumnNamesSorted;
     }
 
     @Override

@@ -32,5 +32,5 @@ public interface QueryOperationNode extends Externalizable{
     /**
      * @since GS-14433, 16.0
      */
-    String printTree();
+    String getPrettifiedString();
 }

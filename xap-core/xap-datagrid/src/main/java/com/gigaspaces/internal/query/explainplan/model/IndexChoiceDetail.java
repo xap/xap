@@ -1,29 +1,26 @@
-package com.gigaspaces.internal.query.explainplan.formatter;
+package com.gigaspaces.internal.query.explainplan.model;
 
 import java.util.List;
 
-public class IndexChoiceFormat {
+public class IndexChoiceDetail {
     private String operator;
     private boolean isUnion;
-    private List<IndexInfoFormat> inspectedIndexes;
-    private List<IndexInfoFormat> selectedIndexes;
+    private List<IndexInfoDetail> inspectedIndexes;
+    private List<IndexInfoDetail> selectedIndexes;
 
 
-    public IndexChoiceFormat() {
-    }
-
-    public IndexChoiceFormat(String operator, boolean isUnion, List<IndexInfoFormat> inspectedIndexes, List<IndexInfoFormat> selectedIndexes) {
+    public IndexChoiceDetail(String operator, boolean isUnion, List<IndexInfoDetail> inspectedIndexes, List<IndexInfoDetail> selectedIndexes) {
         this.operator = operator;
         this.inspectedIndexes = inspectedIndexes;
         this.selectedIndexes = selectedIndexes;
         this.isUnion = isUnion;
     }
 
-    public List<IndexInfoFormat> getInspectedIndexes() {
+    public List<IndexInfoDetail> getInspectedIndexes() {
         return inspectedIndexes;
     }
 
-    public void setInspectedIndexes(List<IndexInfoFormat> inspectedIndexes) {
+    public void setInspectedIndexes(List<IndexInfoDetail> inspectedIndexes) {
         this.inspectedIndexes = inspectedIndexes;
     }
 
@@ -35,11 +32,11 @@ public class IndexChoiceFormat {
         this.operator = operator;
     }
 
-    public List<IndexInfoFormat> getSelectedIndexes() {
+    public List<IndexInfoDetail> getSelectedIndexes() {
         return selectedIndexes;
     }
 
-    public void setSelectedIndexes(List<IndexInfoFormat> selectedIndexes) {
+    public void setSelectedIndexes(List<IndexInfoDetail> selectedIndexes) {
         this.selectedIndexes = selectedIndexes;
     }
 

@@ -25,10 +25,10 @@ import com.gigaspaces.api.ExperimentalApi;
 public enum QueryOperator {
     EQ("="),
     NE("!="),
-    GT(">", "<"),
-    GE(">=", "=<"),
-    LT("<",">"),
-    LE("<=", "=>"),
+    GT(">"),
+    GE(">="),
+    LT("<"),
+    LE("<="),
     IS_NULL("IS_NULL"),
     NOT_NULL("NOT_NULL"),
     REGEX("REGEX"),
@@ -41,27 +41,16 @@ public enum QueryOperator {
     NOT_SUPPORTED("NOT_SUPPORTED"),
     BETWEEN("=");
 
-    private final String valueOnTheRightOperator;
-    private final String valueOnTheLeftOperator;
+    private final String str;
 
-    QueryOperator(String valueOnTheRightOperator) {
-        this.valueOnTheRightOperator = valueOnTheRightOperator;
-        this.valueOnTheLeftOperator = valueOnTheRightOperator;
+    QueryOperator(String str) {
+        this.str = str;
 
     }
 
-    QueryOperator(String valueOnTheRightOperator, String reversed) {
-        this.valueOnTheRightOperator = valueOnTheRightOperator;
-        this.valueOnTheLeftOperator = reversed;
-
-    }
-
-    public String getValueOnTheRightOperator() {
-        return valueOnTheRightOperator;
-    }
-
-    public String getValueOnTheLeftOperator() {
-        return valueOnTheLeftOperator;
+    @Override
+    public String toString() {
+        return str;
     }
 }
 
