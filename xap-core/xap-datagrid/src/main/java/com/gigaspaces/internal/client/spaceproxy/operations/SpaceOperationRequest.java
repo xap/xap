@@ -93,6 +93,11 @@ public abstract class SpaceOperationRequest<TResult extends SpaceOperationResult
     }
 
     @Override
+    public boolean isDirectExecutionEnabled() {
+        return false;
+    }
+
+    @Override
     public boolean processUnknownTypeException(List<Integer> positions) {
         return false;
     }

@@ -25,6 +25,7 @@ import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterRe
 import com.gigaspaces.internal.server.space.operations.SpaceOperationsCodes;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.utils.Textualizer;
+import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
 
 import net.jini.core.entry.UnusableEntryException;
@@ -107,6 +108,11 @@ public class CountClearEntriesSpaceOperationRequest extends SpaceOperationReques
 
     public int getModifiers() {
         return _modifiers;
+    }
+
+    @Override
+    public boolean isDirectExecutionEnabled() {
+        return Modifiers.contains(_modifiers, Modifiers.RUN_ON_IO_THREAD);
     }
 
     @Override

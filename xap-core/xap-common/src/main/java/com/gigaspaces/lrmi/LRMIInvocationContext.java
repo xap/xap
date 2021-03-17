@@ -82,10 +82,12 @@ public class LRMIInvocationContext {
     private boolean _callbackMethod;
     private boolean _livenessPriorityEnabled;
     private boolean _customPriorityEnabled;
+    private boolean _directPriorityEnabled;
 
     private boolean _callbackMethodInNextInvocation;
     private boolean _livenessPriorityEnabledInNextInvocation;
     private boolean _customPriorityEnabledInNextInvocation;
+    private boolean _directPriorityEnabledInNextInvocation;
     private InetSocketAddress _clientEndPointAddress;
 
     public void setTrace(LRMIInvocationTrace trace) {
@@ -193,6 +195,7 @@ public class LRMIInvocationContext {
     private void resetNextInvocationState() {
         _livenessPriorityEnabledInNextInvocation = false;
         _customPriorityEnabledInNextInvocation = false;
+        _directPriorityEnabledInNextInvocation = false;
         _callbackMethodInNextInvocation = false;
     }
 
@@ -206,6 +209,7 @@ public class LRMIInvocationContext {
         _callbackMethod = false;
         _livenessPriorityEnabled = false;
         _customPriorityEnabled = false;
+        _directPriorityEnabled = false;
         _clientEndPointAddress = null;
         resetNextInvocationState();
     }
@@ -280,6 +284,8 @@ public class LRMIInvocationContext {
                 actualContext.setLivenessPriorityEnabled(true);
             if (invocationContext._customPriorityEnabledInNextInvocation)
                 actualContext.setCustomPriorityEnabled(true);
+            if (invocationContext._directPriorityEnabledInNextInvocation)
+                actualContext.setDirectPriorityEnabled(true);
             if (invocationContext._callbackMethodInNextInvocation)
                 actualContext.setCallbackMethod(true);
         }
@@ -308,6 +314,10 @@ public class LRMIInvocationContext {
 
     public static void enableCustomPriorityForNextInvocation() {
         getCurrentContext()._customPriorityEnabledInNextInvocation = true;
+    }
+
+    public static void enableDirectPriorityForNextInvocation() {
+        getCurrentContext()._directPriorityEnabledInNextInvocation = true;
     }
 
     public static void enableCallbackModeForNextInvocation() {
@@ -345,6 +355,14 @@ public class LRMIInvocationContext {
 
     public boolean isCustomPriorityEnabled() {
         return _customPriorityEnabled;
+    }
+
+    public void setDirectPriorityEnabled(boolean directPriorityEnabled) {
+        _directPriorityEnabled = directPriorityEnabled;
+    }
+
+    public boolean isDirectPriorityEnabled() {
+        return _directPriorityEnabled;
     }
 
     public static InetSocketAddress getEndpointAddress() {

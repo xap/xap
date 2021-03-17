@@ -16,6 +16,8 @@
 
 package com.gigaspaces.lrmi;
 
+import com.gigaspaces.api.ExperimentalApi;
+
 /**
  * Indicates a priority on an interface which is used by LRMI layer to decide SLA for that method
  * invocation
@@ -29,5 +31,10 @@ public enum OperationPriority {
     /**
      * @since 9.7
      */
-    CUSTOM
+    CUSTOM,
+    /**
+     * @since 16.0
+     */
+    @ExperimentalApi
+    DIRECT;
 }

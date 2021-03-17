@@ -170,6 +170,11 @@ public class ChangeEntriesSpaceOperationRequest extends SpaceOperationRequest<Ch
         return _modifiers;
     }
 
+    @Override
+    public boolean isDirectExecutionEnabled() {
+        return Modifiers.contains(_modifiers, Modifiers.RUN_ON_IO_THREAD);
+    }
+
     public long getTimeout() {
         return _timeout;
     }

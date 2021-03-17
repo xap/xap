@@ -29,6 +29,7 @@ import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.utils.Textualizer;
 import com.gigaspaces.logger.Constants;
+import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
 import com.j_spaces.core.exception.internal.InterruptedSpaceException;
 
@@ -151,6 +152,11 @@ public class ReadTakeEntrySpaceOperationRequest extends SpaceOperationRequest<Re
 
     public int getModifiers() {
         return _modifiers;
+    }
+
+    @Override
+    public boolean isDirectExecutionEnabled() {
+        return Modifiers.contains(_modifiers, Modifiers.RUN_ON_IO_THREAD);
     }
 
     public long getTimeout() {

@@ -30,6 +30,7 @@ import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.utils.Textualizer;
 import com.gigaspaces.logger.Constants;
+import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.Transaction;
@@ -256,6 +257,11 @@ public class ReadTakeEntriesSpaceOperationRequest extends SpaceOperationRequest<
 
     public int getModifiers() {
         return _modifiers;
+    }
+
+    @Override
+    public boolean isDirectExecutionEnabled() {
+        return Modifiers.contains(_modifiers, Modifiers.RUN_ON_IO_THREAD);
     }
 
     public int getMinResultsToWaitFor() {

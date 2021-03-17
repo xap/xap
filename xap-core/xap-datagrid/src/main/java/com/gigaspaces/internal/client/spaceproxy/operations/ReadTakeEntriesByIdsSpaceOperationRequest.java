@@ -29,6 +29,7 @@ import com.gigaspaces.internal.utils.Textualizer;
 import com.j_spaces.core.AbstractIdsQueryPacket;
 import com.j_spaces.core.IdsMultiRoutingQueryPacket;
 import com.j_spaces.core.IdsQueryPacket;
+import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
 
 import net.jini.core.entry.UnusableEntryException;
@@ -296,6 +297,11 @@ public class ReadTakeEntriesByIdsSpaceOperationRequest extends SpaceScatterGathe
 
     public int getModifiers() {
         return _modifiers;
+    }
+
+    @Override
+    public boolean isDirectExecutionEnabled() {
+        return Modifiers.contains(_modifiers, Modifiers.RUN_ON_IO_THREAD);
     }
 
     public AbstractIdsQueryPacket getTemplate() {

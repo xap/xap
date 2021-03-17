@@ -22,6 +22,7 @@ import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterRe
 import com.gigaspaces.internal.server.space.operations.SpaceOperationsCodes;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.utils.Textualizer;
+import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.UpdateModifiers;
 
 import net.jini.core.lease.Lease;
@@ -109,6 +110,11 @@ public class WriteEntrySpaceOperationRequest extends SpaceOperationRequest<Write
 
     public int getModifiers() {
         return _modifiers;
+    }
+
+    @Override
+    public boolean isDirectExecutionEnabled() {
+        return Modifiers.contains(_modifiers, Modifiers.RUN_ON_IO_THREAD);
     }
 
     public boolean isUpdate() {
