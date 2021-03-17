@@ -28,6 +28,12 @@ public class CollocatedJoinedQueryExecutor extends AbstractQueryExecutor {
         super(query);
     }
 
+    @Override
+    public void execute(InnerQueryNode innerQueryNode, ISpaceProxy space, Transaction txn, int readModifier, int max) throws SQLException {
+        if (!space.isClustered()) throw new SQLException("Cannot run InnerQuery in collocated join");
+        super.execute(innerQueryNode, space, txn, readModifier, max);
+    }
+
     public IQueryResultSet<IEntryPacket> execute(ISpaceProxy space, Transaction txn, int readModifier, int max)
             throws SQLException {
         try {

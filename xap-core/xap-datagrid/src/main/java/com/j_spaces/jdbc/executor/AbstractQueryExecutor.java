@@ -734,7 +734,6 @@ public abstract class AbstractQueryExecutor implements IQueryExecutor {
         innerQuery.setRouting(query.getRouting());
         if (!innerQuery.isPrepared() && !innerQuery.containsSubQueries())
             innerQuery.build();
-         if (!space.isClustered()) throw new SQLException("Cannot run InnerQuery in collocated join");
         ResponsePacket innerResponse = innerQuery.executeOnSpace(space, txn);
 
         // Get the values from the inner query response
