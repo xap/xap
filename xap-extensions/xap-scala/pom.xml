@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.gigaspaces</groupId>
 		<artifactId>xap</artifactId>
-		<version>15.8.0-SNAPSHOT</version>
+		<version>15.8.0-test-wed-20</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
