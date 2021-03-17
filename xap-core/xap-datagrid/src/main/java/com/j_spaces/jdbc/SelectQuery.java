@@ -1027,7 +1027,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
 
 
     private void applyJoinsIfNeeded() throws SQLException {
-        _logger.info(">>applyJoinsIfNeeded pushDownPredicatesToSpace="+pushDownPredicatesToSpace);
+        _logger.debug(">>applyJoinsIfNeeded pushDownPredicatesToSpace="+pushDownPredicatesToSpace);
         if (joins != null) {
             if (pushDownPredicatesToSpace) {
                 getTableData().setTableCondition(getExpTree());
