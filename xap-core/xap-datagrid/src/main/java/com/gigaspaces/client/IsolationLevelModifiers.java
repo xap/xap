@@ -62,7 +62,9 @@ abstract public class IsolationLevelModifiers extends SpaceProxyOperationModifie
         int isolationLevelCode = isolationLevel.getCode();
         if (!(isolationLevelCode == Modifiers.DIRTY_READ ||
                 isolationLevelCode == Modifiers.READ_COMMITTED ||
-                isolationLevelCode == REPEATABLE_READ)) {
+                isolationLevelCode == REPEATABLE_READ ||
+                isolationLevelCode == Modifiers.RUN_ON_IO_THREAD
+                )) {
             throw new IllegalArgumentException("isolationLevel must be one of: REPEATABLE_READ, DIRTY_READ, READ_COMMITTED. Got ["
                     + isolationLevelCode + " instead");
         }
