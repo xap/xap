@@ -30,6 +30,7 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
         this.visibleColumnsAndAliasMap = visibleColumnsAndAliasMap;
     }
 
+
     @Override
     public String toString() {
         return createPlan().toString();
@@ -54,7 +55,7 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
     /**
      * @return JSON structured plan
      */
-    protected ExplainPlanInfo createPlan() {
+    private ExplainPlanInfo createPlan() {
         ExplainPlanInfo planFormat = new ExplainPlanInfo(this);
         if (!plans.isEmpty()) {
             appendScanDetails(planFormat);
@@ -62,7 +63,10 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
         return planFormat;
     }
 
-    protected void appendScanDetails(ExplainPlanInfo planFormat) {
+    /**
+     * Fill the planFormat with the criteria and the index inspections
+     */
+    private void appendScanDetails(ExplainPlanInfo planFormat) {
         indexInfoDescCache.clear();
         String queryFilterTree = getQueryFilterTree(plans.values().iterator().next().getRoot());
         planFormat.setCriteria(queryFilterTree);
@@ -71,11 +75,17 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
         }
     }
 
-    protected String getQueryFilterTree(QueryOperationNode node) {
-        return node == null ? null : node.getPrettifiedString();
+    /**
+     * Gets the criteria from the QueryOperationNode root
+     */
+    private String getQueryFilterTree(QueryOperationNode root) {
+        return root == null ? null : root.getPrettifiedString();
     }
 
-    protected IndexInspectionDetail getPartitionPlan(String partitionId, SingleExplainPlan singleExplainPlan) {
+    /**
+     * Return index choices of single partition wrapped by IndexInspectionDetail
+     */
+    private IndexInspectionDetail getPartitionPlan(String partitionId, SingleExplainPlan singleExplainPlan) {
         final IndexInspectionDetail indexInspection = new IndexInspectionDetail();
         final Map<String, List<IndexChoiceNode>> indexesInfo = singleExplainPlan.getIndexesInfo();
         if (indexesInfo.size() == 1) {
@@ -90,7 +100,10 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
         return indexInspection;
     }
 
-    protected List<IndexChoiceDetail> getIndexInspectionPerTableType(List<IndexChoiceNode> indexChoices) {
+    /**
+     * Return index choices of single partition
+     */
+    private List<IndexChoiceDetail> getIndexInspectionPerTableType(List<IndexChoiceNode> indexChoices) {
         List<IndexChoiceDetail> indexChoiceDetailList = new ArrayList<>();
         for (IndexChoiceNode node : indexChoices) {
             final List<IndexInfoDetail> selected = getSelectedIndexesDescription(node.getChosen());
@@ -102,6 +115,9 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
         return indexChoiceDetailList;
     }
 
+    /**
+     * Gets Single index choice detail of the inspected indexes
+     */
     private List<IndexInfoDetail> getInspectedIndexesDescription(List<IndexInfo> options) {
         final List<IndexInfoDetail> indexInfoDetails = new ArrayList<>();
         for (IndexInfo option : options) {
@@ -111,6 +127,10 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
         return indexInfoDetails;
     }
 
+    /**
+     * Gets Single index choice detail of the selected indexes
+     * Might return an array in case of a union choice
+     */
     private List<IndexInfoDetail> getSelectedIndexesDescription(IndexInfo indexInfo) {
         final List<IndexInfoDetail> indexInfoDetails = new ArrayList<>();
         if (indexInfo == null) return indexInfoDetails;

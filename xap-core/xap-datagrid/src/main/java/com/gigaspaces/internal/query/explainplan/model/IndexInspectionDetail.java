@@ -3,6 +3,11 @@ package com.gigaspaces.internal.query.explainplan.model;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * All the index choices of specific partition
+ * @author Mishel Liberman
+ * @since 16.0
+ */
 public class IndexInspectionDetail {
     private String partition;
     private List<IndexChoiceDetail> indexes = new ArrayList<>();

@@ -28,7 +28,7 @@ public class ConcreteTableContainer extends TableContainer {
     private final ITypeDesc typeDesc;
     private final int maxResults = Integer.MAX_VALUE;
 
-    private List<String> allColumnNamesSorted;
+    private final List<String> allColumnNamesSorted;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
     private final String name;
     private final String alias;

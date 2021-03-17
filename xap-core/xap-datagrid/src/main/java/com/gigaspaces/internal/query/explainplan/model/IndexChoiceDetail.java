@@ -2,6 +2,11 @@ package com.gigaspaces.internal.query.explainplan.model;
 
 import java.util.List;
 
+/**
+ * Part of the index choices of the partition
+ * @author Mishel Liberman
+ * @since 16.0
+ */
 public class IndexChoiceDetail {
     private String operator;
     private boolean isUnion;

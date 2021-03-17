@@ -10,6 +10,11 @@ import java.util.stream.Collectors;
 
 import static com.gigaspaces.internal.query.explainplan.ExplainPlanUtil.notEmpty;
 
+/**
+ * Base class representing the format of ExplainPlan
+ * @author Mishel Liberman
+ * @since 16.0
+ */
 public class ExplainPlanInfo {
     private final String spaceName;
     private final String tableName;
@@ -18,14 +23,14 @@ public class ExplainPlanInfo {
     private List<IndexInspectionDetail> indexInspectionsPerPartition = new ArrayList<>();
     private String criteria;
 
-    private static final String SELECTED_INDEX_STRING = "SelectedIndex:";
+    private static final String SELECTED_INDEX_STRING = "Selected Index:";
 
 
     public ExplainPlanInfo(ExplainPlanV3 explainPlan) {
-        tableName = explainPlan.getTableName();
-        tableAlias = explainPlan.getTableAlias();
-        visibleColumnsAndAliasMap = explainPlan.getVisibleColumnsAndAliasMap();
-        spaceName = explainPlan.getSpaceName();
+            tableName = explainPlan.getTableName();
+            tableAlias = explainPlan.getTableAlias();
+            visibleColumnsAndAliasMap = explainPlan.getVisibleColumnsAndAliasMap();
+            spaceName = explainPlan.getSpaceName();
     }
 
     @Override
@@ -57,14 +62,14 @@ public class ExplainPlanInfo {
             formatter.line("Criteria: " + criteria);
         }
 
-        for (IndexInspectionDetail inspectionFormat : indexInspectionsPerPartition) {
-            if (inspectionFormat.getIndexes().isEmpty()) {
+        for (IndexInspectionDetail inspectionDetail : indexInspectionsPerPartition) {
+            if (inspectionDetail.getIndexes().isEmpty()) {
                 continue;
             }
 
-            formatter.line(String.format("Partition: [%s]", inspectionFormat.getPartition()));
+            formatter.line(String.format("Partition: [%s]", inspectionDetail.getPartition()));
             formatter.indent();
-            final IndexChoiceDetail unionIndexChoice = getUnionIndexChoiceIfExists(inspectionFormat.getIndexes());
+            final IndexChoiceDetail unionIndexChoice = getUnionIndexChoiceIfExists(inspectionDetail.getIndexes());
             if (!verbose && unionIndexChoice != null) {
                 formatter.line(SELECTED_INDEX_STRING);
                 formatter.indent();
@@ -76,12 +81,12 @@ public class ExplainPlanInfo {
 
                 formatter.unindent();
             } else {
-                for (int i = inspectionFormat.getIndexes().size() - 1; i >= 0; i--) {
-                    IndexChoiceDetail indexChoice = inspectionFormat.getIndexes().get(i);
+                for (int i = inspectionDetail.getIndexes().size() - 1; i >= 0; i--) {
+                    IndexChoiceDetail indexChoice = inspectionDetail.getIndexes().get(i);
                     if (verbose) {
                         formatter.line(indexChoice.getOperator());
                         formatter.indent();
-                        formatter.line("Inspected: ");
+                        formatter.line("Inspected Index: ");
                         formatter.indent();
                         indexChoice.getInspectedIndexes().forEach(inspected -> formatter.line(inspected.toString()));
                         formatter.unindent();

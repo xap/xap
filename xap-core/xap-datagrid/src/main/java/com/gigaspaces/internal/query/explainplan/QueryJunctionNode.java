@@ -57,17 +57,29 @@ public class QueryJunctionNode implements QueryOperationNode{
     @Override
     public String getPrettifiedString() {
         StringBuilder result = new StringBuilder();
-        final boolean surroundParentheses = name.equalsIgnoreCase("OR");
         final Iterator<QueryOperationNode> iterator = subTrees.iterator();
         while (iterator.hasNext()) {
             QueryOperationNode node = iterator.next();
+            boolean surroundParentheses = isSurroundParentheses(node);
             appendNode(result, node, surroundParentheses);
             if (iterator.hasNext()) {
-                result.append(" "+name+" ");
+                result.append(" " + name + " ");
             }
         }
 
         return result.toString();
+    }
+
+    private boolean isSurroundParentheses(QueryOperationNode node) {
+        if (node instanceof QueryJunctionNode) {
+            QueryJunctionNode junctionNode = ((QueryJunctionNode) node);
+            return junctionNode.getName().equals("AND") && isMoreThanOneRangeChildren(junctionNode);
+        }
+        return false;
+    }
+
+    private boolean isMoreThanOneRangeChildren(QueryJunctionNode junctionNode) {
+        return junctionNode.subTrees.stream().filter(child -> !(child instanceof QueryJunctionNode)).count() > 1;
     }
 
     private void appendNode(StringBuilder result, QueryOperationNode node, boolean surroundParentheses) {

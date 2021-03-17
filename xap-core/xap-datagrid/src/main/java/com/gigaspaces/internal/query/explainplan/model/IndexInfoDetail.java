@@ -4,6 +4,11 @@ import com.gigaspaces.internal.query.explainplan.IndexInfo;
 import com.gigaspaces.internal.query.explainplan.QueryOperator;
 import com.gigaspaces.metadata.index.SpaceIndexType;
 
+/**
+ * Single index choice detail
+ * @author Mishel Liberman
+ * @since 16.0
+ */
 public class IndexInfoDetail {
     private Integer id;
     private String name;
