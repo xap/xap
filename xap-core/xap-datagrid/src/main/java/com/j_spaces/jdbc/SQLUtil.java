@@ -198,6 +198,12 @@ public class SQLUtil {
     }
 
     protected static ITypeDesc getTypeDesc(IJSpace space, String tableName) {
+        try {
+            return space.getDirectProxy().getTypeManager().getTypeDescByName(tableName);
+        } catch (SpaceMetadataException ex) {
+        }
+
+
         List<String> spaceTypes = findSpaceRegisteredTypes(space);
         String shortTableName = trimPackage(tableName);
         for (Map.Entry<String, List<String>> entry : mapByShortName(spaceTypes).entrySet()) {
