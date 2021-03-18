@@ -78,7 +78,7 @@ public class IndexInfoDetail {
     @Override
     public String toString() {
         return String.format("[#%s] (%s %s %s), IndexSize=%s, IndexType=%s"
-                , getId(), getName(), getOperator().toString()
+                , getId(), getName(), getOperator().getOperatorString()
                 , getValue(), getSize(), getType());
     }
 }

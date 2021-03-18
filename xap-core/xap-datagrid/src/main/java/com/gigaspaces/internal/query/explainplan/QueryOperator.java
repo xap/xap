@@ -41,16 +41,15 @@ public enum QueryOperator {
     NOT_SUPPORTED("NOT_SUPPORTED"),
     BETWEEN("=");
 
-    private final String str;
+    private final String operatorString;
 
-    QueryOperator(String str) {
-        this.str = str;
+    QueryOperator(String operatorString) {
+        this.operatorString = operatorString;
 
     }
 
-    @Override
-    public String toString() {
-        return str;
+    public String getOperatorString() {
+        return operatorString;
     }
 }
 
