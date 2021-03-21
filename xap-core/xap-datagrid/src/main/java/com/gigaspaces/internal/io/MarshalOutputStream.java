@@ -194,6 +194,7 @@ public class MarshalOutputStream
         int i = _context.getObjectStreamClassKey(desc);
         boolean newClass = false;
         if (i == 0 || !_optimize) {
+            _logger.info("new class: {} (size: {})", desc.getName(), _nextClassId);
             newClass = true;
             if (_optimize) {
                 i = _nextClassId++;

@@ -17,27 +17,20 @@
 package com.gigaspaces.internal.io;
 
 import com.gigaspaces.executor.SpaceTask;
+import com.gigaspaces.internal.client.spaceproxy.operations.ReadTakeEntrySpaceOperationRequest;
+import com.gigaspaces.internal.client.spaceproxy.operations.ReadTakeEntrySpaceOperationResult;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.IntegerObjectMap;
 import com.gigaspaces.internal.collections.ObjectIntegerMap;
-import com.gigaspaces.internal.serialization.BooleanClassSerializer;
-import com.gigaspaces.internal.serialization.ByteArrayClassSerializer;
-import com.gigaspaces.internal.serialization.ByteClassSerializer;
-import com.gigaspaces.internal.serialization.CharacterClassSerializer;
-import com.gigaspaces.internal.serialization.DoubleClassSerializer;
-import com.gigaspaces.internal.serialization.FloatClassSerializer;
-import com.gigaspaces.internal.serialization.IClassSerializer;
-import com.gigaspaces.internal.serialization.IntegerClassSerializer;
-import com.gigaspaces.internal.serialization.LongClassSerializer;
-import com.gigaspaces.internal.serialization.NullClassSerializer;
-import com.gigaspaces.internal.serialization.ObjectClassSerializer;
-import com.gigaspaces.internal.serialization.ShortClassSerializer;
-import com.gigaspaces.internal.serialization.StringClassSerializer;
+import com.gigaspaces.internal.serialization.*;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
+import com.gigaspaces.internal.transport.EntryPacket;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.transport.PocSettings;
 import com.gigaspaces.utils.CodeChangeUtilities;
+import com.j_spaces.core.IdQueryPacket;
 import com.j_spaces.core.SpaceContext;
 import com.j_spaces.kernel.ClassLoaderHelper;
 import net.jini.core.transaction.Transaction;
@@ -116,6 +109,18 @@ public class IOUtils {
 //		register((byte)18, IdentifierInfo.class, PlatformLogicalVersion.v7_1_0_ga);
 //		register((byte)19, SpacePropertyIndex.class, PlatformLogicalVersion.v7_1_0_ga);
 //		register((byte)20, CustomIndex.class, PlatformLogicalVersion.v7_1_0_ga);
+
+        if (PocSettings.directExternalizable) {
+            register(new ExternalizableClassSerializer(IClassSerializer.CODE_ReadTakeEntrySpaceOperationRequest, ReadTakeEntrySpaceOperationRequest::new));
+            register(new ExternalizableClassSerializer(IClassSerializer.CODE_ReadTakeEntrySpaceOperationResult, ReadTakeEntrySpaceOperationResult::new));
+            register(new ExternalizableClassSerializer(IClassSerializer.CODE_EntryPacket, EntryPacket::new));
+            register(new ExternalizableClassSerializer(IClassSerializer.CODE_IdQueryPacket, IdQueryPacket::new));
+        }
+    }
+
+    private static void register(ExternalizableClassSerializer serializer) {
+        _typeCache.put(serializer.getType(), serializer);
+        _codeCache.put(serializer.getCode(), serializer);
     }
 
     private static void register(Class<?> type, IClassSerializer<?> serializer) {
@@ -256,7 +261,9 @@ public class IOUtils {
                 throw new AssertionError("Unrecognized primitive type: " + type);
             }
         } else {
-            out.writeObject(value);
+            // NIV_WARN: backwards change
+            IOUtils.writeObject(out, value);
+            //out.writeObject(value);
         }
     }
 
@@ -295,7 +302,9 @@ public class IOUtils {
 
             throw new AssertionError("Unrecognized primitive type: " + type);
         }
-        return in.readObject();
+        // NIV_WARN: backwards change
+        return IOUtils.readObject(in);
+        //return in.readObject();
     }
 
 

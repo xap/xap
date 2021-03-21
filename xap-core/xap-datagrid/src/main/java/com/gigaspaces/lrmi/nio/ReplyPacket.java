@@ -18,6 +18,7 @@ package com.gigaspaces.lrmi.nio;
 
 import com.gigaspaces.internal.io.AnnotatedObjectInputStream;
 import com.gigaspaces.internal.io.AnnotatedObjectOutputStream;
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.lrmi.classloading.LRMIRemoteClassLoaderIdentifier;
 import com.gigaspaces.lrmi.classloading.protocol.lrmi.LRMIConnection;
 
@@ -85,8 +86,11 @@ public class ReplyPacket<T> implements IPacket {
         if (remoteClassLoaderId != null)
             previousIdentifier = LRMIConnection.setRemoteClassLoaderIdentifier(remoteClassLoaderId);
 
-        result = (T) in.readUnshared();
-        exception = (Exception) in.readUnshared();
+        result = IOUtils.readObject(in);
+        exception = IOUtils.readObject(in);
+        // NIV_WARN: backwards change
+        //result = (T) in.readUnshared();
+        //exception = (Exception) in.readUnshared();
 
         if (remoteClassLoaderId != null)
             LRMIConnection.setRemoteClassLoaderIdentifier(previousIdentifier);
@@ -98,9 +102,11 @@ public class ReplyPacket<T> implements IPacket {
     public void writeExternal(AnnotatedObjectOutputStream out) throws IOException {
         //Writes serial version
         out.writeByte(SERIAL_VERSION);
-
-        out.writeUnshared(result);
-        out.writeUnshared(exception);
+        IOUtils.writeObject(out, result);
+        IOUtils.writeObject(out, exception);
+        // NIV_WARN: backwards change
+        //out.writeUnshared(result);
+        //out.writeUnshared(exception);
     }
 
     @Override

@@ -16,14 +16,11 @@
 
 package com.gigaspaces.internal.serialization;
 
-import com.gigaspaces.internal.version.PlatformLogicalVersion;
-
-import net.jini.space.InternalSpaceException;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.function.Supplier;
 
 /**
  * Serializer for Externalizable.
@@ -34,35 +31,29 @@ import java.io.ObjectOutput;
 @com.gigaspaces.api.InternalApi
 public class ExternalizableClassSerializer implements IClassSerializer<Externalizable> {
     private final byte _code;
-    private final Class<?> _type;
-    private final PlatformLogicalVersion _since;
+    private final Supplier<Externalizable> factory;
+    private final Class<Externalizable> _type;
 
-    public ExternalizableClassSerializer(byte code, Class<?> type, PlatformLogicalVersion since) {
+    public ExternalizableClassSerializer(byte code, Supplier<Externalizable> factory) {
         this._code = code;
-        this._type = type;
-        this._since = since;
+        this.factory = factory;
+        this._type = (Class<Externalizable>) factory.get().getClass();
     }
 
     public byte getCode() {
         return _code;
     }
 
-    public void write(ObjectOutput out, Externalizable obj)
-            throws IOException {
+    public Class<Externalizable> getType() {
+        return _type;
+    }
+
+    public void write(ObjectOutput out, Externalizable obj) throws IOException {
         obj.writeExternal(out);
     }
 
-    public Externalizable read(ObjectInput in)
-            throws IOException, ClassNotFoundException {
-        Externalizable result;
-        try {
-            result = (Externalizable) _type.newInstance();
-        } catch (InstantiationException e) {
-            throw new InternalSpaceException("Failed to create an instance of type [" + _type.getName() + "].", e);
-        } catch (IllegalAccessException e) {
-            throw new InternalSpaceException("Failed to create an instance of type [" + _type.getName() + "].", e);
-        }
-
+    public Externalizable read(ObjectInput in) throws IOException, ClassNotFoundException {
+        Externalizable result = factory.get();
         result.readExternal(in);
         return result;
     }

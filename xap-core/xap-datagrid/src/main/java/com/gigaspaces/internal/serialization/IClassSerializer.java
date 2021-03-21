@@ -25,6 +25,7 @@ import java.io.ObjectOutput;
  * @since 7.1
  */
 public interface IClassSerializer<T> {
+
     byte getCode();
 
     void write(ObjectOutput out, T obj)
@@ -60,6 +61,10 @@ public interface IClassSerializer<T> {
     //public static final byte CODE_BOOLEAN_ARRAY	= -27;
     //public static final byte CODE_CHAR_ARRAY	= -28;
 
-    public static final byte CODE_HASHMAP = 10;
-
+    // entry/template classes
+    byte CODE_EntryPacket = 1;
+    byte CODE_IdQueryPacket = 2;
+    // request/reply classes
+    byte CODE_ReadTakeEntrySpaceOperationRequest = 10;
+    byte CODE_ReadTakeEntrySpaceOperationResult = 11;
 }

@@ -7,6 +7,7 @@ public class PocSettings {
     public static final String host = GsEnv.property("com.gs.nio.host").get("localhost");
     public static final int port = GsEnv.propertyInt("com.gs.nio.port").get(8080);
     public static final boolean directBuffers = GsEnv.propertyBoolean("com.gs.nio.direct-buffers").get(false);
+    public static final boolean directExternalizable = GsEnv.propertyBoolean("com.gs.nio.direct-externalizable").get(false);
     //public static final boolean customMarshal = GsEnv.propertyBoolean("com.gs.nio.custom-marshal").get(true);
     public static final boolean clientConnectionPoolDynamic = GsEnv.propertyBoolean("com.gs.nio.client.connection-pool.dynamic").get(false);
     public static final int clientConnectionPoolSize = GsEnv.propertyInt("com.gs.nio.client.connection-pool.size").get(4);
