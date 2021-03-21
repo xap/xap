@@ -22,8 +22,10 @@ public class GSConnection extends GConnection {
      */
     private static final String HOST_REGEX = "[^\\:]+(:\\d{4,5})?";
     private static final String MULTIPLE_HOST_REGEX = String.format("(%s(;%s)*)", HOST_REGEX, HOST_REGEX);
-    private static final String OPTIONAL_VERSION_REGEX = "((?<version>v3):)?";
-    static final String CONNECTION_STRING_REGEX = String.format("jdbc:gigaspaces:%s//(?<host>%s)/(?<spaceName>.*)", OPTIONAL_VERSION_REGEX, MULTIPLE_HOST_REGEX);
+//    private static final String OPTIONAL_VERSION_REGEX = "((?<version>v3):)?";
+    private static final String REQUIRED_VERSION_REGEX = "((?<version>v3):)";
+
+    static final String CONNECTION_STRING_REGEX = String.format("jdbc:gigaspaces:%s//(?<host>%s)/(?<spaceName>.*)", REQUIRED_VERSION_REGEX, MULTIPLE_HOST_REGEX);
 
     private static final String CONNECTION_TEMPLATE = String.format("jdbc:gigaspaces:%s://hostname[:port]/spaceName", DRIVER_VERSION);
 

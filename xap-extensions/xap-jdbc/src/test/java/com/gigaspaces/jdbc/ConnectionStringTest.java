@@ -10,9 +10,15 @@ public class ConnectionStringTest {
     @Test
     public void test() {
 
-        testConnectionString("jdbc:gigaspaces://localhost:4174;localhost2:1234/demo", "jini://*/*/demo?locators=localhost:4174,localhost2:1234");
-        testConnectionString("jdbc:gigaspaces://localhost:4174/demo", "jini://*/*/demo?locators=localhost:4174");
-        testConnectionString("jdbc:gigaspaces://localhost/demo", "jini://*/*/demo?locators=localhost");
+        //TODO - currently there is no default so v3 is mandatory
+//        testConnectionString("jdbc:gigaspaces://localhost:4174;localhost2:1234/demo", "jini://*/*/demo?locators=localhost:4174,localhost2:1234");
+        testFailure("jdbc:gigaspaces://localhost:4174;localhost2:1234/demo");
+//        testConnectionString("jdbc:gigaspaces://localhost:4174/demo", "jini://*/*/demo?locators=localhost:4174");
+        testFailure("jdbc:gigaspaces://localhost:4174/demo");
+//        testConnectionString("jdbc:gigaspaces://localhost/demo", "jini://*/*/demo?locators=localhost");
+        testFailure("jdbc:gigaspaces://localhost/demo");
+
+
 
         testConnectionString("jdbc:gigaspaces:v3://localhost:4174;localhost2:1234/demo", "jini://*/*/demo?locators=localhost:4174,localhost2:1234");
         testConnectionString("jdbc:gigaspaces:v3://localhost:4174/demo", "jini://*/*/demo?locators=localhost:4174");

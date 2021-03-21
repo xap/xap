@@ -12,9 +12,9 @@ public class MainTester {
         GigaSpace space = createAndFillSpace();
 
         Properties properties = new Properties();
-                try (Connection connection = GSConnection.getInstance(space.getSpace(), properties)) {
+//                try (Connection connection = GSConnection.getInstance(space.getSpace(), properties)) {
 
-//        try (Connection connection = DriverManager.getConnection("jdbc:gigaspaces://localhost:4174/demo", properties)) {
+        try (Connection connection = DriverManager.getConnection("jdbc:gigaspaces:v3://localhost:4174/demo", properties)) {
             Statement statement = connection.createStatement();
 //            String sqlQuery = "select name, name, id from com.gigaspaces.jdbc.MyPojo";
 //            String sqlQuery = "select * from com.gigaspaces.jdbc.MyPojo";
