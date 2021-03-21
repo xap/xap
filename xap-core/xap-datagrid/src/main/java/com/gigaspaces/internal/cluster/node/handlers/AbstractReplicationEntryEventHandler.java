@@ -53,7 +53,7 @@ public abstract class AbstractReplicationEntryEventHandler implements IReplicati
     @Override
     public void inRemoveEntryByUID(IReplicationInContext context, String typeName, String uid, boolean isTransient, OperationID operationID)
             throws Exception {
-        removeEntryByUid(context, null, false, uid, isTransient, operationID);
+        removeEntryByUid(context, null, false, uid, isTransient, operationID, typeName);
     }
 
     @Override
@@ -80,7 +80,7 @@ public abstract class AbstractReplicationEntryEventHandler implements IReplicati
     public abstract void removeEntry(IReplicationInContext context, Transaction txn, boolean twoPhaseCommit, IEntryPacket entry)
             throws Exception;
 
-    public abstract void removeEntryByUid(IReplicationInContext context, Transaction txn, boolean twoPhaseCommit, String uid, boolean isTransient, OperationID operationID)
+    public abstract void removeEntryByUid(IReplicationInContext context, Transaction txn, boolean twoPhaseCommit, String uid, boolean isTransient, OperationID operationID, String typeName)
             throws Exception;
 
     public abstract void changeEntry(IReplicationInContext context,

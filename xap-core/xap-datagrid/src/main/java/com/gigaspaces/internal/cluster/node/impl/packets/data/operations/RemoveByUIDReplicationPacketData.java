@@ -64,7 +64,7 @@ public class RemoveByUIDReplicationPacketData
                                      ITransactionalExecutionCallback transactionExecutionCallback,
                                      Transaction transaction, boolean twoPhaseCommit) throws Exception {
         try {
-            transactionExecutionCallback.removeEntryByUID(context, transaction, twoPhaseCommit, getUid(), isTransient(), getOperationId());
+            transactionExecutionCallback.removeEntryByUID(context, transaction, twoPhaseCommit, getUid(), isTransient(), getOperationId(), _typeName);
         } finally {
             ReplicationInContentContext contentContext = context.getContentContext();
             if (contentContext != null) {

@@ -145,8 +145,7 @@ public class EntryHolderFactory {
         return new UserTypeEntryData(entryPacket.toObject(entryType), entryTypeDesc, version, lease, entryXtnInfo);
     }
 
-    public static IEntryHolder createTieredStorageHollowEntry(Context context, IServerTypeDesc typeDesc, String uid, boolean isTransient, Object entryId){
-        context.setSuppliedEntryIdForColdTier(entryId);
+    public static IEntryHolder createTieredStorageHollowEntry(Context context, IServerTypeDesc typeDesc, String uid, boolean isTransient){
         return new EntryHolder(typeDesc, uid, SystemTime.timeMillis(), isTransient, null);
     }
 

@@ -68,6 +68,10 @@ public class TemplatePacketFactory {
         return new UidQueryPacket(null, uid, null, version, QueryResultTypeInternal.EXTERNAL_ENTRY, returnOnlyUids, null);
     }
 
+    public static ITemplatePacket createUidPacket(ITypeDesc typeDesc, String uid, int version) {
+        return new UidQueryPacket(typeDesc, uid, null, version, QueryResultTypeInternal.EXTERNAL_ENTRY, false, null);
+    }
+
     public static ITemplatePacket createUidPacket(ITypeDesc typeDesc, String uid, Object routing, int version, QueryResultTypeInternal resultType, AbstractProjectionTemplate projectionTemplate) {
         return new UidQueryPacket(typeDesc, uid, routing, version, resultType, false, projectionTemplate);
     }

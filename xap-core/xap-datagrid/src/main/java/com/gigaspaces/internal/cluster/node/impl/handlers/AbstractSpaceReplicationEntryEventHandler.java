@@ -20,6 +20,7 @@ import com.gigaspaces.client.mutators.SpaceEntryMutator;
 import com.gigaspaces.internal.cluster.node.IReplicationInContext;
 import com.gigaspaces.internal.cluster.node.handlers.AbstractReplicationEntryEventHandler;
 import com.gigaspaces.internal.cluster.node.handlers.IReplicationInEvictEntryHandler;
+import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.transport.IEntryPacket;
@@ -129,12 +130,19 @@ public abstract class AbstractSpaceReplicationEntryEventHandler
     }
 
     @Override
-    public void removeEntryByUid(IReplicationInContext context, Transaction transaction, boolean twoPhaseCommit, String uid, boolean isTransient, OperationID operationID)
+    public void removeEntryByUid(IReplicationInContext context, Transaction transaction, boolean twoPhaseCommit, String uid, boolean isTransient, OperationID operationID, String typeName)
             throws Exception {
         if (!shouldRemoveEntryFromSpace(isTransient))
             return;
 
-        ITemplatePacket entryPacket = TemplatePacketFactory.createUidPacket(uid, 0, false);
+        ITemplatePacket entryPacket;
+        if(_engine.isTieredStorage()){
+            ITypeDesc typeDesc = this._engine.getTypeManager().getTypeDesc(typeName);
+            entryPacket = TemplatePacketFactory.createUidPacket(typeDesc, uid, 0);
+        } else {
+            entryPacket = TemplatePacketFactory.createUidPacket(uid, 0, false);
+        }
+
         entryPacket.setOperationID(operationID);
 
         removeEntryFromSpace(context, transaction, entryPacket, twoPhaseCommit);

@@ -33,7 +33,7 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     }
 
     public TieredStorageManagerImpl(TieredStorageConfig storageConfig, InternalRDBMS internalDiskStorage, IDirectSpaceProxy proxy, String fullSpaceName) {
-        this.logger =  LoggerFactory.getLogger(Constants.TieredStorage.getLoggerName(fullSpaceName));
+        this.logger = LoggerFactory.getLogger(Constants.TieredStorage.getLoggerName(fullSpaceName));
         this.internalDiskStorage = internalDiskStorage;
         this.storageConfig = storageConfig;
         this.spaceProxy = proxy;
@@ -79,26 +79,35 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
         String typeName = entryData.getSpaceTypeDescriptor().getTypeName();
         CachePredicate cacheRule = getCacheRule(typeName);
         if (cacheRule == null) {
-            return TieredState.TIERED_COLD;
-        } else if (cacheRule.evaluate(entryData)) {
-            if (cacheRule.isTransient()) {
-                return TieredState.TIERED_HOT;
-            } else {
-                return TieredState.TIERED_HOT_AND_COLD;
-            }
-        } else {
+            logger.trace("No cache rule for type {}, EntryTieredState = TIERED_COLD", typeName);
             return TieredState.TIERED_COLD;
         }
+
+        if (cacheRule.isTransient()) {
+            logger.trace("Type {} is transient, EntryTieredState = TIERED_HOT", typeName);
+            return TieredState.TIERED_HOT;
+        }
+
+        if (cacheRule.evaluate(entryData)) {
+            logger.trace("Fits cache rule for type {}, EntryTieredState = TIERED_HOT_AND_COLD", typeName);
+            return TieredState.TIERED_HOT_AND_COLD;
+        }
+
+        logger.trace("Does'nt Fit cache rule for type {}, EntryTieredState = TIERED_COLD", typeName);
+        return TieredState.TIERED_COLD;
     }
 
     @Override
     public TieredState guessEntryTieredState(String typeName) {
         CachePredicate cacheRule = getCacheRule(typeName);
         if (cacheRule == null) {
+            logger.trace("No cache rule for type {}, EntryTieredState = TIERED_COLD", typeName);
             return TieredState.TIERED_COLD;
         } else if (cacheRule.isTransient()) {
+            logger.trace("Type {} is transient, EntryTieredState = TIERED_HOT", typeName);
             return TieredState.TIERED_HOT;
         } else {
+            logger.trace("Has cache rule for type {}, EntryTieredState = TIERED_HOT_AND_COLD", typeName);
             return TieredState.TIERED_HOT_AND_COLD;
         }
     }
@@ -108,18 +117,18 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
         String typeName = templateHolder.getServerTypeDesc().getTypeName();
         CachePredicate cacheRule = getCacheRule(typeName);
         if (cacheRule == null) {
-            logger.trace("No cache rule for type {}, TemplateMatchTier = MATCH_COLD",typeName);
+            logger.trace("No cache rule for type {}, TemplateMatchTier = MATCH_COLD", typeName);
             return templateHolder.isEmptyTemplate() ? TemplateMatchTier.MATCH_HOT_AND_COLD : TemplateMatchTier.MATCH_COLD;
         } else {
             if (cacheRule.isTransient()) {
-                logger.trace("Type {} is transient, TemplateMatchTier = MATCH_HOT",typeName);
+                logger.trace("Type {} is transient, TemplateMatchTier = MATCH_HOT", typeName);
                 return TemplateMatchTier.MATCH_HOT;
             } else if (templateHolder.isIdQuery()) {
-                logger.trace("Id query for type {}, TemplateMatchTier = MATCH_HOT_AND_COLD",typeName);
+                logger.trace("Id query for type {}, TemplateMatchTier = MATCH_HOT_AND_COLD", typeName);
                 return TemplateMatchTier.MATCH_HOT_AND_COLD;
             } else {
                 TemplateMatchTier templateMatchTier = cacheRule.evaluate(templateHolder);
-                logger.trace("Query for type {}, TemplateMatchTier = {}",typeName, templateMatchTier);
+                logger.trace("Query for type {}, TemplateMatchTier = {}", typeName, templateMatchTier);
                 return templateMatchTier;
             }
         }

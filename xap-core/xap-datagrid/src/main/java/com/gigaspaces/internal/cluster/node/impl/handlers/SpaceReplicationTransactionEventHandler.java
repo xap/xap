@@ -174,8 +174,8 @@ public class SpaceReplicationTransactionEventHandler implements IReplicationInTr
     }
 
     @Override
-    public void removeEntryByUID(IReplicationInContext context, Transaction txn, boolean twoPhaseCommit, String uid, boolean isTransient, OperationID operationID)
+    public void removeEntryByUID(IReplicationInContext context, Transaction txn, boolean twoPhaseCommit, String uid, boolean isTransient, OperationID operationID, String typeName)
             throws Exception {
-        _entryHandler.removeEntryByUid(context, txn, twoPhaseCommit, uid, isTransient, operationID);
+        _entryHandler.removeEntryByUid(context, txn, twoPhaseCommit, uid, isTransient, operationID, typeName);
     }
 }

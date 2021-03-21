@@ -1327,6 +1327,7 @@ public class Context {
     }
 
     public Context setEntryTieredState(TieredState entryTieredState) {
+//        Thread.dumpStack();
         this.entryTieredState = entryTieredState;
         return this;
     }
@@ -1345,13 +1346,5 @@ public class Context {
 
     public boolean isColdEntry(){
         return entryTieredState == TieredState.TIERED_COLD || entryTieredState == TieredState.TIERED_HOT_AND_COLD;
-    }
-
-    public Object getSuppliedEntryIdForColdTier() {
-        return suppliedEntryIdForColdTier;
-    }
-
-    public void setSuppliedEntryIdForColdTier(Object suppliedEntryIdForColdTier) {
-        this.suppliedEntryIdForColdTier = suppliedEntryIdForColdTier;
     }
 }

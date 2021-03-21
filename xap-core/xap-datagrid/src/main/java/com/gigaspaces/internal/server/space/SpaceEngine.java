@@ -864,27 +864,10 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             if(tieredStorageManager != null) {
                 String typeName = eHolder.getServerTypeDesc().getTypeName();
                 eHolder.setTransient(false);
-                if(!tieredStorageManager.hasCacheRule(typeName)) {
-                    context.setEntryTieredState(TieredState.TIERED_COLD);
-                } else{
-                    CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
-                    if(cacheRule.evaluate(eHolder.getEntryData())){
-                        if(cacheRule.isTransient()){
-                            eHolder.setTransient(true);
-                            context.setEntryTieredState(TieredState.TIERED_HOT);
-                        } else {
-                            context.setEntryTieredState(TieredState.TIERED_HOT_AND_COLD);
-                        }
-                    } else {
-                        if(cacheRule.isTransient()){
-                            _logger.warn("tried to write transient type but doesnt fit cache rule");
-                            return  new WriteEntryResult();
-                        } else {
-                            context.setEntryTieredState(TieredState.TIERED_COLD);
-                        }
-                    }
+                context.setEntryTieredState(tieredStorageManager.getEntryTieredState(eHolder.getEntryData()));
+                if(tieredStorageManager.getCacheRule(typeName) != null && tieredStorageManager.getCacheRule(typeName).isTransient()) {
+                    eHolder.setTransient(true);
                 }
-
             }
             context.cacheViewEntryDataIfNeeded(eHolder.getEntryData(), entryPacket);
             writeResult = _coreProcessor.handleDirectWriteSA(context, eHolder, serverTypeDesc, fromReplication,
@@ -3884,7 +3867,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 entry = _cacheManager.getEntry(context, uid, template.getClassName(),
                         template, false /*tryInsertToCache*/, false /*lockedEntry*/, template.isMemoryOnlySearch() || template.isTransient());
             } else {
-                entry = EntryHolderFactory.createTieredStorageHollowEntry(context, template.getServerTypeDesc(), uid, template.isTransient(), template.getEntryId());
+                entry = EntryHolderFactory.createTieredStorageHollowEntry(context, template.getServerTypeDesc(), uid, template.isTransient());
             }
         } else {
             //if update/take/takeIE arrives from central-db replication only retrieve from pure cache
@@ -4547,6 +4530,9 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 reRead = entry.isHollowEntry() || !context.isNonBlockingReadOp() ;
                 if(reRead){
                     entry = _cacheManager.getEntry(context, ent, false /*tryInsertToCache*/, !context.isNonBlockingReadOp() /*lockeEntry*/, tmpl.isMemoryOnlySearch() || ent.isTransient() /*useOnlyCache*/);
+                    if(entry != null){
+                        context.setEntryTieredState(getTieredStorageManager().getEntryTieredState(entry.getEntryData()));
+                    }
                 }
             } else {
                 reRead = getCacheManager().needReReadAfterEntryLock() && (!context.isNonBlockingReadOp() || !context.isMainThread());

@@ -35,7 +35,7 @@ public interface ITransactionalExecutionCallback {
                      IEntryPacket entryPacket) throws Exception;
 
     void removeEntryByUID(IReplicationInContext context, Transaction transaction, boolean twoPhaseCommit,
-                          String uid, boolean isTransient, OperationID operationID) throws Exception;
+                          String uid, boolean isTransient, OperationID operationID, String typeName) throws Exception;
 
     void updateEntry(IReplicationInContext context, Transaction transaction, boolean twoPhaseCommit,
                      IEntryPacket entryPacket, IEntryPacket previousEntryPacket, boolean partialUpdate, boolean overrideVersion, short flags) throws Exception;

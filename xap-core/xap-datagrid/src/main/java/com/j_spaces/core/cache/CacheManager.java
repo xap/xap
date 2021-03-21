@@ -1802,8 +1802,7 @@ public class CacheManager extends AbstractCacheManager
         else {
 
             if(_engine.getTieredStorageManager() != null){
-                entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(context, entryHolder.getServerTypeDesc().getTypeName(),
-                        entryHolder.isHollowEntry() ? context.getSuppliedEntryIdForColdTier() : entryHolder.getEntryId());
+                entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(context, entryHolder.getServerTypeDesc().getTypeName(), entryHolder.getUID());
             } else {
                 entry = _storageAdapter.getEntry(context, entryHolder.getUID(), entryHolder.getClassName(), entryHolder);
             }

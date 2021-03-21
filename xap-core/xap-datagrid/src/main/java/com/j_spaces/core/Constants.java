@@ -956,6 +956,7 @@ public interface Constants {
         String TIERED_STORAGE_INTERNAL_RDBMS_CLASS_DEFAULT = "com.gigaspaces.internal.server.space.tiered_storage.SqliteRDBMS";
         CachePredicate TRANSIENT_ALL_CACHE_PREDICATE = new AllPredicate(true);
         String TIERED_STORAGE_LOGGER_NAME = "com.gigaspaces.internal.server.space.tiered_storage.InternalRDBMS";
+        String UID_DB_FIELD_NAME = "UID$GS";
 
         static String getLoggerName(String memberName){
          return TIERED_STORAGE_LOGGER_NAME+"_"+memberName;
