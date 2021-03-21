@@ -54,24 +54,38 @@ public class SqliteUtils {
         int propertyIndex = property.getOriginalIndex() + 1;
         if (propertyType.equals(String.class)) {
             return resultSet.getString(propertyIndex);
-        } else if (propertyType.equals(boolean.class) || propertyType.equals(Boolean.class)) {
+        } else if (propertyType.equals(boolean.class)) {
             return resultSet.getBoolean(propertyIndex);
-        } else if (propertyType.equals(byte.class) || propertyType.equals(Byte.class)) {
+        } else if (propertyType.equals(Boolean.class)) {
+            return resultSet.getObject(propertyIndex);
+        } else if (propertyType.equals(byte.class)) {
             return resultSet.getByte(propertyIndex);
-        } else if (propertyType.equals(short.class) || propertyType.equals(Short.class)) {
+        } else if (propertyType.equals(Byte.class)) {
+            return resultSet.getObject(propertyIndex);
+        } else if (propertyType.equals(short.class)) {
             return resultSet.getShort(propertyIndex);
-        } else if (propertyType.equals(int.class) || propertyType.equals(Integer.class)) {
+        } else if (propertyType.equals(Short.class)) {
+            return resultSet.getObject(propertyIndex);
+        } else if (propertyType.equals(int.class)) {
             return resultSet.getInt(propertyIndex);
-        } else if (propertyType.equals(long.class) || propertyType.equals(Long.class)) {
+        } else if (propertyType.equals(Integer.class)) {
+            return resultSet.getObject(propertyIndex);
+        } else if (propertyType.equals(long.class)) {
             return resultSet.getLong(propertyIndex);
+        } else if (propertyType.equals(Long.class)) {
+            return resultSet.getObject(propertyIndex);
         } else if (propertyType.equals(BigInteger.class)) {
             return resultSet.getLong(propertyIndex);
         } else if (propertyType.equals(BigDecimal.class)) {
             return resultSet.getBigDecimal(propertyIndex);
-        } else if (propertyType.equals(float.class) || propertyType.equals(Float.class)) {
+        } else if (propertyType.equals(float.class)) {
             return resultSet.getFloat(propertyIndex);
-        } else if (propertyType.equals(double.class) || propertyType.equals(Double.class)) {
+        } else if (propertyType.equals(Float.class)) {
+            return resultSet.getObject(propertyIndex);
+        } else if (propertyType.equals(double.class)) {
             return resultSet.getDouble(propertyIndex);
+        } else if (propertyType.equals(Double.class)) {
+            return resultSet.getObject(propertyIndex);
         } else if (propertyType.equals(byte[].class) || propertyType.equals(Byte[].class)) {
             return resultSet.getBytes(propertyIndex);
         } else if (propertyType.equals(Timestamp.class)) {

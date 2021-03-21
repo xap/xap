@@ -609,6 +609,41 @@
             <xsd:complexContent>
                 <xsd:extension base="beans:identifiedType">
                     <xsd:choice minOccurs="0" maxOccurs="unbounded">
+                        <xsd:element name="tiered-storage">
+                            <xsd:complexType>
+                                <xsd:sequence>
+                                    <xsd:element name="tables">
+                                        <xsd:complexType>
+                                            <xsd:sequence>
+                                                <xsd:element name="table" maxOccurs="unbounded" minOccurs="0">
+                                                    <xsd:annotation>
+                                                        <xsd:documentation>no cache rule are always cold. cache rule all - always hot persistent.cant have retention policy for always hot data (never deleted). Customers has cache rule all - always hot not persistent. cant have retention policy for transient data</xsd:documentation>
+                                                    </xsd:annotation>
+                                                    <xsd:complexType mixed="true">
+                                                        <xsd:sequence>
+                                                            <xsd:element name="cache-rule" minOccurs="0">
+                                                                <xsd:complexType>
+                                                                    <xsd:simpleContent>
+                                                                        <xsd:extension base="xsd:string">
+                                                                            <xsd:attribute type="xsd:string" name="period" use="optional"/>
+                                                                            <xsd:attribute type="xsd:string" name="criteria" use="optional"/>
+                                                                        </xsd:extension>
+                                                                    </xsd:simpleContent>
+                                                                </xsd:complexType>
+                                                            </xsd:element>
+                                                        </xsd:sequence>
+                                                        <xsd:attribute type="xsd:string" name="name" use="optional"/>
+                                                        <xsd:attribute type="xsd:string" name="time-column" use="optional"/>
+                                                        <xsd:attribute type="xsd:string" name="retention" use="optional"/>
+                                                        <xsd:attribute type="xsd:string" name="transient" use="optional"/>
+                                                    </xsd:complexType>
+                                                </xsd:element>
+                                            </xsd:sequence>
+                                        </xsd:complexType>
+                                    </xsd:element>
+                                </xsd:sequence>
+                            </xsd:complexType>
+                        </xsd:element>
                         <xsd:element name="security" minOccurs="0" maxOccurs="1">
                             <xsd:complexType>
                                 <xsd:attribute name="username" type="xsd:string"/>

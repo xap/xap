@@ -17,6 +17,7 @@
 package org.openspaces.core.config;
 
 import org.openspaces.core.config.xmlparser.SecurityDefinitionsParser;
+import org.openspaces.core.config.xmlparser.TieredStorageDefinitionsParser;
 import org.openspaces.core.space.AllInCachePolicy;
 import org.openspaces.core.space.CachePolicy;
 import org.openspaces.core.space.LruCachePolicy;
@@ -38,6 +39,7 @@ import java.util.List;
 public abstract class AbstractSpaceBeanDefinitionParser extends AbstractSimpleBeanDefinitionParser {
 
     private static final String PROPERTIES = "properties";
+    private static final String TIERED_STORAGE = "tiered-storage";
     private static final String SECURITY = "security";
     private static final String DATA_SOURCE = "external-data-source";
     private static final String SPACE_DATA_SOURCE = "space-data-source";
@@ -70,6 +72,11 @@ public abstract class AbstractSpaceBeanDefinitionParser extends AbstractSimpleBe
                 builder.addPropertyValue("secured", Boolean.parseBoolean(secured));
             }
         }
+        Element tieredStorageElement = DomUtils.getChildElementByTagName(element, TIERED_STORAGE);
+        if (tieredStorageElement != null) {
+            TieredStorageDefinitionsParser.parseXml(tieredStorageElement, builder);
+        }
+
     }
 
     protected void parseServerComponents(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {

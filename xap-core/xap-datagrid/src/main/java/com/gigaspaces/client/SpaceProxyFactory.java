@@ -22,6 +22,7 @@ import com.gigaspaces.datasource.SpaceDataSource;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.lookup.SpaceUrlUtils;
 import com.gigaspaces.internal.server.space.SpaceInstanceConfig;
+import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageConfig;
 import com.gigaspaces.internal.sync.mirror.MirrorDistributedTxnConfig;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
@@ -39,16 +40,11 @@ import com.j_spaces.core.client.SpaceURL;
 import com.j_spaces.core.client.SpaceURLParser;
 import com.j_spaces.core.cluster.ReplicationFilterProvider;
 import com.j_spaces.core.filters.FilterProvider;
-
-import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.MalformedURLException;
+import java.util.*;
 
 /**
  * @author Niv Ingberg
@@ -391,5 +387,9 @@ public class SpaceProxyFactory {
 
     public void setAttributeStore(AttributeStore attributeStore) {
         this.attributeStore = attributeStore;
+    }
+
+    public void setTieredStorageConfig(TieredStorageConfig tieredStorageConfig) {
+        customComponents.add(tieredStorageConfig);
     }
 }

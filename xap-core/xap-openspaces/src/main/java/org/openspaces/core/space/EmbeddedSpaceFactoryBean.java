@@ -20,14 +20,17 @@ package org.openspaces.core.space;
 import com.gigaspaces.attribute_store.AttributeStore;
 import com.gigaspaces.datasource.ManagedDataSource;
 import com.gigaspaces.datasource.SpaceDataSource;
+import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageConfig;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.sync.SpaceSynchronizationEndpoint;
 import com.j_spaces.core.IJSpace;
-
 import org.openspaces.core.cluster.ClusterInfo;
 import org.openspaces.core.cluster.ClusterInfoAware;
-import org.openspaces.core.config.*;
+import org.openspaces.core.config.AttributeStoreFactoryBean;
+import org.openspaces.core.config.BlobStoreDataPolicyFactoryBean;
+import org.openspaces.core.config.CustomCachePolicyFactoryBean;
+import org.openspaces.core.config.SpaceSqlFunctionBean;
 import org.openspaces.core.extension.SpaceCustomComponentFactoryBean;
 import org.openspaces.core.properties.BeanLevelMergedPropertiesAware;
 import org.openspaces.core.space.filter.FilterProviderFactory;
@@ -75,6 +78,10 @@ public class EmbeddedSpaceFactoryBean extends AbstractSpaceFactoryBean implement
     public void setSecurityConfig(SecurityConfig securityConfig) {
         super.setSecurityConfig(securityConfig);
         factory.setSecurityConfig(securityConfig);
+    }
+
+    public void setTieredStorageConfig(TieredStorageConfig tieredStorageConfig){
+        factory.getFactory().setTieredStorageConfig(tieredStorageConfig);
     }
 
     public void setProperties(Properties properties) {
