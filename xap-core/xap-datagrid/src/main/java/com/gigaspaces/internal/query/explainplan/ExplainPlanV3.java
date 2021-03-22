@@ -36,6 +36,10 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
         return createPlan().toString();
     }
 
+    public String getVerbose() {
+        return createPlan().toString(true);
+    }
+
     public String getSpaceName() {
         return spaceName;
     }

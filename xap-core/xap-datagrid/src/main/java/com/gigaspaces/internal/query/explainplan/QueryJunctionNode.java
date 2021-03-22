@@ -31,6 +31,8 @@ import java.util.List;
 @ExperimentalApi
 public class QueryJunctionNode implements QueryOperationNode{
 
+    private static final long serialVersionUID = 8876082103633319234L;
+
     private String name;
     private final List<QueryOperationNode> subTrees = new ArrayList<QueryOperationNode>();
 

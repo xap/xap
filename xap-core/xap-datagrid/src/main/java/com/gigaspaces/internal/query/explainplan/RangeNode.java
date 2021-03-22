@@ -29,6 +29,7 @@ import java.util.List;
  */
 @ExperimentalApi
 public class RangeNode implements QueryOperationNode{
+    private static final long serialVersionUID = 4429295310828611780L;
 
     private String fieldName;
     private Object value;

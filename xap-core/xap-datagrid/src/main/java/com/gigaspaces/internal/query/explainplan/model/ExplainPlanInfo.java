@@ -41,7 +41,6 @@ public class ExplainPlanInfo {
     public String toString(boolean verbose) {
         TextReportFormatter formatter = new TextReportFormatter();
         String table = notEmpty(tableAlias) ? tableName + " as " + tableAlias : tableName;
-        table = notEmpty(spaceName) ? spaceName + "." + table : table;
         if (isNoIndexUsed()) {
             formatter.line("FullScan: " + table);
         } else {
