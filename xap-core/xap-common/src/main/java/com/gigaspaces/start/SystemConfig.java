@@ -333,6 +333,7 @@ public class SystemConfig {
         }
 
         classpathBuilder.appendOptionalJars("tiered-storage/sqlite");
+        classpathBuilder.appendPlatformJars("jdbc" );
 
         return classpathBuilder.toURLs();
     }
