@@ -487,9 +487,14 @@ public class SystemProperties extends CommonSystemProperties {
     public final static String SPACE_STARTUP_STATE_ENABLED = "com.gs.cluster.replication.secure-restart";
 
     /**
-     * System variable for look&feel class definition
+     * System variable for enabling metrics of ops-ui and hsqldb
      */
     public final static String UI_ENABLED = "com.gs.ops-ui.enabled";
+
+    /**
+     * System variable for enabling jdbc driver v3
+     */
+    public final static String JDBC_DRIVER_V3_ENABLED = "com.gs.jdbc-driver-v3.enabled";
 
     /**
      * System variable for enabling recording of all metrics tables to hsqldb
