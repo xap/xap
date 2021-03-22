@@ -116,7 +116,12 @@ public class ExplainPlanImpl implements ExplainPlan {
         report.indent();
         report.line("Query Tree:");
         report.indent();
-        append(report, plans.values().iterator().next().getRoot());
+        QueryOperationNode root = plans.values().iterator().next().getRoot();
+        if(root == null){
+            report.line("No Query Tree");
+        }else {
+            append(report, root);
+        }
         report.unindent();
 
         for (Map.Entry<String, SingleExplainPlan> entry : plans.entrySet()) {

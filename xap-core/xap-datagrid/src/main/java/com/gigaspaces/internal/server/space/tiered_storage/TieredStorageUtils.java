@@ -6,11 +6,11 @@ import com.gigaspaces.internal.server.storage.EntryTieredMetaData;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.j_spaces.core.cache.context.Context;
+import com.j_spaces.core.cache.context.TemplateMatchTier;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.sadapter.SAException;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class TieredStorageUtils {
     public static Map<Object, EntryTieredMetaData> getEntriesTieredMetaDataByIds(SpaceEngine space, String typeName, Object[] ids) throws Exception {
@@ -71,5 +71,18 @@ public class TieredStorageUtils {
             }
         }
         return true;
+    }
+
+    public static List<String> getTiersAsList(TemplateMatchTier templateTieredState) {
+        switch (templateTieredState){
+            case MATCH_HOT:
+                return Collections.singletonList("HOT");
+            case MATCH_COLD:
+                return Collections.singletonList("COLD");
+            case MATCH_HOT_AND_COLD:
+                return Arrays.asList("HOT", "COLD");
+        }
+
+        throw new IllegalStateException("Should be unreachable");
     }
 }

@@ -563,6 +563,10 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
 
     private IEntryHolder saIterNext()
             throws SAException {
+        if (_context.getExplainPlanContext() != null && _context.getExplainPlanContext().isDryRun()) {
+            return null;
+        }
+
         if (_saIter == null)
             return null;
 

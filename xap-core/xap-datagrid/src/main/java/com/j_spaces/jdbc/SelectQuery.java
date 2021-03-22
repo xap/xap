@@ -1120,6 +1120,11 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
 
         if (useAggregationApi(txn))
             template.setAggregationSet(_aggregationSet);
+
+        if(this.getExplainPlan() != null){
+            template.setExplainPlan(this.getExplainPlan());
+        }
+
         return template.read(space, this, txn, getReadModifier(), size);
 
     }

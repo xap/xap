@@ -71,6 +71,7 @@ import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.TypeDesc;
 import com.gigaspaces.internal.metadata.converter.ConversionException;
 import com.gigaspaces.internal.query.EntryHolderAggregatorContext;
+import com.gigaspaces.internal.query.explainplan.ExplainPlanContext;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterUtils;
 import com.gigaspaces.internal.server.metadata.AddTypeDescResult;
@@ -4007,6 +4008,20 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         if(isTieredStorage()){
             if(context.getTemplateTieredState() == null){
                 context.setTemplateTieredState(getTieredStorageManager().guessTemplateTier(template));
+            }
+
+            if (template.getExplainPlan() != null && context.getExplainPlanContext() == null) {
+                template.getExplainPlan().setPartitionId(Integer.toString(getPartitionIdOneBased()));
+                ExplainPlanContext explainPlanContext = new ExplainPlanContext();
+                explainPlanContext.setSingleExplainPlan(template.getExplainPlan());
+                if (Modifiers.contains(template.getOperationModifiers(), Modifiers.DRY_RUN)) {
+                    explainPlanContext.setDryRun(true);
+                }
+                context.setExplainPlanContext(explainPlanContext);
+            }
+
+            if(context.getExplainPlanContext() != null){
+                context.getExplainPlanContext().getSingleExplainPlan().addTiersInfo(template.getServerTypeDesc().getTypeName(), TieredStorageUtils.getTiersAsList(context.getTemplateTieredState()));
             }
         }
 

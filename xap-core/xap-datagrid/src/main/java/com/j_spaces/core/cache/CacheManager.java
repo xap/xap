@@ -4558,7 +4558,7 @@ public class CacheManager extends AbstractCacheManager
      * are no matches.
      */
     public Object getEntriesMinIndexExtended(Context context, TypeData entryType, int numOfFields, ITemplateHolder template) {
-        if (template.getExplainPlan() != null) {
+        if (template.getExplainPlan() != null && context.getExplainPlanContext() == null) {
             template.getExplainPlan().setPartitionId(Integer.toString(getEngine().getPartitionIdOneBased()));
             ExplainPlanContext explainPlanContext = new ExplainPlanContext();
             explainPlanContext.setSingleExplainPlan(template.getExplainPlan());

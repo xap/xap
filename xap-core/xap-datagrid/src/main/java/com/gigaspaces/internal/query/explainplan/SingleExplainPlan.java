@@ -18,21 +18,13 @@ package com.gigaspaces.internal.query.explainplan;
 import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.SpaceCollectionIndex;
-import com.gigaspaces.internal.query.AbstractCompundCustomQuery;
 import com.gigaspaces.internal.query.ICustomQuery;
-import com.gigaspaces.internal.server.storage.IEntryHolder;
-import com.gigaspaces.internal.server.storage.TemplateHolder;
-import com.gigaspaces.internal.transport.ITemplatePacket;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.metadata.index.CompoundIndex;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.j_spaces.core.client.Modifiers;
-import com.j_spaces.jdbc.builder.range.CompositeRange;
-import com.j_spaces.jdbc.builder.range.IsNullRange;
-import com.j_spaces.jdbc.builder.range.NotNullRange;
-import com.j_spaces.jdbc.builder.range.NotRegexRange;
-import com.j_spaces.jdbc.builder.range.Range;
-import com.j_spaces.jdbc.builder.range.RegexRange;
-import com.j_spaces.jdbc.builder.range.RelationRange;
+import com.j_spaces.jdbc.builder.range.*;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -55,15 +47,18 @@ public class SingleExplainPlan implements Externalizable {
     private QueryOperationNode root;
     private Map<String, List<IndexChoiceNode>> indexesInfo;
     private Map<String, ScanningInfo> scanningInfo; // Pair = (int scanned, int matched)
+    private Map<String, List<String>> tiersInfo;
 
     public SingleExplainPlan() {
         this.scanningInfo = new HashMap<String, ScanningInfo>();
         this.indexesInfo = new HashMap<String, List<IndexChoiceNode>>();
+        this.tiersInfo = new HashMap<>();
     }
 
     public SingleExplainPlan(ICustomQuery customQuery) {
         this.scanningInfo = new HashMap<String, ScanningInfo>();
         this.indexesInfo = new HashMap<String, List<IndexChoiceNode>>();
+        this.tiersInfo = new HashMap<>();
         this.root = ExplainPlanUtil.buildQueryTree(customQuery);
     }
 
@@ -83,6 +78,10 @@ public class SingleExplainPlan implements Externalizable {
         this.scanningInfo = scanningInfo;
     }
 
+    public void addTiersInfo(String type, List<String> tiers) {
+        this.tiersInfo.put(type, tiers);
+    }
+
     public String getPartitionId() {
         return partitionId;
     }
@@ -97,6 +96,10 @@ public class SingleExplainPlan implements Externalizable {
 
     public Map<String, ScanningInfo> getScanningInfo() {
         return scanningInfo;
+    }
+
+    public Map<String, List<String>> getTiersInfo() {
+        return tiersInfo;
     }
 
     public void addIndexesInfo(String type, List<IndexChoiceNode> scanSelectionTree) {
@@ -182,7 +185,22 @@ public class SingleExplainPlan implements Externalizable {
         IOUtils.writeString(objectOutput, partitionId);
         writeIndexes(objectOutput);
         writeScannigInfo(objectOutput);
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)){
+            writeTiersInfo(objectOutput);
+        }
+    }
 
+    private void writeTiersInfo(ObjectOutput objectOutput) throws IOException {
+        int length = tiersInfo.size();
+        objectOutput.writeInt(length);
+        for (Map.Entry<String, List<String>> entry : tiersInfo.entrySet()) {
+            IOUtils.writeString(objectOutput, entry.getKey());
+            int tiersLength = entry.getValue().size();
+            objectOutput.writeInt(tiersLength);
+            for (String tier : entry.getValue()) {
+                IOUtils.writeString(objectOutput, tier);
+            }
+        }
     }
 
     private void writeScannigInfo(ObjectOutput objectOutput) throws IOException {
@@ -216,6 +234,24 @@ public class SingleExplainPlan implements Externalizable {
         this.partitionId = IOUtils.readString(objectInput);
         this.indexesInfo = readIndexes(objectInput);
         this.scanningInfo = readScanningInfo(objectInput);
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)){
+            this.tiersInfo = readTiersInfo(objectInput);
+        }
+    }
+
+    private Map<String, List<String>> readTiersInfo(ObjectInput objectInput) throws IOException, ClassNotFoundException {
+        int length = objectInput.readInt();
+        Map<String, List<String>> map = new HashMap<>();
+        for (int i = 0; i <length; i++) {
+            String type = IOUtils.readString(objectInput);
+            int tiersLength = objectInput.readInt();
+            List<String> tiers = new ArrayList<>(tiersLength);
+            for (int j = 0; j < tiersLength; j++) {
+                tiers.add(IOUtils.readString(objectInput));
+            }
+            map.put(type, tiers);
+        }
+        return map;
     }
 
     private Map<String, ScanningInfo> readScanningInfo(ObjectInput objectInput) throws IOException, ClassNotFoundException {
