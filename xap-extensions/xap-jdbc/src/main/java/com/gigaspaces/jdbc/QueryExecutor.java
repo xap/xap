@@ -1,6 +1,8 @@
 package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.exceptions.ExecutionException;
+import com.gigaspaces.jdbc.handlers.QueryColumnHandler;
+import com.gigaspaces.jdbc.handlers.WhereHandler;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
@@ -37,11 +39,16 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
             plainSelect.getJoins().forEach(join -> join.getRightItem().accept(this));
 
         prepareQueryColumns(plainSelect);
+        prepareWhereClause(plainSelect);
     }
 
     private void prepareQueryColumns(PlainSelect plainSelect) {
         QueryColumnHandler visitor = new QueryColumnHandler(this);
         plainSelect.getSelectItems().forEach(selectItem -> selectItem.accept(visitor));
+    }
+
+    private void prepareWhereClause(PlainSelect plainSelect) {
+        plainSelect.getWhere().accept(new WhereHandler(this));
     }
 
 

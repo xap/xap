@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc.model.table;
 
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.QueryResult;
+import com.j_spaces.jdbc.builder.range.Range;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,6 +38,11 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public String getTableNameOrAlias() {
+        throw new UnsupportedOperationException("Not supported yet!");
+    }
+
+    @Override
+    public void addRange(Range range) {
         throw new UnsupportedOperationException("Not supported yet!");
     }
 }

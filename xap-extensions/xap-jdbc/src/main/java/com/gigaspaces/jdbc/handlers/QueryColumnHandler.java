@@ -1,5 +1,6 @@
-package com.gigaspaces.jdbc;
+package com.gigaspaces.jdbc.handlers;
 
+import com.gigaspaces.jdbc.QueryExecutor;
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
@@ -22,7 +23,7 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
         this.queryColumns = queryExecutor.getQueryColumns();
     }
 
-    private TableContainer getTableForColumn(Column column) {
+    public static TableContainer getTableForColumn(Column column, List<TableContainer> tables) {
         TableContainer tableContainer = null;
         for (TableContainer table : tables) {
             if (column.getTable() != null && !column.getTable().getFullyQualifiedName().equals(table.getTableNameOrAlias()))
@@ -76,7 +77,7 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
         selectExpressionItem.getExpression().accept(new ExpressionVisitorAdapter() {
             @Override
             public void visit(Column column) {
-                TableContainer table = getTableForColumn(column);
+                TableContainer table = getTableForColumn(column, tables);
                 QueryColumn qc = table.addQueryColumn(column.getColumnName(), getStringOrNull(selectExpressionItem.getAlias()));
                 queryColumns.add(qc);
             }
