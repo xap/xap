@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.exceptions.ExecutionException;
 import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
+import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.result.TableRow;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
@@ -48,8 +49,8 @@ public class QueryHandler {
         statement.accept(new StatementVisitorAdapter() {
             @Override
             public void visit(ExplainStatement explainStatement) {
-                QueryExecutor qE = new QueryExecutor(space);
-                qE.setExplain(true);
+                QueryExecutionConfig context = new QueryExecutionConfig(true, explainStatement.getOption(ExplainStatement.OptionType.VERBOSE)!= null);
+                QueryExecutor qE = new QueryExecutor(space, context);
                 QueryResult res;
                 try {
                     res = qE.execute(explainStatement.getStatement().getSelectBody());

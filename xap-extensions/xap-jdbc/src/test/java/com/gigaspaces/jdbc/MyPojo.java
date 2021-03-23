@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc;
 
 import com.gigaspaces.annotation.pojo.SpaceId;
+import com.gigaspaces.annotation.pojo.SpaceIndex;
 
 public class MyPojo {
     private String id;
@@ -27,6 +28,7 @@ public class MyPojo {
         return this;
     }
 
+    @SpaceIndex
     public String getName() {
         return name;
     }
@@ -36,6 +38,7 @@ public class MyPojo {
         return this;
     }
 
+    @SpaceIndex
     public Integer getAge() {
         return age;
     }

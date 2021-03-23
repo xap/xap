@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by moran on 6/8/18.
@@ -53,6 +54,7 @@ public class Output {
     }
 
     public Output addRow(List<String> row) {
+        row = row.stream().map(x->x.replace("\t","  ")).collect(Collectors.toList());
         rows.add(row);
         for (int i=0; i<row.size(); i++) {
             updateColumnWidth(i, row.get(i).length());

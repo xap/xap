@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.exceptions.ExecutionException;
 import com.gigaspaces.jdbc.model.result.QueryResult;
+import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
@@ -18,10 +19,15 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     private final List<TableContainer> tables = new ArrayList<>();
     private final List<QueryColumn> queryColumns = new ArrayList<>();
     private final IJSpace space;
-    private boolean explainPlan;
+    private final QueryExecutionConfig config;
+
+    public QueryExecutor(IJSpace space, QueryExecutionConfig config) {
+        this.space = space;
+        this.config = config;
+    }
 
     public QueryExecutor(IJSpace space) {
-        this.space = space;
+        this(space, new QueryExecutionConfig());
     }
 
     @Override
@@ -46,8 +52,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
 
     @Override
     public void visit(SubSelect subSelect) {
-        QueryExecutor subQueryExecutor = new QueryExecutor(space);
-        subQueryExecutor.setExplain(explainPlan);
+        QueryExecutor subQueryExecutor = new QueryExecutor(space, config);
         try {
             tables.add(new TempTableContainer(subQueryExecutor.execute(subSelect.getSelectBody()), subSelect.getAlias() == null ? null : subSelect.getAlias().getName()));
         } catch (SQLException e) {
@@ -85,9 +90,9 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         prepareForExecution(selectBody);
 
         if (tables.size() == 1) { //Simple Query
-            return tables.get(0).executeRead(explainPlan);
+            return tables.get(0).executeRead(config);
         }
-        JoinQueryExecutor joinE = new JoinQueryExecutor(tables, space, queryColumns, explainPlan);
+        JoinQueryExecutor joinE = new JoinQueryExecutor(tables, space, queryColumns, config);
         return joinE.execute();
     }
 
@@ -95,11 +100,6 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         selectBody.accept(this);
     }
 
-
-
-    void setExplain(boolean explainPlan) {
-        this.explainPlan = explainPlan;
-    }
 
     public List<TableContainer> getTables() {
         return tables;

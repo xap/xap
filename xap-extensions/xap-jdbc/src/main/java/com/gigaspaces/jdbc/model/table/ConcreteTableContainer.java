@@ -7,9 +7,9 @@ import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ProjectionTemplate;
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.exceptions.TypeNotFoundException;
+import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
-import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
@@ -56,7 +56,7 @@ public class ConcreteTableContainer extends TableContainer {
     }
 
     @Override
-    public QueryResult executeRead(boolean explainPlan) throws SQLException {
+    public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
         String[] projectionC = visibleColumns.stream().map(QueryColumn::getName).toArray(String[]::new);
 
         try {
@@ -64,9 +64,8 @@ public class ConcreteTableContainer extends TableContainer {
             queryTemplatePacket.setProjectionTemplate(_projectionTemplate);
 
             int modifiers = ReadModifiers.REPEATABLE_READ;
-
-            ExplainPlan explainPlanImpl = null;
-            if (explainPlan) {
+            ExplainPlanV3 explainPlanImpl = null;
+            if (config.isExplainPlan()) {
                 // Using LinkedHashMap to keep insertion order from the ArrayList
                 final Map<String, String> visibleColumnsAndAliasMap = visibleColumns.stream().collect(Collectors.toMap
                         (QueryColumn::getName, queryColumn -> queryColumn.getAlias() == null ? "" :  queryColumn.getAlias()
@@ -79,8 +78,11 @@ public class ConcreteTableContainer extends TableContainer {
             }
 
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, maxResults, modifiers);
-            if (explainPlan) return new ExplainPlanResult(explainPlanImpl.toString());
-            return new QueryResult(res, visibleColumns);
+            if (explainPlanImpl != null) {
+                return new ExplainPlanResult(explainPlanImpl.getExplainPlanInfo().toString(config.isExplainPlanVerbose()));
+            } else {
+                return new QueryResult(res, visibleColumns);
+            }
         } catch (Exception e) {
             throw new SQLException("Failed to get results from space", e);
         }

@@ -33,11 +33,7 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
 
     @Override
     public String toString() {
-        return createPlan().toString();
-    }
-
-    public String getVerbose() {
-        return createPlan().toString(true);
+        return getExplainPlanInfo().toString();
     }
 
     public String getSpaceName() {
@@ -59,7 +55,7 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
     /**
      * @return JSON structured plan
      */
-    private ExplainPlanInfo createPlan() {
+    public ExplainPlanInfo getExplainPlanInfo() {
         ExplainPlanInfo planInfo = new ExplainPlanInfo(this);
         if (!plans.isEmpty()) {
             appendScanDetails(planInfo);

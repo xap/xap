@@ -1,5 +1,6 @@
 package com.gigaspaces.jdbc.model.table;
 
+import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public class TempTableContainer extends TableContainer {
     }
 
     @Override
-    public QueryResult executeRead(boolean explainPlan) {
+    public QueryResult executeRead(QueryExecutionConfig config) {
         return tableResult;
     }
 
