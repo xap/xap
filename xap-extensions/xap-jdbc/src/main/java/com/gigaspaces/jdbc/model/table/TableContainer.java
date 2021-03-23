@@ -20,4 +20,6 @@ public abstract class TableContainer {
     public abstract String getTableNameOrAlias();
 
     public abstract void addRange(Range range);
+
+    public abstract void setLimit(Integer value);
 }

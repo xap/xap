@@ -139,11 +139,11 @@ public class WhereHandler implements ExpressionVisitor {
 
     @Override
     public void visit(EqualsTo equalsTo) {
-        SingleConditionHandler handler = new SingleConditionHandler(tables);
+        SingleConditionHandler handler = new SingleConditionHandler();
         equalsTo.getLeftExpression().accept(handler);
         equalsTo.getRightExpression().accept(handler);
 
-        handler.getTable().addRange(new EqualValueRange(handler.getColumn().getColumnName(), handler.getValue()));
+        handler.getTable(tables).addRange(new EqualValueRange(handler.getColumn().getColumnName(), handler.getValue()));
     }
 
     @Override
@@ -188,7 +188,15 @@ public class WhereHandler implements ExpressionVisitor {
 
     @Override
     public void visit(MinorThanEquals minorThanEquals) {
-        throw new UnsupportedOperationException("Unsupported");
+        SingleConditionHandler handler = new SingleConditionHandler();
+        minorThanEquals.getLeftExpression().accept(handler);
+        minorThanEquals.getRightExpression().accept(handler);
+        if (handler.getColumn().getColumnName().equalsIgnoreCase("rowNum") && handler.getValue() instanceof Integer) {
+            Integer value = ((Integer) handler.getValue());
+            tables.forEach(t -> t.setLimit(value));
+        } else {
+            throw new UnsupportedOperationException("Unsupported");
+        }
     }
 
     @Override

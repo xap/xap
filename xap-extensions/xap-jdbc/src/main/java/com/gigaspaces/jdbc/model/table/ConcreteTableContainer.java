@@ -27,12 +27,11 @@ public class ConcreteTableContainer extends TableContainer {
     private final IJSpace space;
     private QueryTemplatePacket queryTemplatePacket;
     private final ITypeDesc typeDesc;
-    private final int maxResults = Integer.MAX_VALUE;
-
     private final List<String> allColumnNamesSorted;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
     private final String name;
     private final String alias;
+    private Integer limit = Integer.MAX_VALUE;
 
     public ConcreteTableContainer(String name, String alias, IJSpace space) {
         this.space = space;
@@ -88,7 +87,7 @@ public class ConcreteTableContainer extends TableContainer {
             }
 
             queryTemplatePacket.prepareForSpace(typeDesc);
-            IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, maxResults, modifiers);
+            IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
             if (explainPlanImpl != null) {
                 return new ExplainPlanResult(explainPlanImpl.getExplainPlanInfo().toString(config.isExplainPlanVerbose()));
             } else {
@@ -131,5 +130,13 @@ public class ConcreteTableContainer extends TableContainer {
             QueryTemplatePacket queryTemplatePacketNew = createQueryTemplatePacketWithRange(this.name, range);
             queryTemplatePacket = queryTemplatePacket.and(queryTemplatePacketNew);
         }
+    }
+
+    @Override
+    public void setLimit(Integer value) {
+        if (this.limit != Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Already set!");
+        }
+        this.limit = value;
     }
 }

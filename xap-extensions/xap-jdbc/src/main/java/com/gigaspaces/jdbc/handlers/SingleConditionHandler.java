@@ -12,16 +12,11 @@ import net.sf.jsqlparser.statement.select.SubSelect;
 import java.util.List;
 
 public class SingleConditionHandler implements ExpressionVisitor {
-    private final List<TableContainer> tables;
 
     private Column column;
     private TableContainer table;
 
     private Object value;
-
-    SingleConditionHandler(List<TableContainer> tables) {
-        this.tables = tables;
-    }
 
     @Override
     public void visit(BitwiseRightShift aThis) {
@@ -196,7 +191,6 @@ public class SingleConditionHandler implements ExpressionVisitor {
     @Override
     public void visit(Column tableColumn) {
         this.column = tableColumn;
-        this.table = QueryColumnHandler.getTableForColumn(column, tables);
     }
 
     @Override
@@ -389,8 +383,8 @@ public class SingleConditionHandler implements ExpressionVisitor {
         return column;
     }
 
-    TableContainer getTable() {
-        return table;
+    TableContainer getTable(List<TableContainer> tables) {
+        return QueryColumnHandler.getTableForColumn(column, tables);
     }
 
     Object getValue() {

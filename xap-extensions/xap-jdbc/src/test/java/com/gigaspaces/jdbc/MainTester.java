@@ -27,6 +27,7 @@ public class MainTester {
         try (Connection connection = DriverManager.getConnection(newDriver ? "jdbc:gigaspaces:v3://localhost:4174/" + space.getSpaceName() : "jdbc:gigaspaces:url:jini://*/*/" + space.getSpaceName(), properties)) {
             Statement statement = connection.createStatement();
             execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo");// WHERE rowNum <= 10");
+            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo WHERE rowNum <= 1");
 
             execute(statement, "select name,age from com.gigaspaces.jdbc.MyPojo where name='Adler' and age=20");
 
@@ -49,6 +50,8 @@ public class MainTester {
 
     private static void execute(Statement statement, String sql) throws SQLException {
         ResultSet res = statement.executeQuery(sql);
+        System.out.println();
+        System.out.println("Executing: " + sql);
         DumpUtils.dump(res);
 
     }
