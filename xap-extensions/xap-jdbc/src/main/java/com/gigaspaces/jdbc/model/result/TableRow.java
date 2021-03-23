@@ -21,7 +21,12 @@ public class TableRow {
         this.columns = queryColumns.toArray(new QueryColumn[0]);
         values = new Object[columns.length];
         for (int i = 0; i < queryColumns.size(); i++) {
-            values[i] = x.getPropertyValue(queryColumns.get(i).getName());
+            QueryColumn queryColumn = queryColumns.get(i);
+            if (queryColumn.isUUID()) {
+                values[i] = x.getUID();
+            } else {
+                values[i] = x.getPropertyValue(queryColumn.getName());
+            }
         }
     }
 

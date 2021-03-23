@@ -48,7 +48,8 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     }
 
     private void prepareWhereClause(PlainSelect plainSelect) {
-        plainSelect.getWhere().accept(new WhereHandler(this));
+        if (plainSelect.getWhere() != null)
+            plainSelect.getWhere().accept(new WhereHandler(this));
     }
 
 

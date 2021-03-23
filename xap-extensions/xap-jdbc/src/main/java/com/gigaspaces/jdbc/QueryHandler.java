@@ -39,7 +39,7 @@ public class QueryHandler {
         } catch (JSQLParserException e) {
             throw new SQLException("Failed to parse query", e);
         } catch (GenericJdbcException e) {
-            throw new SQLException("Failed to execute query", e);
+            throw new SQLException(e.getMessage(), e);
         }
     }
 

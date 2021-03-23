@@ -101,7 +101,7 @@ public class ConcreteTableContainer extends TableContainer {
 
     @Override
     public QueryColumn addQueryColumn(String columnName, String alias) {
-        if (typeDesc.getFixedPropertyPositionIgnoreCase(columnName) == -1) {
+        if (!columnName.equalsIgnoreCase(QueryColumn.UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(columnName) == -1) {
             throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]");
         }
         QueryColumn qc = new QueryColumn(columnName, alias, true);

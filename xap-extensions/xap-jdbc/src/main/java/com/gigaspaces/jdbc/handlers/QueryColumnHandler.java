@@ -28,6 +28,13 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
         for (TableContainer table : tables) {
             if (column.getTable() != null && !column.getTable().getFullyQualifiedName().equals(table.getTableNameOrAlias()))
                 continue;
+            if (column.getColumnName().equalsIgnoreCase(QueryColumn.UUID_COLUMN)) {
+                if (tableContainer == null) {
+                    tableContainer = table;
+                } else {
+                    throw new IllegalArgumentException("Ambiguous column name [" + column.getColumnName() + "]");
+                }
+            }
             for (String columnName : table.getAllColumnNames()) {
                 if (column.getColumnName().equals(columnName)) {
                     if (tableContainer == null) {
