@@ -93,6 +93,15 @@ public class ClusterInfo implements Cloneable, Serializable {
         this.backupId = builder.getBackupId();
     }
 
+    protected ClusterInfo(ClusterInfo other) {
+        this.name = other.getName();
+        this.schema = other.getSchema();
+        this.numberOfInstances = other.getNumberOfInstances();
+        this.numberOfBackups = other.getNumberOfBackups();
+        this.instanceId = other.getInstanceId();
+        this.backupId = other.getBackupId();
+    }
+
     /**
      * Gets the generation of the cluster topology
      * @since 15.5
@@ -277,17 +286,7 @@ public class ClusterInfo implements Cloneable, Serializable {
     }
 
     public ClusterInfo copy() {
-        return copy(new ClusterInfo());
-    }
-
-    protected ClusterInfo copy(ClusterInfo copy) {
-        copy.setBackupId(getBackupId());
-        copy.setInstanceId(getInstanceId());
-        copy.setNumberOfBackups(getNumberOfBackups());
-        copy.setNumberOfInstances(getNumberOfInstances());
-        copy.setSchema(getSchema());
-        copy.setName(getName());
-        return this;
+        return new ClusterInfo(this);
     }
 
     @Override
