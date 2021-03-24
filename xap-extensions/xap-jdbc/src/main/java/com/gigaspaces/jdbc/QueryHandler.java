@@ -56,7 +56,7 @@ public class QueryHandler {
                     res = qE.execute(explainStatement.getStatement().getSelectBody());
                     packet.setResultEntry(convertEntriesToResultArrays(res));
                 } catch (SQLException e) {
-                    throw new ExecutionException("Failed to execute query", e);
+                    throw new ExecutionException(e.getMessage(), e.getCause());
                 }
             }
 
@@ -68,7 +68,7 @@ public class QueryHandler {
                     res = qE.execute(select.getSelectBody());
                     packet.setResultEntry(convertEntriesToResultArrays(res));
                 } catch (SQLException e) {
-                    throw new ExecutionException("Failed to execute query", e);
+                    throw new ExecutionException(e.getMessage(), e.getCause());
                 }
             }
         });
