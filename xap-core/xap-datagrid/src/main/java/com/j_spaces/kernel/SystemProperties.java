@@ -819,6 +819,12 @@ public class SystemProperties extends CommonSystemProperties {
 
     public static final String CLASS_BINARY_STORAGE_ADAPTER = "com.gs.class-binary-storage-adapter.";
 
+
+    public static final String PROXY_POOL_CAPACITY = "com.gs.proxypool.capacity";
+    public static final String PROXY_POOL_WAITING_TIMEOUT = "com.gs.proxypool.waiting-timeout";
+    public static final String PROXY_POOL_EXPIRATION_TIME = "com.gs.proxypool.expiration-time";
+
+
     private static final Map<String, String> defaultValues = initDefaultValues();
 
     private static Map<String, String> initDefaultValues() {
