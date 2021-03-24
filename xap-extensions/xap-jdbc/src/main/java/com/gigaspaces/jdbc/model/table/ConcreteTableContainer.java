@@ -80,7 +80,7 @@ public class ConcreteTableContainer extends TableContainer {
                         (QueryColumn::getName, queryColumn -> queryColumn.getAlias() == null ? "" : queryColumn.getAlias()
                                 , (oldValue, newValue) -> newValue, LinkedHashMap::new));
 
-                explainPlanImpl = new ExplainPlanV3(name, alias, visibleColumnsAndAliasMap, space.getName());
+                explainPlanImpl = new ExplainPlanV3(name, alias, visibleColumnsAndAliasMap);
                 queryTemplatePacket.setExplainPlan(explainPlanImpl);
                 modifiers = Modifiers.add(modifiers, Modifiers.EXPLAIN_PLAN);
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);

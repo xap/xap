@@ -327,7 +327,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         } catch (SAException e) {
             throw new CreateException("Failed to initialize InternalRDBMS", e);
         } catch (IllegalAccessException | InstantiationException | ClassNotFoundException e) {
-            throw new CreateException("Failed to instantiate InternalRDBMS class");
+            throw new CreateException("Failed to instantiate InternalRDBMS class", e);
         }
 
         _partitionId = _clusterInfo.getPartitionOfMember(_fullSpaceName);

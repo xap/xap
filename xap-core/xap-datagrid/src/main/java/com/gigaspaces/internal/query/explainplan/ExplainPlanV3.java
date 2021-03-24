@@ -3,12 +3,11 @@ package com.gigaspaces.internal.query.explainplan;
 import com.gigaspaces.internal.query.explainplan.model.ExplainPlanInfo;
 import com.gigaspaces.internal.query.explainplan.model.IndexChoiceDetail;
 import com.gigaspaces.internal.query.explainplan.model.IndexInfoDetail;
-import com.gigaspaces.internal.query.explainplan.model.IndexInspectionDetail;
+import com.gigaspaces.internal.query.explainplan.model.PartitionIndexInspectionDetail;
+import com.j_spaces.core.client.SQLQuery;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * ExplainPlan for the JDBC Driver V3
@@ -17,14 +16,12 @@ import java.util.Map;
  */
 public class ExplainPlanV3 extends ExplainPlanImpl {
 
-    private final String spaceName;
     private final String tableName;
     private final String tableAlias;
     private final Map<String, String> visibleColumnsAndAliasMap;
 
-    public ExplainPlanV3(String tableName, String tableAlias, Map<String, String> visibleColumnsAndAliasMap, String spaceName) {
+    public ExplainPlanV3(String tableName, String tableAlias, Map<String, String> visibleColumnsAndAliasMap) {
         super(null);
-        this.spaceName = spaceName;
         this.tableName = tableName;
         this.tableAlias = tableAlias;
         this.visibleColumnsAndAliasMap = visibleColumnsAndAliasMap;
@@ -34,10 +31,6 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
     @Override
     public String toString() {
         return getExplainPlanInfo().toString();
-    }
-
-    public String getSpaceName() {
-        return spaceName;
     }
 
     public String getTableName() {
@@ -85,15 +78,17 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
     /**
      * Return index choices of single partition wrapped by IndexInspectionDetail
      */
-    private IndexInspectionDetail getPartitionPlan(String partitionId, SingleExplainPlan singleExplainPlan) {
-        final IndexInspectionDetail indexInspection = new IndexInspectionDetail();
+    private PartitionIndexInspectionDetail getPartitionPlan(String partitionId, SingleExplainPlan singleExplainPlan) {
+        final PartitionIndexInspectionDetail indexInspection = new PartitionIndexInspectionDetail();
         final Map<String, List<IndexChoiceNode>> indexesInfo = singleExplainPlan.getIndexesInfo();
+        indexInspection.setUsedTiers(singleExplainPlan.getTiersInfo().values().stream().flatMap(List::stream).collect(Collectors.toList()));
+        indexInspection.setPartition(partitionId);
+
         if (indexesInfo.size() == 1) {
             Map.Entry<String, List<IndexChoiceNode>> entry = indexesInfo.entrySet().iterator().next();
             List<IndexChoiceNode> indexChoices = entry.getValue();
             List<IndexChoiceDetail> indexInspections = getIndexInspectionPerTableType(indexChoices);
             indexInspection.setIndexes(indexInspections);
-            indexInspection.setPartition(partitionId);
         } else if (indexesInfo.size() != 0) {
             throw new UnsupportedOperationException("Not supported with more than one type");
         }

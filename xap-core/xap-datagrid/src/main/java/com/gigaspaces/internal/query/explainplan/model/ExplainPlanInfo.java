@@ -16,11 +16,10 @@ import static com.gigaspaces.internal.query.explainplan.ExplainPlanUtil.notEmpty
  * @since 16.0
  */
 public class ExplainPlanInfo {
-    private final String spaceName;
     private final String tableName;
     private final String tableAlias;
     private final Map<String, String> visibleColumnsAndAliasMap;
-    private List<IndexInspectionDetail> indexInspectionsPerPartition = new ArrayList<>();
+    private List<PartitionIndexInspectionDetail> indexInspectionsPerPartition = new ArrayList<>();
     private String criteria;
 
     private static final String SELECTED_INDEX_STRING = "Selected Index:";
@@ -30,7 +29,6 @@ public class ExplainPlanInfo {
         tableName = explainPlan.getTableName();
         tableAlias = explainPlan.getTableAlias();
         visibleColumnsAndAliasMap = explainPlan.getVisibleColumnsAndAliasMap();
-        spaceName = explainPlan.getSpaceName();
     }
 
     @Override
@@ -41,10 +39,10 @@ public class ExplainPlanInfo {
     public String toString(boolean verbose) {
         TextReportFormatter formatter = new TextReportFormatter();
         String table = notEmpty(tableAlias) ? tableName + " as " + tableAlias : tableName;
-        if (isNoIndexUsed()) {
-            formatter.line("FullScan: " + table);
+        if (isIndexUsed()) {
+            formatter.line("IndexScan: " + table);
         } else {
-            formatter.line("TableScan: " + table);
+            formatter.line("FullScan: " + table);
         }
         formatter.indent();
 
@@ -61,13 +59,16 @@ public class ExplainPlanInfo {
             formatter.line("Criteria: " + criteria);
         }
 
-        for (IndexInspectionDetail inspectionDetail : indexInspectionsPerPartition) {
-            if (inspectionDetail.getIndexes().isEmpty()) {
+        for (PartitionIndexInspectionDetail inspectionDetail : indexInspectionsPerPartition) {
+            formatter.line(String.format("Partition: [%s]", inspectionDetail.getPartition()));
+            formatter.indent();
+            if (inspectionDetail.getUsedTiers() != null) {
+                formatter.line(String.format("Tier%s: %s", (inspectionDetail.getUsedTiers().size() > 1 ? "s" : ""), String.join(", ", inspectionDetail.getUsedTiers())));
+            }
+            if (inspectionDetail.getIndexes() == null || inspectionDetail.getIndexes().isEmpty()) {
                 continue;
             }
 
-            formatter.line(String.format("Partition: [%s]", inspectionDetail.getPartition()));
-            formatter.indent();
             final IndexChoiceDetail unionIndexChoice = getUnionIndexChoiceIfExists(inspectionDetail.getIndexes());
             if (!verbose && unionIndexChoice != null) {
                 formatter.line(SELECTED_INDEX_STRING);
@@ -117,11 +118,7 @@ public class ExplainPlanInfo {
     }
 
     private boolean isIndexUsed() {
-        return getIndexInspectionsPerPartition().stream().anyMatch(indexInspectionDetail -> !indexInspectionDetail.getIndexes().isEmpty());
-    }
-
-    private boolean isNoIndexUsed() {
-        return !isIndexUsed();
+        return getIndexInspectionsPerPartition().stream().anyMatch(indexInspectionDetail -> indexInspectionDetail.getIndexes() != null && !indexInspectionDetail.getIndexes().isEmpty());
     }
 
     private IndexChoiceDetail getUnionIndexChoiceIfExists(List<IndexChoiceDetail> indexes) {
@@ -149,15 +146,15 @@ public class ExplainPlanInfo {
         this.criteria = criteria;
     }
 
-    public List<IndexInspectionDetail> getIndexInspectionsPerPartition() {
+    public List<PartitionIndexInspectionDetail> getIndexInspectionsPerPartition() {
         return indexInspectionsPerPartition;
     }
 
-    public void setIndexInspectionsPerPartition(List<IndexInspectionDetail> indexInspectionsPerPartition) {
+    public void setIndexInspectionsPerPartition(List<PartitionIndexInspectionDetail> indexInspectionsPerPartition) {
         this.indexInspectionsPerPartition = indexInspectionsPerPartition;
     }
 
-    public void addIndexInspection(IndexInspectionDetail indexInspection) {
+    public void addIndexInspection(PartitionIndexInspectionDetail indexInspection) {
         indexInspectionsPerPartition.add(indexInspection);
     }
 

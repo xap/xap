@@ -1,6 +1,5 @@
 package com.gigaspaces.internal.query.explainplan.model;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -8,11 +7,12 @@ import java.util.List;
  * @author Mishel Liberman
  * @since 16.0
  */
-public class IndexInspectionDetail {
+public class PartitionIndexInspectionDetail {
     private String partition;
-    private List<IndexChoiceDetail> indexes = new ArrayList<>();
+    private List<IndexChoiceDetail> indexes;
+    private List<String> usedTiers;
 
-    public IndexInspectionDetail() {
+    public PartitionIndexInspectionDetail() {
     }
 
     public String getPartition() {
@@ -31,7 +31,11 @@ public class IndexInspectionDetail {
         this.indexes = indices;
     }
 
-    public boolean addIndex(IndexChoiceDetail indexInfo) {
-        return indexes.add(indexInfo);
+    public List<String> getUsedTiers() {
+        return usedTiers;
+    }
+
+    public void setUsedTiers(List<String> usedTiers) {
+        this.usedTiers = usedTiers;
     }
 }
