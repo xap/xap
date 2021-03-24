@@ -28,6 +28,12 @@ public class ClusterInfoImpl extends ClusterInfo implements Externalizable {
         this.dynamicPartitionInfo = builder.getDynamicPartitionInfo();
     }
 
+    protected ClusterInfoImpl(ClusterInfoImpl other) {
+        super(other);
+        this.generation = other.generation;
+        this.dynamicPartitionInfo = other.dynamicPartitionInfo;
+    }
+
     @Override
     public DynamicPartitionInfo getDynamicPartitionInfo() {
         return dynamicPartitionInfo;
@@ -39,11 +45,8 @@ public class ClusterInfoImpl extends ClusterInfo implements Externalizable {
     }
 
     @Override
-    public ClusterInfo copy(){
-        ClusterInfoImpl copy = new ClusterInfoImpl();
-        copy.generation = this.generation;
-        copy.dynamicPartitionInfo = this.dynamicPartitionInfo;
-        return copy(copy);
+    public ClusterInfo copy() {
+        return new ClusterInfoImpl(this);
     }
 
     @Override
