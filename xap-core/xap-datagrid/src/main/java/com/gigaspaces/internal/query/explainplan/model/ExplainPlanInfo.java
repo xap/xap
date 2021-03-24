@@ -60,15 +60,21 @@ public class ExplainPlanInfo {
         }
 
         for (PartitionIndexInspectionDetail inspectionDetail : indexInspectionsPerPartition) {
-            formatter.line(String.format("Partition: [%s]", inspectionDetail.getPartition()));
-            formatter.indent();
-            if (inspectionDetail.getUsedTiers() != null) {
-                formatter.line(String.format("Tier%s: %s", (inspectionDetail.getUsedTiers().size() > 1 ? "s" : ""), String.join(", ", inspectionDetail.getUsedTiers())));
-            }
-            if (inspectionDetail.getIndexes() == null || inspectionDetail.getIndexes().isEmpty()) {
-                continue;
+            if ((inspectionDetail.getIndexes() == null || inspectionDetail.getIndexes().isEmpty()) &&
+                (inspectionDetail.getUsedTiers() == null || inspectionDetail.getUsedTiers().isEmpty())) {
+                    continue;
             }
 
+            formatter.line(String.format("Partition: [%s]", inspectionDetail.getPartition()));
+            formatter.indent();
+            if (inspectionDetail.getUsedTiers() != null && inspectionDetail.getUsedTiers().size() != 0) {
+                formatter.line(String.format("Tier%s: %s", (inspectionDetail.getUsedTiers().size() > 1 ? "s" : ""), String.join(", ", inspectionDetail.getUsedTiers())));
+            }
+
+            if (inspectionDetail.getIndexes() == null || inspectionDetail.getIndexes().isEmpty()) {
+                formatter.unindent();
+                continue;
+            }
             final IndexChoiceDetail unionIndexChoice = getUnionIndexChoiceIfExists(inspectionDetail.getIndexes());
             if (!verbose && unionIndexChoice != null) {
                 formatter.line(SELECTED_INDEX_STRING);

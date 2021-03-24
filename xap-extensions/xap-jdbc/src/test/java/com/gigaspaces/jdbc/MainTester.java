@@ -1,7 +1,9 @@
 package com.gigaspaces.jdbc;
 
+import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageTableConfig;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.GigaSpaceConfigurer;
+import org.openspaces.core.config.TieredStorageConfigurer;
 import org.openspaces.core.space.AbstractSpaceConfigurer;
 import org.openspaces.core.space.EmbeddedSpaceConfigurer;
 import org.openspaces.core.space.SpaceProxyConfigurer;
@@ -12,7 +14,7 @@ import java.util.Properties;
 public class MainTester {
     public static void main(String[] args) throws SQLException {
         boolean newDriver = Boolean.getBoolean("useNewDriver");
-        GigaSpace space = createAndFillSpace(newDriver, false);
+        GigaSpace space = createAndFillSpace(newDriver, true);
 
         Properties properties = new Properties();
 //                try (Connection connection = GSConnection.getInstance(space.getSpace(), properties)) {
@@ -26,13 +28,15 @@ public class MainTester {
 //        try (Connection connection = DriverManager.getConnection("jdbc:gigaspaces:url:jini://*/*/demo", properties)) {
         try (Connection connection = DriverManager.getConnection(newDriver ? "jdbc:gigaspaces:v3://localhost:4174/" + space.getSpaceName() : "jdbc:gigaspaces:url:jini://*/*/" + space.getSpaceName(), properties)) {
             Statement statement = connection.createStatement();
-            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo");// WHERE rowNum <= 10");
-            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo WHERE rowNum <= 1");
+            execute(statement, "EXPLAIN SELECT * FROM com.gigaspaces.jdbc.MyPojo");// WHERE rowNum <= 10");
 
-            execute(statement, "select name,age from com.gigaspaces.jdbc.MyPojo where name='Adler' and age=20");
-
-            execute(statement, "explain select name,age from com.gigaspaces.jdbc.MyPojo where name='Adler' and age=20");
-            execute(statement, "explain verbose select name,age from com.gigaspaces.jdbc.MyPojo where name='Adler' and age=20");
+//            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo");// WHERE rowNum <= 10");
+//            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo WHERE rowNum <= 1");
+//
+//            execute(statement, "select name,age from com.gigaspaces.jdbc.MyPojo where name='Adler' and age=20");
+//
+//            execute(statement, "explain select name,age from com.gigaspaces.jdbc.MyPojo where name='Adler' and age=20");
+//            execute(statement, "explain verbose select name,age from com.gigaspaces.jdbc.MyPojo where name='Adler' and age=20");
 
 //            String sqlQuery = "select name, name, id from com.gigaspaces.jdbc.MyPojo";
 //            String sqlQuery = "select * from com.gigaspaces.jdbc.MyPojo";
@@ -58,7 +62,9 @@ public class MainTester {
 
     private static GigaSpace createAndFillSpace(boolean newDriver, boolean embedded) {
         String spaceName = "demo" + (newDriver ? "new" : "old");
-        AbstractSpaceConfigurer configurer = embedded ? new EmbeddedSpaceConfigurer(spaceName) : new SpaceProxyConfigurer(spaceName);
+        AbstractSpaceConfigurer configurer = embedded ? new EmbeddedSpaceConfigurer(spaceName)
+//                .tieredStorage(new TieredStorageConfigurer().addTable(new TieredStorageTableConfig().setName(MyPojo.class.getName()).setCriteria("age > 20")))
+                : new SpaceProxyConfigurer(spaceName);
 
         GigaSpace gigaSpace = new GigaSpaceConfigurer(configurer).gigaSpace();
         if (embedded || gigaSpace.count(null) == 0) {

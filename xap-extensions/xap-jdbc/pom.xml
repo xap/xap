@@ -30,5 +30,11 @@
             <artifactId>xap-openspaces</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.gigaspaces</groupId>
+            <artifactId>xap-tiered-storage-sqlite</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
