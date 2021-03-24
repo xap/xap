@@ -2724,7 +2724,6 @@
                         <xsd:enumeration value="FIFO_GROUPING_POLL"/>
                         <xsd:enumeration value="MEMORY_ONLY_SEARCH"/>
                         <xsd:enumeration value="IF_EXISTS"/>
-                        <xsd:enumeration value="RUN_ON_IO_THREAD"/>
                     </xsd:restriction>
                 </xsd:simpleType>
             </xsd:attribute>

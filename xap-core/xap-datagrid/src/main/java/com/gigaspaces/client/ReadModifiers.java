@@ -106,15 +106,6 @@ public class ReadModifiers extends IsolationLevelModifiers {
      */
     public static final ReadModifiers IF_EXISTS = new ReadModifiers(Modifiers.IF_EXISTS);
 
-    /**
-     * Indicates operation should run directly on i/o thread, instead of being submitted to the operations thread pool.
-     * This is useful for short, non-blocking operations (e.g. readById), but risky for long or non-blocking operations.
-     * NOTE: This is an experimental API, subject to breaking changes in future releases.
-     * @since 16.0
-     */
-    @ExperimentalApi
-    public static final ReadModifiers RUN_ON_IO_THREAD = new ReadModifiers(Modifiers.RUN_ON_IO_THREAD);
-
     private static final Map<Integer, SpaceProxyOperationModifiers> cache = initCache();
 
     private static Map<Integer, SpaceProxyOperationModifiers> initCache() {
@@ -129,7 +120,6 @@ public class ReadModifiers extends IsolationLevelModifiers {
         initialValues.put(FIFO_GROUPING_POLL.getCode(), FIFO_GROUPING_POLL);
         initialValues.put(MEMORY_ONLY_SEARCH.getCode(), MEMORY_ONLY_SEARCH);
         initialValues.put(IF_EXISTS.getCode(), IF_EXISTS);
-        initialValues.put(RUN_ON_IO_THREAD.getCode(), RUN_ON_IO_THREAD);
         return initialValues;
     }
 
@@ -139,7 +129,7 @@ public class ReadModifiers extends IsolationLevelModifiers {
     public ReadModifiers() {
     }
 
-    private ReadModifiers(int code) {
+    protected ReadModifiers(int code) {
         super(code);
     }
 
