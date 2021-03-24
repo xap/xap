@@ -19,6 +19,7 @@ package com.gigaspaces.internal.client.spaceproxy;
 import com.gigaspaces.admin.demote.DemoteFailedException;
 import com.gigaspaces.admin.quiesce.QuiesceToken;
 import com.gigaspaces.client.DirectSpaceProxyFactory;
+import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.executor.SpaceTask;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.CommonProxyActionInfo;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.SnapshotProxyActionInfo;
@@ -63,6 +64,7 @@ import com.sun.jini.proxy.DefaultProxyPivot;
 import com.sun.jini.proxy.MarshalPivot;
 import com.sun.jini.proxy.MarshalPivotProvider;
 import net.jini.admin.Administrable;
+import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 import net.jini.core.transaction.server.ServerTransaction;
@@ -507,6 +509,7 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
         }
     }
 
+
     @Override
     public MarshalPivot getMarshalPivot() throws RemoteException {
         return new DefaultProxyPivot(getRemoteJSpace());
@@ -724,7 +727,6 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
 
         return spaceRequest.beforeOperationExecution(isEmbedded);
     }
-
     public static void afterExecute(SpaceOperationRequest<?> spaceRequest, IRemoteSpace targetSpace, int partitionId,
                                     boolean isRejected) {
         // afterOperationExecution is called first on the request for keeping the execution order
@@ -775,6 +777,15 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
 
         SpaceContext spaceContext = getSecurityManager().acquireContext(remoteJSpace, credentialsProvider);
         remoteJSpace.demote(maxSuspendTime, timeUnit, spaceContext);
+    }
+
+
+    public SpaceProxyImpl cloneProxy (){
+        SpaceProxyImpl copy = new SpaceProxyImpl(_factory.createCopy(false), _proxySettings);
+        if (this.isSecured())
+            copy.getSecurityManager().initialize(this.getSecurityManager().getCredentialsProvider());
+        return copy;
+
     }
 
 }
