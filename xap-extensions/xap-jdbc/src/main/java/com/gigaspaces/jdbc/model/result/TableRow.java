@@ -24,6 +24,8 @@ public class TableRow {
             QueryColumn queryColumn = queryColumns.get(i);
             if (queryColumn.isUUID()) {
                 values[i] = x.getUID();
+            } else if (x.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(queryColumn.getName())) {
+                values[i] = x.getID();
             } else {
                 values[i] = x.getPropertyValue(queryColumn.getName());
             }
