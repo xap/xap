@@ -11,7 +11,7 @@
 	<parent>
 		<artifactId>xap</artifactId>
 		<groupId>org.gigaspaces</groupId>
-		<version>15.8.0</version>
+		<version>15.8.0-patch-a-1</version>
 		<relativePath>../../</relativePath>
 	</parent>
 
