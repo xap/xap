@@ -28,6 +28,7 @@ import java.util.Iterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_LRU;
 import static com.j_spaces.kernel.SystemProperties.SPACE_ITERATOR_TYPE;
 import static com.j_spaces.kernel.SystemProperties.SPACE_ITERATOR_TYPE_DEFAULT;
 
@@ -48,7 +49,7 @@ public class SpaceIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
         }
         SpaceIteratorType iteratorType = spaceIteratorConfiguration.getIteratorType();
         if (iteratorType == null) {
-            iteratorType = spaceProxy.isEmbedded() ? SpaceIteratorType.PREFETCH_UIDS : defaultIteratorType;
+            iteratorType = usePrefetchUIDsIterator(spaceProxy) ? SpaceIteratorType.PREFETCH_UIDS : defaultIteratorType;
         }
         if(iteratorType.equals(SpaceIteratorType.PREFETCH_UIDS) && spaceIteratorConfiguration.getMaxInactiveDuration() != null){
             throw new UnsupportedOperationException("Setting the maxInactiveDuration value in not supported for space iterator of type " + iteratorType.toString());
@@ -59,6 +60,14 @@ public class SpaceIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
         this.iterator = iteratorType.equals(SpaceIteratorType.CURSOR)
                 ? new CursorEntryPacketIterator(spaceProxy, query, spaceIteratorConfiguration)
                 : new SpaceEntryPacketIterator(spaceProxy, query, txn, spaceIteratorConfiguration.getBatchSize(), spaceIteratorConfiguration.getReadModifiers().getCode());
+    }
+
+    private boolean usePrefetchUIDsIterator(ISpaceProxy spaceProxy) {
+        if(spaceProxy.isEmbedded())
+            return true;
+        if(spaceProxy.getCacheTypeName().equals("LocalView"))
+            return true;
+        return false;
     }
 
     @Override
