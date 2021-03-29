@@ -382,6 +382,11 @@ public class SimpleNotifyEventListenerContainer extends AbstractEventListenerCon
         return this.notifyAll;
     }
 
+    @Override
+    protected boolean requiresStopStart() {
+        return false;
+    }
+
     /**
      * Turns on notification for least expiration. Defaults to <code>false</code>.
      */
