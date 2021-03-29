@@ -255,10 +255,12 @@ public class SqliteUtils {
             Object value = entryData.getFixedPropertyValue(index);
 
             if (template.getExtendedMatchCodes() == null || (template.isIdQuery() && typeDesc.getIdPropertyName().equalsIgnoreCase(criteria.getPath()))) {
-                if (value != null && timeType != null){
+                if (value == null){
+                    return TemplateMatchTier.MATCH_HOT_AND_COLD;
+                } else if (timeType != null){
                     value = convertTimeTypeToInstant(value);
                 }
-                return value == null ? TemplateMatchTier.MATCH_HOT_AND_COLD : (criteria.getPredicate().execute(value) ? TemplateMatchTier.MATCH_HOT : TemplateMatchTier.MATCH_COLD);
+                return (criteria.getPredicate().execute(value) ? TemplateMatchTier.MATCH_HOT : TemplateMatchTier.MATCH_COLD);
             } else if (template.getExtendedMatchCodes() != null) {
                 return value == null ? TemplateMatchTier.MATCH_HOT_AND_COLD : evalRange(criteria, getRangeFromMatchCode(entryData, value, index, criteria.getPath()), timeType);
             }
@@ -278,10 +280,12 @@ public class SqliteUtils {
             int index = ((PropertyInfo) property).getOriginalIndex();
             Object value = packet.getFieldValue(index);
             if (packet instanceof TemplatePacket || (packet.isIdQuery() && packet.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(criteria.getPath()))) {
-                if (value != null && timeType != null){
+                if (value == null){
+                    return TemplateMatchTier.MATCH_HOT_AND_COLD;
+                } else if (timeType != null){
                     value = convertTimeTypeToInstant(value);
                 }
-                return value == null ? TemplateMatchTier.MATCH_HOT_AND_COLD : (criteria.getPredicate().execute(value) ? TemplateMatchTier.MATCH_HOT : TemplateMatchTier.MATCH_COLD);
+                return (criteria.getPredicate().execute(value) ? TemplateMatchTier.MATCH_HOT : TemplateMatchTier.MATCH_COLD);
             } else if (hasMatchCodes(packet)) {
                 return value == null ? TemplateMatchTier.MATCH_HOT_AND_COLD : SqliteUtils.evalRange(criteria, ((QueryTemplatePacket) packet).getRanges().get(criteria.getPath()), timeType); //todo
             }
@@ -300,7 +304,7 @@ public class SqliteUtils {
         throw new IllegalStateException("Time type of " + value.getClass().toString() + " is unsupported");
     }
 
-    private static Range convertRangeWithTimestampToInstant(Range queryValueRange){
+    private static Range convertRangeFromTimestampToInstant(Range queryValueRange){
         if (queryValueRange.isEqualValueRange()){
             Timestamp timestamp = (Timestamp)((EqualValueRange)queryValueRange).getValue();
             return new EqualValueRange(queryValueRange.getPath(), timestamp.toInstant());
@@ -310,10 +314,10 @@ public class SqliteUtils {
             Comparable<Instant> maxInstant = segmentRange.getMax() != null? ((Timestamp)segmentRange.getMax()).toInstant() : null;
             return new SegmentRange(queryValueRange.getPath(), minInstant, ((SegmentRange) queryValueRange).isIncludeMin(), maxInstant, ((SegmentRange) queryValueRange).isIncludeMax());
         }
-        throw new IllegalStateException("SQL query of type" + queryValueRange.getClass().toString() + " is unsupported"); //todo= e.g. InRange
+        return null; //todo- null?
     }
 
-    private static Range convertRangeWithTimeAsLongToInstant(Range queryValueRange){
+    private static Range convertRangeFromLongToInstant(Range queryValueRange){
         if (queryValueRange.isEqualValueRange()){
             long value = (long)((EqualValueRange)queryValueRange).getValue();
             return new EqualValueRange(queryValueRange.getPath(), Instant.ofEpochSecond(value));
@@ -323,15 +327,19 @@ public class SqliteUtils {
             Comparable<Instant> maxInstant = segmentRange.getMax() != null? Instant.ofEpochSecond((long)segmentRange.getMax()) : null;
             return new SegmentRange(queryValueRange.getPath(), minInstant, ((SegmentRange) queryValueRange).isIncludeMin(), maxInstant, ((SegmentRange) queryValueRange).isIncludeMax());
         }
-        throw new IllegalStateException("SQL query of type" + queryValueRange.getClass().toString() + " is unsupported"); //todo= e.g. InRange
+        return null;//todo- null?
     }
 
 
     public static TemplateMatchTier evalRange(Range criteria, Range queryValueRange, String timeType) {
-        if (Timestamp.class.getName().equals(timeType)){
-            queryValueRange = convertRangeWithTimestampToInstant(queryValueRange);
-        } else if (Long.class.getName().equals(timeType) || long.class.getName().equals(timeType)){
-            queryValueRange = convertRangeWithTimeAsLongToInstant(queryValueRange);
+        if (timeType != null){
+            if (!queryValueRange.isSegmentRange() && !queryValueRange.isEqualValueRange()) {
+                return TemplateMatchTier.MATCH_COLD;
+            } else if (Timestamp.class.getName().equals(timeType)){
+                queryValueRange = convertRangeFromTimestampToInstant(queryValueRange);
+            } else if (Long.class.getName().equals(timeType) || long.class.getName().equals(timeType)){
+                queryValueRange = convertRangeFromLongToInstant(queryValueRange);
+            }
         }
         if (queryValueRange.isEqualValueRange()) {
             return getTemplateMatchTierForEqualQuery(criteria, (EqualValueRange) queryValueRange);
@@ -459,7 +467,6 @@ public class SqliteUtils {
                 allMatched &= match;
                 noneMatched |= match;
             }
-
             return allMatched ? TemplateMatchTier.MATCH_HOT :
                     (noneMatched ? TemplateMatchTier.MATCH_COLD : TemplateMatchTier.MATCH_HOT_AND_COLD);
         }
@@ -493,7 +500,6 @@ public class SqliteUtils {
                 throw new IllegalArgumentException("match codes with code " + matchCode);
         }
     }
-
 
     private static boolean hasMatchCodes(ITemplatePacket packet) {
         Object[] fieldValues = packet.getFieldValues();
