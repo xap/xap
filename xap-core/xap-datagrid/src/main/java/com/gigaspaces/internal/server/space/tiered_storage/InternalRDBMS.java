@@ -35,9 +35,9 @@ public interface InternalRDBMS {
      */
     boolean removeEntry(Context context, IEntryHolder entryHolder) throws SAException;
 
-    IEntryHolder getEntry(Context context, String typeName, Object id) throws SAException;
+    IEntryHolder getEntryById(Context context, String typeName, Object id) throws SAException;
 
-    IEntryHolder getEntry(Context context, String typeName, String uid) throws SAException;
+    IEntryHolder getEntryByUID(Context context, String typeName, String uid) throws SAException;
 
     ISAdapterIterator<IEntryHolder> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder) throws SAException;
 

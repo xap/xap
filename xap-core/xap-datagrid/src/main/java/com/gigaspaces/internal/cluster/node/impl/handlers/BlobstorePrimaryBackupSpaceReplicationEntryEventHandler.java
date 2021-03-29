@@ -35,7 +35,6 @@ import java.rmi.RemoteException;
 import java.util.Collection;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Boris
@@ -166,7 +165,7 @@ public class BlobstorePrimaryBackupSpaceReplicationEntryEventHandler
                                       Transaction txn, String uid, int version,
                                       Collection<SpaceEntryMutator> mutators, boolean isTransient,
                                       OperationID operationID, IEntryData previousEntry, long timeToLive,
-                                      boolean twoPhaseCommit) throws Exception {
+                                      boolean twoPhaseCommit, String typeName) throws Exception {
         handleBlobstoreReplicationBulkIfNeeded(context, false);
         super.changeEntryInSpace(context,
                 txn,
@@ -177,7 +176,7 @@ public class BlobstorePrimaryBackupSpaceReplicationEntryEventHandler
                 operationID,
                 previousEntry,
                 timeToLive,
-                twoPhaseCommit);
+                twoPhaseCommit, typeName);
     }
 
     @Override

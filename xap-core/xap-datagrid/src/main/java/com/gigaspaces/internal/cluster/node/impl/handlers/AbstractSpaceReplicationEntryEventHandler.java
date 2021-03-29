@@ -165,15 +165,24 @@ public abstract class AbstractSpaceReplicationEntryEventHandler
                 operationID,
                 previousEntry,
                 timeToLive,
-                twoPhaseCommit);
+                twoPhaseCommit, typeName);
     }
 
     protected void changeEntryInSpace(IReplicationInContext context,
                                       Transaction txn, String uid, int version,
                                       Collection<SpaceEntryMutator> mutators, boolean isTransient,
                                       OperationID operationID, IEntryData previousEntry, long timeToLive,
-                                      boolean twoPhaseCommit) throws Exception {
-        ITemplatePacket template = TemplatePacketFactory.createUidPacket(uid, version);
+                                      boolean twoPhaseCommit, String typeName) throws Exception {
+
+        ITemplatePacket template;
+
+        if(_engine.isTieredStorage()){
+            ITypeDesc typeDesc = this._engine.getTypeManager().getTypeDesc(typeName);
+            template = TemplatePacketFactory.createUidPacket(typeDesc, uid, 0);
+        } else {
+            template = TemplatePacketFactory.createUidPacket(uid, version);
+        }
+
         int operationModifiers = 0;
         try {
             ExtendedAnswerHolder answerHolder = executeChangeOperation(context,

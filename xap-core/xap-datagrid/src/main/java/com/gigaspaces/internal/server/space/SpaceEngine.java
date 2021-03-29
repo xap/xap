@@ -3904,7 +3904,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         }
 
         // match should be done against all fields even when uid is provided gs-4091
-        if ( ( !template.isMatchByID() || template.isChangeQuery() /*fix for GS-13604*/ )
+        if ( ( !template.isMatchByID() || template.isChangeQuery() /*fix for GS-13604*/ ) && !entry.isHollowEntry()
                 && !_templateScanner.match(context, entry, template))
             return null;
 

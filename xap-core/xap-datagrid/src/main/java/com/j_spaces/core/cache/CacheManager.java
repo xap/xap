@@ -1782,9 +1782,11 @@ public class CacheManager extends AbstractCacheManager
                 return pEntry.getEntryHolder(this);
         } //if (pEntry != null)
         if (!isEvictableCachePolicy() || _isMemorySA) {
-            if(context.getEntryTieredState()  != TieredState.TIERED_HOT_AND_COLD && context.getEntryTieredState() != TieredState.TIERED_COLD) {
-                return null;   //no relevant entry found
-            } else if (!isTieredStorage()) {
+            if(isTieredStorage()) {
+                if(context.getEntryTieredState()  != TieredState.TIERED_HOT_AND_COLD && context.getEntryTieredState() != TieredState.TIERED_COLD){
+                    return null;   //no relevant entry found
+                }
+            } else {
                 return null;   //no relevant entry found
             }
         }
@@ -1801,8 +1803,8 @@ public class CacheManager extends AbstractCacheManager
             //use space uid
         else {
 
-            if(_engine.getTieredStorageManager() != null){
-                entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(context, entryHolder.getServerTypeDesc().getTypeName(), entryHolder.getUID());
+            if(isTieredStorage()){
+                entry = _engine.getTieredStorageManager().getInternalStorage().getEntryByUID(context, entryHolder.getServerTypeDesc().getTypeName(), entryHolder.getUID());
             } else {
                 entry = _storageAdapter.getEntry(context, entryHolder.getUID(), entryHolder.getClassName(), entryHolder);
             }
@@ -1873,8 +1875,15 @@ public class CacheManager extends AbstractCacheManager
             }
 
         } //if (pEntry != null)
-        if (!isEvictableCachePolicy() || _isMemorySA)
-            return null;
+        if (!isEvictableCachePolicy() || _isMemorySA) {
+            if(isTieredStorage()) {
+                if(context.getTemplateTieredState() != TemplateMatchTier.MATCH_HOT_AND_COLD && context.getTemplateTieredState() != TemplateMatchTier.MATCH_COLD ){
+                    return null;   //no relevant entry found
+                }
+            } else {
+                return null;   //no relevant entry found
+            }
+        }
 
         if (useOnlyCache)
             return null;
@@ -1890,8 +1899,14 @@ public class CacheManager extends AbstractCacheManager
         // else locate entry class using the UID, if its external cache DB use the template
         if (!lockedEntry && context.getPrefetchedNonBlobStoreEntries() != null)
             entry = context.getPrefetchedNonBlobStoreEntries().get(uid);
-        else
-            entry = _storageAdapter.getEntry(context, uid, inputClassName, template);
+        else{
+
+            if(isTieredStorage()){
+                entry = _engine.getTieredStorageManager().getInternalStorage().getEntryByUID(context, inputClassName, uid);
+            } else {
+                entry = _storageAdapter.getEntry(context, uid, inputClassName, template);
+            }
+        }
 
         if (entry == null)
             return null;
@@ -4210,7 +4225,7 @@ public class CacheManager extends AbstractCacheManager
             }
             if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_COLD || context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
                 try {
-                    IEntryHolder entry = _engine.getTieredStorageManager().getInternalStorage().getEntry(context, currServerTypeDesc.getTypeName(), templateValue);
+                    IEntryHolder entry = _engine.getTieredStorageManager().getInternalStorage().getEntryById(context, currServerTypeDesc.getTypeName(), templateValue);
                     if (entry != null) {
                         return EntryCacheInfoFactory.createEntryCacheInfo(entry);
                     }

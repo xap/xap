@@ -35,15 +35,7 @@ public class SingleTypeRDBMSIterator implements ISAdapterIterator<IEntryHolder> 
     public IEntryHolder next() throws SAException {
         try {
             if (resultSet.next()) {
-                PropertyInfo[] properties = typeDesc.getProperties();
-                Object[] values = new Object[properties.length];
-                for (int i = 0; i < properties.length; i++) {
-                    values[i] = getPropertyValue(resultSet, properties[i]);
-                }
-                FlatEntryData data = new FlatEntryData(values, null, typeDesc.getEntryTypeDesc(EntryType.DOCUMENT_JAVA), 0, Lease.FOREVER, null);
-                Object idFromEntry = data.getFixedPropertyValue(((PropertyInfo) typeDesc.getFixedProperty(typeDesc.getIdPropertyName())).getOriginalIndex());
-                String uid = SpaceUidFactory.createUidFromTypeAndId(typeDesc, idFromEntry);
-                return new EntryHolder(typeManager.getServerTypeDesc(typeName), uid, 0, false, data);
+                return TieredStorageUtils.getEntryHolderFromRow(typeManager.getServerTypeDesc(typeName), resultSet);
             } else {
                 return null;
             }

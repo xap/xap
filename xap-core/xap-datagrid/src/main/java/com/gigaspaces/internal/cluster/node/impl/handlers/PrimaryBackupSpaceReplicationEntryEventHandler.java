@@ -156,7 +156,7 @@ public class PrimaryBackupSpaceReplicationEntryEventHandler
                                       Transaction txn, String uid, int version,
                                       Collection<SpaceEntryMutator> mutators, boolean isTransient,
                                       OperationID operationID, IEntryData previousEntry, long timeToLive,
-                                      boolean twoPhaseCommit) throws Exception {
+                                      boolean twoPhaseCommit, String typeName) throws Exception {
         protectEntryFromEvictionIfNeeded(context,
                 uid,
                 twoPhaseCommit);
@@ -170,7 +170,7 @@ public class PrimaryBackupSpaceReplicationEntryEventHandler
                 operationID,
                 previousEntry,
                 timeToLive,
-                twoPhaseCommit);
+                twoPhaseCommit, typeName);
     }
 
 
