@@ -4772,8 +4772,11 @@ public class CacheManager extends AbstractCacheManager
                         }
 
                         entriesVector = index.getIndexEntries(templateValue);
-                        if (entriesVector == null)
+                        if (entriesVector == null) {
+                            handleExplainPlanMatchCodes(true, context, entryType, index, pos, templateValue, null);
                             return null; //no values
+                        }
+
                         if (context.isIndicesIntersectionEnabled())
                             intersectedList = addToIntersectedList(context, intersectedList, entriesVector, template.isFifoTemplate(), false/*shortest*/, entryType);
                         if (resultSL == null || resultSL.size() > entriesVector.size()) {
