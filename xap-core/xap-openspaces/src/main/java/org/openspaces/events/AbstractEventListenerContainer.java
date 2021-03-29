@@ -186,10 +186,10 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
     }
 
     protected String getStatus() {
-        if (running)
-            return "started";
         if (quiesced)
             return "quiesced";
+        if (running)
+            return "started";
         return "stopped";
     }
 
@@ -920,14 +920,20 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
                     logger.debug(message("SuspendType was updated to " + suspendType) + ", stopping...");
                 // if container was running before calling quiesce it should resume working after unquiesce
                 boolean runningBeforeSuspend = running;
-                stop();
+                //if requires stop on suspend type change
+                if (requiresStopStart()) {
+                    stop();
+                }
                 resumeAfterSuspend = runningBeforeSuspend;
             } else {
                 // resume only if container was running before calling quiesce
                 if (resumeAfterSuspend) {
                     if (logger.isDebugEnabled())
                         logger.debug(message("SuspendType was updated to " + suspendType) + ", starting...");
-                    start();
+                    //if requires start on suspend type change
+                    if (requiresStopStart()) {
+                        start();
+                    }
                 } else {
                     if (logger.isDebugEnabled())
                         logger.debug(message("SuspendType was updated to " + suspendType) + " but resumeAfterSuspend was set to false, not resuming...");
@@ -935,6 +941,9 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
             }
         }
     }
+
+    //if requires stop/start to be called on suspendTypeChange
+    protected boolean requiresStopStart() { return true;}
 
     protected String message(String message) {
         return "[" + getBeanName() + "] " + message;

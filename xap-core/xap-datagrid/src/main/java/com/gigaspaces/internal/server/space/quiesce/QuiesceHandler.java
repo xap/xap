@@ -18,22 +18,21 @@ package com.gigaspaces.internal.server.space.quiesce;
 
 import com.gigaspaces.admin.quiesce.*;
 import com.gigaspaces.internal.server.space.SpaceImpl;
+import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.collections.ConcurrentHashSet;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.server.space.suspend.SuspendInfo;
 import com.gigaspaces.server.space.suspend.SuspendType;
-import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
 import com.j_spaces.kernel.SystemProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Suspend/Quiesce core functionality
@@ -50,7 +49,6 @@ public class QuiesceHandler {
     private volatile Guard _guard;
     private volatile SuspendInfo _suspendInfo;
     private final Collection<SuspendTypeChangedInternalListener> suspendTypeChangeListeners = new ConcurrentHashSet<SuspendTypeChangedInternalListener>();
-
 
     public QuiesceHandler(SpaceImpl spaceImpl, QuiesceStateChangedEvent quiesceStateChangedEvent) {
         _spaceImpl = spaceImpl;
@@ -90,7 +88,7 @@ public class QuiesceHandler {
     public boolean isHorizontalScale() {
         // Concurrency: snapshot volatile _guard into local variable
         final Guard currGuard = _guard;
-        return hasGuard(currGuard, Status.QUIESCED) && currGuard.getException().getMessage().contains("SCALE");
+        return hasGuard(currGuard, Status.QUIESCED) && currGuard.getMessage().contains("SCALE");
     }
 
     //disable any non-admin op if q mode on
@@ -115,7 +113,7 @@ public class QuiesceHandler {
         if (addGuard(guard)) {
             // Cancel (throw exception) on all pending op templates
             if (_spaceImpl.getEngine() != null)
-                _spaceImpl.getEngine().getTemplateScanner().cancelAllNonNotifyTemplates(_guard.exception);
+                _spaceImpl.getEngine().getTemplateScanner().cancelAllNonNotifyTemplates(_guard.getException());
         }
     }
 
@@ -123,7 +121,7 @@ public class QuiesceHandler {
         if (addGuard(new Guard(description, token, Status.QUIESCED))) {
             // Cancel (throw exception) on all pending op templates
             if (_spaceImpl.getEngine() != null)
-                _spaceImpl.getEngine().getTemplateScanner().cancelAllNonNotifyTemplates(_guard.exception);
+                _spaceImpl.getEngine().getTemplateScanner().cancelAllNonNotifyTemplates(_guard.getException());
         }
     }
 
@@ -188,22 +186,21 @@ public class QuiesceHandler {
 
 
     protected class Guard implements Closeable {
-
-        private final QuiesceException exception;
         private final QuiesceToken token;
         private final Status status;
         private final CountDownLatch suspendLatch;
+        private final String errorMessage;
         private Guard innerGuard;
+        private QuiesceException quiesceException;
 
         Guard(String description, QuiesceToken token, Status status) {
             this.token = token != null ? token : EmptyToken.INSTANCE;
             this.status = status;
             this.suspendLatch = (status == Status.DISCONNECTED) ? new CountDownLatch(1) : null;
 
-            String errorMessage = "Operation cannot be executed - space [" + _spaceImpl.getServiceName() + "] is " +
+            this.errorMessage = "Operation cannot be executed - space [" + _spaceImpl.getServiceName() + "] is " +
                     status.description +
                     (StringUtils.hasLength(description) ? " (" + description + ")" : "");
-            this.exception = new QuiesceException(errorMessage);
         }
 
         void guard(QuiesceToken operationToken) {
@@ -215,12 +212,18 @@ public class QuiesceHandler {
                         return;
                     }
                 }
-                throw exception;
+                QuiesceException qe = new QuiesceException(errorMessage);
+                this.quiesceException = qe;
+                throw qe;
             }
         }
 
-        public QuiesceException getException() {
-            return exception;
+        public String getMessage() {
+            return errorMessage;
+        }
+
+        public Exception getException() {
+            return quiesceException;
         }
 
         boolean supersedes(Guard otherGuard) {
@@ -386,13 +389,15 @@ public class QuiesceHandler {
 
         this._suspendInfo = suspendInfo;
 
-        // Todo: check this with a test
         if (isSuspendTypeChanged) {
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Dispatch suspendInfo [type="+suspendInfo.getSuspendType()+"] event to " + suspendTypeChangeListeners.size() + " listeners");
+            }
             for (SuspendTypeChangedInternalListener listener : suspendTypeChangeListeners) {
                 try {
                     listener.onSuspendTypeChanged(suspendInfo.getSuspendType());
-                } catch (Exception e) {
-                    _logger.warn("Failed to dispatch suspendInfo event to listener [" + listener +"]: " + e.getMessage(), e);
+                } catch (Throwable t) {
+                    _logger.warn("Failed to dispatch suspendInfo [type="+suspendInfo.getSuspendType()+"] event to listener [" + listener + "]: " + t.getMessage(), t);
                 }
             }
         }
