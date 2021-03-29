@@ -24,7 +24,6 @@ import com.gigaspaces.exception.lrmi.LRMINoSuchObjectException;
 import com.gigaspaces.exception.lrmi.LRMIUnhandledException;
 import com.gigaspaces.exception.lrmi.LRMIUnhandledException.Stage;
 import com.gigaspaces.exception.lrmi.ProtocolException;
-import com.gigaspaces.internal.backport.java.util.concurrent.atomic.LongAdder;
 import com.gigaspaces.internal.io.MarshalContextClearedException;
 import com.gigaspaces.internal.lrmi.ConnectionUrlDescriptor;
 import com.gigaspaces.internal.lrmi.LRMIMonitoringModule;
@@ -76,6 +75,7 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

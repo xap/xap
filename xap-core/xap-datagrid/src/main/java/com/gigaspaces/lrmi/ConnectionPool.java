@@ -17,7 +17,6 @@
 package com.gigaspaces.lrmi;
 
 import com.gigaspaces.config.lrmi.ITransportConfig;
-import com.gigaspaces.internal.backport.java.util.concurrent.atomic.LongAdder;
 import com.gigaspaces.internal.lrmi.ConnectionUrlDescriptor;
 import com.gigaspaces.internal.lrmi.LRMIProxyMonitoringDetailsImpl;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
@@ -28,6 +27,7 @@ import com.j_spaces.kernel.pool.IResourceProcedure;
 
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
+import java.util.concurrent.atomic.LongAdder;
 
 
 /**

@@ -17,7 +17,7 @@
 
 package com.gigaspaces.metrics;
 
-import com.gigaspaces.internal.backport.java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * An incrementing and decrementing counter metric for long values.

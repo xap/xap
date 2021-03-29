@@ -18,7 +18,6 @@ package com.gigaspaces.lrmi.nio;
 
 import com.gigaspaces.exception.lrmi.LRMIUnhandledException;
 import com.gigaspaces.exception.lrmi.SlowConsumerException;
-import com.gigaspaces.internal.backport.java.util.concurrent.atomic.LongAdder;
 import com.gigaspaces.internal.io.GSByteArrayInputStream;
 import com.gigaspaces.internal.io.MarshalContextClearedException;
 import com.gigaspaces.internal.io.MarshalInputStream;
@@ -48,6 +47,7 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.rmi.NoSuchObjectException;
 import java.util.Arrays;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * A Reader is capable of reading Request Packets and Reply Packets from a Socket Channel. An NIO
