@@ -85,6 +85,11 @@ public class SpaceStatusChangedAPITest {
     }
 
     private void assertEventReceived() {
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         ensureListenersGotEvents(listenerByInterface);
         ensureListenersGotEvents(listenerByAnnotations);
     }
