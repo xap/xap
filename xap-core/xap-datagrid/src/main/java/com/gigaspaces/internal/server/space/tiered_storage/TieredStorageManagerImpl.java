@@ -93,7 +93,7 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
             return TieredState.TIERED_HOT_AND_COLD;
         }
 
-        logger.trace("Does'nt Fit cache rule for type {}, EntryTieredState = TIERED_COLD", typeName);
+        logger.trace("Doesn't Fit cache rule for type {}, EntryTieredState = TIERED_COLD", typeName);
         return TieredState.TIERED_COLD;
     }
 

@@ -9,10 +9,14 @@ import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.TemplateMatchTier;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.sadapter.SAException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class TieredStorageUtils {
+    private static Logger logger = LoggerFactory.getLogger(TieredStorageUtils.class);
+
     public static Map<Object, EntryTieredMetaData> getEntriesTieredMetaDataByIds(SpaceEngine space, String typeName, Object[] ids) throws Exception {
         Map<Object, EntryTieredMetaData> entryTieredMetaDataMap =  new HashMap<>();
         if (!space.isTieredStorage()) {
@@ -67,6 +71,9 @@ public class TieredStorageUtils {
                 return hotValue == coldValue;
             }
             if(!hotValue.equals(coldValue)){
+                logger.warn("Failed to have consistency between hot and cold tier for id: " +
+                        hotEntry.getEntryDataType().name() + " Hot: " + hotValue + " Cold: " + coldValue);
+
                 return false;
             }
         }
