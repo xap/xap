@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc.model.table;
 
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.QueryResult;
+import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.Range;
 
 import java.sql.SQLException;
@@ -22,4 +23,8 @@ public abstract class TableContainer {
     public abstract void addRange(Range range);
 
     public abstract void setLimit(Integer value);
+
+    public abstract QueryTemplatePacket createQueryTemplatePacketWithRange(Range range);
+
+    public abstract void setQueryTemplatePackage(QueryTemplatePacket queryTemplatePacket);
 }

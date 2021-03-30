@@ -48,18 +48,6 @@ public class ConcreteTableContainer extends TableContainer {
         allColumnNamesSorted.sort(String::compareTo);
     }
 
-    private QueryTemplatePacket createEmptyQueryTemplatePacket(String tableName) {
-        QueryTableData queryTableData = new QueryTableData(tableName, null, 0);
-        queryTableData.setTypeDesc(typeDesc);
-        return new QueryTemplatePacket(queryTableData, QueryResultTypeInternal.NOT_SET);
-    }
-
-    private QueryTemplatePacket createQueryTemplatePacketWithRange(String tableName, Range range) {
-        QueryTableData queryTableData = new QueryTableData(tableName, null, 0);
-        queryTableData.setTypeDesc(typeDesc);
-        return new QueryTemplatePacket(queryTableData, QueryResultTypeInternal.NOT_SET, range.getPath(), range);
-    }
-
     @Override
     public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
         String[] projectionC = visibleColumns.stream().map(QueryColumn::getName).toArray(String[]::new);
@@ -68,7 +56,7 @@ public class ConcreteTableContainer extends TableContainer {
             ProjectionTemplate _projectionTemplate = ProjectionTemplate.create(projectionC, typeDesc);
 
             if (queryTemplatePacket == null) {
-                queryTemplatePacket = createEmptyQueryTemplatePacket(name);
+                queryTemplatePacket = createEmptyQueryTemplatePacket();
             }
             queryTemplatePacket.setProjectionTemplate(_projectionTemplate);
 
@@ -125,9 +113,9 @@ public class ConcreteTableContainer extends TableContainer {
     @Override
     public void addRange(Range range) {
         if (queryTemplatePacket == null) {
-            queryTemplatePacket = createQueryTemplatePacketWithRange(this.name, range);
+            queryTemplatePacket = createQueryTemplatePacketWithRange(range);
         } else {
-            QueryTemplatePacket queryTemplatePacketNew = createQueryTemplatePacketWithRange(this.name, range);
+            QueryTemplatePacket queryTemplatePacketNew = createQueryTemplatePacketWithRange(range);
             queryTemplatePacket = queryTemplatePacket.and(queryTemplatePacketNew);
         }
     }
@@ -138,5 +126,24 @@ public class ConcreteTableContainer extends TableContainer {
             throw new IllegalArgumentException("Already set!");
         }
         this.limit = value;
+    }
+
+
+    private QueryTemplatePacket createEmptyQueryTemplatePacket() {
+        QueryTableData queryTableData = new QueryTableData(this.name, null, 0);
+        queryTableData.setTypeDesc(typeDesc);
+        return new QueryTemplatePacket(queryTableData, QueryResultTypeInternal.NOT_SET);
+    }
+
+    @Override
+    public QueryTemplatePacket createQueryTemplatePacketWithRange(Range range) {
+        QueryTableData queryTableData = new QueryTableData(this.name, null, 0);
+        queryTableData.setTypeDesc(typeDesc);
+        return new QueryTemplatePacket(queryTableData, QueryResultTypeInternal.NOT_SET, range.getPath(), range);
+    }
+
+    @Override
+    public void setQueryTemplatePackage(QueryTemplatePacket queryTemplatePacket) {
+        this.queryTemplatePacket = queryTemplatePacket;
     }
 }

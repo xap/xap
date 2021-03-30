@@ -28,10 +28,11 @@ public class MainTester {
 //        try (Connection connection = DriverManager.getConnection("jdbc:gigaspaces:url:jini://*/*/demo", properties)) {
         try (Connection connection = DriverManager.getConnection(newDriver ? "jdbc:gigaspaces:v3://localhost:4174/" + space.getSpaceName() : "jdbc:gigaspaces:url:jini://*/*/" + space.getSpaceName(), properties)) {
             Statement statement = connection.createStatement();
-            execute(statement, "EXPLAIN SELECT * FROM com.gigaspaces.jdbc.MyPojo");// WHERE rowNum <= 10");
+//            execute(statement, "SELECT * FROM com.gigaspaces.jdbc.MyPojo where name = 'Adler' OR name = 'Adam' AND age = 30");// WHERE rowNum <= 10");
 
 //            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo");// WHERE rowNum <= 10");
-//            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo WHERE rowNum <= 1");
+//            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo WHERE country like '%a%'");
+            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo WHERE age NOT BETWEEN 10 and 20");
 //
 //            execute(statement, "select name,age from com.gigaspaces.jdbc.MyPojo where name='Adler' and age=20");
 //
@@ -71,6 +72,7 @@ public class MainTester {
             gigaSpace.write(new MyPojo("Adler", 20, "Israel"));
             gigaSpace.write(new MyPojo("Adam", 30, "Israel"));
             gigaSpace.write(new MyPojo("Eve", 35, "UK"));
+            gigaSpace.write(new MyPojo("NoCountry", 40, null));
         }
         return gigaSpace;
     }

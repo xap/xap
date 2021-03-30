@@ -10,12 +10,14 @@ import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.gigaspaces.jdbc.model.table.TempTableContainer;
 import com.j_spaces.core.IJSpace;
+import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.*;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisitor {
     private final List<TableContainer> tables = new ArrayList<>();
@@ -48,8 +50,13 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     }
 
     private void prepareWhereClause(PlainSelect plainSelect) {
-        if (plainSelect.getWhere() != null)
-            plainSelect.getWhere().accept(new WhereHandler(this));
+        if (plainSelect.getWhere() != null) {
+            WhereHandler expressionVisitor = new WhereHandler(this.getTables());
+            plainSelect.getWhere().accept(expressionVisitor);
+            for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : expressionVisitor.getQTPMap().entrySet()) {
+                tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePackage(tableContainerQueryTemplatePacketEntry.getValue());
+            }
+        }
     }
 
 

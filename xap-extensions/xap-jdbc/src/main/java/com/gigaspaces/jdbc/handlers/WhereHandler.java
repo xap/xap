@@ -1,140 +1,88 @@
 package com.gigaspaces.jdbc.handlers;
 
-import com.gigaspaces.jdbc.QueryExecutor;
 import com.gigaspaces.jdbc.model.table.TableContainer;
-import com.j_spaces.jdbc.builder.range.EqualValueRange;
-import net.sf.jsqlparser.expression.*;
-import net.sf.jsqlparser.expression.operators.arithmetic.*;
+import com.gigaspaces.metadata.StorageType;
+import com.j_spaces.jdbc.builder.QueryTemplatePacket;
+import com.j_spaces.jdbc.builder.range.*;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.*;
-import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.statement.select.SubSelect;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-public class WhereHandler implements ExpressionVisitor {
+public class WhereHandler extends UnsupportedWhereHandler {
     private final List<TableContainer> tables;
+    private final Map<TableContainer, QueryTemplatePacket> qtpMap;
 
-    public WhereHandler(QueryExecutor executor) {
-        this.tables = executor.getTables();
+    public Map<TableContainer, QueryTemplatePacket> getQTPMap() {
+        return qtpMap;
     }
 
-
-    @Override
-    public void visit(BitwiseRightShift aThis) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(BitwiseLeftShift aThis) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(NullValue nullValue) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(Function function) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(SignedExpression signedExpression) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(JdbcParameter jdbcParameter) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(JdbcNamedParameter jdbcNamedParameter) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(DoubleValue doubleValue) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(LongValue longValue) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(HexValue hexValue) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(DateValue dateValue) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(TimeValue timeValue) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(TimestampValue timestampValue) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(Parenthesis parenthesis) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(StringValue stringValue) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(Addition addition) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(Division division) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(IntegerDivision division) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(Multiplication multiplication) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(Subtraction subtraction) {
-        throw new UnsupportedOperationException("Unsupported");
+    public WhereHandler(List<TableContainer> tables) {
+        this.tables = tables;
+        this.qtpMap = new LinkedHashMap<>();
     }
 
     @Override
     public void visit(AndExpression andExpression) {
-        andExpression.getLeftExpression().accept(this);
-        andExpression.getRightExpression().accept(this);
+        WhereHandler leftHandler = new WhereHandler(tables);
+        andExpression.getLeftExpression().accept(leftHandler);
+        WhereHandler rightHandler = new WhereHandler(tables);
+        andExpression.getRightExpression().accept(rightHandler);
+
+        and(leftHandler, rightHandler);
+    }
+
+    private void and(WhereHandler leftHandler, WhereHandler rightHandler) {
+        for (Map.Entry<TableContainer, QueryTemplatePacket> leftTable : leftHandler.getQTPMap().entrySet()) {
+            QueryTemplatePacket rightTable = rightHandler.getQTPMap().get(leftTable.getKey());
+            if (rightTable == null) {
+                this.qtpMap.put(leftTable.getKey(), leftTable.getValue());
+            } else {
+                this.qtpMap.put(leftTable.getKey(), leftTable.getValue().and(rightTable));
+            }
+        }
+
+        for (Map.Entry<TableContainer, QueryTemplatePacket> rightTable : rightHandler.getQTPMap().entrySet()) {
+            QueryTemplatePacket leftTable = leftHandler.getQTPMap().get(rightTable.getKey());
+            if (leftTable == null) {
+                this.qtpMap.put(rightTable.getKey(), rightTable.getValue());
+            } else {
+                // already handled
+            }
+        }
     }
 
     @Override
     public void visit(OrExpression orExpression) {
-        throw new UnsupportedOperationException("Unsupported");
+        WhereHandler leftHandler = new WhereHandler(tables);
+        orExpression.getLeftExpression().accept(leftHandler);
+        WhereHandler rightHandler = new WhereHandler(tables);
+        orExpression.getRightExpression().accept(rightHandler);
+
+        or(leftHandler, rightHandler);
     }
 
-    @Override
-    public void visit(Between between) {
-        throw new UnsupportedOperationException("Unsupported");
+    private void or(WhereHandler leftHandler, WhereHandler rightHandler) {
+        for (Map.Entry<TableContainer, QueryTemplatePacket> leftTable : leftHandler.getQTPMap().entrySet()) {
+            QueryTemplatePacket rightTable = rightHandler.getQTPMap().get(leftTable.getKey());
+            if (rightTable == null) {
+                this.qtpMap.put(leftTable.getKey(), leftTable.getValue());
+            } else {
+                this.qtpMap.put(leftTable.getKey(), leftTable.getValue().union(rightTable));
+            }
+        }
+
+        for (Map.Entry<TableContainer, QueryTemplatePacket> rightTable : rightHandler.getQTPMap().entrySet()) {
+            QueryTemplatePacket leftTable = leftHandler.getQTPMap().get(rightTable.getKey());
+            if (leftTable == null) {
+                this.qtpMap.put(rightTable.getKey(), rightTable.getValue());
+            } else {
+                // Already handled above
+            }
+        }
     }
 
     @Override
@@ -143,47 +91,20 @@ public class WhereHandler implements ExpressionVisitor {
         equalsTo.getLeftExpression().accept(handler);
         equalsTo.getRightExpression().accept(handler);
 
-        handler.getTable(tables).addRange(new EqualValueRange(handler.getColumn().getColumnName(), handler.getValue()));
+        TableContainer table = handler.getTable(tables);
+        Range range = new EqualValueRange(handler.getColumn().getColumnName(), handler.getValue());
+        qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
     }
 
     @Override
-    public void visit(GreaterThan greaterThan) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
+    public void visit(NotEqualsTo notEqualsTo) {
+        SingleConditionHandler handler = new SingleConditionHandler();
+        notEqualsTo.getLeftExpression().accept(handler);
+        notEqualsTo.getRightExpression().accept(handler);
 
-    @Override
-    public void visit(GreaterThanEquals greaterThanEquals) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(InExpression inExpression) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(FullTextSearch fullTextSearch) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(IsNullExpression isNullExpression) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(IsBooleanExpression isBooleanExpression) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(LikeExpression likeExpression) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(MinorThan minorThan) {
-        throw new UnsupportedOperationException("Unsupported");
+        TableContainer table = handler.getTable(tables);
+        Range range = new NotEqualValueRange(handler.getColumn().getColumnName(), handler.getValue());
+        qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
     }
 
     @Override
@@ -195,202 +116,97 @@ public class WhereHandler implements ExpressionVisitor {
             Integer value = ((Integer) handler.getValue());
             tables.forEach(t -> t.setLimit(value));
         } else {
-            throw new UnsupportedOperationException("Unsupported");
+            TableContainer table = handler.getTable(tables);
+            Range range = new SegmentRange(handler.getColumn().getColumnName(), null, false, castToComparable(handler.getValue()), true);
+            qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
         }
     }
 
     @Override
-    public void visit(NotEqualsTo notEqualsTo) {
-        throw new UnsupportedOperationException("Unsupported");
+    public void visit(MinorThan minorThan) {
+        SingleConditionHandler handler = new SingleConditionHandler();
+        minorThan.getLeftExpression().accept(handler);
+        minorThan.getRightExpression().accept(handler);
+        if (handler.getColumn().getColumnName().equalsIgnoreCase("rowNum") && handler.getValue() instanceof Integer) {
+            Integer value = ((Integer) handler.getValue());
+            tables.forEach(t -> t.setLimit(value - 1));
+        } else {
+            TableContainer table = handler.getTable(tables);
+            Range range = new SegmentRange(handler.getColumn().getColumnName(), null, false, castToComparable(handler.getValue()), false);
+            qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+        }
     }
 
     @Override
-    public void visit(Column tableColumn) {
-        throw new UnsupportedOperationException("Unsupported");
+    public void visit(GreaterThan greaterThan) {
+        SingleConditionHandler handler = new SingleConditionHandler();
+        greaterThan.getLeftExpression().accept(handler);
+        greaterThan.getRightExpression().accept(handler);
+        TableContainer table = handler.getTable(tables);
+        Range range = new SegmentRange(handler.getColumn().getColumnName(), castToComparable(handler.getValue()), false, null, false);
+        qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
     }
 
     @Override
-    public void visit(SubSelect subSelect) {
-        throw new UnsupportedOperationException("Unsupported");
+    public void visit(GreaterThanEquals greaterThanEquals) {
+        SingleConditionHandler handler = new SingleConditionHandler();
+        greaterThanEquals.getLeftExpression().accept(handler);
+        greaterThanEquals.getRightExpression().accept(handler);
+        TableContainer table = handler.getTable(tables);
+        Range range = new SegmentRange(handler.getColumn().getColumnName(), castToComparable(handler.getValue()), true, null, false);
+        qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+    }
+
+    /**
+     * Cast the object to Comparable otherwise throws an IllegalArgumentException exception
+     */
+    private static Comparable castToComparable(Object obj) {
+        try {
+            //NOTE- a check for Comparable interface implementation is be done in the proxy
+            return (Comparable) obj;
+        } catch (ClassCastException cce) {
+            throw new IllegalArgumentException("Type " + obj.getClass() +
+                    " doesn't implement Comparable, Serialization mode might be different than " + StorageType.OBJECT + ".", cce);
+        }
+    }
+
+
+    @Override
+    public void visit(IsNullExpression isNullExpression) {
+        SingleConditionHandler handler = new SingleConditionHandler();
+        isNullExpression.getLeftExpression().accept(handler);
+        TableContainer table = handler.getTable(tables);
+        Range range = isNullExpression.isNot() ? new NotNullRange(handler.getColumn().getColumnName()) : new IsNullRange(handler.getColumn().getColumnName());
+        qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
     }
 
     @Override
-    public void visit(CaseExpression caseExpression) {
-        throw new UnsupportedOperationException("Unsupported");
+    public void visit(LikeExpression likeExpression) {
+        SingleConditionHandler handler = new SingleConditionHandler();
+        likeExpression.getLeftExpression().accept(handler);
+        likeExpression.getRightExpression().accept(handler);
+        TableContainer table = handler.getTable(tables);
+        String regex = ((String) handler.getValue()).replaceAll("%", ".*").replaceAll("_", ".");
+
+        Range range = likeExpression.isNot() ? new NotRegexRange(handler.getColumn().getColumnName(), regex) : new RegexRange(handler.getColumn().getColumnName(), regex);
+        qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
     }
 
     @Override
-    public void visit(WhenClause whenClause) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
+    public void visit(Between between) {
+        SingleConditionHandler handlerStart = new SingleConditionHandler();
+        between.getLeftExpression().accept(handlerStart);
+        between.getBetweenExpressionStart().accept(handlerStart);
+        TableContainer table = handlerStart.getTable(tables);
 
-    @Override
-    public void visit(ExistsExpression existsExpression) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
+        SingleConditionHandler handlerEnd = new SingleConditionHandler();
+        between.getBetweenExpressionEnd().accept(handlerEnd);
 
-    @Override
-    public void visit(AllComparisonExpression allComparisonExpression) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(AnyComparisonExpression anyComparisonExpression) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(Concat concat) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(Matches matches) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(BitwiseAnd bitwiseAnd) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(BitwiseOr bitwiseOr) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(BitwiseXor bitwiseXor) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(CastExpression cast) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(Modulo modulo) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(AnalyticExpression aexpr) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(ExtractExpression eexpr) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(IntervalExpression iexpr) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(OracleHierarchicalExpression oexpr) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(RegExpMatchOperator rexpr) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(JsonExpression jsonExpr) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(JsonOperator jsonExpr) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(RegExpMySQLOperator regExpMySQLOperator) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(UserVariable var) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(NumericBind bind) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(KeepExpression aexpr) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(MySQLGroupConcat groupConcat) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(ValueListExpression valueList) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(RowConstructor rowConstructor) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(OracleHint hint) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(TimeKeyExpression timeKeyExpression) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(DateTimeLiteralExpression literal) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(NotExpression aThis) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(NextValExpression aThis) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(CollateExpression aThis) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(SimilarToExpression aThis) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(ArrayExpression aThis) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(VariableAssignment aThis) {
-        throw new UnsupportedOperationException("Unsupported");
-    }
-
-    @Override
-    public void visit(XMLSerializeExpr aThis) {
-        throw new UnsupportedOperationException("Unsupported");
+        if (!between.isNot()) {
+            Range range = new SegmentRange(handlerStart.getColumn().getColumnName(), castToComparable(handlerStart.getValue()), true, castToComparable(handlerEnd.getValue()), true);
+            qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+        } else {
+            throw new UnsupportedOperationException("NOT BETWEEN is not supported");
+        }
     }
 }
