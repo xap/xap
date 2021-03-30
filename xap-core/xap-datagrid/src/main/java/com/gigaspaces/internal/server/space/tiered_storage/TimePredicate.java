@@ -4,10 +4,13 @@ import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.j_spaces.core.cache.context.TemplateMatchTier;
+import com.j_spaces.jdbc.builder.range.SegmentRange;
 
+import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.Instant;
 
-public class TimePredicate implements CachePredicate {
+public class TimePredicate implements CachePredicate, InternalCachePredicate {
     private final String typeName;
     private final String timeColumn;
     private final Duration period;
@@ -39,13 +42,17 @@ public class TimePredicate implements CachePredicate {
     }
 
     //For tests
+    @Override
     public TemplateMatchTier evaluate(ITemplatePacket packet) {
-        return TemplateMatchTier.MATCH_COLD; //TODO - tiered storage
+        String columnTimeType = packet.getTypeDescriptor().getFixedProperty(getTimeColumn()).getType().getName();
+        return SqliteUtils.getTemplateMatchTier(getTimeRuleAsRange(), packet, columnTimeType);
     }
 
     @Override
-    public boolean evaluate(IEntryData entryData) {
-        return false; //TODO - tiered storage
+    public boolean evaluate(IEntryData entryData)  {
+        Object value = entryData.getFixedPropertyValue(entryData.getSpaceTypeDescriptor().getFixedPropertyPosition(timeColumn));
+        value = SqliteUtils.convertTimeTypeToInstant(value);
+        return getTimeRuleAsRange().getPredicate().execute(value);
     }
 
     @Override
@@ -55,7 +62,14 @@ public class TimePredicate implements CachePredicate {
 
     @Override
     public TemplateMatchTier evaluate(ITemplateHolder template) {
-        return TemplateMatchTier.MATCH_COLD; //TODO - tiered storage
+       String timeType = template.getServerTypeDesc().getTypeDesc().getFixedProperty(timeColumn).getTypeName();
+       TemplateMatchTier templateMatchTier = SqliteUtils.getTemplateMatchTier(getTimeRuleAsRange(), template, timeType);
+       return SqliteUtils.evaluateByMatchTier(template, templateMatchTier);
+    }
+
+    public SegmentRange getTimeRuleAsRange(){
+         Instant timeRule = Instant.now().minus(period);
+         return new SegmentRange(timeColumn, timeRule, true, null, false);
     }
 
     @Override
