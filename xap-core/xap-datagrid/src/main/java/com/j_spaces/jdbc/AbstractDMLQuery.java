@@ -73,13 +73,13 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
     protected ExpNode expTree = null;   //root Node of the expression tree
     protected Object[] preparedValues = null;
     //of the tables
-    protected List<QueryTableData> _tablesData = Collections.synchronizedList(new ArrayList<QueryTableData>());
+    protected List<QueryTableData> _tablesData = Collections.synchronizedList(new ArrayList<>());
     private QuerySession session = null;
     protected RowNumNode rownum = null;
     protected TreeMap<String, Object> valueMap = null;
     private boolean m_isUseTemplate = false;
 
-    protected ConcurrentHashMap<String, QueryTableData> tables = new ConcurrentHashMap<String, QueryTableData>(); //keeps a mapping between an alias and a table
+    protected ConcurrentHashMap<String, QueryTableData> tables = new ConcurrentHashMap<>(); //keeps a mapping between an alias and a table
     //if there was no alias, it will be like the table name
 
     // Indicates whether the query contains a "field[*] = ?" syntax
@@ -288,7 +288,7 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
 
     public void setTemplatePreparedValues(ITypeDesc typeDesc, Object[] fieldValues) {
         if (fieldValues != null) {
-            valueMap = new TreeMap<String, Object>();
+            valueMap = new TreeMap<>();
             this.preparedValues = new Object[fieldValues.length];
             m_isUseTemplate = true;
 
@@ -326,7 +326,7 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
      */
     public String getTableByAlias(String alias) {
         if (tables == null) {
-            tables = new ConcurrentHashMap<String, QueryTableData>();
+            tables = new ConcurrentHashMap<>();
         }
         QueryTableData tableData = tables.get(alias);
 
@@ -413,7 +413,7 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
     }
 
     protected void executeSubQueries(ISpaceProxy space, Transaction txn) throws SQLException {
-        final Stack<ExpNode> nodes = new Stack<ExpNode>();
+        final Stack<ExpNode> nodes = new Stack<>();
         nodes.push(expTree);
         while (!nodes.isEmpty()) {
             final ExpNode currentNode = nodes.pop();

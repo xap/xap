@@ -713,10 +713,21 @@ public class SystemProperties extends CommonSystemProperties {
      */
     public final static String ENABLE_BOUNDED_QUERY_CACHE = "com.gs.queryCache.bounded.enable";
 
+
+    /**
+     * Indication for if the QueryCache inner implementation will be bounded or not
+     */
+    public final static String ENABLE_QUERY_CACHE = "com.gs.queryCache.enable";
+
     /**
      * The default indication for if the QueryCache inner implementation will be bounded or not
      */
     public final static String ENABLE_BOUNDED_QUERY_CACHE_DEFAULT = "true";
+
+    /**
+     * The default indication for if the QueryCache inner implementation will be bounded or not
+     */
+    public final static boolean ENABLE_QUERY_CACHE_DEFAULT = true;
 
     /**
      * The bounded query cache size

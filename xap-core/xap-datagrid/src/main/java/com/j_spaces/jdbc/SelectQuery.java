@@ -59,6 +59,7 @@ import java.io.ObjectOutput;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -121,12 +122,10 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
 
         List<SelectColumn> aList = getQueryColumns();
         if (aList == null || aList.isEmpty())
-            return new ArrayList<SelectColumn>(0);
+            return new ArrayList<>(0);
 
-        ArrayList<SelectColumn> aFuncList = new ArrayList<SelectColumn>(aList.size());
-        for (int i = 0; i < aList.size(); i++) {
-            SelectColumn col = aList.get(i);
-
+        ArrayList<SelectColumn> aFuncList = new ArrayList<>(aList.size());
+        for (SelectColumn col : aList) {
             if (col.isAggregatedFunction())
                 aFuncList.add(col);
         }
@@ -672,9 +671,9 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         } else {
 
             int numOfColumns = getQueryColumns().size();
-            ArrayList<String> columnNamesList = new ArrayList<String>(numOfColumns);
-            ArrayList<String> columnLabelsList = new ArrayList<String>(numOfColumns);
-            ArrayList<String> tableNamesList = new ArrayList<String>(numOfColumns);
+            ArrayList<String> columnNamesList = new ArrayList<>(numOfColumns);
+            ArrayList<String> columnLabelsList = new ArrayList<>(numOfColumns);
+            ArrayList<String> tableNamesList = new ArrayList<>(numOfColumns);
 
             // Gather metadata for visible columns
             for (SelectColumn resultColumn : getQueryColumns()) {
@@ -758,8 +757,30 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
     @Override
     public SelectQuery clone() {
         SelectQuery query = new SelectQuery();
-        query.tables = this.tables;
-        query._tablesData = _tablesData;
+
+        query.tables = new ConcurrentHashMap<>();
+        query._tablesData = Collections.synchronizedList(new ArrayList<>());
+
+        //as part of GS-14455 fix
+        for( QueryTableData queryTableData : this._tablesData ){
+
+            String tableAlias = queryTableData.getTableAlias();
+            String tableName = queryTableData.getTableName();
+
+            query._tablesData.add( queryTableData );
+            if( tableAlias != null) {
+                query.tables.put(tableAlias, queryTableData);
+            }
+            if( tableName != null) {
+                query.tables.put(tableName, queryTableData);
+            }
+            //it's very important to set null here, otherwise we get previous statement's values
+            queryTableData.setTableCondition(null);
+        }
+        if( this.preparedValues != null ) {
+            query.preparedValues = Arrays.copyOf( this.preparedValues, this.preparedValues.length );
+        }
+
         query.rownum = (RowNumNode) (this.rownum == null ? null : rownum.clone());
         query.orderColumns = this.orderColumns;
         query.groupColumn = this.groupColumn;
@@ -1025,7 +1046,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         ITypeDesc info = queryTableData.getTypeDesc();
         if (info == null)
             return Collections.emptyList();
-        List<SelectColumn> toAdd = new ArrayList<SelectColumn>(info.getNumOfFixedProperties());
+        List<SelectColumn> toAdd = new ArrayList<>(info.getNumOfFixedProperties());
         for (int i = 0; i < info.getNumOfFixedProperties(); i++) {
             SelectColumn newColumn = new SelectColumn(queryTableData, info.getFixedProperty(i).getName());
             toAdd.add(newColumn);
@@ -1209,7 +1230,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         if (_projectionTemplate != null || !isConvertResultToArray() || isSelectAll)
             return;
 
-        ArrayList<String> projectedProperties = new ArrayList<String>(getQueryColumns().size());
+        ArrayList<String> projectedProperties = new ArrayList<>(getQueryColumns().size());
         for (SelectColumn col : getQueryColumns()) {
             if (col.isVisible() && !col.isAllColumns()) {
                 projectedProperties.add(col.getName());
@@ -1249,8 +1270,8 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
      */
     private void addDynamicSelectColumns(IQueryResultSet<IEntryPacket> entries)
             throws SQLException {
-        HashMap<String, QueryTableData> dynamicPropertiesTables = new HashMap<String, QueryTableData>();
-        HashMap<QueryTableData, HashMap<String, SelectColumn>> dynamicColumnsMap = new HashMap<QueryTableData, HashMap<String, SelectColumn>>();
+        HashMap<String, QueryTableData> dynamicPropertiesTables = new HashMap<>();
+        HashMap<QueryTableData, HashMap<String, SelectColumn>> dynamicColumnsMap = new HashMap<>();
 
         // find dynamic tables
         for (QueryTableData tableData : getTablesData()) {
@@ -1259,8 +1280,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
                     && tableData.supportsDynamicProperties()) {
                 dynamicPropertiesTables
                         .put(tableData.getTableName(), tableData);
-                dynamicColumnsMap.put(tableData,
-                        new HashMap<String, SelectColumn>());
+                dynamicColumnsMap.put(tableData, new HashMap<>());
             }
         }
 

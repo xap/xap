@@ -21,6 +21,7 @@ import com.gigaspaces.client.transaction.TransactionManagerProviderFactory;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.exceptions.BatchQueryException;
 import com.gigaspaces.internal.query.explainplan.ExplainPlanImpl;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.jdbc.request.RequestPacketV3;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.security.service.SecurityInterceptor;
@@ -31,6 +32,7 @@ import com.j_spaces.jdbc.parser.grammar.SqlParser;
 import com.j_spaces.jdbc.request.SetAutoCommitRequest;
 import com.j_spaces.jdbc.request.SetTransaction;
 import com.j_spaces.jdbc.request.SetUseSingleSpace;
+import com.j_spaces.kernel.SystemProperties;
 import net.jini.core.lease.LeaseDeniedException;
 import net.jini.core.transaction.*;
 import org.slf4j.Logger;
@@ -63,6 +65,12 @@ public class QueryHandler {
 
     // Transaction manager provider is lazy initialized...
     private volatile ITransactionManagerProvider _transactionManagerProvider;
+
+    private static final boolean isCacheEnabled = GsEnv.propertyBoolean( SystemProperties.ENABLE_QUERY_CACHE ).
+            get( SystemProperties.ENABLE_QUERY_CACHE_DEFAULT );
+    static{
+        _logger.info( "Query Cache " + ( isCacheEnabled ? "Enabled" : "Disabled" ) );
+    }
 
     public QueryHandler(IJSpace spaceCluster, IJSpace spaceRegular,
                         QueryProcessorConfiguration config, SecurityInterceptor securityInterceptor) {
@@ -112,6 +120,10 @@ public class QueryHandler {
                 AbstractDMLQuery dmlQuery = (AbstractDMLQuery) handleStatement(request, space);
                 attachTransaction(session, dmlQuery);
                 request.build(dmlQuery);
+/*                //part of GS-14455 fix
+                if( isCacheEnabled ) {
+                    dmlQuery = dmlQuery.clone();
+                }*/
 
                 dmlQuery.setSession(session);
                 dmlQuery.setSecurityInterceptor(securityInterceptor);
@@ -205,7 +217,10 @@ public class QueryHandler {
      * cache.
      */
     public Query handleStatement(RequestPacket request, ISpaceProxy space) throws SQLException {
-        // first, try to get it from the cache.
+
+        // first, try to get it from the cache ( if enabled )
+        //as part of GS-14455 fix
+        //Query query = isCacheEnabled ? _queryCache.getQueryFromCache(request.getStatement()) : null;
         Query query = _queryCache.getQueryFromCache(request.getStatement());
         try {
             if (query == null) {
