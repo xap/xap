@@ -777,9 +777,6 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
             //it's very important to set null here, otherwise we get previous statement's values
             queryTableData.setTableCondition(null);
         }
-        if( this.preparedValues != null ) {
-            query.preparedValues = Arrays.copyOf( this.preparedValues, this.preparedValues.length );
-        }
 
         query.rownum = (RowNumNode) (this.rownum == null ? null : rownum.clone());
         query.orderColumns = this.orderColumns;
