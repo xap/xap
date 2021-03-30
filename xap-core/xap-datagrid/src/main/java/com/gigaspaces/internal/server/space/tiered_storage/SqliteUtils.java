@@ -299,7 +299,7 @@ public class SqliteUtils {
         } else if (Timestamp.class.equals(value.getClass())){
             return ((Timestamp) value).toInstant();
         } else if (Long.class.equals(value.getClass())){
-            return Instant.ofEpochSecond((long)value);
+            return Instant.ofEpochMilli((long)value);
         }
         throw new IllegalStateException("Time type of " + value.getClass().toString() + " is unsupported");
     }
@@ -320,11 +320,11 @@ public class SqliteUtils {
     private static Range convertRangeFromLongToInstant(Range queryValueRange){
         if (queryValueRange.isEqualValueRange()){
             long value = (long)((EqualValueRange)queryValueRange).getValue();
-            return new EqualValueRange(queryValueRange.getPath(), Instant.ofEpochSecond(value));
+            return new EqualValueRange(queryValueRange.getPath(), Instant.ofEpochMilli(value));
         } else if (queryValueRange.isSegmentRange()){
             SegmentRange segmentRange = (SegmentRange) queryValueRange;
-            Comparable<Instant> minInstant = segmentRange.getMin() != null? Instant.ofEpochSecond((long)segmentRange.getMin()) : null;
-            Comparable<Instant> maxInstant = segmentRange.getMax() != null? Instant.ofEpochSecond((long)segmentRange.getMax()) : null;
+            Comparable<Instant> minInstant = segmentRange.getMin() != null? Instant.ofEpochMilli((long)segmentRange.getMin()) : null;
+            Comparable<Instant> maxInstant = segmentRange.getMax() != null? Instant.ofEpochMilli((long)segmentRange.getMax()) : null;
             return new SegmentRange(queryValueRange.getPath(), minInstant, ((SegmentRange) queryValueRange).isIncludeMin(), maxInstant, ((SegmentRange) queryValueRange).isIncludeMax());
         }
         return null;//todo- null?
