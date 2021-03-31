@@ -393,22 +393,33 @@ public class SqliteUtils {
             }
         }
         return TemplateMatchTier.MATCH_COLD;
-
     }
 
     public static TemplateMatchTier evalCustomQuery(Range criteria, ICustomQuery customQuery, String timeType) {
         if (customQuery instanceof CompoundAndCustomQuery) {
             List<ICustomQuery> subQueries = ((AbstractCompundCustomQuery) customQuery).get_subQueries();
-            TemplateMatchTier result = TemplateMatchTier.MATCH_COLD;
+            TemplateMatchTier result = null;
             for (ICustomQuery query : subQueries) {
-                result = andTemplateMatchTier(result, evalCustomQuery(criteria, query, timeType));
+                TemplateMatchTier templateMatchTier = evalCustomQuery(criteria, query, timeType);
+                if (result == null) {
+                    result = templateMatchTier;
+                }
+                else {
+                    result = andTemplateMatchTier(result, templateMatchTier);
+                }
             }
             return result;
         } else if (customQuery instanceof CompoundOrCustomQuery) {
             List<ICustomQuery> subQueries = ((AbstractCompundCustomQuery) customQuery).get_subQueries();
-            TemplateMatchTier result = TemplateMatchTier.MATCH_HOT;
-            for (ICustomQuery query : subQueries) {
-                result = orTemplateMatchTier(result, evalCustomQuery(criteria, query, timeType));
+            TemplateMatchTier result = null;
+            for (ICustomQuery query : subQueries){
+                TemplateMatchTier templateMatchTier = evalCustomQuery(criteria, query, timeType);
+                if (result == null) {
+                    result = templateMatchTier;
+                }
+                else {
+                    result = orTemplateMatchTier(result, templateMatchTier);
+                }
             }
             return result;
         } else if (customQuery instanceof Range) {
@@ -422,17 +433,17 @@ public class SqliteUtils {
         return TemplateMatchTier.MATCH_COLD;
     }
 
-    private static TemplateMatchTier andTemplateMatchTier(TemplateMatchTier tier1, TemplateMatchTier tier2) {
+    static private TemplateMatchTier andTemplateMatchTier(TemplateMatchTier tier1, TemplateMatchTier tier2) {
+        if (tier1 == TemplateMatchTier.MATCH_COLD || tier2 == TemplateMatchTier.MATCH_COLD) {
+            return TemplateMatchTier.MATCH_COLD;
+        }
         if (tier1 == TemplateMatchTier.MATCH_HOT || tier2 == TemplateMatchTier.MATCH_HOT) {
             return TemplateMatchTier.MATCH_HOT;
-        } else if (tier1 == TemplateMatchTier.MATCH_COLD && tier2 == TemplateMatchTier.MATCH_COLD) {
-            return TemplateMatchTier.MATCH_COLD;
-        } else {
-            return TemplateMatchTier.MATCH_HOT_AND_COLD;
         }
+        return TemplateMatchTier.MATCH_HOT_AND_COLD;
     }
 
-    private static TemplateMatchTier orTemplateMatchTier(TemplateMatchTier tier1, TemplateMatchTier tier2) {
+    static private TemplateMatchTier orTemplateMatchTier(TemplateMatchTier tier1, TemplateMatchTier tier2) {
         if (tier1 == TemplateMatchTier.MATCH_HOT && tier2 == TemplateMatchTier.MATCH_HOT) {
             return TemplateMatchTier.MATCH_HOT;
         } else if (tier1 == TemplateMatchTier.MATCH_COLD && tier2 == TemplateMatchTier.MATCH_COLD) {
@@ -462,14 +473,16 @@ public class SqliteUtils {
             }
         } else {
             boolean allMatched = true;
-            boolean noneMatched = false;
+            boolean someMatched  = false;
             for (Object queryInRangeInValue : queryValueRange.getInValues()) {
                 boolean match = criteria.getPredicate().execute(queryInRangeInValue);
                 allMatched &= match;
-                noneMatched |= match;
+                someMatched |= match;
+                //noneMatched = noneMatched ? !match : noneMatched;
             }
+
             return allMatched ? TemplateMatchTier.MATCH_HOT :
-                    (noneMatched ? TemplateMatchTier.MATCH_COLD : TemplateMatchTier.MATCH_HOT_AND_COLD);
+                    (someMatched? TemplateMatchTier.MATCH_HOT_AND_COLD : TemplateMatchTier.MATCH_COLD);
         }
     }
 

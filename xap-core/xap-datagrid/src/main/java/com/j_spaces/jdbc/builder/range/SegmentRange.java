@@ -72,16 +72,16 @@ public class SegmentRange extends Range {
         this(colName, null, value1, includeMin, value2, includeMax);
     }
 
-    public SegmentRange(String colName, FunctionCallDescription functionCallDescription, Comparable<?> value1, boolean includeMin,
-                        Comparable<?> value2, boolean includeMax) {
-        super(colName, functionCallDescription, createSpacePredicate(value1, includeMin, value2, includeMax));
-        this._min = value1;
-        this._max = value2;
+    public SegmentRange(String colName, FunctionCallDescription functionCallDescription, Comparable<?> min, boolean includeMin,
+                        Comparable<?> max, boolean includeMax) {
+        super(colName, functionCallDescription, createSpacePredicate(min, includeMin, max, includeMax));
+        this._min = min;
+        this._max = max;
 
         //noinspection unchecked
         if (_min != null && _max != null && _min.compareTo(_max) > 0)
-            throw new IllegalArgumentException("Invalid range (" + value1 + ","
-                    + value2 + ")");
+            throw new IllegalArgumentException("Invalid range (" + min + ","
+                    + max + ")");
 
         _includeMin = includeMin;
         _includeMax = includeMax;
