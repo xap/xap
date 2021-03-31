@@ -330,21 +330,6 @@ public class SqliteUtils {
         throw new IllegalStateException("Supports only equal and segment Range");
     }
 
-
-    /*public static TemplateMatchTier evalRange(Range criteria, Range queryValueRange, String timeType) {
-
-
-        if (queryValueRange.isSegmentRange() || queryValueRange.isEqualValueRange()) {
-            if (Timestamp.class.getName().equals(timeType)) {
-                queryValueRange = convertRangeFromTimestampToInstant(queryValueRange);
-            } else if (Long.class.getName().equals(timeType) || long.class.getName().equals(timeType)) {
-                queryValueRange = convertRangeFromLongToInstant(queryValueRange);
-            }
-            return evalRange(criteria, queryValueRange);
-        }
-        return TemplateMatchTier.MATCH_COLD;
-    }*/
-
     public static TemplateMatchTier evalRange(Range criteria, Range queryValueRange, String timeType) {
         if (timeType != null){
             if (queryValueRange.isSegmentRange() || queryValueRange.isEqualValueRange()) {
