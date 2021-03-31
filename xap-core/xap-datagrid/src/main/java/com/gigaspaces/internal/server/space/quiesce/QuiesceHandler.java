@@ -389,9 +389,10 @@ public class QuiesceHandler {
 
         this._suspendInfo = suspendInfo;
 
-        // Todo: check this with a test
         if (isSuspendTypeChanged) {
-            _logger.info("Dispatch suspendInfo [type="+suspendInfo.getSuspendType()+"] event to " + suspendTypeChangeListeners.size() + " listeners");
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Dispatch suspendInfo [type="+suspendInfo.getSuspendType()+"] event to " + suspendTypeChangeListeners.size() + " listeners");
+            }
             for (SuspendTypeChangedInternalListener listener : suspendTypeChangeListeners) {
                 try {
                     listener.onSuspendTypeChanged(suspendInfo.getSuspendType());
