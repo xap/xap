@@ -763,7 +763,26 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
 
         //as part of GS-14455 fix
         for( QueryTableData queryTableData : this._tablesData ){
+            try {
+                QueryTableData clonedQueryTableData = queryTableData.clone();
 
+                String tableAlias = clonedQueryTableData.getTableAlias();
+                String tableName = clonedQueryTableData.getTableName();
+
+                query._tablesData.add( clonedQueryTableData );
+                if( tableAlias != null) {
+                    query.tables.put(tableAlias, clonedQueryTableData);
+                }
+                if( tableName != null) {
+                    query.tables.put(tableName, clonedQueryTableData);
+                }
+                clonedQueryTableData.setTableCondition( null );
+            } catch (CloneNotSupportedException e) {
+                _logger.error( "Failed to clone QueryTableData due to", e );
+            }
+        }
+/*
+        for( QueryTableData queryTableData : this._tablesData ){
             String tableAlias = queryTableData.getTableAlias();
             String tableName = queryTableData.getTableName();
 
@@ -774,9 +793,8 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
             if( tableName != null) {
                 query.tables.put(tableName, queryTableData);
             }
-            //it's very important to set null here, otherwise we get previous statement's values
             queryTableData.setTableCondition(null);
-        }
+        }*/
 
         query.rownum = (RowNumNode) (this.rownum == null ? null : rownum.clone());
         query.orderColumns = this.orderColumns;

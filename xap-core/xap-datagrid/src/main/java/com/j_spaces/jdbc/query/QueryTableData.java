@@ -38,7 +38,7 @@ import java.io.*;
  * @since 7.0
  */
 @com.gigaspaces.api.InternalApi
-public class QueryTableData implements Externalizable {
+public class QueryTableData implements Externalizable, Cloneable {
     private static final long serialVersionUID = 1L;
 
     private String _tableName;
@@ -56,7 +56,7 @@ public class QueryTableData implements Externalizable {
     private Join.JoinType _joinType;
 
     //use thread local because this object is cached and used by several threads
-    private transient ThreadLocal<EntriesCursor> _entriesCursor = new ThreadLocal<EntriesCursor>();
+    private transient ThreadLocal<EntriesCursor> _entriesCursor = new ThreadLocal<>();
 
     private boolean _isJoined;
     private boolean _hasAsterixSelectColumns;
@@ -327,7 +327,7 @@ public class QueryTableData implements Externalizable {
         if (root == null)
             return;
 
-        Stack<ExpNode> stack = new Stack<ExpNode>();
+        Stack<ExpNode> stack = new Stack<>();
 
         stack.push(root);
         while (!stack.isEmpty()) {
@@ -367,7 +367,7 @@ public class QueryTableData implements Externalizable {
     private void readObject(java.io.ObjectInputStream in)
             throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        _entriesCursor = new ThreadLocal<EntriesCursor>();
+        _entriesCursor = new ThreadLocal<>();
     }
 
     public Join.JoinType getJoinType() {
@@ -415,6 +415,12 @@ public class QueryTableData implements Externalizable {
             flags |= FLAG_SUBQUERY;
 
         return flags;
+    }
+
+    @Override
+    public QueryTableData clone() throws CloneNotSupportedException {
+        QueryTableData queryTableData = (QueryTableData)super.clone();
+        return queryTableData;
     }
 
     @Override
