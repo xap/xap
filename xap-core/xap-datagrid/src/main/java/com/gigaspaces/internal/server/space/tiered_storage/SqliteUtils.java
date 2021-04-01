@@ -384,12 +384,12 @@ public class SqliteUtils {
         } else if (criteria instanceof InRange) {
             if (queryValueRange.isSegmentRange()) {
                 InRange criteriaInRange = (InRange) criteria;
-                boolean noneMatched = false;
+                boolean someMatched = false;
                 for (Object criteriaInRangeInValue : criteriaInRange.getInValues()) {
                     boolean match = queryValueRange.getPredicate().execute(criteriaInRangeInValue);
-                    noneMatched |= match;
+                    someMatched |= match;
                 }
-                return noneMatched ? TemplateMatchTier.MATCH_COLD : TemplateMatchTier.MATCH_HOT_AND_COLD;
+                return someMatched ? TemplateMatchTier.MATCH_HOT_AND_COLD : TemplateMatchTier.MATCH_COLD;
             }
         }
         return TemplateMatchTier.MATCH_COLD;
