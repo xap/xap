@@ -5921,9 +5921,15 @@ public class CacheManager extends AbstractCacheManager
             throw new IllegalArgumentException("Runtime info couldn't be extracted. Unknown class [" + typeName + "] for space [" + _engine.getFullSpaceName() + "]");
 
         Map<String, Integer> entriesInfo;
-        // APP-833 (Guy K): 18.12.2006 in order to avoid
-        // Searching the DB when using all in cache/externalDB
-        final boolean memoryOnlyIter = isCacheExternalDB() || isResidentEntriesCachePolicy();
+        boolean memoryOnlyIter;
+        if(isTieredStorage()){
+            memoryOnlyIter = false;
+        }else {
+            // APP-833 (Guy K): 18.12.2006 in order to avoid
+            // Searching the DB when using all in cache/externalDB
+            memoryOnlyIter = isCacheExternalDB() || isResidentEntriesCachePolicy();
+        }
+
         if (memoryOnlyIter && !useRecentDeletes())
             entriesInfo = null;
         else {
@@ -5992,7 +5998,7 @@ public class CacheManager extends AbstractCacheManager
         ISAdapterIterator<IEntryHolder> entriesIter = null;
         try {
             context = getCacheContext();
-            entriesIter = makeEntriesIter(context, template, serverTypeDesc, 0, SystemTime.timeMillis(), true /*memoryOnlyIter*/);
+            entriesIter = makeEntriesIter(context, template, serverTypeDesc, 0, SystemTime.timeMillis(), !isTieredStorage());
 
             String curClass = null;
             int currCount = 0;
