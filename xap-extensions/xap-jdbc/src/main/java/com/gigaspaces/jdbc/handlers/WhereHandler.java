@@ -89,36 +89,36 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
 
     @Override
     public void visit(EqualsTo equalsTo) {
-        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
+        SingleConditionHandler handler = new SingleConditionHandler(tables, preparedValues);
         equalsTo.getLeftExpression().accept(handler);
         equalsTo.getRightExpression().accept(handler);
 
-        TableContainer table = handler.getTable(tables);
+        TableContainer table = handler.getTable();
         Range range = new EqualValueRange(handler.getColumn().getColumnName(), handler.getValue());
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
     }
 
     @Override
     public void visit(NotEqualsTo notEqualsTo) {
-        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
+        SingleConditionHandler handler = new SingleConditionHandler(tables, preparedValues);
         notEqualsTo.getLeftExpression().accept(handler);
         notEqualsTo.getRightExpression().accept(handler);
 
-        TableContainer table = handler.getTable(tables);
+        TableContainer table = handler.getTable();
         Range range = new NotEqualValueRange(handler.getColumn().getColumnName(), handler.getValue());
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
     }
 
     @Override
     public void visit(MinorThanEquals minorThanEquals) {
-        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
+        SingleConditionHandler handler = new SingleConditionHandler(tables, preparedValues);
         minorThanEquals.getLeftExpression().accept(handler);
         minorThanEquals.getRightExpression().accept(handler);
         if (handler.getColumn().getColumnName().equalsIgnoreCase("rowNum") && handler.getValue() instanceof Integer) {
             Integer value = ((Integer) handler.getValue());
             tables.forEach(t -> t.setLimit(value));
         } else {
-            TableContainer table = handler.getTable(tables);
+            TableContainer table = handler.getTable();
             Range range = new SegmentRange(handler.getColumn().getColumnName(), null, false, castToComparable(handler.getValue()), true);
             qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
         }
@@ -126,14 +126,14 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
 
     @Override
     public void visit(MinorThan minorThan) {
-        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
+        SingleConditionHandler handler = new SingleConditionHandler(tables, preparedValues);
         minorThan.getLeftExpression().accept(handler);
         minorThan.getRightExpression().accept(handler);
         if (handler.getColumn().getColumnName().equalsIgnoreCase("rowNum") && handler.getValue() instanceof Integer) {
             Integer value = ((Integer) handler.getValue());
             tables.forEach(t -> t.setLimit(value - 1));
         } else {
-            TableContainer table = handler.getTable(tables);
+            TableContainer table = handler.getTable();
             Range range = new SegmentRange(handler.getColumn().getColumnName(), null, false, castToComparable(handler.getValue()), false);
             qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
         }
@@ -141,20 +141,20 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
 
     @Override
     public void visit(GreaterThan greaterThan) {
-        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
+        SingleConditionHandler handler = new SingleConditionHandler(tables, preparedValues);
         greaterThan.getLeftExpression().accept(handler);
         greaterThan.getRightExpression().accept(handler);
-        TableContainer table = handler.getTable(tables);
+        TableContainer table = handler.getTable();
         Range range = new SegmentRange(handler.getColumn().getColumnName(), castToComparable(handler.getValue()), false, null, false);
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
     }
 
     @Override
     public void visit(GreaterThanEquals greaterThanEquals) {
-        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
+        SingleConditionHandler handler = new SingleConditionHandler(tables, preparedValues);
         greaterThanEquals.getLeftExpression().accept(handler);
         greaterThanEquals.getRightExpression().accept(handler);
-        TableContainer table = handler.getTable(tables);
+        TableContainer table = handler.getTable();
         Range range = new SegmentRange(handler.getColumn().getColumnName(), castToComparable(handler.getValue()), true, null, false);
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
     }
@@ -175,19 +175,19 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
 
     @Override
     public void visit(IsNullExpression isNullExpression) {
-        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
+        SingleConditionHandler handler = new SingleConditionHandler(tables, preparedValues);
         isNullExpression.getLeftExpression().accept(handler);
-        TableContainer table = handler.getTable(tables);
+        TableContainer table = handler.getTable();
         Range range = isNullExpression.isNot() ? new NotNullRange(handler.getColumn().getColumnName()) : new IsNullRange(handler.getColumn().getColumnName());
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
     }
 
     @Override
     public void visit(LikeExpression likeExpression) {
-        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
+        SingleConditionHandler handler = new SingleConditionHandler(tables, preparedValues);
         likeExpression.getLeftExpression().accept(handler);
         likeExpression.getRightExpression().accept(handler);
-        TableContainer table = handler.getTable(tables);
+        TableContainer table = handler.getTable();
         String regex = ((String) handler.getValue()).replaceAll("%", ".*").replaceAll("_", ".");
 
         Range range = likeExpression.isNot() ? new NotRegexRange(handler.getColumn().getColumnName(), regex) : new RegexRange(handler.getColumn().getColumnName(), regex);
@@ -196,12 +196,12 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
 
     @Override
     public void visit(Between between) {
-        SingleConditionHandler handlerStart = new SingleConditionHandler(preparedValues);
+        SingleConditionHandler handlerStart = new SingleConditionHandler(tables, preparedValues);
         between.getLeftExpression().accept(handlerStart);
         between.getBetweenExpressionStart().accept(handlerStart);
-        TableContainer table = handlerStart.getTable(tables);
+        TableContainer table = handlerStart.getTable();
 
-        SingleConditionHandler handlerEnd = new SingleConditionHandler(preparedValues);
+        SingleConditionHandler handlerEnd = new SingleConditionHandler(tables, preparedValues);
         between.getBetweenExpressionEnd().accept(handlerEnd);
 
         if (!between.isNot()) {

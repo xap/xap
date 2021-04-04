@@ -87,4 +87,9 @@ public class TempTableContainer extends TableContainer {
     public boolean isJoined() {
         return false;
     }
+
+    @Override
+    public Object getColumnValue(String columnName, Object value) {
+        throw new UnsupportedOperationException("Not supported yet!");
+    }
 }

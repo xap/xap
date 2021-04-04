@@ -176,4 +176,10 @@ public class ConcreteTableContainer extends TableContainer {
     public void setJoined(boolean joined) {
         this.joined = joined;
     }
+
+    @Override
+    public Object getColumnValue(String columnName, Object value) throws SQLException {
+        return SQLUtil.cast(typeDesc, columnName, value, false);
+
+    }
 }

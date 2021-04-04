@@ -9,10 +9,12 @@ import org.openspaces.core.space.EmbeddedSpaceConfigurer;
 import org.openspaces.core.space.SpaceProxyConfigurer;
 
 import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Properties;
 
 public class MainTester {
-    public static void main(String[] args) throws SQLException {
+    public static void main(String[] args) throws SQLException, ParseException {
         boolean newDriver = Boolean.getBoolean("useNewDriver");
         GigaSpace space = createAndFillSpace(newDriver, true);
 
@@ -27,15 +29,16 @@ public class MainTester {
         }
 //        try (Connection connection = DriverManager.getConnection("jdbc:gigaspaces:url:jini://*/*/"+space.getSpaceName(), properties)) {
         try (Connection connection = DriverManager.getConnection(newDriver ? "jdbc:gigaspaces:v3://localhost:4174/" + space.getSpaceName() : "jdbc:gigaspaces:url:jini://*/*/" + space.getSpaceName(), properties)) {
-            PreparedStatement st = connection.prepareStatement("EXPLAIN SELECT * FROM com.gigaspaces.jdbc.MyPojo where age = ?");
-            st.setInt(1, 30);
+//            PreparedStatement st = connection.prepareStatement("EXPLAIN SELECT * FROM com.gigaspaces.jdbc.MyPojo where age = ?");
+//            st.setInt(1, 30);
+//
+//
+//            ResultSet rs = st.executeQuery();
+//            DumpUtils.dump(rs);
 
-
-            ResultSet rs = st.executeQuery();
-            DumpUtils.dump(rs);
-
-//            Statement statement = connection.createStatement();
-//            execute(statement, "SELECT * FROM com.gigaspaces.jdbc.MyPojo where name = 'Adler' OR name = 'Adam' AND age = 30");// WHERE rowNum <= 10");
+            Statement statement = connection.createStatement();
+//            execute(statement, "SELECT * FROM com.gigaspaces.jdbc.MyPojo where timestamp > '2001-09-10 05:20:00'");// WHERE rowNum <= 10");
+            execute(statement, "explain SELECT *, birthLong FROM com.gigaspaces.jdbc.MyPojo where birthLong = 1000192800000");// WHERE rowNum <= 10");
 
 //            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo");// WHERE rowNum <= 10");
 //            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo WHERE country like '%a%'");
@@ -68,18 +71,23 @@ public class MainTester {
 
     }
 
-    private static GigaSpace createAndFillSpace(boolean newDriver, boolean embedded) {
+    private static GigaSpace createAndFillSpace(boolean newDriver, boolean embedded) throws ParseException {
         String spaceName = "demo" + (newDriver ? "new" : "old");
         AbstractSpaceConfigurer configurer = embedded ? new EmbeddedSpaceConfigurer(spaceName)
 //                .tieredStorage(new TieredStorageConfigurer().addTable(new TieredStorageTableConfig().setName(MyPojo.class.getName()).setCriteria("age > 20")))
                 : new SpaceProxyConfigurer(spaceName);
 
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         GigaSpace gigaSpace = new GigaSpaceConfigurer(configurer).gigaSpace();
         if (embedded || gigaSpace.count(null) == 0) {
-            gigaSpace.write(new MyPojo("Adler", 20, "Israel"));
-            gigaSpace.write(new MyPojo("Adam", 30, "Israel"));
-            gigaSpace.write(new MyPojo("Eve", 35, "UK"));
-            gigaSpace.write(new MyPojo("NoCountry", 40, null));
+            java.util.Date date1 = simpleDateFormat.parse("10/09/2001 05:20:00");
+            java.util.Date date2 = simpleDateFormat.parse("11/09/2001 10:20:00");
+            java.util.Date date3 = simpleDateFormat.parse("12/09/2001 15:20:00");
+            java.util.Date date4 = simpleDateFormat.parse("13/09/2001 20:20:00");
+            gigaSpace.write(new MyPojo("Adler", 20, "Israel", date1, new Time(date1.getTime()), new Timestamp(date1.getTime())));
+            gigaSpace.write(new MyPojo("Adam", 30, "Israel", date2, new Time(date2.getTime()), new Timestamp(date2.getTime())));
+            gigaSpace.write(new MyPojo("Eve", 35, "UK", date3, new Time(date3.getTime()), new Timestamp(date3.getTime())));
+            gigaSpace.write(new MyPojo("NoCountry", 40, null, date4, new Time(date4.getTime()), new Timestamp(date4.getTime())));
         }
         return gigaSpace;
     }

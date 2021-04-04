@@ -20,13 +20,13 @@ public abstract class TableContainer {
 
     public abstract String getTableNameOrAlias();
 
-    public abstract void addRange(Range range);
-
     public abstract void setLimit(Integer value);
 
     public abstract QueryTemplatePacket createQueryTemplatePacketWithRange(Range range);
 
     public abstract void setQueryTemplatePackage(QueryTemplatePacket queryTemplatePacket);
+
+    public abstract Object getColumnValue(String columnName, Object value) throws SQLException;
 
     public abstract TableContainer getJoinedTable();
 
