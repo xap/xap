@@ -12,24 +12,26 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class WhereHandler extends UnsupportedWhereHandler {
+public class WhereHandler extends UnsupportedExpressionVisitor {
     private final List<TableContainer> tables;
     private final Map<TableContainer, QueryTemplatePacket> qtpMap;
+    private final Object[] preparedValues;
 
     public Map<TableContainer, QueryTemplatePacket> getQTPMap() {
         return qtpMap;
     }
 
-    public WhereHandler(List<TableContainer> tables) {
+    public WhereHandler(List<TableContainer> tables, Object[] preparedValues) {
         this.tables = tables;
         this.qtpMap = new LinkedHashMap<>();
+        this.preparedValues = preparedValues;
     }
 
     @Override
     public void visit(AndExpression andExpression) {
-        WhereHandler leftHandler = new WhereHandler(tables);
+        WhereHandler leftHandler = new WhereHandler(tables, preparedValues);
         andExpression.getLeftExpression().accept(leftHandler);
-        WhereHandler rightHandler = new WhereHandler(tables);
+        WhereHandler rightHandler = new WhereHandler(tables, preparedValues);
         andExpression.getRightExpression().accept(rightHandler);
 
         and(leftHandler, rightHandler);
@@ -57,9 +59,9 @@ public class WhereHandler extends UnsupportedWhereHandler {
 
     @Override
     public void visit(OrExpression orExpression) {
-        WhereHandler leftHandler = new WhereHandler(tables);
+        WhereHandler leftHandler = new WhereHandler(tables, preparedValues);
         orExpression.getLeftExpression().accept(leftHandler);
-        WhereHandler rightHandler = new WhereHandler(tables);
+        WhereHandler rightHandler = new WhereHandler(tables, preparedValues);
         orExpression.getRightExpression().accept(rightHandler);
 
         or(leftHandler, rightHandler);
@@ -87,7 +89,7 @@ public class WhereHandler extends UnsupportedWhereHandler {
 
     @Override
     public void visit(EqualsTo equalsTo) {
-        SingleConditionHandler handler = new SingleConditionHandler();
+        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
         equalsTo.getLeftExpression().accept(handler);
         equalsTo.getRightExpression().accept(handler);
 
@@ -98,7 +100,7 @@ public class WhereHandler extends UnsupportedWhereHandler {
 
     @Override
     public void visit(NotEqualsTo notEqualsTo) {
-        SingleConditionHandler handler = new SingleConditionHandler();
+        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
         notEqualsTo.getLeftExpression().accept(handler);
         notEqualsTo.getRightExpression().accept(handler);
 
@@ -109,7 +111,7 @@ public class WhereHandler extends UnsupportedWhereHandler {
 
     @Override
     public void visit(MinorThanEquals minorThanEquals) {
-        SingleConditionHandler handler = new SingleConditionHandler();
+        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
         minorThanEquals.getLeftExpression().accept(handler);
         minorThanEquals.getRightExpression().accept(handler);
         if (handler.getColumn().getColumnName().equalsIgnoreCase("rowNum") && handler.getValue() instanceof Integer) {
@@ -124,7 +126,7 @@ public class WhereHandler extends UnsupportedWhereHandler {
 
     @Override
     public void visit(MinorThan minorThan) {
-        SingleConditionHandler handler = new SingleConditionHandler();
+        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
         minorThan.getLeftExpression().accept(handler);
         minorThan.getRightExpression().accept(handler);
         if (handler.getColumn().getColumnName().equalsIgnoreCase("rowNum") && handler.getValue() instanceof Integer) {
@@ -139,7 +141,7 @@ public class WhereHandler extends UnsupportedWhereHandler {
 
     @Override
     public void visit(GreaterThan greaterThan) {
-        SingleConditionHandler handler = new SingleConditionHandler();
+        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
         greaterThan.getLeftExpression().accept(handler);
         greaterThan.getRightExpression().accept(handler);
         TableContainer table = handler.getTable(tables);
@@ -149,7 +151,7 @@ public class WhereHandler extends UnsupportedWhereHandler {
 
     @Override
     public void visit(GreaterThanEquals greaterThanEquals) {
-        SingleConditionHandler handler = new SingleConditionHandler();
+        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
         greaterThanEquals.getLeftExpression().accept(handler);
         greaterThanEquals.getRightExpression().accept(handler);
         TableContainer table = handler.getTable(tables);
@@ -173,7 +175,7 @@ public class WhereHandler extends UnsupportedWhereHandler {
 
     @Override
     public void visit(IsNullExpression isNullExpression) {
-        SingleConditionHandler handler = new SingleConditionHandler();
+        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
         isNullExpression.getLeftExpression().accept(handler);
         TableContainer table = handler.getTable(tables);
         Range range = isNullExpression.isNot() ? new NotNullRange(handler.getColumn().getColumnName()) : new IsNullRange(handler.getColumn().getColumnName());
@@ -182,7 +184,7 @@ public class WhereHandler extends UnsupportedWhereHandler {
 
     @Override
     public void visit(LikeExpression likeExpression) {
-        SingleConditionHandler handler = new SingleConditionHandler();
+        SingleConditionHandler handler = new SingleConditionHandler(preparedValues);
         likeExpression.getLeftExpression().accept(handler);
         likeExpression.getRightExpression().accept(handler);
         TableContainer table = handler.getTable(tables);
@@ -194,12 +196,12 @@ public class WhereHandler extends UnsupportedWhereHandler {
 
     @Override
     public void visit(Between between) {
-        SingleConditionHandler handlerStart = new SingleConditionHandler();
+        SingleConditionHandler handlerStart = new SingleConditionHandler(preparedValues);
         between.getLeftExpression().accept(handlerStart);
         between.getBetweenExpressionStart().accept(handlerStart);
         TableContainer table = handlerStart.getTable(tables);
 
-        SingleConditionHandler handlerEnd = new SingleConditionHandler();
+        SingleConditionHandler handlerEnd = new SingleConditionHandler(preparedValues);
         between.getBetweenExpressionEnd().accept(handlerEnd);
 
         if (!between.isNot()) {

@@ -28,14 +28,14 @@ import java.util.Set;
 
 public class QueryHandler {
 
-    private final Feature[] allowedFeatures = new Feature[] {Feature.select, Feature.explain, Feature.exprLike/*, Feature.join, Feature.joinInner*/};
+    private final Feature[] allowedFeatures = new Feature[] {Feature.select, Feature.explain, Feature.exprLike, Feature.jdbcParameter/*, Feature.join, Feature.joinInner*/};
 
-    public ResponsePacket handle(String query, IJSpace space) throws SQLException {
+    public ResponsePacket handle(String query, IJSpace space, Object[] preparedValues) throws SQLException {
 
         try {
             Statement statement = CCJSqlParserUtil.parse(query);
             validateStatement(statement);
-            return executeStatement(space, statement);
+            return executeStatement(space, statement, preparedValues);
         } catch (JSQLParserException e) {
             throw new SQLException("Failed to parse query", e);
         } catch (GenericJdbcException e) {
@@ -43,14 +43,14 @@ public class QueryHandler {
         }
     }
 
-    private ResponsePacket executeStatement(IJSpace space, Statement statement) {
+    private ResponsePacket executeStatement(IJSpace space, Statement statement, Object[] preparedValues) {
         ResponsePacket packet = new ResponsePacket();
 
         statement.accept(new StatementVisitorAdapter() {
             @Override
             public void visit(ExplainStatement explainStatement) {
                 QueryExecutionConfig context = new QueryExecutionConfig(true, explainStatement.getOption(ExplainStatement.OptionType.VERBOSE)!= null);
-                QueryExecutor qE = new QueryExecutor(space, context);
+                QueryExecutor qE = new QueryExecutor(space, context, preparedValues);
                 QueryResult res;
                 try {
                     res = qE.execute(explainStatement.getStatement().getSelectBody());
@@ -62,7 +62,7 @@ public class QueryHandler {
 
             @Override
             public void visit(Select select) {
-                QueryExecutor qE = new QueryExecutor(space);
+                QueryExecutor qE = new QueryExecutor(space, preparedValues);
                 QueryResult res;
                 try {
                     res = qE.execute(select.getSelectBody());

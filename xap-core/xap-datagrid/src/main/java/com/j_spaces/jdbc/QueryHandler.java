@@ -152,10 +152,11 @@ public class QueryHandler {
 
         switch (request.getType()) {
             case STATEMENT:
+            case PREPARED_WITH_VALUES:
                 try {
                     Class<?> clazz = Class.forName("com.gigaspaces.jdbc.QueryHandler");
                     Object newQueryHandler = clazz.newInstance();
-                    response = (ResponsePacket) clazz.getDeclaredMethod("handle", String.class, IJSpace.class).invoke(newQueryHandler, request.getStatement(), space);
+                    response = (ResponsePacket) clazz.getDeclaredMethod("handle", String.class, IJSpace.class, Object[].class).invoke(newQueryHandler, request.getStatement(), space, request.getPreparedValues());
                 } catch (InvocationTargetException e) {
                     if (e.getCause() != null && e.getCause() instanceof SQLException) {
                         throw ((SQLException) e.getCause());
@@ -165,7 +166,6 @@ public class QueryHandler {
                     throw new SQLException("Unable to execute query", e);
                 }
                 break;
-            case PREPARED_WITH_VALUES:
             case PREPARED_STATEMENT:
             case PREPARED_VALUES_BATCH:
                 throw new UnsupportedOperationException("Unsupported");

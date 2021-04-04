@@ -8,7 +8,7 @@ import net.sf.jsqlparser.expression.operators.relational.*;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
-public abstract class UnsupportedWhereHandler implements ExpressionVisitor {
+public abstract class UnsupportedExpressionVisitor implements ExpressionVisitor {
 
 
     @Override

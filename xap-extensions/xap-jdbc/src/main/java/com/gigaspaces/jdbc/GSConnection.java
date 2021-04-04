@@ -5,6 +5,7 @@ import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.RequestPacket;
 import com.j_spaces.jdbc.ResponsePacket;
 import com.j_spaces.jdbc.driver.GConnection;
+import com.j_spaces.jdbc.driver.GPreparedStatement;
 import net.jini.core.transaction.Transaction;
 
 import java.sql.*;
@@ -64,6 +65,15 @@ public class GSConnection extends GConnection {
         RequestPacket packet = new RequestPacketV3();
         packet.setType(RequestPacket.Type.STATEMENT);
         packet.setStatement(statement);
+        return writeRequestPacket(packet);
+    }
+
+    @Override
+    public ResponsePacket sendPreparedStatement(String statement, Object[] values) throws SQLException {
+        RequestPacket packet = new RequestPacketV3();
+        packet.setType(RequestPacket.Type.PREPARED_WITH_VALUES);
+        packet.setStatement(statement);
+        packet.setPreparedValues(values);
         return writeRequestPacket(packet);
     }
 
@@ -230,8 +240,9 @@ public class GSConnection extends GConnection {
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql){
-        throw new UnsupportedOperationException("Unsupported");
+    public PreparedStatement prepareStatement(String sql) throws SQLException {
+        GPreparedStatement ps = new GPreparedStatement(this, sql);
+        return ps;
     }
 
     @Override

@@ -24,14 +24,16 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     private final List<QueryColumn> queryColumns = new ArrayList<>();
     private final IJSpace space;
     private final QueryExecutionConfig config;
+    private final Object[] preparedValues;
 
-    public QueryExecutor(IJSpace space, QueryExecutionConfig config) {
+    public QueryExecutor(IJSpace space, QueryExecutionConfig config, Object[] preparedValues) {
         this.space = space;
         this.config = config;
+        this.preparedValues = preparedValues;
     }
 
-    public QueryExecutor(IJSpace space) {
-        this(space, new QueryExecutionConfig());
+    public QueryExecutor(IJSpace space, Object[] preparedValues) {
+        this(space, new QueryExecutionConfig(), preparedValues);
     }
 
     @Override
@@ -51,7 +53,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
 
     private void prepareWhereClause(PlainSelect plainSelect) {
         if (plainSelect.getWhere() != null) {
-            WhereHandler expressionVisitor = new WhereHandler(this.getTables());
+            WhereHandler expressionVisitor = new WhereHandler(this.getTables(), preparedValues);
             plainSelect.getWhere().accept(expressionVisitor);
             for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : expressionVisitor.getQTPMap().entrySet()) {
                 tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePackage(tableContainerQueryTemplatePacketEntry.getValue());
@@ -67,7 +69,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
 
     @Override
     public void visit(SubSelect subSelect) {
-        QueryExecutor subQueryExecutor = new QueryExecutor(space, config);
+        QueryExecutor subQueryExecutor = new QueryExecutor(space, config, preparedValues);
         try {
             tables.add(new TempTableContainer(subQueryExecutor.execute(subSelect.getSelectBody()), subSelect.getAlias() == null ? null : subSelect.getAlias().getName()));
         } catch (SQLException e) {
