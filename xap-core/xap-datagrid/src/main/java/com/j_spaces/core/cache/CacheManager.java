@@ -5922,19 +5922,20 @@ public class CacheManager extends AbstractCacheManager
 
         Map<String, Integer> entriesInfo;
         boolean memoryOnlyIter;
-        if(isTieredStorage()){
-            memoryOnlyIter = false;
-        }else {
-            // APP-833 (Guy K): 18.12.2006 in order to avoid
-            // Searching the DB when using all in cache/externalDB
-            memoryOnlyIter = isCacheExternalDB() || isResidentEntriesCachePolicy();
-        }
 
-        if (memoryOnlyIter && !useRecentDeletes())
-            entriesInfo = null;
-        else {
-            boolean loadPersistent = !(isMemorySpace() || isResidentEntriesCachePolicy()) && !memoryOnlyIter;
-            entriesInfo = countEntries(serverTypeDesc, loadPersistent);
+
+        if(isTieredStorage()){
+            entriesInfo = countEntries(serverTypeDesc, false);
+        }else {
+//             APP-833 (Guy K): 18.12.2006 in order to avoid
+//             Searching the DB when using all in cache/externalDB
+            memoryOnlyIter = isCacheExternalDB() || isResidentEntriesCachePolicy();
+            if (memoryOnlyIter && !useRecentDeletes())
+                entriesInfo = null;
+            else {
+                boolean loadPersistent = !(isMemorySpace() || isResidentEntriesCachePolicy()) && !memoryOnlyIter;
+                entriesInfo = countEntries(serverTypeDesc, loadPersistent);
+            }
         }
 
         return getRuntimeInfo(serverTypeDesc, entriesInfo);
