@@ -6,6 +6,7 @@ import com.gigaspaces.metadata.index.SpaceIndexType;
 
 /**
  * Single index choice detail
+ *
  * @author Mishel Liberman
  * @since 16.0
  */
@@ -77,8 +78,28 @@ public class IndexInfoDetail {
 
     @Override
     public String toString() {
-        return String.format("[#%s] (%s %s %s), IndexSize=%s, IndexType=%s"
-                , getId(), getName(), getOperator().getOperatorString()
-                , getValue(), getSize(), getType());
+        return getString(getSize(), true);
+    }
+
+    public String toStringNotVerbose(Integer min, Integer max) {
+        if (min.equals(max)) {
+            return getString(min, false);
+        }
+
+        return String.format("- (%s %s %s), IndexSize=[min=%s, max=%s], IndexType=%s"
+                , getName(), getOperator().getOperatorString()
+                , getValue(), min, max, getType()); //TODO mishel - move to another method in my code instead of here.
+    }
+
+    private String getString(Integer size, boolean verbose) {
+        if (verbose) {
+            return String.format("[#%s] (%s %s %s), IndexSize=%s, IndexType=%s"
+                    , getId(), getName(), getOperator().getOperatorString()
+                    , getValue(), size, getType());
+        } else {
+            return String.format("- (%s %s %s), IndexSize=%s, IndexType=%s"
+                    , getName(), getOperator().getOperatorString()
+                    , getValue(), size, getType());
+        }
     }
 }
