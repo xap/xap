@@ -77,8 +77,22 @@ public class IndexInfoDetail {
 
     @Override
     public String toString() {
+        return getString(getSize());
+    }
+
+    public String toString(Integer min, Integer max) {
+        if (min == max) {
+            return getString(min);
+        }
+
+        return String.format("[#%s] (%s %s %s), IndexSize=[min=%s, max=%s], IndexType=%s"
+                , getId(), getName(), getOperator().getOperatorString()
+                , getValue(), min, max, getType());
+    }
+
+    private String getString(Integer size) {
         return String.format("[#%s] (%s %s %s), IndexSize=%s, IndexType=%s"
                 , getId(), getName(), getOperator().getOperatorString()
-                , getValue(), getSize(), getType());
+                , getValue(), size, getType());
     }
 }
