@@ -14,38 +14,37 @@
  * limitations under the License.
  */
 
-package com.gigaspaces.client.iterator.internal;
+package com.gigaspaces.client.iterator.internal.tiered_storage;
 
+import com.gigaspaces.client.iterator.internal.ISpaceIteratorAggregatorPartitionResult;
+import com.gigaspaces.client.iterator.internal.ISpaceIteratorResult;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
+import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.TemplatePacketFactory;
 import com.gigaspaces.internal.utils.CollectionUtils;
 import com.j_spaces.core.UidQueryPacket;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.LinkedList;
+import java.util.*;
 
 /**
- * @author Niv Ingberg
- * @since 10.1
+ * @author Yael nahon
+ * @since 16.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceIteratorResult implements ISpaceIteratorResult {
+public class TieredSpaceIteratorResult implements ISpaceIteratorResult {
 
     private final List<IEntryPacket> entries = new ArrayList<IEntryPacket>();
-    private final Map<Integer, LinkedList<String>> partitionedUids = new HashMap<Integer, LinkedList<String>>();
+    private final Map<Integer, Map<String, List<String>>> partitionedUids = new HashMap<>();
 
     @Override
     public void addPartition(ISpaceIteratorAggregatorPartitionResult partitionResult) {
         entries.addAll(partitionResult.getEntries());
-        SpaceIteratorAggregatorPartitionResult result = (SpaceIteratorAggregatorPartitionResult) partitionResult;
+        TieredSpaceIteratorAggregatorPartitionResult result = (TieredSpaceIteratorAggregatorPartitionResult) partitionResult;
         if (result.getUids() != null) {
-            partitionedUids.put(partitionResult.getPartitionId(), new LinkedList<>(result.getUids()));
+            partitionedUids.put(partitionResult.getPartitionId(), result.getUids());
         }
     }
 
@@ -66,7 +65,9 @@ public class SpaceIteratorResult implements ISpaceIteratorResult {
         if (partitionId == null)
             return null;
 
-        final LinkedList<String> uids = partitionedUids.get(partitionId);
+        Map<String, List<String>> partitionUids = partitionedUids.get(partitionId);
+        String nextType = partitionUids.keySet().iterator().next();
+        List<String> uids = partitionUids.get(nextType);
         final String[] batch = new String[Math.min(batchSize, uids.size())];
         final Iterator<String> iterator = uids.iterator();
         int index = 0;
@@ -74,10 +75,15 @@ public class SpaceIteratorResult implements ISpaceIteratorResult {
             batch[index++] = iterator.next();
             iterator.remove();
         }
-        if (uids.isEmpty())
-            partitionedUids.remove(partitionId);
+        if (uids.isEmpty()) {
+            partitionedUids.get(partitionId).remove(nextType);
+            if(partitionedUids.get(partitionId).isEmpty()){
+                partitionedUids.remove(partitionId);
+            }
+        }
 
-        UidQueryPacket queryPacket = (UidQueryPacket) TemplatePacketFactory.createUidsPacket(batch, resultType, false);
+        ITypeDesc typeDesc = ((SpaceProxyImpl) spaceProxy).getTypeManager().getTypeDescByName(nextType);
+        UidQueryPacket queryPacket = (UidQueryPacket) TemplatePacketFactory.createUidsPacket(typeDesc, batch, resultType, false);
         queryPacket.setRouting(partitionId);
         return queryPacket;
     }
@@ -85,8 +91,11 @@ public class SpaceIteratorResult implements ISpaceIteratorResult {
     @Override
     public int size() {
         int size = entries.size();
-        for (LinkedList<String> uids : partitionedUids.values())
-            size += uids.size();
+        for (Map<String, List<String>> partitionResult : partitionedUids.values()) {
+            for (List<String> typeResult : partitionResult.values()) {
+                    size += typeResult.size();
+            }
+        }
         return size;
     }
 }

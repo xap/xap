@@ -18,9 +18,11 @@
 package com.gigaspaces.client.iterator;
 
 import com.gigaspaces.SpaceRuntimeException;
+import com.gigaspaces.client.iterator.internal.AbstractSpaceIteratorAggregator;
 import com.gigaspaces.client.iterator.internal.ArrayIterator;
+import com.gigaspaces.client.iterator.internal.ISpaceIteratorResult;
 import com.gigaspaces.client.iterator.internal.SpaceIteratorAggregator;
-import com.gigaspaces.client.iterator.internal.SpaceIteratorResult;
+import com.gigaspaces.client.iterator.internal.tiered_storage.TieredSpaceIteratorAggregator;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
@@ -55,7 +57,7 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
     private final int _readModifiers;
     private final ITemplatePacket _queryPacket;
     private final QueryResultTypeInternal _queryResultType;
-    private final SpaceIteratorResult _iteratorResult;
+    private final ISpaceIteratorResult _iteratorResult;
     private Iterator<IEntryPacket> _bufferIterator;
     private boolean _closed;
 
@@ -158,13 +160,19 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
         }
     }
 
-    private SpaceIteratorResult initialize() {
-        final AggregationSet aggregationSet = new AggregationSet().add(new SpaceIteratorAggregator()
+    private ISpaceIteratorResult initialize() {
+        AbstractSpaceIteratorAggregator aggregator;
+        if(_spaceProxy.getDirectProxy().getSpaceClusterInfo().isTieredStorage()){
+            aggregator = new TieredSpaceIteratorAggregator();
+        }else {
+            aggregator = new SpaceIteratorAggregator();
+        }
+        final AggregationSet aggregationSet = new AggregationSet().add(aggregator
                 .setBatchSize(_batchSize));
-        final SpaceIteratorResult result;
+        final ISpaceIteratorResult result;
 
         try {
-            result = (SpaceIteratorResult) _spaceProxy.aggregate(_queryPacket, aggregationSet, _txn, _readModifiers).get(0);
+            result = (ISpaceIteratorResult) _spaceProxy.aggregate(_queryPacket, aggregationSet, _txn, _readModifiers).get(0);
         } catch (RemoteException e) {
             throw new SpaceRuntimeException("Failed to initialize iterator", e);
         } catch (TransactionException e) {
@@ -180,7 +188,7 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
     }
 
     private Iterator<IEntryPacket> getNextBatch() {
-        UidQueryPacket template = _iteratorResult.buildQueryPacket(_batchSize, _queryResultType);
+        UidQueryPacket template = _iteratorResult.buildQueryPacket(_spaceProxy, _batchSize, _queryResultType);
         if (template == null)
             return null;
         template.setProjectionTemplate(_queryPacket.getProjectionTemplate());

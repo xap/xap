@@ -14,40 +14,42 @@
  * limitations under the License.
  */
 
-package com.gigaspaces.client.iterator.internal;
+package com.gigaspaces.client.iterator.internal.tiered_storage;
 
+import com.gigaspaces.client.iterator.internal.ISpaceIteratorAggregatorPartitionResult;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * @author Niv Ingberg
- * @since 10.1
+ * @author Yael nahon
+ * @since 16.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceIteratorAggregatorPartitionResult implements ISpaceIteratorAggregatorPartitionResult {
+public class TieredSpaceIteratorAggregatorPartitionResult implements ISpaceIteratorAggregatorPartitionResult {
 
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 1L;
 
     private int partitionId;
     private List<IEntryPacket> entries;
-    private List<String> uids;
+    private Map<String, List<String>> uids;
 
     /**
      * Required for Externalizable
      */
-    public SpaceIteratorAggregatorPartitionResult() {
+    public TieredSpaceIteratorAggregatorPartitionResult() {
     }
 
-    public SpaceIteratorAggregatorPartitionResult(int partitionId) {
+    public TieredSpaceIteratorAggregatorPartitionResult(int partitionId) {
         this.partitionId = partitionId;
-        this.entries = new ArrayList<IEntryPacket>();
+        this.entries = new ArrayList<>();
     }
 
     @Override
@@ -59,12 +61,13 @@ public class SpaceIteratorAggregatorPartitionResult implements ISpaceIteratorAgg
         this.entries = entries;
     }
 
-    public List<String> getUids() {
+    public Map<String, List<String>> getUids() {
         return uids;
     }
 
-    public void setUids(List<String> uids) {
+    public TieredSpaceIteratorAggregatorPartitionResult setUids(Map<String, List<String>> uids) {
         this.uids = uids;
+        return this;
     }
 
     @Override
@@ -76,13 +79,26 @@ public class SpaceIteratorAggregatorPartitionResult implements ISpaceIteratorAgg
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(partitionId);
         IOUtils.writeList(out, entries);
-        IOUtils.writeListString(out, uids);
+        out.writeInt(uids == null ? -1 : uids.size());
+        if(uids != null) {
+            for (Map.Entry<String, List<String>> entry : uids.entrySet()) {
+                IOUtils.writeString(out, entry.getKey());
+                IOUtils.writeListString(out, entry.getValue());
+            }
+        }
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        this.partitionId = in.readInt();
-        this.entries = IOUtils.readList(in);
-        this.uids = IOUtils.readListString(in);
+        partitionId = in.readInt();
+        entries = IOUtils.readList(in);
+        int size = in.readInt();
+        if(size == -1){
+            return;
+        }
+        uids = new HashMap<>(size);
+        for (int i = 0; i < size; i++) {
+            uids.put(IOUtils.readString(in), IOUtils.readListString(in));
+        }
     }
 }

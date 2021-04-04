@@ -14,25 +14,33 @@
  * limitations under the License.
  */
 
-package com.gigaspaces.client.iterator.internal;
+package com.gigaspaces.client.iterator.internal.tiered_storage;
 
+import com.gigaspaces.client.iterator.internal.AbstractSpaceIteratorAggregator;
+import com.gigaspaces.client.iterator.internal.ISpaceIteratorAggregatorPartitionResult;
+import com.gigaspaces.client.iterator.internal.ISpaceIteratorResult;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregatorContext;
 
 import java.io.Externalizable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * @author Niv Ingberg
- * @since 10.1
+ * @author Yael nahon
+ * @since 16.0.0
  */
+
 @com.gigaspaces.api.InternalApi
-public class SpaceIteratorAggregator extends AbstractSpaceIteratorAggregator
+public class TieredSpaceIteratorAggregator extends AbstractSpaceIteratorAggregator
         implements Externalizable {
 
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 1L;
     private transient ISpaceIteratorResult finalResult;
-    private transient SpaceIteratorAggregatorPartitionResult result;
+    private transient TieredSpaceIteratorAggregatorPartitionResult result;
+
 
     @Override
     public String getDefaultAlias() {
@@ -42,16 +50,18 @@ public class SpaceIteratorAggregator extends AbstractSpaceIteratorAggregator
     @Override
     public void aggregate(SpaceEntriesAggregatorContext context) {
         if (result == null)
-            result = new SpaceIteratorAggregatorPartitionResult(context.getPartitionId());
+            result = new TieredSpaceIteratorAggregatorPartitionResult(context.getPartitionId());
         if (result.getEntries().size() < getBatchSize())
             result.getEntries().add((IEntryPacket) context.getRawEntry());
         else {
             if (result.getUids() == null)
-                result.setUids(new ArrayList<String>());
-            result.getUids().add(context.getEntryUid());
+                result.setUids(new HashMap<>());
+            Map<String, List<String>> uids = result.getUids();
+            String typeName = context.getTypeDescriptor().getTypeName();
+            uids.computeIfAbsent(typeName, k -> new ArrayList<>());
+            uids.get(typeName).add(context.getEntryUid());
         }
     }
-
     @Override
     public ISpaceIteratorAggregatorPartitionResult getIntermediateResult() {
         return result;
@@ -60,7 +70,7 @@ public class SpaceIteratorAggregator extends AbstractSpaceIteratorAggregator
     @Override
     public void aggregateIntermediateResult(ISpaceIteratorAggregatorPartitionResult partitionResult) {
         if (finalResult == null)
-            finalResult = new SpaceIteratorResult();
+            finalResult = new TieredSpaceIteratorResult();
         finalResult.addPartition(partitionResult);
     }
 
@@ -68,6 +78,6 @@ public class SpaceIteratorAggregator extends AbstractSpaceIteratorAggregator
     public Object getFinalResult() {
         if (result != null)
             aggregateIntermediateResult(result);
-        return finalResult != null ? finalResult : new SpaceIteratorResult();
+        return finalResult != null ? finalResult : new TieredSpaceIteratorResult();
     }
 }

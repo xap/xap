@@ -65,13 +65,18 @@ public class UidQueryPacket extends AbstractQueryPacket {
         this(null, uid, routing, version, resultType, false /*returnOnlyUids*/, null);
     }
 
-    public UidQueryPacket(String[] uids, int version, QueryResultTypeInternal resultType, boolean returnOnlyUids) {
-        super(null, resultType);
+    public UidQueryPacket(ITypeDesc typeDesc, String[] uids, int version, QueryResultTypeInternal resultType, boolean returnOnlyUids) {
+        super(typeDesc, resultType);
+        this._typeName = typeDesc != null ? typeDesc.getTypeName() : null;
         this._uids = uids;
         this._version = version;
         this._isReturnOnlyUids = returnOnlyUids;
         this._routing = null;
         this._projectionTemplate = null;
+    }
+
+    public UidQueryPacket(String[] uids, int version, QueryResultTypeInternal resultType, boolean returnOnlyUids) {
+        this(null, uids, version, resultType, returnOnlyUids);
     }
 
     @Override
