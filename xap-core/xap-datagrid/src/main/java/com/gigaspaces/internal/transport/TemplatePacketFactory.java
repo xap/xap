@@ -92,6 +92,10 @@ public class TemplatePacketFactory {
         return new UidQueryPacket(uids, 0, resultType, returnOnlyUids);
     }
 
+    public static ITemplatePacket createUidsPacket(ITypeDesc typeDesc, String[] uids, QueryResultTypeInternal resultType, boolean returnOnlyUids) {
+        return new UidQueryPacket(typeDesc, uids, 0, resultType, returnOnlyUids);
+    }
+
     public static ITemplatePacket createUidsResponsePacket(String[] uids) {
         return new UidQueryPacket(uids, 0, QueryResultTypeInternal.NOT_SET, true);
     }

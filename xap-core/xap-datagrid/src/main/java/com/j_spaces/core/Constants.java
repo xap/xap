@@ -950,6 +950,7 @@ public interface Constants {
     }
 
     public interface TieredStorage {
+        String SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME="TieredStorage";
         String CACHE_MANAGER_TIERED_STORAGE_LOCKS_SIZE_PROP = "engine.TieredStorage.LocksSize";
         String CACHE_MANAGER_TIERED_STORAGE_LOCKS_SIZE_DEFAULT = "10000";
         String TIERED_STORAGE_INTERNAL_RDBMS_CLASS_PROP = "engine.TieredStorage.RDBMSClass";

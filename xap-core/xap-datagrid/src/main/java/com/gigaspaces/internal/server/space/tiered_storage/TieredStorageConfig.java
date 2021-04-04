@@ -9,6 +9,8 @@ import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.j_spaces.core.Constants.TieredStorage.SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME;
+
 public class TieredStorageConfig extends SpaceCustomComponent implements Externalizable {
 
 
@@ -16,12 +18,12 @@ public class TieredStorageConfig extends SpaceCustomComponent implements Externa
 
     @Override
     public String getSpaceComponentKey() {
-        return "TieredStorage";
+        return SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME;
     }
 
     @Override
     public String getServiceDetailAttributeName() {
-        return "TieredStorage";
+        return SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME;
     }
 
     @Override

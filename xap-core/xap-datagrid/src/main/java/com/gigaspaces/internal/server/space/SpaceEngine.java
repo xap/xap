@@ -391,7 +391,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
 
     private void initTieredStorageManager(SpaceImpl space) throws RemoteException, IllegalAccessException, InstantiationException, ClassNotFoundException {
-        Object tieredStorage = this._clusterInfo.getCustomComponent("TieredStorage");
+        Object tieredStorage = this._clusterInfo.getCustomComponent(SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME);
         if(tieredStorage != null ){
             TieredStorageConfig storageConfig = (TieredStorageConfig) tieredStorage;
             String className = System.getProperty(TIERED_STORAGE_INTERNAL_RDBMS_CLASS_PROP, TIERED_STORAGE_INTERNAL_RDBMS_CLASS_DEFAULT);
@@ -3986,24 +3986,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
     public void executeOnMatchingEntries(Context context, ITemplateHolder template, boolean makeWaitForInfo)
             throws TransactionException, TemplateDeletedException, SAException {
-        // If template is a multiple uids template:
-        final String[] multipleUids = template.getMultipleUids();
-
-        if (multipleUids != null) {
-            for (int i = 0; i < multipleUids.length && template.getBatchOperationContext().getNumResults() < template.getBatchOperationContext().getMaxEntries(); i++) {
-                if (multipleUids[i] != null) {
-                    template.setUidToOperateBy(multipleUids[i]);
-                    handleEntryByIdAndOperateSA(context, template);
-                }
-            }
-            return;
-        }
-
-        if (template.getUidToOperateBy() != null) {
-            //add matching entry to matchedEntries
-            handleEntryByIdAndOperateSA(context, template);
-            return;
-        }
 
         if(isTieredStorage()){
             if(context.getTemplateTieredState() == null){
@@ -4024,6 +4006,26 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 context.getExplainPlanContext().getSingleExplainPlan().addTiersInfo(template.getServerTypeDesc().getTypeName(), TieredStorageUtils.getTiersAsList(context.getTemplateTieredState()));
             }
         }
+
+        // If template is a multiple uids template:
+        final String[] multipleUids = template.getMultipleUids();
+
+        if (multipleUids != null) {
+            for (int i = 0; i < multipleUids.length && template.getBatchOperationContext().getNumResults() < template.getBatchOperationContext().getMaxEntries(); i++) {
+                if (multipleUids[i] != null) {
+                    template.setUidToOperateBy(multipleUids[i]);
+                    handleEntryByIdAndOperateSA(context, template);
+                }
+            }
+            return;
+        }
+
+        if (template.getUidToOperateBy() != null) {
+            //add matching entry to matchedEntries
+            handleEntryByIdAndOperateSA(context, template);
+            return;
+        }
+
 
         // get template BFS class names list from Type Table (if template is null, use BFS of java.lang.Object).
         final IServerTypeDesc serverTypeDesc = _typeManager.getServerTypeDesc(template.getClassName());

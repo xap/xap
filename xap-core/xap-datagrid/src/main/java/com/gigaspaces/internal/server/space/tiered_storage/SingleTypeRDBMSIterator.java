@@ -1,21 +1,13 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
-import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.metadata.PropertyInfo;
-import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
-import com.gigaspaces.internal.server.storage.EntryHolder;
-import com.gigaspaces.internal.server.storage.FlatEntryData;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
-import net.jini.core.lease.Lease;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import static com.gigaspaces.internal.server.space.tiered_storage.SqliteUtils.getPropertyValue;
 
 public class SingleTypeRDBMSIterator implements ISAdapterIterator<IEntryHolder> {
 

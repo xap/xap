@@ -24,6 +24,7 @@ import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.server.SpaceCustomComponent;
+import com.j_spaces.core.Constants;
 import com.j_spaces.core.JSpaceAttributes;
 import com.j_spaces.core.cluster.ClusterPolicy;
 import com.j_spaces.core.cluster.ClusterXML;
@@ -300,6 +301,10 @@ public class SpaceClusterInfo implements Externalizable {
     private static String toMemberName(String spaceName, int partitionId, int backupId) {
         String member = backupId == 0 ? String.valueOf(partitionId) : partitionId + "_" + backupId;
         return spaceName + "_container" + member + ":" + spaceName;
+    }
+
+    public boolean isTieredStorage(){
+        return customComponents.get(Constants.TieredStorage.SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME) != null;
     }
 
     @Override

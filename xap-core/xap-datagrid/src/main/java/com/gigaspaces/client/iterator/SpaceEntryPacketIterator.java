@@ -21,6 +21,7 @@ import com.gigaspaces.SpaceRuntimeException;
 import com.gigaspaces.client.iterator.internal.ArrayIterator;
 import com.gigaspaces.client.iterator.internal.SpaceIteratorAggregator;
 import com.gigaspaces.client.iterator.internal.SpaceIteratorResult;
+import com.gigaspaces.client.iterator.internal.tiered_storage.TieredSpaceIteratorResult;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
@@ -55,7 +56,8 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
     private final int _readModifiers;
     private final ITemplatePacket _queryPacket;
     private final QueryResultTypeInternal _queryResultType;
-    private final SpaceIteratorResult _iteratorResult;
+    private final ISpaceIteratorResult _iteratorResult;
+    private final boolean _isTiered;
     private Iterator<IEntryPacket> _bufferIterator;
     private boolean _closed;
 
@@ -76,6 +78,7 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
         this._readModifiers = modifiers;
         this._queryPacket = toTemplatePacket(query);
         this._queryResultType = _queryPacket.getQueryResultType();
+        this._isTiered = _spaceProxy.getDirectProxy().getSpaceClusterInfo().isTieredStorage();
         this._iteratorResult = initialize();
         this._bufferIterator = _iteratorResult.getEntries().iterator();
     }
@@ -158,18 +161,14 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
         }
     }
 
-    private SpaceIteratorResult initialize() {
+    private ISpaceIteratorResult initialize() {
         final AggregationSet aggregationSet = new AggregationSet().add(new SpaceIteratorAggregator()
-                .setBatchSize(_batchSize));
-        final SpaceIteratorResult result;
+                .setBatchSize(_batchSize).setTiered(_isTiered));
+        final ISpaceIteratorResult result;
 
         try {
-            result = (SpaceIteratorResult) _spaceProxy.aggregate(_queryPacket, aggregationSet, _txn, _readModifiers).get(0);
-        } catch (RemoteException e) {
-            throw new SpaceRuntimeException("Failed to initialize iterator", e);
-        } catch (TransactionException e) {
-            throw new SpaceRuntimeException("Failed to initialize iterator", e);
-        } catch (InterruptedException e) {
+            result = (ISpaceIteratorResult) _spaceProxy.aggregate(_queryPacket, aggregationSet, _txn, _readModifiers).get(0);
+        } catch (RemoteException | TransactionException | InterruptedException e) {
             throw new SpaceRuntimeException("Failed to initialize iterator", e);
         }
 
@@ -180,7 +179,10 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
     }
 
     private Iterator<IEntryPacket> getNextBatch() {
-        UidQueryPacket template = _iteratorResult.buildQueryPacket(_batchSize, _queryResultType);
+        if(_isTiered){
+            return getNextTieredBatch();
+        }
+        UidQueryPacket template = ((SpaceIteratorResult) _iteratorResult).buildQueryPacket(_batchSize, _queryResultType);
         if (template == null)
             return null;
         template.setProjectionTemplate(_queryPacket.getProjectionTemplate());
@@ -190,11 +192,24 @@ public class SpaceEntryPacketIterator implements IEntryPacketIterator {
                 _logger.debug("getNextBatch returns with a buffer of " + entries.length + " entries.");
             }
             return ArrayIterator.wrap(entries);
-        } catch (RemoteException e) {
+        } catch (RemoteException | UnusableEntryException | TransactionException e) {
             processNextBatchFailure(e);
-        } catch (UnusableEntryException e) {
-            processNextBatchFailure(e);
-        } catch (TransactionException e) {
+        }
+        return null;
+    }
+
+    private Iterator<IEntryPacket> getNextTieredBatch() {
+        UidQueryPacket template = ((TieredSpaceIteratorResult) _iteratorResult).buildQueryPacket(_spaceProxy, _batchSize, _queryResultType);
+        if (template == null)
+            return null;
+        template.setProjectionTemplate(_queryPacket.getProjectionTemplate());
+        try {
+            Object[] entries = _spaceProxy.readMultiple(template, _txn, template.getMultipleUIDs().length, _readModifiers);
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("getNextBatch returns with a buffer of " + entries.length + " entries.");
+            }
+            return ArrayIterator.wrap(entries);
+        } catch (RemoteException | UnusableEntryException | TransactionException e) {
             processNextBatchFailure(e);
         }
         return null;
