@@ -391,7 +391,7 @@ public class GPreparedStatement extends GStatement implements PreparedStatement 
      */
     public ResultSet executeQuery() throws SQLException {
         checkValues();
-        if (!sql.toUpperCase().startsWith("SELECT") && !sql.toUpperCase().startsWith("CALL")) {
+        if (!sql.toUpperCase().startsWith("SELECT") && !sql.toUpperCase().startsWith("CALL") && !sql.toUpperCase().startsWith("EXPLAIN")) {
             //	throw new SQLException(" Used executeQuery  instead executeUpdate",
             //	"GSP",-146);
             executeUpdate();

@@ -27,15 +27,15 @@ public class MainTester {
         }
 //        try (Connection connection = DriverManager.getConnection("jdbc:gigaspaces:url:jini://*/*/"+space.getSpaceName(), properties)) {
         try (Connection connection = DriverManager.getConnection(newDriver ? "jdbc:gigaspaces:v3://localhost:4174/" + space.getSpaceName() : "jdbc:gigaspaces:url:jini://*/*/" + space.getSpaceName(), properties)) {
-            PreparedStatement st = connection.prepareStatement("SELECT * FROM com.gigaspaces.jdbc.MyPojo where age = ?");
+            PreparedStatement st = connection.prepareStatement("EXPLAIN SELECT * FROM com.gigaspaces.jdbc.MyPojo where age = ?");
             st.setInt(1, 30);
 
 
             ResultSet rs = st.executeQuery();
             DumpUtils.dump(rs);
 
-            Statement statement = connection.createStatement();
-            execute(statement, "SELECT * FROM com.gigaspaces.jdbc.MyPojo where name = 'Adler' OR name = 'Adam' AND age = 30");// WHERE rowNum <= 10");
+//            Statement statement = connection.createStatement();
+//            execute(statement, "SELECT * FROM com.gigaspaces.jdbc.MyPojo where name = 'Adler' OR name = 'Adam' AND age = 30");// WHERE rowNum <= 10");
 
 //            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo");// WHERE rowNum <= 10");
 //            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo WHERE country like '%a%'");
