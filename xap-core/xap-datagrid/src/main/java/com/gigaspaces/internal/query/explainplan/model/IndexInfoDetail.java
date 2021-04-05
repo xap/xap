@@ -6,6 +6,7 @@ import com.gigaspaces.metadata.index.SpaceIndexType;
 
 /**
  * Single index choice detail
+ *
  * @author Mishel Liberman
  * @since 16.0
  */

@@ -4,6 +4,7 @@ import java.util.List;
 
 /**
  * All the index choices of specific partition
+ *
  * @author Mishel Liberman
  * @since 16.0
  */
