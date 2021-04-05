@@ -723,6 +723,10 @@ public abstract class AbstractEventListenerContainer implements ApplicationConte
      * A callback to handle exception. Possible extension point for registered exception listeners.
      */
     protected void invokeExceptionListener(Exception e) {
+        //log specific exceptions
+        if (e instanceof IllegalArgumentException) {
+            logger.warn("Caught exception while invoking listener", e);
+        }
     }
 
     public long getProcessedEvents() {
