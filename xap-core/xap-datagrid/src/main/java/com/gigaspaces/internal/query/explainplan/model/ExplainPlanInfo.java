@@ -126,7 +126,7 @@ public class ExplainPlanInfo {
                     formatter.line(SELECTED_INDEX_STRING);
                     if (unionIndexChoice) {
                         formatter.indent();
-                        formatter.line("Union: ");
+                        formatter.line("Union:");
                     }
 
                     formatter.indent();
@@ -169,7 +169,7 @@ public class ExplainPlanInfo {
                     formatter.line(SELECTED_INDEX_STRING);
                     if (indexChoice.isUnion()) {
                         formatter.indent();
-                        formatter.line("Union: ");
+                        formatter.line("Union:");
                     }
 
                     formatter.indent();
