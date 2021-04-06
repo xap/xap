@@ -11,4 +11,8 @@ public interface CachePredicate {
     boolean isTransient();
 
     TemplateMatchTier evaluate(ITemplateHolder template);
+
+    default boolean isTimeRule(){
+        return false;
+    }
 }

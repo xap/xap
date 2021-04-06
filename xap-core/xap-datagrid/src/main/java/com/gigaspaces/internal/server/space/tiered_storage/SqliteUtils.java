@@ -293,9 +293,9 @@ public class SqliteUtils {
         return TemplateMatchTier.MATCH_HOT_AND_COLD;
     }
 
-    public static Object convertTimeTypeToInstant(Object value) {
+    public static Instant convertTimeTypeToInstant(Object value) {
         if (Instant.class.equals(value.getClass())) {
-            return value;
+            return (Instant)value;
         } else if (Timestamp.class.equals(value.getClass())) {
             return ((Timestamp) value).toInstant();
         } else if (Long.class.equals(value.getClass())) {
