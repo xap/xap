@@ -59,22 +59,7 @@ public class ExplainPlanInfo {
         }
 
         if (!verbose) {
-            // Gather the selected indexes per partition along with their usedTier
-            Map<String, PartitionFinalSelectedIndexes> selectedIndexesPerPartition = new HashMap<>();
-            for (PartitionIndexInspectionDetail inspectionDetail : indexInspectionsPerPartition) {
-                ArrayList<IndexInfoDetail> selectedIndexes = new ArrayList<>();
-                List<IndexChoiceDetail> indexChoices = inspectionDetail.getIndexes();
-                IndexChoiceDetail unionIndexChoice = getUnionIndexChoiceIfExists(indexChoices);
-                if (unionIndexChoice != null) {
-                    selectedIndexes.addAll(unionIndexChoice.getSelectedIndexes());
-                } else {
-                    if (indexChoices != null) {
-                        indexChoices.forEach(indexChoiceDetail -> selectedIndexes.addAll(indexChoiceDetail.getSelectedIndexes()));
-                    }
-                }
-
-                selectedIndexesPerPartition.put(inspectionDetail.getPartition(), new PartitionFinalSelectedIndexes(selectedIndexes, inspectionDetail.getUsedTiers()));
-            }
+            Map<String, PartitionFinalSelectedIndexes> selectedIndexesPerPartition = getFinalSelectedIndexesMap();
 
             Map<String, List<String>> finalResults = new LinkedHashMap<>();
             Map<String, List<String>> partitionsAndUsedTiers = new HashMap<>();
@@ -202,6 +187,30 @@ public class ExplainPlanInfo {
 
         formatter.unindent();
         return formatter.toString();
+    }
+
+    /**
+     * Gather the selected indexes per partition along with their usedTier
+     *
+     * @return map of partition id and its final selected indexes and used tiers
+     */
+    private Map<String, PartitionFinalSelectedIndexes> getFinalSelectedIndexesMap() {
+        Map<String, PartitionFinalSelectedIndexes> selectedIndexesPerPartition = new HashMap<>();
+        for (PartitionIndexInspectionDetail inspectionDetail : indexInspectionsPerPartition) {
+            ArrayList<IndexInfoDetail> selectedIndexes = new ArrayList<>();
+            List<IndexChoiceDetail> indexChoices = inspectionDetail.getIndexes();
+            IndexChoiceDetail unionIndexChoice = getUnionIndexChoiceIfExists(indexChoices);
+            if (unionIndexChoice != null) {
+                selectedIndexes.addAll(unionIndexChoice.getSelectedIndexes());
+            } else {
+                if (indexChoices != null) {
+                    indexChoices.forEach(indexChoiceDetail -> selectedIndexes.addAll(indexChoiceDetail.getSelectedIndexes()));
+                }
+            }
+
+            selectedIndexesPerPartition.put(inspectionDetail.getPartition(), new PartitionFinalSelectedIndexes(selectedIndexes, inspectionDetail.getUsedTiers()));
+        }
+        return selectedIndexesPerPartition;
     }
 
     private String getTiersFormatted(List<String> usedTiers) {
