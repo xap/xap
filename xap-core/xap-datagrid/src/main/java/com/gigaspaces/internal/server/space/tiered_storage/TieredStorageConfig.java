@@ -35,6 +35,10 @@ public class TieredStorageConfig extends SpaceCustomComponent implements Externa
         return tables;
     }
 
+    public boolean hasCacheRule(String type){
+        return getTables().get(type) != null;
+    }
+
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         if (tables != null) {

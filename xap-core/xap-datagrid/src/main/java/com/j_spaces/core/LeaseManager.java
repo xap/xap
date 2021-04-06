@@ -33,9 +33,13 @@ import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.space.eviction.RecentDeletesRepository;
 import com.gigaspaces.internal.server.space.eviction.RecentUpdatesRepository;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
+import com.gigaspaces.internal.server.space.tiered_storage.CachePredicate;
+import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageManager;
+import com.gigaspaces.internal.server.space.tiered_storage.TimePredicate;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.server.storage.NotifyTemplateHolder;
+import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.TemplatePacket;
 import com.gigaspaces.internal.utils.concurrent.GSThread;
@@ -78,6 +82,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.j_spaces.core.Constants.Engine.UPDATE_NO_LEASE;
 import static com.j_spaces.core.Constants.LeaseManager.LM_BACKUP_EXPIRATION_DELAY_DEFAULT;
 import static com.j_spaces.core.Constants.LeaseManager.LM_BACKUP_EXPIRATION_DELAY_PROP;
 import static com.j_spaces.core.Constants.LeaseManager.LM_CHECK_TIME_MARKERS_REPOSITORY_DEFAULT;
@@ -97,6 +102,9 @@ import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_STALE_
 import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_STALE_REPLICAS_PROP;
 import static com.j_spaces.core.Constants.LeaseManager.LM_SEGMEENTS_PER_EXPIRATION_CELL_DEFAULT;
 import static com.j_spaces.core.Constants.LeaseManager.LM_SEGMEENTS_PER_EXPIRATION_CELL_PROP;
+import static com.j_spaces.core.Constants.LeaseManager.TIERED_STORAGE_EVICTION_GRACE_PERIOD;
+import static com.j_spaces.core.Constants.LeaseManager.TIERED_STORAGE_EVICTION_GRACE_PERIOD_DEFAULT;
+
 
 /**
  * Lease Manager handles operations that can be carried out on a lease: creation, renewal and
@@ -143,6 +151,7 @@ public class LeaseManager {
     private final long _expirationTimeRecentDeletes;
     private final long _expirationTimeRecentUpdates;
     private final long _staleReplicaExpirationTime;
+    private final long _tieredStorageEvictionGracePeriod;
 
     private LeaseReaper _leaseReaperDaemon;
     private boolean _closed;
@@ -179,8 +188,8 @@ public class LeaseManager {
         _expirationTimeRecentDeletes = getLongValue(configReader, LM_EXPIRATION_TIME_RECENT_DELETES_PROP, LM_EXPIRATION_TIME_RECENT_DELETES_DEFAULT);
         _expirationTimeRecentUpdates = getLongValue(configReader, LM_EXPIRATION_TIME_RECENT_UPDATES_PROP, LM_EXPIRATION_TIME_RECENT_UPDATES_DEFAULT);
         _staleReplicaExpirationTime = getLongValue(configReader, LM_EXPIRATION_TIME_STALE_REPLICAS_PROP, LM_EXPIRATION_TIME_STALE_REPLICAS_DEFAULT);
-
         _supportsRecentExtendedUpdates = _engine.getCacheManager().isBlobStoreCachePolicy();
+        _tieredStorageEvictionGracePeriod = getLongValue(configReader, TIERED_STORAGE_EVICTION_GRACE_PERIOD, TIERED_STORAGE_EVICTION_GRACE_PERIOD_DEFAULT);
         logConfiguration();
 
     }
@@ -233,7 +242,10 @@ public class LeaseManager {
                     + _expirationTimeRecentUpdates
                     + " ms\n\t"
                     + "Transactions of FIFO entries - every "
-                    + LM_EXPIRATION_TIME_FIFOENTRY_XTNINFO + " ms\n\t");
+                    + LM_EXPIRATION_TIME_FIFOENTRY_XTNINFO + " ms\n\t"
+                    + "Tiered storage eviction grace period - "
+                    + _tieredStorageEvictionGracePeriod
+                    + "s\n\t");
         }
     }
 
@@ -523,6 +535,61 @@ public class LeaseManager {
             return Long.MAX_VALUE;
 
         return duration;
+    }
+
+    public long getExpirationOnWriteByLeaseOrByTimeRule(long lease, long startTime, IEntryPacket entry, boolean fromReplication) {
+        if (_engine.isTieredStorage()){
+            TieredStorageManager tieredStorageManager = _engine.getTieredStorageManager();
+            String typeName = entry.getTypeName();
+            CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
+            if ((cacheRule == null || !cacheRule.isTransient()) && (lease != Lease.FOREVER)){
+                if (!fromReplication) {
+                    throw new IllegalStateException("Lease is not supported for type " + typeName);
+                }
+            }
+            if (cacheRule != null && cacheRule.isTimeRule()){
+                return ((TimePredicate)cacheRule).getExpirationTime(entry, getTieredStorageEvictionGracePeriod());
+            }
+        }
+        //cases of:1. no tiered storage  2.tiered- transient with/without lease  3. tiered-cache criteria without lease
+        return toAbsoluteTime(lease, startTime);
+    }
+
+    public long getExpirationOnUpdateOrChangeByLeaseOrByTimeRule(long lease, long startTime, IEntryPacket entry, boolean fromReplication) {
+        if (_engine.isTieredStorage()){
+            TieredStorageManager tieredStorageManager = _engine.getTieredStorageManager();
+            String typeName = entry.getTypeName();
+            CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
+            if ((cacheRule == null || !cacheRule.isTransient()) && (lease != Lease.FOREVER && lease != UPDATE_NO_LEASE)){
+                if (!fromReplication) {
+                    throw new IllegalStateException("Lease is not supported for type " + typeName);
+                }
+            }
+            if (cacheRule != null && cacheRule.isTimeRule()){
+                return ((TimePredicate)cacheRule).getExpirationTime(entry, getTieredStorageEvictionGracePeriod());
+            }
+        }
+
+        //cases of:1. no tiered storage  2.tiered- transient with/without lease  3. tiered-cache criteria without lease
+        return lease != UPDATE_NO_LEASE ? LeaseManager.toAbsoluteTime(lease, startTime) : UPDATE_NO_LEASE;
+    }
+
+    public boolean isReRegisterLeaseOnUpdate(long lease, IEntryPacket entry){
+        if (_engine.isTieredStorage()) {
+            TieredStorageManager tieredStorageManager = _engine.getTieredStorageManager();
+            String typeName = entry.getTypeName();
+            CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
+            if (cacheRule != null && cacheRule.isTimeRule()){
+                return true;
+            }
+        }
+
+        //cases of:1. no tiered storage  2.tiered- transient with/without lease  3. tiered-cache criteria without lease
+        return lease != UPDATE_NO_LEASE;
+    }
+
+    public long getTieredStorageEvictionGracePeriod() {
+        return _tieredStorageEvictionGracePeriod;
     }
 
     /**

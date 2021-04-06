@@ -71,8 +71,6 @@ public class TieredStorageDefinitionsParser {
                 }
             }
             tieredStorageConfig.setTables(tablesMap);
-
-
         }
         else {
             logger.error("no tables entity found in tiered storage");

@@ -30,6 +30,8 @@ import com.gigaspaces.internal.metadata.SpaceTypeInfoRepository;
 import com.gigaspaces.internal.query.PropertiesQuery;
 import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
+import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageConfig;
+import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageTableConfig;
 import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.gigaspaces.internal.transport.EntryPacket;
 import com.gigaspaces.internal.transport.EntryPacketFactory;
@@ -40,6 +42,7 @@ import com.gigaspaces.internal.transport.ProjectionTemplate;
 import com.gigaspaces.internal.transport.TemplatePacketFactory;
 import com.gigaspaces.internal.utils.ObjectUtils;
 import com.gigaspaces.lrmi.classloading.LRMIClassLoadersHolder;
+import com.gigaspaces.metadata.SpaceMetadataException;
 import com.gigaspaces.query.IdQuery;
 import com.gigaspaces.query.IdsQuery;
 import com.j_spaces.core.IGSEntry;
@@ -303,7 +306,24 @@ public class SpaceProxyTypeManager implements ISpaceProxyTypeManager {
         if (objectType != ObjectType.ENTRY_PACKET)
             disablePacketVersionIfNotSupported(packet);
 
+        if(_proxy.getSpaceClusterInfo() != null && _proxy.getSpaceClusterInfo().isTieredStorage()){
+            validateTimeValueNotNull(object, packet);
+        }
         return packet;
+    }
+
+    private void validateTimeValueNotNull(Object object, IEntryPacket packet){
+        String typeName = object.getClass().getTypeName();
+        TieredStorageConfig tieredStorageConfig = _proxy.getSpaceClusterInfo().getCustomComponent("TieredStorage");
+        if (tieredStorageConfig.hasCacheRule(typeName)){
+            TieredStorageTableConfig tieredStorageTableConfig = tieredStorageConfig.getTables().get(typeName);
+            if (tieredStorageTableConfig.isTimeRule()){
+                String timeColumn = tieredStorageTableConfig.getTimeColumn();
+                if (packet.getPropertyValue(timeColumn) == null){
+                    throw new SpaceMetadataException("property which set as time rule cannot be null.");
+                }
+            }
+        }
     }
 
     public ITemplatePacket getTemplatePacketFromObject(Object object, ObjectType objectType) {
