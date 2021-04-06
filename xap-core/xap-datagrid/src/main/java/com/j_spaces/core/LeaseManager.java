@@ -33,9 +33,11 @@ import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.space.eviction.RecentDeletesRepository;
 import com.gigaspaces.internal.server.space.eviction.RecentUpdatesRepository;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
+import com.gigaspaces.internal.server.space.tiered_storage.TimePredicate;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.server.storage.NotifyTemplateHolder;
+import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.TemplatePacket;
 import com.gigaspaces.internal.utils.concurrent.GSThread;
@@ -97,6 +99,9 @@ import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_STALE_
 import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_STALE_REPLICAS_PROP;
 import static com.j_spaces.core.Constants.LeaseManager.LM_SEGMEENTS_PER_EXPIRATION_CELL_DEFAULT;
 import static com.j_spaces.core.Constants.LeaseManager.LM_SEGMEENTS_PER_EXPIRATION_CELL_PROP;
+import static com.j_spaces.core.Constants.LeaseManager.TIERED_STORAGE_TIME_BASED_EVICTION_GRACE_PERIOD;
+import static com.j_spaces.core.Constants.LeaseManager.TIERED_STORAGE_TIME_BASED_GRACE_PERIOD_EVICTION_DEFAULT;
+
 
 /**
  * Lease Manager handles operations that can be carried out on a lease: creation, renewal and
@@ -143,6 +148,7 @@ public class LeaseManager {
     private final long _expirationTimeRecentDeletes;
     private final long _expirationTimeRecentUpdates;
     private final long _staleReplicaExpirationTime;
+    private final long _tieredStorageTimeBasedEvictionGracePeriod;
 
     private LeaseReaper _leaseReaperDaemon;
     private boolean _closed;
@@ -179,8 +185,8 @@ public class LeaseManager {
         _expirationTimeRecentDeletes = getLongValue(configReader, LM_EXPIRATION_TIME_RECENT_DELETES_PROP, LM_EXPIRATION_TIME_RECENT_DELETES_DEFAULT);
         _expirationTimeRecentUpdates = getLongValue(configReader, LM_EXPIRATION_TIME_RECENT_UPDATES_PROP, LM_EXPIRATION_TIME_RECENT_UPDATES_DEFAULT);
         _staleReplicaExpirationTime = getLongValue(configReader, LM_EXPIRATION_TIME_STALE_REPLICAS_PROP, LM_EXPIRATION_TIME_STALE_REPLICAS_DEFAULT);
-
         _supportsRecentExtendedUpdates = _engine.getCacheManager().isBlobStoreCachePolicy();
+        _tieredStorageTimeBasedEvictionGracePeriod = getLongValue(configReader, TIERED_STORAGE_TIME_BASED_EVICTION_GRACE_PERIOD, TIERED_STORAGE_TIME_BASED_GRACE_PERIOD_EVICTION_DEFAULT);
         logConfiguration();
 
     }
@@ -523,6 +529,20 @@ public class LeaseManager {
             return Long.MAX_VALUE;
 
         return duration;
+    }
+
+    public long getExpiredTimeByLeaseOrByTimeRule(long duration, long current, IEntryPacket entry) { //todo- shorter
+         if (_engine.isTieredStorage() && _engine.getTieredStorageManager().getCacheRule(entry.getTypeName()) != null
+         && _engine.getTieredStorageManager().getCacheRule(entry.getTypeName()).isTimeRule()){
+            TimePredicate timePredicate = (TimePredicate) _engine.getTieredStorageManager().getCacheRule(entry.getTypeName());
+            return timePredicate.getExpirationTime(entry.getPropertyValue(timePredicate.getTimeColumn()), getTieredStorageTimeBasedEvictionGracePeriod());
+        } else {
+           return LeaseManager.toAbsoluteTime(duration, current);
+        }
+    }
+
+    public long getTieredStorageTimeBasedEvictionGracePeriod() {
+        return _tieredStorageTimeBasedEvictionGracePeriod;
     }
 
     /**

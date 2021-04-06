@@ -124,9 +124,7 @@ import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.blobStore.storage.preFetch.BlobStorePreFetchIteratorBasedHandler;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.TemplateMatchTier;
-import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.*;
-import com.j_spaces.core.client.sql.ReadQueryParser;
 import com.j_spaces.core.cluster.*;
 import com.j_spaces.core.exception.internal.EngineInternalSpaceException;
 import com.j_spaces.core.exception.internal.ProxyInternalSpaceException;
@@ -138,9 +136,6 @@ import com.j_spaces.core.filters.ReplicationStatistics.ReplicationMode;
 import com.j_spaces.core.sadapter.*;
 import com.j_spaces.core.server.processor.*;
 import com.j_spaces.core.transaction.TransactionHandler;
-import com.j_spaces.jdbc.AbstractDMLQuery;
-import com.j_spaces.jdbc.builder.QueryTemplatePacket;
-import com.j_spaces.jdbc.builder.range.Range;
 import com.j_spaces.kernel.ClassLoaderHelper;
 import com.j_spaces.kernel.*;
 import com.j_spaces.kernel.list.CircularNumerator;
@@ -852,8 +847,11 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         final long current = SystemTime.timeMillis();
         final String entryUid = getOrCreateUid(entryPacket);
+
+        long expiration = _leaseManager.getExpiredTimeByLeaseOrByTimeRule(lease, current, entryPacket);
+
         IEntryHolder eHolder = EntryHolderFactory.createEntryHolder(serverTypeDesc, entryPacket, _entryDataType,
-                entryUid, LeaseManager.toAbsoluteTime(lease, current), txnEntry, current, (_cacheManager.isblobStoreDataSpace() && serverTypeDesc.getTypeDesc().isBlobstoreEnabled() && !UpdateModifiers.isUpdateOnly(modifiers)));
+                entryUid, expiration, txnEntry, current, (_cacheManager.isblobStoreDataSpace() && serverTypeDesc.getTypeDesc().isBlobstoreEnabled() && !UpdateModifiers.isUpdateOnly(modifiers)));
 
         /** set write lease mode */
         if (!reInsertedEntry && _filterManager._isFilter[FilterOperationCodes.BEFORE_WRITE])
@@ -2448,7 +2446,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         String entryId = updated_entry.getUID();
         final long startTime = SystemTime.timeMillis();
-        long expiration_time = lease != UPDATE_NO_LEASE ? LeaseManager.toAbsoluteTime(lease, startTime) : UPDATE_NO_LEASE;
+         long expiration_time = lease != UPDATE_NO_LEASE ? _leaseManager.getExpiredTimeByLeaseOrByTimeRule(lease, startTime, updated_entry) : UPDATE_NO_LEASE;
 
         //create an update template that will contain the updated_entry
         // with the UID of the original entry. Note that it is assumed that primary key fields
@@ -2459,7 +2457,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         if (respContext != null)
             respContext.setInvokedFromNewRouter(newRouter);
         ITemplateHolder tHolder = TemplateHolderFactory.createUpdateTemplateHolder(serverTypeDesc, template, uid,
-                LeaseManager.toAbsoluteTime(timeout, startTime) /* expiration time*/,
+                _leaseManager.getExpiredTimeByLeaseOrByTimeRule(timeout, startTime, template) /* expiration time*/,
                 txnEntry, startTime, respContext, modifiers);
 
         tHolder.setAnswerHolder(new ExtendedAnswerHolder());

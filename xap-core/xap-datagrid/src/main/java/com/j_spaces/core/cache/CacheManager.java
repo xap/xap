@@ -47,6 +47,7 @@ import com.gigaspaces.internal.server.space.recovery.direct_persistency.IStorage
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.StorageConsistencyModes;
 import com.gigaspaces.internal.server.space.tiered_storage.CachePredicate;
 import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageManager;
+import com.gigaspaces.internal.server.space.tiered_storage.TimePredicate;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridStorageAdapter;
 import com.gigaspaces.internal.transport.ITemplatePacket;
@@ -1488,7 +1489,6 @@ public class CacheManager extends AbstractCacheManager
                     tieredStorageManager.getInternalStorage().updateEntry(context, cold_eh);
                 }
 
-
                 String typeName = newEntryData.getSpaceTypeDescriptor().getTypeName();
                 if(!tieredStorageManager.hasCacheRule(typeName)) {
                     context.setEntryTieredState(TieredState.TIERED_COLD);
@@ -2021,15 +2021,15 @@ public class CacheManager extends AbstractCacheManager
                     if (entryHolder.isBlobStoreEntry() && isDirectPersistencyEmbeddedtHandlerUsed() && context.isActiveBlobStoreBulk())
                         context.setForBulkRemove(entryHolder, removeReason);
                     if(isTieredStorage()){
-                        if(context.getEntryTieredState() == null ){
-                            throw new IllegalStateException("context.getEntryTieredState() == null in  remove entry ");
-                        }
-
-                        if(context.getEntryTieredState() != TieredState.TIERED_HOT){
-                            _engine.getTieredStorageManager().getInternalStorage().removeEntry(context, entryHolder);
+                        if (!leaseExpiration){
+                            if(context.getEntryTieredState() == null ){
+                                throw new IllegalStateException("context.getEntryTieredState() == null in  remove entry ");
+                            }
+                            if(context.getEntryTieredState() != TieredState.TIERED_HOT){
+                                _engine.getTieredStorageManager().getInternalStorage().removeEntry(context, entryHolder);
+                            }
                         }
                     } else {
-
                         _storageAdapter.removeEntry(context, entryHolder, origin, leaseExpiration, shouldReplicate);
                     }
                     if (shouldReplicate && !context.isDelayedReplicationForbulkOpUsed())
@@ -2051,19 +2051,19 @@ public class CacheManager extends AbstractCacheManager
                     if (!disableSAcall) {
                         if (entryHolder.isBlobStoreEntry() && isDirectPersistencyEmbeddedtHandlerUsed() && context.isActiveBlobStoreBulk())
                             context.setForBulkRemove(entryHolder, removeReason);
-
                         if(isTieredStorage()){
-                            if(context.getEntryTieredState() == null ){
-                                throw new IllegalStateException("context.getEntryTieredState() == null in  remove entry ");
-                            }
+                            if (!leaseExpiration){
+                                if(context.getEntryTieredState() == null ){
+                                    throw new IllegalStateException("context.getEntryTieredState() == null in  remove entry ");
+                                }
 
-                            if(context.getEntryTieredState() != TieredState.TIERED_HOT){
-                                _engine.getTieredStorageManager().getInternalStorage().removeEntry(context, entryHolder);
+                                if(context.getEntryTieredState() != TieredState.TIERED_HOT){
+                                    _engine.getTieredStorageManager().getInternalStorage().removeEntry(context, entryHolder);
+                                }
                             }
                         } else {
                             _storageAdapter.removeEntry(context, entryHolder, origin, leaseExpiration, actualUpdateRedoLog);
                         }
-
                         if (actualUpdateRedoLog && !context.isDelayedReplicationForbulkOpUsed())
                             handleRemoveEntryReplication(context, entryHolder, removeReason);
                     }
@@ -2081,11 +2081,10 @@ public class CacheManager extends AbstractCacheManager
         }
 
         RecentDeleteCodes recentDeleteUsage = updated_recent_deletes ? RecentDeleteCodes.INSERT_DUMMY : RecentDeleteCodes.NONE;
-
         if(isTieredStorage()){
-            if(context.getEntryTieredState() != TieredState.TIERED_COLD)
+            if(leaseExpiration || context.getEntryTieredState() != TieredState.TIERED_COLD ) {
                 removeEntryFromCache(entryHolder, false /*initiatedByEvictionStrategy*/, true/*locked*/, pEntry/* pEntry*/, recentDeleteUsage);
-
+        }
         } else if (!entryHolder.isBlobStoreEntry() || context.getBlobStoreBulkInfo() == null || (((IBlobStoreEntryHolder) entryHolder).getBulkInfo() == null
                 && !context.getBlobStoreBulkInfo().wasEntryRemovedInChunk(entryHolder.getUID()))) {
             //in case of blob-store bulk remove the entry from cache only after the bulk op performed

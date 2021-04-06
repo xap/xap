@@ -437,7 +437,6 @@ public interface Constants {
         String FULL_ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS = SPACE_CONFIG_PREFIX + ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS;
         String ENGINE_BLOBSTORE_ROCKSDB_ALLOW_DUPLICATE_UIDS_DEFAULT = "auto";
 
-
     }
 
     public interface Replication {
@@ -525,6 +524,8 @@ public interface Constants {
 
         boolean LM_DISABLE_ENTRIES_LEASES_DEFAULT = false;
 
+        long TIERED_STORAGE_TIME_BASED_GRACE_PERIOD_EVICTION_DEFAULT = 10 * 1000;
+
         String LM_EXPIRATION_TIME_UNUSED_TXN_PROP = "lease_manager.expiration_unused_txns";
 
         String LM_DISABLE_ENTRIES_LEASES_PROP = "lease_manager.disable_entries_leases";
@@ -542,6 +543,8 @@ public interface Constants {
         String FULL_LM_EXPIRATION_TIME_INTERVAL_PROP = SPACE_CONFIG_PREFIX + LM_EXPIRATION_TIME_INTERVAL_PROP;
         String LM_BACKUP_EXPIRATION_DELAY_PROP = "lease_manager.backup_leases_expiration_delay";
         String LM_SEGMEENTS_PER_EXPIRATION_CELL_PROP = "lease_manager.segments_per_expiration_cell";
+
+        String TIERED_STORAGE_TIME_BASED_EVICTION_GRACE_PERIOD = "lease_manager.tiered_storage_time_based_grace_period_eviction";
     }
 
     public interface SystemTime {
