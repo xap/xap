@@ -2,6 +2,7 @@ package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.j_spaces.core.cache.context.TemplateMatchTier;
 import com.j_spaces.jdbc.builder.range.SegmentRange;
@@ -9,6 +10,7 @@ import com.j_spaces.jdbc.builder.range.SegmentRange;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 public class TimePredicate implements CachePredicate, InternalCachePredicate {
     private final String typeName;
@@ -36,9 +38,11 @@ public class TimePredicate implements CachePredicate, InternalCachePredicate {
     }
 
     //eviction from hot tier
-    public static long getExpirationTime(long currentTime){
-        //TODO - tiered storage
-        return 0;
+    public long getExpirationTime(IEntryPacket entry, long gracePeriod) {
+        //assumes time column field not null when this method is reached
+        Object value = entry.getPropertyValue(getTimeColumn());
+        long originalValueInLong = Long.class.equals(value.getClass())? (long)value : SqliteUtils.convertTimeTypeToInstant(value).toEpochMilli();
+        return originalValueInLong + period.toMillis() + gracePeriod;
     }
 
     //For tests
@@ -65,6 +69,11 @@ public class TimePredicate implements CachePredicate, InternalCachePredicate {
        String timeType = template.getServerTypeDesc().getTypeDesc().getFixedProperty(timeColumn).getTypeName();
        TemplateMatchTier templateMatchTier = SqliteUtils.getTemplateMatchTier(getTimeRuleAsRange(), template, timeType);
        return SqliteUtils.evaluateByMatchTier(template, templateMatchTier);
+    }
+
+    @Override
+    public boolean isTimeRule(){
+        return true;
     }
 
     public SegmentRange getTimeRuleAsRange(){

@@ -73,6 +73,10 @@ public class TieredStorageTableConfig implements Externalizable {
         return this;
     }
 
+    public boolean isTimeRule(){
+        return timeColumn != null && period != null;
+    }
+
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         IOUtils.writeString(out, name);
