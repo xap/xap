@@ -62,6 +62,7 @@ public class GConnection implements Connection {
     private ConnectionContext context;
     private Integer readModifiers;
     private Properties properties;
+    private Connection fallbackConnection;
 
     private GConnection(IJSpace space, Properties properties) throws SQLException {
         try {
@@ -69,6 +70,10 @@ public class GConnection implements Connection {
             this.space = (ISpaceProxy) space;
             this.properties = properties;
             initialize(space.getDirectProxy().getRemoteJSpace());
+
+            String fallbackConnectionString = properties.getProperty("fallbackConnectionString");
+            if (fallbackConnectionString != null)
+                fallbackConnection = DriverManager.getConnection(fallbackConnectionString);
         } catch (Exception e) {
             SQLException se = new SQLException("Connect to space failed:[ " + space.getURL().getURL() + "]");
             se.initCause(e);
@@ -89,6 +94,10 @@ public class GConnection implements Connection {
             this.space = (ISpaceProxy) SpaceFinder.find(this.url);
             this.properties = properties;
             initialize(space.getDirectProxy().getRemoteJSpace());
+
+            String fallbackConnectionString = properties.getProperty("fallbackConnectionString");
+            if (fallbackConnectionString != null)
+                fallbackConnection = DriverManager.getConnection(fallbackConnectionString);
         } catch (Exception e) {
             SQLException se = new SQLException("Error creating connection; Cause: " + e, "GSP", -137);
             se.initCause(e);
@@ -407,7 +416,7 @@ public class GConnection implements Connection {
      * @see java.sql.Connection#createStatement()
      */
     public Statement createStatement() throws SQLException {
-        return new GStatement(this);
+        return fallbackConnection == null ? new GStatement(this) : new GStatementWithFallback(this);
     }
 
     /* (non-Javadoc)
@@ -742,5 +751,9 @@ public class GConnection implements Connection {
 
     public int getNetworkTimeout() throws SQLException {
         throw new UnsupportedOperationException();
+    }
+
+    public Connection getFallbackConnection() {
+        return fallbackConnection;
     }
 }
