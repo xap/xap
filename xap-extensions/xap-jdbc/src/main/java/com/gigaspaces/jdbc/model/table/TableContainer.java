@@ -12,7 +12,7 @@ public abstract class TableContainer {
 
     public abstract QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
 
-    public abstract QueryColumn addQueryColumn(String columnName, String alias);
+    public abstract QueryColumn addQueryColumn(String columnName, String alias, boolean visible);
 
     public abstract List<QueryColumn> getVisibleColumns();
 
@@ -27,4 +27,14 @@ public abstract class TableContainer {
     public abstract QueryTemplatePacket createQueryTemplatePacketWithRange(Range range);
 
     public abstract void setQueryTemplatePackage(QueryTemplatePacket queryTemplatePacket);
+
+    public abstract TableContainer getJoinedTable();
+
+    public abstract void setJoinedTable(TableContainer joinedTable);
+
+    public abstract QueryResult getQueryResult();
+
+    public abstract void setJoined(boolean joined);
+
+    public abstract boolean isJoined();
 }

@@ -28,7 +28,7 @@ import java.util.Set;
 
 public class QueryHandler {
 
-    private final Feature[] allowedFeatures = new Feature[] {Feature.select, Feature.explain, Feature.exprLike, Feature.jdbcParameter/*, Feature.join, Feature.joinInner*/};
+    private final Feature[] allowedFeatures = new Feature[] {Feature.select, Feature.explain, Feature.exprLike, Feature.jdbcParameter, Feature.join, Feature.joinInner};
 
     public ResponsePacket handle(String query, IJSpace space, Object[] preparedValues) throws SQLException {
 
@@ -88,23 +88,21 @@ public class QueryHandler {
         }
     }
 
-    public ResultEntry convertEntriesToResultArrays(QueryResult entries) {
+    public ResultEntry convertEntriesToResultArrays(QueryResult queryResult) {
         // Column (field) names and labels (aliases)
-        int columns = entries.getQueryColumns().size();
+        int columns = queryResult.getQueryColumns().size();
 
-        String[] fieldNames = entries.getQueryColumns().stream().map(QueryColumn::getName).toArray(String[]::new);
-        String[] columnLabels = entries.getQueryColumns().stream().map(qC -> qC.getAlias() == null ? qC.getName() : qC.getAlias()).toArray(String[]::new);
+        String[] fieldNames = queryResult.getQueryColumns().stream().map(QueryColumn::getName).toArray(String[]::new);
+        String[] columnLabels = queryResult.getQueryColumns().stream().map(qC -> qC.getAlias() == null ? qC.getName() : qC.getAlias()).toArray(String[]::new);
 
         //the field values for the result
-        Object[][] fieldValues = new Object[entries.size()][columns];
+        Object[][] fieldValues = new Object[queryResult.size()][columns];
 
-        Iterator<TableRow> iter = entries.iterator();
 
         int row = 0;
 
-        while (iter.hasNext()) {
-            TableRow entry = iter.next();
-
+        while (queryResult.next()) {
+            TableRow entry = queryResult.getCurrent();
             int column = 0;
             for (int i = 0; i < columns; i++) {
                 fieldValues[row][column++] = entry.getPropertyValue(i);

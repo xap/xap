@@ -6,12 +6,14 @@ public class QueryColumn {
     private final boolean isVisible;
     private final boolean isUUID;
     public static final String UUID_COLUMN = "UID";
+    private final TableContainer tableContainer;
 
-    public QueryColumn(String name, String alias, boolean isVisible) {
+    public QueryColumn(String name, String alias, boolean isVisible, TableContainer tableContainer) {
         this.name = name;
         this.alias = alias;
         this.isVisible = isVisible;
         this.isUUID = name.equalsIgnoreCase(UUID_COLUMN);
+        this.tableContainer = tableContainer;
     }
 
     public String getName() {
@@ -28,5 +30,9 @@ public class QueryColumn {
 
     public boolean isUUID() {
         return isUUID;
+    }
+
+    public Object getCurrentValue(){
+        return tableContainer.getQueryResult().getCurrent().getPropertyValue(this);
     }
 }

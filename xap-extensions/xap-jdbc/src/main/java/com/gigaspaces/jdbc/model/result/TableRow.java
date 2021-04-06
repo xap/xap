@@ -32,20 +32,12 @@ public class TableRow {
         }
     }
 
-    public TableRow(List<QueryColumn> queryColumns, TableRow... tablesRow) {
-        if (Arrays.stream(tablesRow).allMatch(x -> x instanceof ExplainPlanTableRow)) {
-            ExplainPlanTableRow[] explainPlanTableRows = Arrays.stream(tablesRow).map(x -> ((ExplainPlanTableRow) x)).toArray(ExplainPlanTableRow[]::new);
-            mergeExplainPlan(explainPlanTableRows);
-        } else {
-            this.columns = queryColumns.toArray(new QueryColumn[0]);
-            values = Arrays.stream(columns)
-                    .map(queryColumn ->
-                            Arrays.stream(tablesRow)
-                                    .filter(tableRow -> tableRow.hasColumn(queryColumn))
-                                    .findFirst()
-                                    .get()
-                                    .getPropertyValue(queryColumn))
-                    .toArray();
+    public TableRow(List<QueryColumn> queryColumns) {
+        this.columns = queryColumns.toArray(new QueryColumn[0]);
+        values = new Object[columns.length];
+        for (int i = 0; i < queryColumns.size(); i++) {
+            Object value = queryColumns.get(i).getCurrentValue();
+            values[i] = value;
         }
     }
 

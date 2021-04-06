@@ -32,6 +32,9 @@ public class ConcreteTableContainer extends TableContainer {
     private final String name;
     private final String alias;
     private Integer limit = Integer.MAX_VALUE;
+    private QueryResult queryResult;
+    private TableContainer joinedTable;
+    private boolean joined = false;
 
     public ConcreteTableContainer(String name, String alias, IJSpace space) {
         this.space = space;
@@ -50,6 +53,8 @@ public class ConcreteTableContainer extends TableContainer {
 
     @Override
     public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
+        if(queryResult != null)
+            return queryResult;
         String[] projectionC = visibleColumns.stream().map(QueryColumn::getName).toArray(String[]::new);
 
         try {
@@ -77,21 +82,22 @@ public class ConcreteTableContainer extends TableContainer {
             queryTemplatePacket.prepareForSpace(typeDesc);
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
             if (explainPlanImpl != null) {
-                return new ExplainPlanResult(explainPlanImpl.getExplainPlanInfo().toString(config.isExplainPlanVerbose()));
+                queryResult =  new ExplainPlanResult(explainPlanImpl.getExplainPlanInfo().toString(config.isExplainPlanVerbose()));
             } else {
-                return new QueryResult(res, visibleColumns);
+                queryResult  = new QueryResult(res, visibleColumns, this);
             }
+            return queryResult;
         } catch (Exception e) {
             throw new SQLException("Failed to get results from space", e);
         }
     }
 
     @Override
-    public QueryColumn addQueryColumn(String columnName, String alias) {
+    public QueryColumn addQueryColumn(String columnName, String alias, boolean visible) {
         if (!columnName.equalsIgnoreCase(QueryColumn.UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(columnName) == -1) {
             throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]");
         }
-        QueryColumn qc = new QueryColumn(columnName, alias, true);
+        QueryColumn qc = new QueryColumn(columnName, alias, visible, this);
         this.visibleColumns.add(qc);
         return qc;
     }
@@ -108,6 +114,20 @@ public class ConcreteTableContainer extends TableContainer {
     @Override
     public String getTableNameOrAlias() {
         return alias == null ? name : alias;
+    }
+
+    @Override
+    public TableContainer getJoinedTable() {
+        return joinedTable;
+    }
+
+    @Override
+    public void setJoinedTable(TableContainer joinedTable) {
+        this.joinedTable = joinedTable;
+    }
+
+    public QueryResult getQueryResult() {
+        return queryResult;
     }
 
     @Override
@@ -145,5 +165,15 @@ public class ConcreteTableContainer extends TableContainer {
     @Override
     public void setQueryTemplatePackage(QueryTemplatePacket queryTemplatePacket) {
         this.queryTemplatePacket = queryTemplatePacket;
+    }
+
+    @Override
+    public boolean isJoined() {
+        return joined;
+    }
+
+    @Override
+    public void setJoined(boolean joined) {
+        this.joined = joined;
     }
 }

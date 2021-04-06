@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 public class TempTableContainer extends TableContainer {
     private final QueryResult tableResult;
     private final String alias;
+    private TableContainer joinedTable;
 
     public TempTableContainer(QueryResult tableResult, String alias) {
         this.tableResult = tableResult;
@@ -23,7 +24,7 @@ public class TempTableContainer extends TableContainer {
     }
 
     @Override
-    public QueryColumn addQueryColumn(String columnName, String alias) {
+    public QueryColumn addQueryColumn(String columnName, String alias, boolean visible) {
         throw new UnsupportedOperationException("Not supported yet!");
     }
 
@@ -40,6 +41,21 @@ public class TempTableContainer extends TableContainer {
     @Override
     public String getTableNameOrAlias() {
         throw new UnsupportedOperationException("Not supported yet!");
+    }
+
+    @Override
+    public TableContainer getJoinedTable() {
+        throw new UnsupportedOperationException("Not supported yet!");
+    }
+
+    @Override
+    public void setJoinedTable(TableContainer joinedTable) {
+        this.joinedTable = joinedTable;
+    }
+
+    @Override
+    public QueryResult getQueryResult() {
+        return tableResult;
     }
 
     @Override
@@ -60,5 +76,15 @@ public class TempTableContainer extends TableContainer {
     @Override
     public void setQueryTemplatePackage(QueryTemplatePacket queryTemplatePacket) {
         throw new UnsupportedOperationException("Not supported yet!");
+    }
+
+    @Override
+    public void setJoined(boolean joined) {
+
+    }
+
+    @Override
+    public boolean isJoined() {
+        return false;
     }
 }

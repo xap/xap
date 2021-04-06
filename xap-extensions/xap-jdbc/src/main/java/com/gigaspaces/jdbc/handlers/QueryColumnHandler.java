@@ -74,7 +74,7 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
 
     private void fillQueryColumns(TableContainer table) {
         table.getAllColumnNames().forEach(columnName -> {
-            QueryColumn qc = table.addQueryColumn(columnName, null);
+            QueryColumn qc = table.addQueryColumn(columnName, null, true);
             queryColumns.add(qc);
         });
     }
@@ -85,7 +85,7 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
             @Override
             public void visit(Column column) {
                 TableContainer table = getTableForColumn(column, tables);
-                QueryColumn qc = table.addQueryColumn(column.getColumnName(), getStringOrNull(selectExpressionItem.getAlias()));
+                QueryColumn qc = table.addQueryColumn(column.getColumnName(), getStringOrNull(selectExpressionItem.getAlias()), true);
                 queryColumns.add(qc);
             }
         });

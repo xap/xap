@@ -3,13 +3,15 @@ package com.gigaspaces.jdbc;
 import com.gigaspaces.jdbc.exceptions.ExecutionException;
 import com.gigaspaces.jdbc.handlers.QueryColumnHandler;
 import com.gigaspaces.jdbc.handlers.WhereHandler;
-import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.gigaspaces.jdbc.model.table.TempTableContainer;
 import com.j_spaces.core.IJSpace;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.schema.Column;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.*;
@@ -39,11 +41,29 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     @Override
     public void visit(PlainSelect plainSelect) {
         plainSelect.getFromItem().accept(this);
-        if (plainSelect.getJoins() != null)
-            plainSelect.getJoins().forEach(join -> join.getRightItem().accept(this));
-
+        if (plainSelect.getJoins() != null) {
+            plainSelect.getJoins().forEach(this::handleJoin);
+        }
         prepareQueryColumns(plainSelect);
         prepareWhereClause(plainSelect);
+    }
+
+    private void handleJoin(Join join){
+        TableContainer rightTable = createTableContainer((Table) join.getRightItem()); //TODO handle multiple creation of the same table
+        Column rightColumn = (Column) ((EqualsTo) join.getOnExpression()).getRightExpression();
+        rightTable.addQueryColumn(rightColumn.getColumnName(), null, false);
+        Column leftColumn = (Column) ((EqualsTo) join.getOnExpression()).getLeftExpression();
+        TableContainer leftTable = QueryColumnHandler.getTableForColumn(leftColumn, tables);
+        leftTable.addQueryColumn(leftColumn.getColumnName(), null, false);
+        if(leftTable.getJoinedTable() == null) { // TODO set right table every time and align it to recursive form in JoinTablesIterator
+            if(!rightTable.isJoined()) {
+                leftTable.setJoinedTable(rightTable);
+                rightTable.setJoined(true);
+            }
+        }
+
+        tables.add(rightTable);
+        //JoinType joinType = JoinType.getType(join);
     }
 
     private void prepareQueryColumns(PlainSelect plainSelect) {
@@ -64,7 +84,11 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
 
     @Override
     public void visit(Table table) {
-        tables.add(new ConcreteTableContainer(table.getFullyQualifiedName(), table.getAlias() == null ? null : table.getAlias().getName(), space));
+        tables.add(createTableContainer(table));
+    }
+
+    private TableContainer createTableContainer(Table table){
+        return new ConcreteTableContainer(table.getFullyQualifiedName(), table.getAlias() == null ? null : table.getAlias().getName(), space);
     }
 
     @Override
