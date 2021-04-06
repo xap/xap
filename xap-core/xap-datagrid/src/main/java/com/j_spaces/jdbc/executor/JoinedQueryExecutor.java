@@ -24,30 +24,17 @@ import com.j_spaces.jdbc.JoinedEntry;
 import com.j_spaces.jdbc.SelectColumn;
 import com.j_spaces.jdbc.Stack;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
-import com.j_spaces.jdbc.parser.AbstractInNode;
-import com.j_spaces.jdbc.parser.AndNode;
-import com.j_spaces.jdbc.parser.ColumnNode;
-import com.j_spaces.jdbc.parser.ExpNode;
-import com.j_spaces.jdbc.parser.InNode;
-import com.j_spaces.jdbc.parser.InnerQueryNode;
-import com.j_spaces.jdbc.parser.LiteralNode;
-import com.j_spaces.jdbc.parser.NotInNode;
-import com.j_spaces.jdbc.parser.OrNode;
-import com.j_spaces.jdbc.parser.ValueNode;
+import com.j_spaces.jdbc.parser.*;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 import com.j_spaces.jdbc.query.JoinedQueryResult;
 import com.j_spaces.jdbc.query.QueryTableData;
-
 import net.jini.core.transaction.Transaction;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.sql.SQLException;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Executes a join query. Create a cartesian product of all the tables , keep only the products that
@@ -68,6 +55,8 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
     // doesn't require to use the stack
     private ExpNode[] _traversalOrder;
 
+    //protected final static Logger _logger = LoggerFactory.getLogger(this.);
+
     // Required for Externalizable
     public JoinedQueryExecutor() {
     }
@@ -80,7 +69,11 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
             throws SQLException {
 
         JoinedQueryResult result = new JoinedQueryResult();
-        JoinedIterator iter = new JoinedIterator(query.getTablesData(), space, txn);
+        final List<QueryTableData> tablesData = query.getTablesData();
+        JoinedIterator iter = new JoinedIterator(tablesData, space, txn);
+
+        _logger.info( "~~~ execute, START, threadId=" + Thread.currentThread().getId() + ", ExpTree=" + query.getExpTree() +
+                ", tables count=" + tablesData.size() + ", tablesData=" + Arrays.toString( tablesData.toArray( new QueryTableData[0] ) ) + ", PreparedValues=" + Arrays.toString( query.getPreparedValues() ));
 
         while (iter.next()) {
             _currentEntry = iter.get();
@@ -88,6 +81,7 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
             // check if the joined entry satisfies the query condition.
             // run the whole query tree on the entry
             boolean matches = matchesExpressionTree(query.getExpTree(), space, txn, readModifier, max);
+            _logger.info( "~~~ execute, threadId=" + Thread.currentThread().getId() + ", _currentEntry=" + _currentEntry + ", matches=" + matches );
 
             // if the entry matched the whole expression tree - add it to the result set
             // otherwise it is omitted 
@@ -317,13 +311,17 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
      * traversed in postorder - the parent is traversed after its children.
      */
     protected boolean matchesExpressionTree(ExpNode root, ISpaceProxy space, Transaction txn, int readModifier, int max) throws SQLException {
-        if (root == null)
+        if (root == null) {
+            _logger.info("RETURN 1, " + appendThreadId()  );
             return true;
+        }
 
         // If entry is not full (i.e. left/right outer join), consider it matched.
         // TODO: check if this is still valid when join has more than 2 tables.
-        if (_currentEntry.isOuterJoin())
+        if (_currentEntry.isOuterJoin()) {
+            _logger.info("RETURN 2, " + appendThreadId() + ", _currentEntry=" + _currentEntry.toString() );
             return true;
+        }
 
         if (_traversalOrder != null) {
             for (int i = 0; i < _traversalOrder.length; i++) {
@@ -337,7 +335,9 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
                 else
                     node.accept(this, space, txn, readModifier, max);
             }
-            return getResults(root);
+            boolean retVal = getResults(root);
+            _logger.info("RETURN 3, retValue=" + retVal + appendThreadId());
+            return retVal;
         }
 
         Stack<ExpNode> stack = new Stack<>();
@@ -373,7 +373,13 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
                 node.accept(this, space, txn, readModifier, Integer.MAX_VALUE);
         }
 
-        return getResults(root);
+        boolean retValue =getResults(root);
+        _logger.info("RETURN 4, retValue=" + retValue + appendThreadId());
+        return retValue;
+    }
+
+    private String appendThreadId(){
+        return ", threadId=" + String.valueOf( Thread.currentThread().getId() );
     }
 
     /**
@@ -418,7 +424,10 @@ public class JoinedQueryExecutor extends AbstractQueryExecutor {
         public JoinedEntry get() {
             IEntryPacket[] entries = new IEntryPacket[_tablesData.size()];
             for (int i = 0; i < entries.length; i++) {
-                entries[i] = _tablesData.get(i).getCurrentEntry();
+                QueryTableData queryTableData = _tablesData.get(i);
+                IEntryPacket currentEntry = queryTableData.getCurrentEntry();
+                entries[i] = currentEntry;
+                _logger.info( "@@@ GET, currentEntry=" + currentEntry );
             }
             return new JoinedEntry(entries);
         }

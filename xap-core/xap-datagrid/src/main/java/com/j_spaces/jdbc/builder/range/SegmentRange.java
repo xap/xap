@@ -520,4 +520,14 @@ public class SegmentRange extends Range {
                 b.toString(),
                 parameters.toArray());
     }
+
+    @Override
+    public String toString() {
+        return "SegmentRange{" +
+                "_min=" + _min +
+                ", _includeMin=" + _includeMin +
+                ", _max=" + _max +
+                ", _includeMax=" + _includeMax +
+                '}';
+    }
 }

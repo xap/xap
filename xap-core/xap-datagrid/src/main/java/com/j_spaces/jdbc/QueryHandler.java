@@ -42,6 +42,7 @@ import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.Arrays;
 
 /**
  * QueryHandler executes the JDBC  statements set by the {@link GConnection}. For each statement the
@@ -110,12 +111,17 @@ public class QueryHandler {
                 break;
             case PREPARED_WITH_VALUES:
                 AbstractDMLQuery dmlQuery = (AbstractDMLQuery) handleStatement(request, space);
+                _logger.info( "Handle statement, threadId=" + Thread.currentThread().getId() +
+                        ", query hashCode=" + dmlQuery.hashCode() +
+                        ", QUERY=" + dmlQuery + ", request values: " + Arrays.toString( request.getPreparedValues() ) );
                 attachTransaction(session, dmlQuery);
                 request.build(dmlQuery);
                 dmlQuery.setSession(session);
                 dmlQuery.setSecurityInterceptor(securityInterceptor);
+                _logger.info( "PREPARED_WITH_VALUES, threadIndex=" + Thread.currentThread().getId() + ", dmlQuery=" + dmlQuery + ", request=" + request );
                 response = dmlQuery.executeOnSpace(space,
                         session.getTransaction());
+                _logger.info( "PREPARED_WITH_VALUES, threadIndex=" + Thread.currentThread().getId() + ", response row number=" + response.getResultEntry().getRowNumber() );
                 session.setUnderTransaction(request.getStatement());
                 commitForcedTransaction(dmlQuery, session);
                 break;
@@ -130,6 +136,7 @@ public class QueryHandler {
                 attachTransaction(session, dmlQuery);
                 dmlQuery.setSession(session);
                 dmlQuery.setSecurityInterceptor(securityInterceptor);
+                //dmlQuery = dmlQuery.clone();
                 response = dmlQuery.executePreparedValuesBatch(
                         space, session.getTransaction(), request.getPreparedValuesCollection());
                 session.setUnderTransaction(request.getStatement());
@@ -207,6 +214,8 @@ public class QueryHandler {
 
         // first, try to get it from the cache
         Query query = _queryCache.getQueryFromCache(request.getStatement());
+        //_logger.info( "Handle statement, threadId=" + Thread.currentThread().getId() + ", QUERY=" + query + ", request values: " + Arrays.toString( request.getPreparedValues() ) );
+
         try {
             if (query == null) {
                 if (_logger.isDebugEnabled()) {

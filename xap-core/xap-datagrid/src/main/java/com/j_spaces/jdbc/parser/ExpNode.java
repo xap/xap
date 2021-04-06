@@ -19,6 +19,7 @@ package com.j_spaces.jdbc.parser;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.logger.Constants;
 import com.j_spaces.jdbc.Stack;
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
@@ -29,6 +30,8 @@ import com.j_spaces.jdbc.query.IQueryResultSet;
 import com.j_spaces.jdbc.query.QueryTableData;
 
 import net.jini.core.transaction.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.sql.SQLException;
@@ -49,6 +52,9 @@ public abstract class ExpNode
     protected ExpNode leftChild, rightChild;
 
     protected QueryTemplatePacket template;
+
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
+
 
     /**
      * Empty constructor.
@@ -221,6 +227,7 @@ public abstract class ExpNode
     }
 
     public void setTemplate(QueryTemplatePacket template) {
+        _logger.info( "~~~ setTemplate, this hashCode=" + hashCode() + ", this.template=" + this.template + ", template=" + template );
         this.template = template;
     }
 
@@ -251,7 +258,10 @@ public abstract class ExpNode
         QueryTableData leftTable = ((ColumnNode) getLeftChild()).getColumnData()
                 .getColumnTableData();
 
+        //_logger.info( "-- before equals, hashCode=" + hashCode() + ", this=" + this);
+
         if (leftTable.equals(tableData)) {
+            //_logger.info( "-- within equals, hashCode=" + hashCode() );
             if (isJoined()) {
                 tableData.join(this);
             } else {
@@ -261,6 +271,9 @@ public abstract class ExpNode
                     tableData.setTableCondition(this);
                 }
             }
+        }
+        else{
+            //_logger.info( "-- ELSE equals, hashCode=" + hashCode() );
         }
         return false;
     }

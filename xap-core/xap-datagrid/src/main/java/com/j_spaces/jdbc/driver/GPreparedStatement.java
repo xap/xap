@@ -45,6 +45,7 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
@@ -57,7 +58,7 @@ import java.util.List;
 public class GPreparedStatement extends GStatement implements PreparedStatement {
 
     private final String sql;
-    private PreparedValuesCollection _preparedValuesCollection;
+    public PreparedValuesCollection _preparedValuesCollection;
 
     public GPreparedStatement(GConnection con, String sql) throws SQLException {
         super(con);
@@ -652,6 +653,15 @@ public class GPreparedStatement extends GStatement implements PreparedStatement 
                 IOUtils.writeObjectArray(out, valuesArray);
             }
         }
+
+        @Override
+        public String toString() {
+            return "PreparedValuesCollection{" +
+                    "_currentValues=" + Arrays.toString(_currentValues) +
+                    ", _currentValuesSetStatus=" + Arrays.toString(_currentValuesSetStatus) +
+                    ", _valuesBatch=" + _valuesBatch +
+                    '}';
+        }
     }
 
     @Override
@@ -669,4 +679,6 @@ public class GPreparedStatement extends GStatement implements PreparedStatement 
             throws SQLException {
         throw new UnsupportedOperationException();
     }
+
+
 }

@@ -20,11 +20,15 @@
 package com.j_spaces.jdbc.executor;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.logger.Constants;
 import com.j_spaces.jdbc.Join;
 import com.j_spaces.jdbc.parser.ColumnNode;
 import com.j_spaces.jdbc.parser.ExpNode;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 import com.j_spaces.jdbc.query.QueryTableData;
+import com.j_spaces.kernel.JSpaceUtilities;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,6 +56,8 @@ public class HashedEntriesCursor implements EntriesCursor {
     private IEntryPacket _currentEntry;
 
     private boolean leftJoin;
+
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     /**
      * @param table
@@ -105,6 +111,7 @@ public class HashedEntriesCursor implements EntriesCursor {
      * @see com.j_spaces.jdbc.executor.EntriesIndex#getCurrentEntry()
      */
     public IEntryPacket getCurrentEntry() {
+        _logger.info( "HashedEntriesCursor, hashCode=" + hashCode() + ", getCurrentEntry=" + _currentEntry );
         return _currentEntry;
     }
 
@@ -112,24 +119,33 @@ public class HashedEntriesCursor implements EntriesCursor {
      * @see com.j_spaces.jdbc.executor.EntriesIndex#next()
      */
     public boolean next() {
+
+        _logger.info( "HashedEntriesCursor, START NEXT, hashCode=" + hashCode() + ", _cursor=" + _cursor );
+
         //check if cursor needs to be initialized
         if (_cursor == null) {
             IEntryPacket joinEntryPacket = _joinTable.getCurrentEntry();
             List<IEntryPacket> match = getMatch(_joinCol, joinEntryPacket);
 
             if (match == null) {
-                if (!leftJoin)
+                if (!leftJoin) {
+                    _logger.info( "HashedEntriesCursor, RETURN FALSE 1, hashCode=" + hashCode()  );
                     return false;
+                }
                 match = SINGLE_NULL;
             }
             _cursor = match.iterator();
         }
 
+        _logger.info( "HashedEntriesCursor, hashCode=" + hashCode() + ", before next(), stacktrace:" + JSpaceUtilities.getStackTrace(new Exception("~~DEBUG~~")));
         if (_cursor.hasNext()) {
             _currentEntry = _cursor.next();
+            _logger.info( "HashedEntriesCursor, hashCode=" + hashCode() + ", INIT currentEntry:" + _currentEntry );
             return true;
         }
 
+
+        _logger.info( "HashedEntriesCursor, RETURN FALSE 2, hashCode=" + hashCode()  );
         return false;
 
     }

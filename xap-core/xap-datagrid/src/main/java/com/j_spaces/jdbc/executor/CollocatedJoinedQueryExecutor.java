@@ -31,6 +31,7 @@ public class CollocatedJoinedQueryExecutor extends AbstractQueryExecutor {
     public IQueryResultSet<IEntryPacket> execute(ISpaceProxy space, Transaction txn, int readModifier, int max)
             throws SQLException {
         try {
+            _logger.info( "---execute, query=" + query );
             AsyncFuture<CollocatedJoinSpaceResponseInfo> res = space.execute(new CollocatedJoinSpaceTask(query, txn, readModifier, max), null, null, null);
             return res.get().getResult();
         } catch (Exception e) {

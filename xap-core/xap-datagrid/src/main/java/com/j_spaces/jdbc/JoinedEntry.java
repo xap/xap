@@ -99,7 +99,7 @@ public class JoinedEntry extends EntryPacket implements Serializable {
      */
     public void createProjection(List<SelectColumn> columns) {
 
-        ArrayList<Object> fieldValues = new ArrayList<Object>();
+        ArrayList<Object> fieldValues = new ArrayList<>();
 
         for (int i = 0; i < columns.size(); i++) {
 
@@ -155,5 +155,12 @@ public class JoinedEntry extends EntryPacket implements Serializable {
         super.writeExternal(out, version);
         if (version.greaterOrEquals(PlatformLogicalVersion.v15_8_0))
             IOUtils.writeObjectArray(out, _entries);
+    }
+
+    @Override
+    public String toString() {
+        return "JoinedEntry{" +
+                "_entries=" + Arrays.toString(_entries) +
+                '}';
     }
 }

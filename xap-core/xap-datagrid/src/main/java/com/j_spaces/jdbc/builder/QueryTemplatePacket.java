@@ -24,23 +24,16 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.query.CompoundAndCustomQuery;
-import com.gigaspaces.internal.query.CompoundContainsItemsCustomQuery;
-import com.gigaspaces.internal.query.ExacValueCompoundIndexScanner;
-import com.gigaspaces.internal.query.IContainsItemsCustomQuery;
-import com.gigaspaces.internal.query.ICustomQuery;
-import com.gigaspaces.internal.query.IQueryIndexScanner;
-import com.gigaspaces.internal.query.NullValueIndexScanner;
-import com.gigaspaces.internal.query.RangeCompoundIndexScanner;
-import com.gigaspaces.query.explainplan.ExplainPlan;
+import com.gigaspaces.internal.query.*;
 import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.logger.Constants;
 import com.gigaspaces.metadata.index.CompoundIndex;
 import com.gigaspaces.metadata.index.ISpaceCompoundIndexSegment;
 import com.gigaspaces.metadata.index.SpaceIndex;
-import com.gigaspaces.metadata.index.SpaceIndexType;
 import com.gigaspaces.query.aggregators.AggregationSet;
+import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.ExternalTemplatePacket;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.client.TemplateMatchCodes;
@@ -48,31 +41,21 @@ import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.AggregationsUtil;
 import com.j_spaces.jdbc.JoinedEntry;
 import com.j_spaces.jdbc.SQLUtil;
-import com.j_spaces.jdbc.builder.range.ContainsItemIntersectionBase;
-import com.j_spaces.jdbc.builder.range.ContainsItemValueRange;
-import com.j_spaces.jdbc.builder.range.EmptyRange;
-import com.j_spaces.jdbc.builder.range.Range;
-import com.j_spaces.jdbc.builder.range.RelationRange;
+import com.j_spaces.jdbc.builder.range.*;
 import com.j_spaces.jdbc.query.ArrayListResult;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 import com.j_spaces.jdbc.query.QueryTableData;
-
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 @com.gigaspaces.api.InternalApi
@@ -100,6 +83,8 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
     public static final IQueryIndexScanner _dummyNullIndexScanner = new NullValueIndexScanner();
 
     private transient ExplainPlan explainPlan;
+
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     public QueryTemplatePacket() {
     }
@@ -678,7 +663,11 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
 
     public IQueryResultSet<IEntryPacket> readMultiple(ISpaceProxy space, Transaction txn, int maxResults, int modifiers)
             throws Exception {
-        return read(space, txn, 0, modifiers, false, maxResults, 0);
+        IQueryResultSet<IEntryPacket> result = read(space, txn, 0, modifiers, false, maxResults, 0);
+
+        _logger.info( "~~~readMultiple, threadId=" + Thread.currentThread().getId() + ", this:" + this + ", results size=" + result.size() );
+
+        return result;
     }
 
     @Override
@@ -895,5 +884,23 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
 
     public ExplainPlan getExplainPlan() {
         return explainPlan;
+    }
+
+    @Override
+    public String toString() {
+        return "QueryTemplatePacket{" +
+                "_table=" + _table +
+                ", _ranges=" + _ranges +
+                ", _isAlwaysEmpty=" + _isAlwaysEmpty +
+                ", _multipleUids=" + _multipleUids +
+                ", _preparedForSpace=" + _preparedForSpace +
+                ", _routing=" + _routing +
+                ", _queryResultType=" + _queryResultType +
+                ", _projectionTemplate=" + _projectionTemplate +
+                ", _aggregationSet=" + _aggregationSet +
+                ", _containsItemsQueries=" + _containsItemsQueries +
+                ", _allIndexValuesQuery=" + _allIndexValuesQuery +
+                ", explainPlan=" + explainPlan +
+                '}';
     }
 }

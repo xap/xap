@@ -388,4 +388,13 @@ public class EntryPacket extends AbstractEntryPacket {
         return true;
     }
 
+    @Override
+    public String toString() {
+        int salaryPosition = _typeDesc.getFixedPropertyPosition("salary");
+        int idPosition = _typeDesc.getFixedPropertyPosition("id");
+        return "EntryPacket{" +
+                " salary=" + ( salaryPosition >= 0 ? _fixedProperties[ salaryPosition ] : "N/A" ) +
+                ", id=" + _fixedProperties[ idPosition ] +
+                '}';
+    }
 }

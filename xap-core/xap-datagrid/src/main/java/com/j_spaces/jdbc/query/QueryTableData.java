@@ -21,16 +21,22 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.logger.Constants;
 import com.j_spaces.jdbc.*;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.executor.EntriesCursor;
 import com.j_spaces.jdbc.executor.ScanCursor;
 import com.j_spaces.jdbc.parser.ColumnNode;
 import com.j_spaces.jdbc.parser.ExpNode;
-
+import com.j_spaces.kernel.JSpaceUtilities;
 import net.jini.core.transaction.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 
 /**
@@ -61,6 +67,8 @@ public class QueryTableData implements Externalizable, Cloneable {
     private boolean _isJoined;
     private boolean _hasAsterixSelectColumns;
     private Query subQuery;
+
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
 
     // Required by Externalizable
     public QueryTableData() {
@@ -111,20 +119,22 @@ public class QueryTableData implements Externalizable, Cloneable {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("  QueryTableData\n    [\n        getTableAlias()=");
+        builder.append("  QueryTableData , hashCode=" + hashCode() + "  [ getTableAlias()=");
         builder.append(getTableAlias());
 
-        builder.append(", \n        getTableName()=");
+        builder.append(", getTableName()=");
         builder.append(getTableName());
 
         builder.append(", \n        getTableCondition()=");
         builder.append(getTableCondition());
-        builder.append(", \n        getJoinTable()=");
+        builder.append(", HashCode TableCondition=" + ( ( getTableCondition() != null ) ? getTableCondition().hashCode() : "NULL" ));
+
+/*        builder.append(", \n        getJoinTable()=");
 
         if (getJoinTable() != null)
-            builder.append(getJoinTable().getTableName());
-        builder.append(", \n        getJoinExpression()=");
-        builder.append(getJoinCondition());
+            builder.append(getJoinTable().getTableName());*/
+/*        builder.append(", \n        getJoinExpression()=");
+        builder.append(getJoinCondition());*/
         builder.append(", \n        getTableIndex()=");
         builder.append(getTableIndex());
         builder.append("\n    ]");
@@ -171,6 +181,7 @@ public class QueryTableData implements Externalizable, Cloneable {
      * @return IEntryPacket
      */
     public IEntryPacket getCurrentEntry() {
+        //_logger.info( "#### getCurrentEntry, EntriesCursor classname=" + getEntriesCursor().getClass().getName() );
         return getEntriesCursor().getCurrentEntry();
     }
 
@@ -179,21 +190,32 @@ public class QueryTableData implements Externalizable, Cloneable {
      * @return true _joinTable doesn't finished , false if finished
      */
     public boolean next() {
+
+        _logger.info( "QueryTableData, next 1, _joinTable=" + _joinTable );
+
         if (_joinTable == null)
             return getEntriesCursor().next();
 
         while (hasNext()) {
-            if (_joinTable.next())
+            _logger.info( "QueryTableData, hasNext 1" );
+            if (_joinTable.next()) {
+                _logger.info( "QueryTableData, next 2, return true");
                 return true;
+            }
+            _logger.info( "QueryTableData, hasNext 2" );
             //if joined table can't advance any further - increment this table cursor
             // and reset the joined
             if (getEntriesCursor().next()) {
+                _logger.info( "QueryTableData, _joinTable.reset() !" );
                 _joinTable.reset();
             } else {
+                _logger.info( "QueryTableData, next 3, return false");
                 return false;
             }
 
         }
+
+        _logger.info( "QueryTableData, next 4, return false");
         return false;
     }
 
@@ -223,10 +245,21 @@ public class QueryTableData implements Externalizable, Cloneable {
     }
 
     public EntriesCursor getEntriesCursor() {
-        return _entriesCursor.get();
+        //TODO
+        EntriesCursor entriesCursor = _entriesCursor.get();
+        _logger.info( "---getEntriesCursor, hashCode=" + hashCode() + ", threadId=" + Thread.currentThread().getId() +
+                ", _entriesCursor hashcode=" + _entriesCursor.hashCode() +
+                ( ", entriesCursor=" + ( entriesCursor != null ? entriesCursor.hashCode() : "NULL" ) ) );
+        return entriesCursor;
     }
 
     public void setEntriesCursor(EntriesCursor entriesCursor) {
+        _logger.info( "---setEntriesCursor, hashCode=" + hashCode() + ", threadId=" + Thread.currentThread().getId() +
+                ", _entriesCursor hashcode=" + _entriesCursor.hashCode() +
+                ( ", entriesCursorClassName=" + ( entriesCursor != null? entriesCursor.getClass().getName() : "NULL" ) ) +
+                ( ", entriesCursor=" + ( entriesCursor != null? entriesCursor.hashCode() : "NULL" ) ) +
+                ( ", CurrentEntry=" + ( entriesCursor != null? entriesCursor.getCurrentEntry() : "NULL" ) ) );
+
         _entriesCursor.set(entriesCursor);
     }
 
@@ -235,7 +268,11 @@ public class QueryTableData implements Externalizable, Cloneable {
     }
 
     public void setTableCondition(ExpNode tableCondition) {
-        _tableCondition = tableCondition;
+        _logger.info( "!!! setTableCondition, this.hashCode=" + hashCode() +" , setTableCondition=" + tableCondition +
+                        ", hashCode=" + ( tableCondition != null ? tableCondition.hashCode() : "NULL" ) + ", stackTrace:" +
+                                    JSpaceUtilities.getCallStackTraces(12) );
+
+        _tableCondition = tableCondition;//tableCondition != null ? ( ExpNode )tableCondition.clone() : null
     }
 
     public boolean isJoined() {
@@ -284,8 +321,11 @@ public class QueryTableData implements Externalizable, Cloneable {
     }
 
     public QueryTemplatePacket getTemplate(QueryResultTypeInternal queryResultType) {
-        if (getTableCondition() != null)
+        _logger.info( "~~ In getTemplate, getTableCondition=" + getTableCondition() );
+        if (getTableCondition() != null) {
+            _logger.info( "~~ In getTemplate, expNode hashCode=" + getTableCondition().hashCode() );
             return getTableCondition().getTemplate();
+        }
         else
             return new QueryTemplatePacket(this, queryResultType);
     }
@@ -301,13 +341,20 @@ public class QueryTableData implements Externalizable, Cloneable {
             tableEntries = executeSubQuery(space, txn);
         } else {
             QueryTemplatePacket template = getTemplate(query.getQueryResultType());
+            _logger.info("> init, TEMPLATE=" + template /*+ ", query=" + query*/);
             tableEntries = template.readMultiple(space, txn, Integer.MAX_VALUE, query.getReadModifier());
         }
 
-        if (_joinCondition != null)
-            setEntriesCursor(_joinCondition.createIndex(this, tableEntries));
-        else
-            setEntriesCursor(new ScanCursor(tableEntries));
+        if (_joinCondition != null) {
+            EntriesCursor entriesCursor = _joinCondition.createIndex(this, tableEntries);
+            _logger.info("> init, TEMPLATE, threadId=" + Thread.currentThread().getId() + ", entriesCursor==" + entriesCursor /*+ ", query=" + query*/);
+            setEntriesCursor( entriesCursor );
+        }
+        else {
+            ScanCursor scanCursor = new ScanCursor(tableEntries);
+            _logger.info("> init, threadId=" + Thread.currentThread().getId() + ", ELSE, scanCursor=" + scanCursor );
+            setEntriesCursor(scanCursor);
+        }
 
     }
 
@@ -328,7 +375,7 @@ public class QueryTableData implements Externalizable, Cloneable {
             return;
 
         Stack<ExpNode> stack = new Stack<>();
-
+        _logger.info( ">> createJoinIndex=" + hashCode() + ", toString=" + toString() );
         stack.push(root);
         while (!stack.isEmpty()) {
 
@@ -419,8 +466,57 @@ public class QueryTableData implements Externalizable, Cloneable {
 
     @Override
     public QueryTableData clone() throws CloneNotSupportedException {
-        QueryTableData queryTableData = (QueryTableData)super.clone();
-        return queryTableData;
+        QueryTableData clonedQueryTableData = (QueryTableData)super.clone();
+
+        EntriesCursor entriesCursor = this._entriesCursor.get();
+
+        _logger.info("~~~ QueryTableData CLONE, hashCode=" + hashCode() + ", threadId=" + Thread.currentThread().getId() +
+                ", entriesCursor.hashCode=" + this._entriesCursor.hashCode() +
+                ", clonedQueryTableData.hashCode=" + clonedQueryTableData._entriesCursor.hashCode() +
+                ", clonedQueryTableData.getTableCondition:" + clonedQueryTableData.getTableCondition() +
+                ", entriesCursor=" + entriesCursor);
+
+        //clonedQueryTableData._entriesCursor = new ThreadLocal<>();
+
+        //clonedQueryTableData._entriesCursor.set();
+/*
+        if( entriesCursor != null ) {
+            queryTableData._entriesCursor.set( entriesCursor );
+            IEntryPacket currentEntry = entriesCursor.getCurrentEntry();
+            IEntryPacket clonedEntryPacket =  currentEntry != null ? currentEntry.clone() : null;
+            _logger.info("~~~ QueryTableData CLONE, ! hashCode=" + hashCode() + ", threadId=" + Thread.currentThread().getId() +
+                    ", entriesCursor=" + entriesCursor +
+                    ", entriesCursor.getCurrentEntry()=" + currentEntry +
+                    ", entriesCursor.getCurrentEntry hashCode=" + ( currentEntry != null ? currentEntry.hashCode() : "NULL" ) +
+                    ", clonedEntryPacket=" + clonedEntryPacket +
+                    ", clonedEntryPacket hashCode=" + ( clonedEntryPacket != null ? clonedEntryPacket.hashCode() : "NULL" ) );
+        }*/
+
+/*
+        //QueryTableData queryTableData = new QueryTableData(this.getTableName(), this.getTableAlias(), this.getTableIndex());
+        queryTableData.setAsterixSelectColumns(_hasAsterixSelectColumns);
+        //queryTableData.setEntriesCursor();
+        queryTableData.setJoined(isJoined());
+        */
+        /*
+        if( getJoinTable() != null ) {
+            clonedQueryTableData.setJoinTable(getJoinTable().clone());
+        }
+        clonedQueryTableData.setJoinType(getJoinType());
+        if( getJoinCondition() != null ) {
+            clonedQueryTableData.setJoinCondition((ExpNode)getJoinCondition().clone());
+        }
+        clonedQueryTableData.setSubQuery(getSubQuery());
+        if( getTableCondition() != null ) {
+            clonedQueryTableData.setTableCondition( (ExpNode)getTableCondition().clone() );
+        }
+        clonedQueryTableData.setTypeDesc(getTypeDesc());
+*/
+        /*
+        if( this.getEntriesCursor() != null ) {
+            queryTableData.setEntriesCursor(this.getEntriesCursor());
+        }*/
+        return clonedQueryTableData;
     }
 
     @Override

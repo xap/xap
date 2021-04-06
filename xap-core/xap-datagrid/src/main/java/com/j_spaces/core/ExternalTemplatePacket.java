@@ -155,7 +155,9 @@ public class ExternalTemplatePacket extends ExternalEntryPacket implements ITemp
 
     @Override
     public ExternalTemplatePacket clone() {
-        return (ExternalTemplatePacket) super.clone();
+        ExternalTemplatePacket clonedExternalTemplatePacket = (ExternalTemplatePacket) super.clone();
+        System.out.println("!!! CLONE:" + clonedExternalTemplatePacket );
+        return clonedExternalTemplatePacket;
     }
 
     @Override

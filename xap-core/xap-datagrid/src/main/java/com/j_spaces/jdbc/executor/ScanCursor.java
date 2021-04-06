@@ -20,7 +20,10 @@
 package com.j_spaces.jdbc.executor;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.logger.Constants;
 import com.j_spaces.jdbc.query.IQueryResultSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 
@@ -39,6 +42,8 @@ public class ScanCursor
     private Iterator<IEntryPacket> _cursor;
     private IEntryPacket _currentEntry;
 
+    final private static Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_QUERY);
+
     /**
      * @param tableEntries
      */
@@ -52,6 +57,7 @@ public class ScanCursor
      * @see com.j_spaces.jdbc.executor.EntriesIndex#next()
      */
     public boolean next() {
+        _logger.info( "ScanCursor, hashCode=" + hashCode() + " START NEXT" );
         //check if cursor needs to be initialized
         if (_cursor == null) {
             _cursor = _entries.iterator();

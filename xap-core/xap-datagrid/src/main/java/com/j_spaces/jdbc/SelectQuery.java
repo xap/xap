@@ -766,6 +766,11 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
             try {
                 QueryTableData clonedQueryTableData = queryTableData.clone();
 
+                _logger.info( "~~~~~ clone ,JoinCondition hashCode=" + ( queryTableData.getTableCondition() != null ? queryTableData.getTableCondition().hashCode() : "NULL" ) +
+                        ", JoinCondition hashCode=" + ( queryTableData.getJoinCondition() != null ? queryTableData.getJoinCondition().hashCode() : "NULL" ) +
+                        "~~~~~ clone ,clonedJoinCondition hashCode=" + ( clonedQueryTableData.getTableCondition() != null ? clonedQueryTableData.getTableCondition().hashCode() : "NULL" ) +
+                        ", JoinCondition hashCode=" + ( clonedQueryTableData.getJoinCondition() != null ? clonedQueryTableData.getJoinCondition().hashCode() : "NULL" ) );
+
                 String tableAlias = clonedQueryTableData.getTableAlias();
                 String tableName = clonedQueryTableData.getTableName();
 
@@ -1378,5 +1383,23 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
         isSelectAll = in.readBoolean();
         joins = IOUtils.readList(in);
         allowedToUseCollocatedJoin = in.readBoolean();
+    }
+
+    @Override
+    public String toString() {
+        return "SelectQuery{" +
+                "orderColumns=" + orderColumns +
+                ", groupColumn=" + groupColumn +
+                ", isAggFunction=" + isAggFunction +
+                ", forUpdate=" + forUpdate +
+                ", isAddAbsentCol=" + isAddAbsentCol +
+                ", isDistinct=" + isDistinct +
+                ", _aggregationSet=" + _aggregationSet +
+                ", isSelectAll=" + isSelectAll +
+                ", joins=" + joins +
+                ", allowedToUseCollocatedJoin=" + allowedToUseCollocatedJoin +
+                ", preparedValues=" + Arrays.toString(preparedValues) +
+                ", tables=" + ( ( tables != null ) ? Arrays.toString( tables.entrySet().toArray( new Object[0] ) ) : "NULL" ) +
+                '}';
     }
 }
