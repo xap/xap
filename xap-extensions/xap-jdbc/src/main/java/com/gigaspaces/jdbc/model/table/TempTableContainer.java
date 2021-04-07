@@ -59,11 +59,6 @@ public class TempTableContainer extends TableContainer {
     }
 
     @Override
-    public void addRange(Range range) {
-        throw new UnsupportedOperationException("Not supported yet!");
-    }
-
-    @Override
     public void setLimit(Integer value) {
         throw new UnsupportedOperationException("Not supported yet!");
     }

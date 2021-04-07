@@ -131,16 +131,6 @@ public class ConcreteTableContainer extends TableContainer {
     }
 
     @Override
-    public void addRange(Range range) {
-        if (queryTemplatePacket == null) {
-            queryTemplatePacket = createQueryTemplatePacketWithRange(range);
-        } else {
-            QueryTemplatePacket queryTemplatePacketNew = createQueryTemplatePacketWithRange(range);
-            queryTemplatePacket = queryTemplatePacket.and(queryTemplatePacketNew);
-        }
-    }
-
-    @Override
     public void setLimit(Integer value) {
         if (this.limit != Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Already set!");
