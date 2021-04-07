@@ -1,6 +1,8 @@
 package com.gigaspaces.jdbc;
 
+import com.gigaspaces.internal.query.explainplan.TextReportFormatter;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.JoinTablesIterator;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.result.TableRow;
@@ -12,6 +14,7 @@ import com.j_spaces.core.IJSpace;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class JoinQueryExecutor {
     private final IJSpace space;
@@ -35,12 +38,23 @@ public class JoinQueryExecutor {
                 throw new IllegalArgumentException(e);
             }
         }
-        final List<QueryColumn> visibleColumns = config.isExplainPlan() ? Collections.singletonList(new ExplainPlanQueryColumn()) : this.queryColumns;
-        QueryResult res = new QueryResult(visibleColumns);
+        if(config.isExplainPlan())
+            return explain();
+        QueryResult res = new QueryResult(this.queryColumns);
         JoinTablesIterator joinTablesIterator = new JoinTablesIterator(tables);
         while (joinTablesIterator.hasNext()) {
-            res.add(new TableRow(visibleColumns));
+            res.add(new TableRow(this.queryColumns));
         }
         return res;
+    }
+
+    private QueryResult explain() {
+        TextReportFormatter formatter = new TextReportFormatter();
+        formatter.line("Nested Loop Join");
+        formatter.line("Select: " + String.join(", ",queryColumns.stream().map(QueryColumn::getName).collect(Collectors.toList())));
+        formatter.indent();
+        tables.stream().map(t -> ((ExplainPlanResult) t.getQueryResult()).getExplainPlanString()).forEach(formatter::line);
+        formatter.unindent();
+        return new ExplainPlanResult(formatter.toString());
     }
 }

@@ -1,4 +1,4 @@
-package com.gigaspaces.jdbc.model;
+package com.gigaspaces.jdbc.model.join;
 
 
 import net.sf.jsqlparser.statement.select.Join;

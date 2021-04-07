@@ -69,7 +69,7 @@ public class ConcreteTableContainer extends TableContainer {
             ExplainPlanV3 explainPlanImpl = null;
             if (config.isExplainPlan()) {
                 // Using LinkedHashMap to keep insertion order from the ArrayList
-                final Map<String, String> visibleColumnsAndAliasMap = visibleColumns.stream().collect(Collectors.toMap
+                final Map<String, String> visibleColumnsAndAliasMap = visibleColumns.stream().filter(QueryColumn::isVisible).collect(Collectors.toMap
                         (QueryColumn::getName, queryColumn -> queryColumn.getAlias() == null ? "" : queryColumn.getAlias()
                                 , (oldValue, newValue) -> newValue, LinkedHashMap::new));
 
