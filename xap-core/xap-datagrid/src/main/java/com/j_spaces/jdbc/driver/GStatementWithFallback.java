@@ -27,14 +27,14 @@ public class GStatementWithFallback extends GStatement {
             _logger.debug("Query failed to run using GDriver, trying fallback driver", e);
             try {
                 T call = second.call();
-                _logger.debug("Query ran sucessfully with fallback driver");
+                _logger.debug("Query ran successfully with fallback driver");
                 return call;
             } catch (SQLException ex) {
-                _logger.debug("Query failed to run using fallback driver", e);
+                _logger.debug("Query failed to run using fallback driver", ex);
                 throw ex;
             } catch (Exception ex) {
-                _logger.debug("Query failed to run using fallback driver, got generic exception", e);
-                throw new SQLException(e);
+                _logger.debug("Query failed to run using fallback driver, got generic exception", ex);
+                throw new SQLException(ex);
             }
         } catch (Exception e) {
             _logger.debug("Query failed to run using GDriver, got generic exception", e);
