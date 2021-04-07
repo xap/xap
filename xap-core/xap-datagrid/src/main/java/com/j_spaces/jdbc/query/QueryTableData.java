@@ -29,6 +29,7 @@ import com.j_spaces.jdbc.executor.ScanCursor;
 import com.j_spaces.jdbc.parser.ColumnNode;
 import com.j_spaces.jdbc.parser.ExpNode;
 
+import com.j_spaces.jdbc.tiered.CacheRules;
 import net.jini.core.transaction.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -349,6 +350,7 @@ public class QueryTableData implements Externalizable {
             tableEntries = executeSubQuery(space, txn, false);
         } else {
             QueryTemplatePacket template = getTemplate(query.getQueryResultType());
+            CacheRules.validateTiered(template);
             output.add("Table: "+this.getTableName()+", Template: " + template.getRanges());
             tableEntries = template.readMultiple(space, txn, Integer.MAX_VALUE, query.getReadModifier());
         }

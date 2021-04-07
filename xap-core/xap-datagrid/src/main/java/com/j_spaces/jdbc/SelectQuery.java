@@ -44,6 +44,9 @@ import com.j_spaces.jdbc.executor.JoinedQueryExecutor;
 import com.j_spaces.jdbc.executor.QueryExecutor;
 import com.j_spaces.jdbc.parser.*;
 import com.j_spaces.jdbc.query.*;
+import com.j_spaces.jdbc.tiered.CacheRules;
+import com.j_spaces.jdbc.tiered.TieredConfig;
+import com.j_spaces.jdbc.tiered.TimePredicate;
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.lease.LeaseDeniedException;
 import net.jini.core.transaction.Transaction;
@@ -228,6 +231,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
 
                 entries = executeJoinedQuery(space, txn);
             } else if (expTree == null) {
+                CacheRules.validateTiered(null);
                 _executor = new QueryExecutor(this);
 
                 if (isCount() && !isGroupBy()) {
@@ -245,6 +249,7 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
 
                 // Handle composite queries
                 if (expTree.getTemplate() == null || expTree.getTemplate().isComplex()) {
+                    CacheRules.validateTiered(expTree.getTemplate());
                     entries = executeQuery(space, txn);
                 }
                 // Handle queries that won't return anything
@@ -273,9 +278,11 @@ public class SelectQuery extends AbstractDMLQuery implements Externalizable {
 
                     // Check if can be executed as one count query
                     if (isCount() && !isGroupBy() && !isDistinct() && getAggregateFunc().size() == 1) {
+                        CacheRules.validateTiered(expTree.getTemplate());
                         return executeCount(expTree.getTemplate(), space, txn);
                     }
                     // Execute the read query
+                    CacheRules.validateTiered(expTree.getTemplate());
                     entries = executeQuery(space, txn);
                 }
             }
