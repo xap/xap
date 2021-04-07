@@ -16,6 +16,7 @@
 
 package com.gigaspaces.client.iterator.internal;
 
+import com.gigaspaces.client.iterator.ISpaceIteratorResult;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.transport.IEntryPacket;
@@ -35,33 +36,28 @@ import java.util.LinkedList;
  * @since 10.1
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceIteratorResult implements ISpaceIteratorResult {
+public class SpaceIteratorResult implements ISpaceIteratorResult<SpaceIteratorAggregatorPartitionResult> {
 
     private final List<IEntryPacket> entries = new ArrayList<IEntryPacket>();
     private final Map<Integer, LinkedList<String>> partitionedUids = new HashMap<Integer, LinkedList<String>>();
 
-    @Override
-    public void addPartition(ISpaceIteratorAggregatorPartitionResult partitionResult) {
+    public void addPartition(SpaceIteratorAggregatorPartitionResult partitionResult) {
         entries.addAll(partitionResult.getEntries());
-        SpaceIteratorAggregatorPartitionResult result = (SpaceIteratorAggregatorPartitionResult) partitionResult;
-        if (result.getUids() != null) {
-            partitionedUids.put(partitionResult.getPartitionId(), new LinkedList<>(result.getUids()));
+        if (partitionResult.getUids() != null) {
+            partitionedUids.put(partitionResult.getPartitionId(), new LinkedList<String>(partitionResult.getUids()));
         }
     }
 
-    @Override
     public List<IEntryPacket> getEntries() {
         return entries;
     }
 
-    @Override
     public void close() {
         entries.clear();
         partitionedUids.clear();
     }
 
-    @Override
-    public UidQueryPacket buildQueryPacket(ISpaceProxy spaceProxy, int batchSize, QueryResultTypeInternal resultType) {
+    public UidQueryPacket buildQueryPacket(int batchSize, QueryResultTypeInternal resultType) {
         final Integer partitionId = CollectionUtils.first(partitionedUids.keySet());
         if (partitionId == null)
             return null;

@@ -20,9 +20,7 @@ import com.gigaspaces.client.iterator.internal.ISpaceIteratorAggregatorPartition
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +31,7 @@ import java.util.Map;
  * @since 16.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class TieredSpaceIteratorAggregatorPartitionResult implements ISpaceIteratorAggregatorPartitionResult {
+public class TieredSpaceIteratorAggregatorPartitionResult implements Externalizable, ISpaceIteratorAggregatorPartitionResult {
 
     private static final long serialVersionUID = 1L;
 
@@ -52,9 +50,16 @@ public class TieredSpaceIteratorAggregatorPartitionResult implements ISpaceItera
         this.entries = new ArrayList<>();
     }
 
-    @Override
+
     public List<IEntryPacket> getEntries() {
         return entries;
+    }
+
+    @Override
+    public void addUID(String typeName, String uid) {
+        if (uids == null)
+            uids = new HashMap<>();
+        uids.computeIfAbsent(typeName, k -> new ArrayList<>()).add(uid);
     }
 
     public void setEntries(List<IEntryPacket> entries) {
@@ -70,17 +75,17 @@ public class TieredSpaceIteratorAggregatorPartitionResult implements ISpaceItera
         return this;
     }
 
-    @Override
+
     public int getPartitionId() {
         return partitionId;
     }
 
-    @Override
+
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(partitionId);
         IOUtils.writeList(out, entries);
         out.writeInt(uids == null ? -1 : uids.size());
-        if(uids != null) {
+        if (uids != null) {
             for (Map.Entry<String, List<String>> entry : uids.entrySet()) {
                 IOUtils.writeString(out, entry.getKey());
                 IOUtils.writeListString(out, entry.getValue());
@@ -88,12 +93,12 @@ public class TieredSpaceIteratorAggregatorPartitionResult implements ISpaceItera
         }
     }
 
-    @Override
+
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         partitionId = in.readInt();
         entries = IOUtils.readList(in);
         int size = in.readInt();
-        if(size == -1){
+        if (size == -1) {
             return;
         }
         uids = new HashMap<>(size);

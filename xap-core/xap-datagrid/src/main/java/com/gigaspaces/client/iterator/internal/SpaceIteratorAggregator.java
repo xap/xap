@@ -16,23 +16,44 @@
 
 package com.gigaspaces.client.iterator.internal;
 
+import com.gigaspaces.client.iterator.ISpaceIteratorResult;
+import com.gigaspaces.client.iterator.internal.tiered_storage.TieredSpaceIteratorAggregatorPartitionResult;
+import com.gigaspaces.client.iterator.internal.tiered_storage.TieredSpaceIteratorResult;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregatorContext;
 
 import java.io.Externalizable;
-import java.util.ArrayList;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * @author Niv Ingberg
  * @since 10.1
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceIteratorAggregator extends AbstractSpaceIteratorAggregator
+public class SpaceIteratorAggregator extends SpaceEntriesAggregator<ISpaceIteratorAggregatorPartitionResult>
         implements Externalizable {
 
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 1L;
+
+    private int batchSize;
+    private boolean isTiered;
+    private transient ISpaceIteratorAggregatorPartitionResult result;
     private transient ISpaceIteratorResult finalResult;
-    private transient SpaceIteratorAggregatorPartitionResult result;
+
+    public SpaceIteratorAggregator setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
+        return this;
+    }
+
+    public SpaceIteratorAggregator setTiered(boolean tiered) {
+        isTiered = tiered;
+        return this;
+    }
 
     @Override
     public String getDefaultAlias() {
@@ -42,13 +63,12 @@ public class SpaceIteratorAggregator extends AbstractSpaceIteratorAggregator
     @Override
     public void aggregate(SpaceEntriesAggregatorContext context) {
         if (result == null)
-            result = new SpaceIteratorAggregatorPartitionResult(context.getPartitionId());
-        if (result.getEntries().size() < getBatchSize())
+            result = isTiered ? new TieredSpaceIteratorAggregatorPartitionResult(context.getPartitionId())
+                    : new SpaceIteratorAggregatorPartitionResult(context.getPartitionId());
+        if (result.getEntries().size() < batchSize)
             result.getEntries().add((IEntryPacket) context.getRawEntry());
         else {
-            if (result.getUids() == null)
-                result.setUids(new ArrayList<String>());
-            result.getUids().add(context.getEntryUid());
+            result.addUID(context.getTypeDescriptor().getTypeName(), context.getEntryUid());
         }
     }
 
@@ -60,7 +80,7 @@ public class SpaceIteratorAggregator extends AbstractSpaceIteratorAggregator
     @Override
     public void aggregateIntermediateResult(ISpaceIteratorAggregatorPartitionResult partitionResult) {
         if (finalResult == null)
-            finalResult = new SpaceIteratorResult();
+            finalResult = isTiered ? new TieredSpaceIteratorResult() : new SpaceIteratorResult();
         finalResult.addPartition(partitionResult);
     }
 
@@ -69,5 +89,21 @@ public class SpaceIteratorAggregator extends AbstractSpaceIteratorAggregator
         if (result != null)
             aggregateIntermediateResult(result);
         return finalResult != null ? finalResult : new SpaceIteratorResult();
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeInt(batchSize);
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)){
+            out.writeBoolean(isTiered);
+        }
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        this.batchSize = in.readInt();
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)){
+            isTiered = in.readBoolean();
+        }
     }
 }

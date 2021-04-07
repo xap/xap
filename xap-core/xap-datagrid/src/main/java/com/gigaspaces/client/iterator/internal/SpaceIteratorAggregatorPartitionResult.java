@@ -31,9 +31,9 @@ import java.util.List;
  * @since 10.1
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceIteratorAggregatorPartitionResult implements ISpaceIteratorAggregatorPartitionResult {
+public class SpaceIteratorAggregatorPartitionResult implements Externalizable ,ISpaceIteratorAggregatorPartitionResult{
 
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 1L;
 
     private int partitionId;
     private List<IEntryPacket> entries;
@@ -50,9 +50,15 @@ public class SpaceIteratorAggregatorPartitionResult implements ISpaceIteratorAgg
         this.entries = new ArrayList<IEntryPacket>();
     }
 
-    @Override
     public List<IEntryPacket> getEntries() {
         return entries;
+    }
+
+    @Override
+    public void addUID(String typeName, String uid) {
+        if (uids == null)
+            uids= new ArrayList<>();
+        uids.add(uid);
     }
 
     public void setEntries(List<IEntryPacket> entries) {
@@ -67,7 +73,6 @@ public class SpaceIteratorAggregatorPartitionResult implements ISpaceIteratorAgg
         this.uids = uids;
     }
 
-    @Override
     public int getPartitionId() {
         return partitionId;
     }

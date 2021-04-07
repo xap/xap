@@ -16,8 +16,8 @@
 
 package com.gigaspaces.client.iterator.internal.tiered_storage;
 
+import com.gigaspaces.client.iterator.ISpaceIteratorResult;
 import com.gigaspaces.client.iterator.internal.ISpaceIteratorAggregatorPartitionResult;
-import com.gigaspaces.client.iterator.internal.ISpaceIteratorResult;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.SpaceProxyImpl;
@@ -34,32 +34,29 @@ import java.util.*;
  * @since 16.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class TieredSpaceIteratorResult implements ISpaceIteratorResult {
+public class TieredSpaceIteratorResult implements ISpaceIteratorResult<TieredSpaceIteratorAggregatorPartitionResult> {
 
     private final List<IEntryPacket> entries = new ArrayList<IEntryPacket>();
     private final Map<Integer, Map<String, List<String>>> partitionedUids = new HashMap<>();
 
-    @Override
-    public void addPartition(ISpaceIteratorAggregatorPartitionResult partitionResult) {
-        entries.addAll(partitionResult.getEntries());
-        TieredSpaceIteratorAggregatorPartitionResult result = (TieredSpaceIteratorAggregatorPartitionResult) partitionResult;
-        if (result.getUids() != null) {
-            partitionedUids.put(partitionResult.getPartitionId(), result.getUids());
-        }
-    }
 
-    @Override
     public List<IEntryPacket> getEntries() {
         return entries;
     }
 
     @Override
+    public void addPartition(TieredSpaceIteratorAggregatorPartitionResult partitionResult) {
+        entries.addAll(partitionResult.getEntries());
+        if (partitionResult.getUids() != null) {
+            partitionedUids.put(partitionResult.getPartitionId(), partitionResult.getUids());
+        }
+    }
+
     public void close() {
         entries.clear();
         partitionedUids.clear();
     }
 
-    @Override
     public UidQueryPacket buildQueryPacket(ISpaceProxy spaceProxy, int batchSize, QueryResultTypeInternal resultType) {
         final Integer partitionId = CollectionUtils.first(partitionedUids.keySet());
         if (partitionId == null)
@@ -77,7 +74,7 @@ public class TieredSpaceIteratorResult implements ISpaceIteratorResult {
         }
         if (uids.isEmpty()) {
             partitionedUids.get(partitionId).remove(nextType);
-            if(partitionedUids.get(partitionId).isEmpty()){
+            if (partitionedUids.get(partitionId).isEmpty()) {
                 partitionedUids.remove(partitionId);
             }
         }
@@ -93,7 +90,7 @@ public class TieredSpaceIteratorResult implements ISpaceIteratorResult {
         int size = entries.size();
         for (Map<String, List<String>> partitionResult : partitionedUids.values()) {
             for (List<String> typeResult : partitionResult.values()) {
-                    size += typeResult.size();
+                size += typeResult.size();
             }
         }
         return size;

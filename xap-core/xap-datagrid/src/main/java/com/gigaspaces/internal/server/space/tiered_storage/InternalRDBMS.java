@@ -44,10 +44,5 @@ public interface InternalRDBMS {
     boolean isKnownType(String name);
 
     void shutDown();
-
-    //Temporary for tests
-    int getWriteCount();
-
-    int getReadCount();
 }
 
