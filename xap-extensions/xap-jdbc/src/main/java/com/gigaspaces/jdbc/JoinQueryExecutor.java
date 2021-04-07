@@ -12,6 +12,7 @@ import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.core.IJSpace;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -53,7 +54,7 @@ public class JoinQueryExecutor {
         formatter.line("Nested Loop Join");
         formatter.line("Select: " + String.join(", ",queryColumns.stream().map(QueryColumn::getName).collect(Collectors.toList())));
         formatter.indent();
-        tables.stream().map(t -> ((ExplainPlanResult) t.getQueryResult()).getExplainPlanString()).forEach(formatter::line);
+        tables.forEach(t -> Arrays.stream(((ExplainPlanResult) t.getQueryResult()).getExplainPlanString().split("\n")).forEach(formatter::line));
         formatter.unindent();
         return new ExplainPlanResult(formatter.toString());
     }
