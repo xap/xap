@@ -1,9 +1,7 @@
 package com.gigaspaces.jdbc.handlers;
 
 import com.gigaspaces.jdbc.model.table.TableContainer;
-import com.j_spaces.jdbc.SQLUtil;
 import net.sf.jsqlparser.expression.*;
-import net.sf.jsqlparser.expression.operators.relational.IsBooleanExpression;
 import net.sf.jsqlparser.schema.Column;
 
 import java.sql.SQLException;
@@ -29,10 +27,14 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
 
     @Override
     public void visit(LongValue longValue) {
-        try {
-            this.value = getTable().getColumnValue(getColumn().getColumnName(), longValue.getValue());
-        } catch (SQLException e) {
-            this.value = longValue.getValue();
+        if (column.getColumnName().equalsIgnoreCase("rowNum")) {
+            this.value = (int)longValue.getValue();
+        } else {
+            try {
+                this.value = getTable().getColumnValue(getColumn().getColumnName(), longValue.getValue());
+            } catch (SQLException e) {
+                this.value = longValue.getValue();
+            }
         }
     }
 
