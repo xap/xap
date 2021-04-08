@@ -26,7 +26,7 @@ public class SpaceProxyPool {
     private final int capacity;
     private final long expirationTime;
     private final long waitingTimeout;
-    private final int CAPACITY_DEFAULT = 10;
+    private final int CAPACITY_DEFAULT = 50;
     private final int EXPIRATION_DEFAULT = 15 * 60 * 1000;
     private final int WAITING_TIMEOUT_DEFAULT = 3 * 60 * 1000;
     private int proxyCounter = 0;
