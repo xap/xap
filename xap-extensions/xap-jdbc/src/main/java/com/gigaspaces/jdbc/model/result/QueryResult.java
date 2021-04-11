@@ -28,6 +28,12 @@ public class QueryResult {
         this.rows = new ArrayList<>();
     }
 
+    public QueryResult(List<QueryColumn> visibleColumns, QueryResult tableResult) {
+        this.tableContainer = null;
+        this.queryColumns = visibleColumns;
+        this.rows = tableResult.rows.stream().map(row -> new TableRow(row, visibleColumns)).collect(Collectors.toList());
+    }
+
     private List<QueryColumn> filterNonVisibleColumns(List<QueryColumn> queryColumns){
         return queryColumns.stream().filter(QueryColumn::isVisible).collect(Collectors.toList());
     }

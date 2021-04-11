@@ -41,6 +41,15 @@ public class TableRow {
         }
     }
 
+    public TableRow(TableRow row, List<QueryColumn> queryColumns) {
+        this.columns = queryColumns.toArray(new QueryColumn[0]);
+        values = new Object[columns.length];
+        for (int i = 0; i < queryColumns.size(); i++) {
+            QueryColumn queryColumn = queryColumns.get(i);
+            values[i] = row.getPropertyValue(queryColumn);
+        }
+    }
+
     private void mergeExplainPlan(ExplainPlanTableRow[] explainPlanTableRows) {
         this.columns = new QueryColumn[]{new ExplainPlanQueryColumn()};
         String explainPlanString = Arrays.stream(explainPlanTableRows).map(x -> x.getPropertyValue(0).toString()).collect(Collectors.joining("\n------\n"));

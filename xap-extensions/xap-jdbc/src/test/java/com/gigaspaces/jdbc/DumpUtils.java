@@ -29,17 +29,6 @@ public class DumpUtils {
         ConsoleOutput.newline();
         ConsoleOutput.println(out);
 
-/*
-        System.out.println(getHeaderString(metaData));
-        int counter = 0;
-        for (Row row : result) {
-            System.out.println(rowToString(row.columnValues));
-            if (++counter == 10)
-                break;
-        }*/
-//        System.out.println(rowToString(result.stream().map(x -> x.columnValues).findAny().orElse(new Object[columnNames.length])));
-//        System.out.println(result.stream().map(x->x.columnValues).findAny().map(JdbcTestUtils::rowToString).orElse("| Query returned no data! |"));
-
         return result;
     }
 

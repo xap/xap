@@ -1,9 +1,7 @@
 package com.gigaspaces.jdbc;
 
-import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageTableConfig;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.GigaSpaceConfigurer;
-import org.openspaces.core.config.TieredStorageConfigurer;
 import org.openspaces.core.space.AbstractSpaceConfigurer;
 import org.openspaces.core.space.EmbeddedSpaceConfigurer;
 import org.openspaces.core.space.SpaceProxyConfigurer;
@@ -21,6 +19,7 @@ public class MainTester {
         Properties properties = new Properties();
 //                try (Connection connection = GSConnection.getInstance(space.getSpace(), properties)) {
         properties.put("com.gs.embeddedQP.enabled", "true");
+//        properties.put("space-config.QueryProcessor.datetime_format", "yyyy-MM-dd HH:mm:ss.SSS");
 
         try {
             Class.forName("com.j_spaces.jdbc.driver.GDriver");
@@ -37,10 +36,10 @@ public class MainTester {
 //            DumpUtils.dump(rs);
 
             Statement statement = connection.createStatement();
-//            execute(statement, "SELECT * FROM com.gigaspaces.jdbc.MyPojo where timestamp > '2001-09-10 05:20:00'");// WHERE rowNum <= 10");
-            execute(statement, "explain SELECT *, birthLong FROM com.gigaspaces.jdbc.MyPojo where birthLong = 1000192800000");// WHERE rowNum <= 10");
+//            execute(statement, "SELECT * FROM com.gigaspaces.jdbc.MyPojo where timestamp = '2001-09-10 05:20:00.231'");// WHERE rowNum <= 10");
+            execute(statement, "SELECT age, name, * FROM (SELECT name, age FROM com.gigaspaces.jdbc.MyPojo where name = 'Adler' ) where name = 'Adler' ");// WHERE rowNum <= 10");
 
-//            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo");// WHERE rowNum <= 10");
+//            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo WHERE rowNum <= 10");
 //            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo WHERE country like '%a%'");
 //            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo WHERE age NOT BETWEEN 10 and 20");
 //
@@ -74,16 +73,17 @@ public class MainTester {
     private static GigaSpace createAndFillSpace(boolean newDriver, boolean embedded) throws ParseException {
         String spaceName = "demo" + (newDriver ? "new" : "old");
         AbstractSpaceConfigurer configurer = embedded ? new EmbeddedSpaceConfigurer(spaceName)
+                .addProperty("space-config.QueryProcessor.datetime_format", "yyyy-MM-dd HH:mm:ss.SSS")
 //                .tieredStorage(new TieredStorageConfigurer().addTable(new TieredStorageTableConfig().setName(MyPojo.class.getName()).setCriteria("age > 20")))
                 : new SpaceProxyConfigurer(spaceName);
 
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS");
         GigaSpace gigaSpace = new GigaSpaceConfigurer(configurer).gigaSpace();
         if (embedded || gigaSpace.count(null) == 0) {
-            java.util.Date date1 = simpleDateFormat.parse("10/09/2001 05:20:00");
-            java.util.Date date2 = simpleDateFormat.parse("11/09/2001 10:20:00");
-            java.util.Date date3 = simpleDateFormat.parse("12/09/2001 15:20:00");
-            java.util.Date date4 = simpleDateFormat.parse("13/09/2001 20:20:00");
+            java.util.Date date1 = simpleDateFormat.parse("10/09/2001 05:20:00.231");
+            java.util.Date date2 = simpleDateFormat.parse("11/09/2001 10:20:00.250");
+            java.util.Date date3 = simpleDateFormat.parse("12/09/2001 15:20:00.100");
+            java.util.Date date4 = simpleDateFormat.parse("13/09/2001 20:20:00.300");
             gigaSpace.write(new MyPojo("Adler", 20, "Israel", date1, new Time(date1.getTime()), new Timestamp(date1.getTime())));
             gigaSpace.write(new MyPojo("Adam", 30, "Israel", date2, new Time(date2.getTime()), new Timestamp(date2.getTime())));
             gigaSpace.write(new MyPojo("Eve", 35, "UK", date3, new Time(date3.getTime()), new Timestamp(date3.getTime())));

@@ -1,10 +1,12 @@
 package com.gigaspaces.jdbc.model.table;
 
+import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.Range;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,6 +14,7 @@ public class TempTableContainer extends TableContainer {
     private final QueryResult tableResult;
     private final String alias;
     private TableContainer joinedTable;
+    private final List<QueryColumn> visibleColumns = new ArrayList<>();
 
     public TempTableContainer(QueryResult tableResult, String alias) {
         this.tableResult = tableResult;
@@ -20,17 +23,19 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public QueryResult executeRead(QueryExecutionConfig config) {
-        return tableResult;
+        return new QueryResult(visibleColumns, tableResult);
     }
 
     @Override
     public QueryColumn addQueryColumn(String columnName, String alias, boolean visible) {
-        throw new UnsupportedOperationException("Not supported yet!");
+        QueryColumn queryColumn = tableResult.getQueryColumns().stream().filter(qc -> qc.getName().equalsIgnoreCase(columnName)).findFirst().orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
+        visibleColumns.add(queryColumn);
+        return queryColumn;
     }
 
     @Override
     public List<QueryColumn> getVisibleColumns() {
-        return tableResult.getQueryColumns();
+        return visibleColumns;
     }
 
     @Override
@@ -85,6 +90,6 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public Object getColumnValue(String columnName, Object value) {
-        throw new UnsupportedOperationException("Not supported yet!");
+        return value;
     }
 }
