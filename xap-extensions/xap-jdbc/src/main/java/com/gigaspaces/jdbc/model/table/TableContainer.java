@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc.model.table;
 
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.Range;
@@ -39,4 +40,10 @@ public abstract class TableContainer {
     public abstract boolean isJoined();
 
     public abstract boolean hasColumn(String columnName);
+
+    public abstract JoinInfo getJoinInfo();
+
+    public abstract void setJoinInfo(JoinInfo joinInfo);
+
+    public abstract boolean checkJoinCondition();
 }
