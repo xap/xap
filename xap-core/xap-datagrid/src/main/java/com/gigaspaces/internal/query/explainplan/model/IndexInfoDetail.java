@@ -95,11 +95,14 @@ public class IndexInfoDetail {
         if (verbose) {
             return String.format("[#%s] (%s %s %s), IndexSize=%s, IndexType=%s"
                     , getId(), getName(), getOperator().getOperatorString()
-                    , getValue(), size, getType());
+                    , getValue(), getSizeDesc(), getType());
         } else {
             return String.format("- (%s %s %s), IndexSize=%s, IndexType=%s"
                     , getName(), getOperator().getOperatorString()
-                    , getValue(), size, getType());
+                    , getValue(), getSizeDesc(), getType());
         }
+    }
+    private String getSizeDesc() {
+        return size == null || size == -1 ? "unknown" : String.valueOf(size);
     }
 }
