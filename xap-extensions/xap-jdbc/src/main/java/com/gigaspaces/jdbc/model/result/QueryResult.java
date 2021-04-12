@@ -19,7 +19,6 @@ public class QueryResult {
         this.queryColumns = filterNonVisibleColumns(queryColumns);
         this.tableContainer = tableContainer;
         this.rows = res.stream().map(x -> new TableRow(x, queryColumns)).collect(Collectors.toList());
-        this.cursor = new RowScanCursor(rows);
     }
 
     public QueryResult(List<QueryColumn> queryColumns) {
@@ -92,8 +91,14 @@ public class QueryResult {
     }
 
     public Cursor<TableRow> getCursor() {
-        if(cursor == null)
-            cursor = new RowScanCursor(rows);
+        if(cursor == null) {
+            if(tableContainer != null && tableContainer.getJoinInfo() != null) {
+                cursor = new HashedRowCursor(tableContainer.getJoinInfo(), rows);
+            }
+            else {
+                cursor = new RowScanCursor(rows);
+            }
+        }
         return cursor;
     }
 }

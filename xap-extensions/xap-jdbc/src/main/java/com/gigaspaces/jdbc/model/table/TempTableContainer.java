@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc.model.table;
 
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.Range;
@@ -91,5 +92,20 @@ public class TempTableContainer extends TableContainer {
     @Override
     public Object getColumnValue(String columnName, Object value) {
         return value;
+    }
+
+    @Override
+    public JoinInfo getJoinInfo() {
+        return null;
+    }
+
+    @Override
+    public void setJoinInfo(JoinInfo joinInfo) {
+
+    }
+
+    @Override
+    public boolean checkJoinCondition() {
+        return false;
     }
 }

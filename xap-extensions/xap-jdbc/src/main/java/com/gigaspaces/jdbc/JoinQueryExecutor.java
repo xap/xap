@@ -44,7 +44,8 @@ public class JoinQueryExecutor {
         QueryResult res = new QueryResult(this.queryColumns);
         JoinTablesIterator joinTablesIterator = new JoinTablesIterator(tables);
         while (joinTablesIterator.hasNext()) {
-            res.add(new TableRow(this.queryColumns));
+            if(tables.stream().allMatch(TableContainer::checkJoinCondition))
+                res.add(new TableRow(this.queryColumns));
         }
         return res;
     }

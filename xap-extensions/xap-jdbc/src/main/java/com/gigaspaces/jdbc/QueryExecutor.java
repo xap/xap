@@ -4,12 +4,15 @@ import com.gigaspaces.jdbc.exceptions.ExecutionException;
 import com.gigaspaces.jdbc.handlers.QueryColumnHandler;
 import com.gigaspaces.jdbc.handlers.WhereHandler;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.join.JoinInfo;
+import com.gigaspaces.jdbc.model.join.JoinType;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.gigaspaces.jdbc.model.table.TempTableContainer;
 import com.j_spaces.core.IJSpace;
+import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
@@ -49,21 +52,32 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     }
 
     private void handleJoin(Join join){
-        TableContainer rightTable = createTableContainer((Table) join.getRightItem()); //TODO handle multiple creation of the same table
-        Column rightColumn = (Column) ((EqualsTo) join.getOnExpression()).getRightExpression();
-        rightTable.addQueryColumn(rightColumn.getColumnName(), null, false);
-        Column leftColumn = (Column) ((EqualsTo) join.getOnExpression()).getLeftExpression();
-        TableContainer leftTable = QueryColumnHandler.getTableForColumn(leftColumn, tables);
-        leftTable.addQueryColumn(leftColumn.getColumnName(), null, false);
-        if(leftTable.getJoinedTable() == null) { // TODO set right table every time and align it to recursive form in JoinTablesIterator
-            if(!rightTable.isJoined()) {
-                leftTable.setJoinedTable(rightTable);
-                rightTable.setJoined(true);
+        Expression onExpression = join.getOnExpression();
+        if(onExpression instanceof EqualsTo) {
+            Table rTable = (Table) join.getRightItem();
+            tables.add(createTableContainer(rTable));
+            Column rColumn = (Column) ((EqualsTo) onExpression).getRightExpression();
+            Column lColumn = (Column) ((EqualsTo) onExpression).getLeftExpression();
+            if(!rColumn.getTable().getName().equals(rTable.getAlias().getName())){ // in case on condition columns are reversed A JOIN B ON B.id = A.id
+                Column tmp = rColumn;
+                rColumn = lColumn;
+                lColumn = tmp;
+            }
+            TableContainer rightTable = QueryColumnHandler.getTableForColumn(rColumn, tables);
+            TableContainer leftTable = QueryColumnHandler.getTableForColumn(lColumn, tables);
+            QueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false);
+            QueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false);
+            rightTable.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinType.getType(join)));
+            if (leftTable.getJoinedTable() == null) { // TODO set right table every time and align it to recursive form in JoinTablesIterator
+                if (!rightTable.isJoined()) {
+                    leftTable.setJoinedTable(rightTable);
+                    rightTable.setJoined(true);
+                }
             }
         }
-
-        tables.add(rightTable);
-        //JoinType joinType = JoinType.getType(join);
+        else {
+            throw new UnsupportedOperationException("Only simple ON clause is supported");
+        }
     }
 
     private void prepareQueryColumns(PlainSelect plainSelect) {
