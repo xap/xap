@@ -78,12 +78,12 @@ public class IndexInfoDetail {
 
     @Override
     public String toString() {
-        return getString(getSize(), true);
+        return getString(true);
     }
 
     public String toStringNotVerbose(Integer min, Integer max) {
         if (min.equals(max)) {
-            return getString(min, false);
+            return getString(false);
         }
 
         return String.format("- (%s %s %s), IndexSize=[min=%s, max=%s], IndexType=%s"
@@ -91,15 +91,18 @@ public class IndexInfoDetail {
                 , getValue(), min, max, getType()); //TODO mishel - move to another method in my code instead of here.
     }
 
-    private String getString(Integer size, boolean verbose) {
+    private String getString(boolean verbose) {
         if (verbose) {
             return String.format("[#%s] (%s %s %s), IndexSize=%s, IndexType=%s"
                     , getId(), getName(), getOperator().getOperatorString()
-                    , getValue(), size, getType());
+                    , getValue(), getSizeDesc(), getType());
         } else {
             return String.format("- (%s %s %s), IndexSize=%s, IndexType=%s"
                     , getName(), getOperator().getOperatorString()
-                    , getValue(), size, getType());
+                    , getValue(), getSizeDesc(), getType());
         }
+    }
+    private String getSizeDesc() {
+        return size == null || size == -1 ? "unknown" : String.valueOf(size);
     }
 }

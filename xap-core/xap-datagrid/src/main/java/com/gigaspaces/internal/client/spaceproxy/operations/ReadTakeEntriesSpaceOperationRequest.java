@@ -400,4 +400,12 @@ public class ReadTakeEntriesSpaceOperationRequest extends SpaceOperationRequest<
             explainPlan.aggregate(result.getExplainPlan());
         }
     }
+
+    @Override
+    public boolean beforeOperationExecution(boolean isEmbedded) {
+        if (explainPlan != null) {
+            explainPlan.setExecutionType(getPartitionedClusterExecutionType());
+        }
+        return super.beforeOperationExecution(isEmbedded);
+    }
 }

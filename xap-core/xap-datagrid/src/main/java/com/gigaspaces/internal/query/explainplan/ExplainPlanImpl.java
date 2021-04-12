@@ -18,6 +18,7 @@ package com.gigaspaces.internal.query.explainplan;
 import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.IntegerObjectMap;
+import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterExecutionType;
 import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
@@ -36,6 +37,7 @@ public class ExplainPlanImpl implements ExplainPlan {
     protected final SQLQuery<?> query;
     protected final Map<String, SingleExplainPlan> plans = new HashMap<>();
     protected final IntegerObjectMap<Integer> indexInfoDescCache = CollectionsFactory.getInstance().createIntegerObjectMap();
+    protected PartitionedClusterExecutionType executionType;
 
     /**
      * @param query can be null
@@ -62,6 +64,14 @@ public class ExplainPlanImpl implements ExplainPlan {
 
     public Map<String, SingleExplainPlan> getAllPlans() {
         return plans;
+    }
+
+    public PartitionedClusterExecutionType getExecutionType() {
+        return executionType;
+    }
+
+    public void setExecutionType(PartitionedClusterExecutionType executionType) {
+        this.executionType = executionType;
     }
 
     public void reset() {
