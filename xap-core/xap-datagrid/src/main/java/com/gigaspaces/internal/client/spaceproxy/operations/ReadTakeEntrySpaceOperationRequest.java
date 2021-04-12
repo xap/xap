@@ -364,4 +364,11 @@ public class ReadTakeEntrySpaceOperationRequest extends SpaceOperationRequest<Re
         return explainPlan;
     }
 
+    @Override
+    public boolean beforeOperationExecution(boolean isEmbedded) {
+        if (explainPlan != null) {
+            explainPlan.setExecutionType(getPartitionedClusterExecutionType());
+        }
+        return super.beforeOperationExecution(isEmbedded);
+    }
 }
