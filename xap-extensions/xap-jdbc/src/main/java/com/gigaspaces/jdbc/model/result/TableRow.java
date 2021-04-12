@@ -50,12 +50,6 @@ public class TableRow {
         }
     }
 
-    private void mergeExplainPlan(ExplainPlanTableRow[] explainPlanTableRows) {
-        this.columns = new QueryColumn[]{new ExplainPlanQueryColumn()};
-        String explainPlanString = Arrays.stream(explainPlanTableRows).map(x -> x.getPropertyValue(0).toString()).collect(Collectors.joining("\n------\n"));
-        this.values = new String[]{explainPlanString};
-    }
-
     public Object getPropertyValue(int index) {
         return values[index];
     }
@@ -67,12 +61,5 @@ public class TableRow {
             }
         }
         return null;
-    }
-
-    public boolean hasColumn(QueryColumn column) {
-        for (QueryColumn queryColumn : columns) {
-            if (queryColumn.equals(column)) return true;
-        }
-        return false;
     }
 }

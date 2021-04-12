@@ -33,6 +33,8 @@ public class QueryColumn {
     }
 
     public Object getCurrentValue(){
+        if(tableContainer.getQueryResult().getCurrent() == null)
+            return null;
         return tableContainer.getQueryResult().getCurrent().getPropertyValue(this);
     }
 }

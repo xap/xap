@@ -8,6 +8,7 @@ import com.gigaspaces.internal.transport.ProjectionTemplate;
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.exceptions.TypeNotFoundException;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.j_spaces.core.IJSpace;
@@ -35,6 +36,7 @@ public class ConcreteTableContainer extends TableContainer {
     private QueryResult queryResult;
     private TableContainer joinedTable;
     private boolean joined = false;
+    private JoinInfo joinInfo;
 
     public ConcreteTableContainer(String name, String alias, IJSpace space) {
         this.space = space;
@@ -176,5 +178,22 @@ public class ConcreteTableContainer extends TableContainer {
     public Object getColumnValue(String columnName, Object value) throws SQLException {
         return SQLUtil.cast(typeDesc, columnName, value, false);
 
+    }
+
+    @Override
+    public JoinInfo getJoinInfo() {
+        return joinInfo;
+    }
+
+    @Override
+    public void setJoinInfo(JoinInfo joinInfo) {
+        this.joinInfo = joinInfo;
+    }
+
+    @Override
+    public boolean checkJoinCondition() {
+        if(joinInfo == null)
+            return true;
+        return joinInfo.checkJoinCondition();
     }
 }
