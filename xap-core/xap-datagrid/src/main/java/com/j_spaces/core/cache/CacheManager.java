@@ -3381,12 +3381,28 @@ public class CacheManager extends AbstractCacheManager
 
 
     /**
-     * Inserts the specified entry to cache, perform memory manager check.
+     * Inserts the specified entry to cache, perform memory manager check. used by initial load.
      */
-    public IEntryCacheInfo safeInsertEntryToCache(Context context, IEntryHolder entryHolder, boolean newEntry, TypeData pType, boolean pin, InitialLoadOrigin fromInitialLoad) {
+    public IEntryCacheInfo safeInsertEntryToCache(Context context, IEntryHolder entryHolder, boolean newEntry, TypeData pType, boolean pin, InitialLoadOrigin fromInitialLoad) throws SAException {
         // check memory water-mark
         _engine.getMemoryManager().monitorMemoryUsage(true);
-        return insertEntryToCache(context, entryHolder, newEntry, pType, pin, fromInitialLoad);
+        if (isTieredStorage()) {
+            //set context
+            context.setEntryTieredState(_engine.getTieredStorageManager().getEntryTieredState(entryHolder.getEntryData()));
+            if (context.isColdEntry()) {
+                _engine.getTieredStorageManager().getInternalStorage().insertEntry(context, entryHolder);
+            }
+        }
+
+        IEntryCacheInfo pE;
+        if ((isTieredStorage() && context.isHotEntry()) || !isTieredStorage()) {
+            pE = insertEntryToCache(context, entryHolder, newEntry,
+                    pType, pin, fromInitialLoad);
+        } else {//(isTieredStorage() && !context.isHotEntry())
+            pE = EntryCacheInfoFactory.createEntryCacheInfo(entryHolder);
+        }
+
+        return pE;
     }
 
 
