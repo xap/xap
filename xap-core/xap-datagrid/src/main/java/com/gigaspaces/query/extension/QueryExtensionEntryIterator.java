@@ -33,4 +33,6 @@ public abstract class QueryExtensionEntryIterator implements Closeable {
     public abstract String nextUid();
 
     public abstract int size();
+    public abstract boolean isNeedRematch();
+
 }

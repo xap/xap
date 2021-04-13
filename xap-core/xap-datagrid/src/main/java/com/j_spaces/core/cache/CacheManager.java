@@ -4715,9 +4715,13 @@ public class CacheManager extends AbstractCacheManager
                 }
             }
         }
+        boolean match = false;
+        if (resultOIS instanceof QueryExtensionIndexEntryIteratorWrapper){
+             match = resultOIS.needRematch();
+        }
 
         //if single index and is a lucene index
-        if (GS_13953_ENABLED && indexUsed && nameOfChosenCustomIndex != null
+        if ( match &&  GS_13953_ENABLED && indexUsed && nameOfChosenCustomIndex != null
                 && resultOIS != null && resultOIS.isExtensionIndex()) {
             //Remove already traversed paths of first custom index
             ((QueryExtensionIndexEntryIteratorWrapper) resultOIS).setAlreadyMatchedIndexPath(nameOfChosenCustomIndex);

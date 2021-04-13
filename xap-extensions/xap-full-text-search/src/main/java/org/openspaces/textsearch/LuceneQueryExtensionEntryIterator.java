@@ -65,4 +65,9 @@ public class LuceneQueryExtensionEntryIterator extends QueryExtensionEntryIterat
     public int size() {
         return scores.length;
     }
+
+    @Override
+    public boolean isNeedRematch() {
+        return false;
+    }
 }

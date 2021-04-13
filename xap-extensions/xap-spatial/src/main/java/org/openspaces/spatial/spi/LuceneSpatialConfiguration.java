@@ -83,6 +83,7 @@ public class LuceneSpatialConfiguration {
     private final DirectoryFactory _directoryFactory;
     private final int _maxUncommittedChanges;
     private final String _location;
+    private final boolean needRematch;
 
     private enum SupportedSpatialStrategy {
         RecursivePrefixTree, BBox, Composite;
@@ -140,8 +141,12 @@ public class LuceneSpatialConfiguration {
         this._location = initLocation(provider, info);
         //TODO: read from config
         this._maxUncommittedChanges = 1000;
+        this.needRematch = Double.parseDouble(provider.getCustomProperty(DIST_ERR_PCT, DIST_ERR_PCT_DEFAULT)) == 0;
     }
 
+    boolean getMatch (){
+        return this.needRematch;
+    }
     private static RectangleImpl createSpatialContextWorldBounds(LuceneSpatialQueryExtensionProvider provider) {
         String spatialContextWorldBounds = provider.getCustomProperty(SPATIAL_CONTEXT_WORLD_BOUNDS, null);
         if (spatialContextWorldBounds == null)
@@ -312,6 +317,7 @@ public class LuceneSpatialConfiguration {
         return _spatialContext;
     }
 
+
     public int getMaxUncommittedChanges() {
         return _maxUncommittedChanges;
     }
@@ -337,5 +343,8 @@ public class LuceneSpatialConfiguration {
     public abstract class DirectoryFactory {
         public abstract Directory getDirectory(String relativePath) throws IOException;
     }
+
+
+
 
 }

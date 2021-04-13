@@ -73,6 +73,10 @@ public interface IScanListIterator<T>
     {
         return false;
     }
+    default boolean needRematch()
+    {
+        return false;
+    }
 
     /**
      * create a shallow copy ready for alternating thread usage
