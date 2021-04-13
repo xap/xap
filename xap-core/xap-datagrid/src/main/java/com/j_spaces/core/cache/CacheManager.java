@@ -1031,7 +1031,13 @@ public class CacheManager extends AbstractCacheManager
                         insertBlobStoreEntryToCache = _replicationNode.getDirectPesistencySyncHandler().getEmbeddedSyncHandler().getInitialLoadHandler().onLoadingEntry(eh);
                     }
                     if (insertBlobStoreEntryToCache) {
-                        safeInsertEntryToCache(context, eh, false /* newEntry */, null /*pType*/, false /*pin*/, entryFromBlobStore ? InitialLoadOrigin.FROM_BLOBSTORE : InitialLoadOrigin.FROM_NON_BLOBSTORE /*fromInitialLoad*/);
+                        if (isTieredStorage()){
+                            context.setEntryTieredState(_engine.getTieredStorageManager().getEntryTieredState(eh.getEntryData()));
+                            insertEntry(context,eh,false,true,true, InitialLoadOrigin.FROM_NON_BLOBSTORE);
+                        }
+                        else {
+                            safeInsertEntryToCache(context, eh, false /* newEntry */, null /*pType*/, false /*pin*/, entryFromBlobStore ? InitialLoadOrigin.FROM_BLOBSTORE : InitialLoadOrigin.FROM_NON_BLOBSTORE /*fromInitialLoad*/);
+                        }
                     } else {
                         continue;
                     }
@@ -1356,11 +1362,9 @@ public class CacheManager extends AbstractCacheManager
     }
 
 
-    /**
-     * insert an entry to the space.
-     */
-    public void insertEntry(Context context, IEntryHolder entryHolder, boolean shouldReplicate, boolean origin, boolean suppliedUid)
+    public void insertEntry(Context context, IEntryHolder entryHolder, boolean shouldReplicate, boolean origin, boolean suppliedUid, InitialLoadOrigin initialLoadOrigin)
             throws SAException, EntryAlreadyInSpaceException {
+
         validateEntryCanBeWrittenToCache(entryHolder);
 
         final TypeData typeData = _typeDataMap.get(entryHolder.getServerTypeDesc());
@@ -1387,8 +1391,13 @@ public class CacheManager extends AbstractCacheManager
         }
 
         if((isTieredStorage() && context.isHotEntry()) || !isTieredStorage()) {
-            pE = insertEntryToCache(context, entryHolder, true /* newEntry */,
-                    typeData, true /*pin*/, InitialLoadOrigin.NON /*fromInitialLoad*/);
+            if(initialLoadOrigin == InitialLoadOrigin.FROM_NON_BLOBSTORE && isTieredStorage()){
+                pE = safeInsertEntryToCache(context, entryHolder, false /* newEntry */, null /*pType*/, false /*pin*/, initialLoadOrigin /*fromInitialLoad*/);
+            }
+            else {
+                pE = insertEntryToCache(context, entryHolder, true /* newEntry */,
+                        typeData, true /*pin*/, InitialLoadOrigin.NON /*fromInitialLoad*/);
+            }
         } else {//(isTieredStorage() && !context.isHotEntry())
             pE = EntryCacheInfoFactory.createEntryCacheInfo(entryHolder);
             context.setWriteResult(new WriteEntryResult(pE.getUID(), 0, 0));
@@ -1421,6 +1430,13 @@ public class CacheManager extends AbstractCacheManager
 
 
         }//if (entryHolder.m_XidOriginated == null)
+    }
+    /**
+     * insert an entry to the space.
+     */
+    public void insertEntry(Context context, IEntryHolder entryHolder, boolean shouldReplicate, boolean origin, boolean suppliedUid)
+            throws SAException, EntryAlreadyInSpaceException {
+        insertEntry(context,entryHolder,shouldReplicate,origin,suppliedUid,InitialLoadOrigin.NON);
     }
 
     public void handleInsertEntryReplication(Context context, IEntryHolder entryHolder) throws SAException {
@@ -3379,33 +3395,6 @@ public class CacheManager extends AbstractCacheManager
         }
     }
 
-
-    /**
-     * Inserts the specified entry to cache, perform memory manager check. used by initial load.
-     */
-    public IEntryCacheInfo safeInsertEntryToCache(Context context, IEntryHolder entryHolder, boolean newEntry, TypeData pType, boolean pin, InitialLoadOrigin fromInitialLoad) throws SAException {
-        // check memory water-mark
-        _engine.getMemoryManager().monitorMemoryUsage(true);
-        if (isTieredStorage()) {
-            //set context
-            context.setEntryTieredState(_engine.getTieredStorageManager().getEntryTieredState(entryHolder.getEntryData()));
-            if (context.isColdEntry()) {
-                _engine.getTieredStorageManager().getInternalStorage().insertEntry(context, entryHolder);
-            }
-        }
-
-        IEntryCacheInfo pE;
-        if ((isTieredStorage() && context.isHotEntry()) || !isTieredStorage()) {
-            pE = insertEntryToCache(context, entryHolder, newEntry,
-                    pType, pin, fromInitialLoad);
-        } else {//(isTieredStorage() && !context.isHotEntry())
-            pE = EntryCacheInfoFactory.createEntryCacheInfo(entryHolder);
-        }
-
-        return pE;
-    }
-
-
     /**
      * Inserts the specified entry to cache- if feasable. pin == rentry is locked and should be
      * pinned in cache
@@ -3464,6 +3453,15 @@ public class CacheManager extends AbstractCacheManager
             if (newEntry)
                 entryHolder.setunStable(false);
         }
+    }
+
+    /**
+     * Inserts the specified entry to cache, perform memory manager check. used by initial load.
+     */
+    public IEntryCacheInfo safeInsertEntryToCache(Context context, IEntryHolder entryHolder, boolean newEntry, TypeData pType, boolean pin, InitialLoadOrigin fromInitialLoad) throws SAException {
+        // check memory water-mark
+        _engine.getMemoryManager().monitorMemoryUsage(true);
+        return insertEntryToCache(context, entryHolder, newEntry, pType, pin, fromInitialLoad);
     }
 
     public boolean forceSpaceIdIndexIfEqual() {
