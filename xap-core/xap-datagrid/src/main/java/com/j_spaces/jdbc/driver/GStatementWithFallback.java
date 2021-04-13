@@ -17,27 +17,35 @@ public class GStatementWithFallback extends GStatement {
         super(connection);
         fallbackStatement = connection.getFallbackConnection().createStatement();
     }
+    public void log(String str) {
+        System.out.println(str);
+        _logger.debug(str);
+    }
+    public void log(String str, Throwable t) {
+        t.printStackTrace();
+        _logger.debug(str, t);
+    }
     public <T> T call(Callable<T> first, Callable<T> second) throws SQLException {
         try {
-            _logger.debug("Will try and run the query with the GDriver");
+            log("Will try and run the query with the GDriver");
             T call = first.call();
-            _logger.debug("Query ran successfully with GDriver");
+            log("Query ran successfully with GDriver");
             return call;
         } catch (SQLException e) {
-            _logger.debug("Query failed to run using GDriver, trying fallback driver", e);
+            log("Query failed to run using GDriver, trying fallback driver", e);
             try {
                 T call = second.call();
-                _logger.debug("Query ran successfully with fallback driver");
+                log("Query ran successfully with fallback driver");
                 return call;
             } catch (SQLException ex) {
-                _logger.debug("Query failed to run using fallback driver", ex);
+                log("Query failed to run using fallback driver", ex);
                 throw ex;
             } catch (Exception ex) {
-                _logger.debug("Query failed to run using fallback driver, got generic exception", ex);
+                log("Query failed to run using fallback driver, got generic exception", ex);
                 throw new SQLException(ex);
             }
         } catch (Exception e) {
-            _logger.debug("Query failed to run using GDriver, got generic exception", e);
+            log("Query failed to run using GDriver, got generic exception", e);
             throw new SQLException(e);
         }
     }
