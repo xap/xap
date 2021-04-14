@@ -19,6 +19,7 @@ package com.gigaspaces.internal.client.spaceproxy;
 import com.gigaspaces.admin.demote.DemoteFailedException;
 import com.gigaspaces.admin.quiesce.QuiesceToken;
 import com.gigaspaces.client.DirectSpaceProxyFactory;
+import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.executor.SpaceTask;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.CommonProxyActionInfo;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.SnapshotProxyActionInfo;
