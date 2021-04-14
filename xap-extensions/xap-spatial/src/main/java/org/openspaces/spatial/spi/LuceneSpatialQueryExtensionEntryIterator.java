@@ -34,11 +34,13 @@ public class LuceneSpatialQueryExtensionEntryIterator extends QueryExtensionEntr
     private final IndexSearcher indexSearcher;
     private final DirectoryReader directoryReader;
     private int position;
+    private final boolean noRematchNeeded;
 
-    public LuceneSpatialQueryExtensionEntryIterator(ScoreDoc[] scores, IndexSearcher indexSearcher, DirectoryReader directoryReader) {
+    public LuceneSpatialQueryExtensionEntryIterator(ScoreDoc[] scores, IndexSearcher indexSearcher, DirectoryReader directoryReader, boolean noRematchNeeded) {
         this.scores = scores;
         this.indexSearcher = indexSearcher;
         this.directoryReader = directoryReader;
+        this.noRematchNeeded = noRematchNeeded;
     }
 
     @Override
@@ -61,8 +63,16 @@ public class LuceneSpatialQueryExtensionEntryIterator extends QueryExtensionEntr
         }
     }
 
+
     @Override
     public int size() {
         return scores.length;
     }
+
+    @Override
+    public boolean isNoRematchNeeded() {
+        return noRematchNeeded;
+    }
+
+
 }
