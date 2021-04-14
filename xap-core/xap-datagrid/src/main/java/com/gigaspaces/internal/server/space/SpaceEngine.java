@@ -89,6 +89,7 @@ import com.gigaspaces.internal.server.space.recovery.direct_persistency.StorageC
 import com.gigaspaces.internal.server.space.replication.SpaceReplicationInitializer;
 import com.gigaspaces.internal.server.space.replication.SpaceReplicationManager;
 import com.gigaspaces.internal.server.space.tiered_storage.*;
+import com.gigaspaces.internal.server.space.tiered_storage.error.TieredStorageConfigException;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.SynchronizationStorageAdapter;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridSAException;
@@ -124,9 +125,7 @@ import com.j_spaces.core.cache.blobStore.storage.bulks.BlobStoreBulkInfo;
 import com.j_spaces.core.cache.blobStore.storage.preFetch.BlobStorePreFetchIteratorBasedHandler;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.TemplateMatchTier;
-import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.*;
-import com.j_spaces.core.client.sql.ReadQueryParser;
 import com.j_spaces.core.cluster.*;
 import com.j_spaces.core.exception.internal.EngineInternalSpaceException;
 import com.j_spaces.core.exception.internal.ProxyInternalSpaceException;
@@ -138,9 +137,6 @@ import com.j_spaces.core.filters.ReplicationStatistics.ReplicationMode;
 import com.j_spaces.core.sadapter.*;
 import com.j_spaces.core.server.processor.*;
 import com.j_spaces.core.transaction.TransactionHandler;
-import com.j_spaces.jdbc.AbstractDMLQuery;
-import com.j_spaces.jdbc.builder.QueryTemplatePacket;
-import com.j_spaces.jdbc.builder.range.Range;
 import com.j_spaces.kernel.ClassLoaderHelper;
 import com.j_spaces.kernel.*;
 import com.j_spaces.kernel.list.CircularNumerator;
@@ -394,9 +390,34 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         Object tieredStorage = this._clusterInfo.getCustomComponent(SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME);
         if(tieredStorage != null ){
             TieredStorageConfig storageConfig = (TieredStorageConfig) tieredStorage;
+            validateTieredStorage(storageConfig);
             String className = System.getProperty(TIERED_STORAGE_INTERNAL_RDBMS_CLASS_PROP, TIERED_STORAGE_INTERNAL_RDBMS_CLASS_DEFAULT);
             InternalRDBMS rdbms = ClassLoaderHelper.newInstance(className);
             this.tieredStorageManager = new TieredStorageManagerImpl(storageConfig, rdbms, space.getSpaceProxy().getDirectProxy(), _fullSpaceName);
+        }
+    }
+
+    private void validateTieredStorage(TieredStorageConfig storageConfig) {
+        for (TieredStorageTableConfig tableConfig : storageConfig.getTables().values()) {
+            if(tableConfig.isTransient()){
+                if(tableConfig.getCriteria() != null || tableConfig.getPeriod() != null
+                        || tableConfig.getTimeColumn() != null || tableConfig.getRetention() != null){
+                    throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
+                            "transient type should have only isTransient = true , actual: "+tableConfig);
+                }
+            }
+
+            if(tableConfig.getPeriod() != null){
+                if(tableConfig.getTimeColumn() == null){
+                    throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
+                            "timeColumn can not be null when period = "+tableConfig.getPeriod());
+                }
+
+                if(tableConfig.getCriteria() != null){
+                    throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
+                            "can not set both period and criteria");
+                }
+            }
         }
     }
 

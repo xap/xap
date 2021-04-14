@@ -15,14 +15,45 @@ import net.jini.core.lease.Lease;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.*;
 
 import static com.gigaspaces.internal.server.space.tiered_storage.SqliteUtils.getPropertyValue;
 
 public class TieredStorageUtils {
     private static Logger logger = LoggerFactory.getLogger(TieredStorageUtils.class);
+    private static Set<String> supportedTypes = initTypes();
+
+    private static Set<String> initTypes() {
+        Set<String> types = new HashSet<>();
+        types.add(String.class.getName());
+        types.add(boolean.class.getName());
+        types.add(Boolean.class.getName());
+        types.add(byte.class.getName());
+        types.add(Byte.class.getName());
+        types.add(short.class.getName());
+        types.add(Short.class.getName());
+        types.add(int.class.getName());
+        types.add(Integer.class.getName());
+        types.add(long.class.getName());
+        types.add(Long.class.getName());
+        types.add(BigInteger.class.getName());
+        types.add(BigDecimal.class.getName());
+        types.add(float.class.getName());
+        types.add(Float.class.getName());
+        types.add(double.class.getName());
+        types.add(Double.class.getName());
+        types.add(byte[].class.getName());
+        types.add(Byte[].class.getName());
+        types.add(Instant.class.getName());
+        types.add(Timestamp.class.getName());
+        return types;
+    }
 
     public static Map<Object, EntryTieredMetaData> getEntriesTieredMetaDataByIds(SpaceEngine space, String typeName, Object[] ids) throws Exception {
         Map<Object, EntryTieredMetaData> entryTieredMetaDataMap = new HashMap<>();
@@ -134,5 +165,13 @@ public class TieredStorageUtils {
             uid = SpaceUidFactory.createUidFromTypeAndId(typeDesc, idFromEntry);
         }
         return new EntryHolder(serverTypeDesc, uid, 0, false, data);
+    }
+
+    public static boolean isSupportedPropertyType(Class<?> type){
+        return supportedTypes.contains(type.getName());
+    }
+
+    public static boolean isSupportedTimeColumn(Class<?> type){
+        return type.equals(Instant.class) || type.equals(Timestamp.class) || type.equals(long.class) || type.equals(Long.class);
     }
 }

@@ -30,41 +30,7 @@ import com.j_spaces.core.exception.ClosedResourceException;
 
 import net.jini.core.transaction.TransactionException;
 
-import org.openspaces.core.BadSqlQueryException;
-import org.openspaces.core.ChangeException;
-import org.openspaces.core.ClearException;
-import org.openspaces.core.ConsistencyLevelViolationException;
-import org.openspaces.core.EntryAlreadyInSpaceException;
-import org.openspaces.core.EntryLockedException;
-import org.openspaces.core.EntryNotInSpaceException;
-import org.openspaces.core.EntrySerializationException;
-import org.openspaces.core.InactiveTransactionException;
-import org.openspaces.core.InternalSpaceException;
-import org.openspaces.core.InvalidFifoClassException;
-import org.openspaces.core.InvalidFifoTemplateException;
-import org.openspaces.core.InvalidTransactionUsageException;
-import org.openspaces.core.ObjectConversionException;
-import org.openspaces.core.ReadByIdsException;
-import org.openspaces.core.ReadMultipleException;
-import org.openspaces.core.RedoLogCapacityExceededException;
-import org.openspaces.core.RemoteDataAccessException;
-import org.openspaces.core.ResourceCapacityExceededException;
-import org.openspaces.core.SecurityAccessException;
-import org.openspaces.core.SpaceClosedException;
-import org.openspaces.core.SpaceInterruptedException;
-import org.openspaces.core.SpaceMemoryShortageException;
-import org.openspaces.core.SpaceMetadataException;
-import org.openspaces.core.SpaceOptimisticLockingFailureException;
-import org.openspaces.core.SpaceTimeoutException;
-import org.openspaces.core.SpaceUnavailableException;
-import org.openspaces.core.TakeByIdsException;
-import org.openspaces.core.TakeMultipleException;
-import org.openspaces.core.TransactionDataAccessException;
-import org.openspaces.core.UncategorizedSpaceException;
-import org.openspaces.core.UniqueConstraintViolationException;
-import org.openspaces.core.UnusableEntryException;
-import org.openspaces.core.UpdateOperationTimeoutException;
-import org.openspaces.core.WriteMultipleException;
+import org.openspaces.core.*;
 import org.springframework.dao.DataAccessException;
 
 import java.rmi.RemoteException;
@@ -161,8 +127,17 @@ public class DefaultExceptionTranslator implements ExceptionTranslator {
         if (e instanceof com.gigaspaces.internal.metadata.converter.ConversionException) {
             return new ObjectConversionException((com.gigaspaces.internal.metadata.converter.ConversionException) e);
         }
+
+        if (e instanceof com.gigaspaces.internal.server.space.tiered_storage.error.TieredStorageMetadataException) {
+            return new TieredStorageMetadataException(e.getMessage(), e.getCause());
+        }
+
         if (e instanceof com.gigaspaces.metadata.SpaceMetadataException) {
             return new SpaceMetadataException(e.getMessage(), e.getCause());
+        }
+
+        if (e instanceof com.gigaspaces.internal.server.space.tiered_storage.error.TieredStorageOperationException) {
+            return new TieredStorageOperationException(e.getMessage(), e.getCause());
         }
 
         if (e instanceof com.gigaspaces.client.WriteMultipleException) {
