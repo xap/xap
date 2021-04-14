@@ -1,5 +1,6 @@
 package com.gigaspaces.transport.serializers;
 
+import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.io.MarshalInputStream;
 import com.gigaspaces.internal.io.MarshalOutputStream;
 
@@ -53,7 +54,7 @@ public class NioReusableMarshalSerializer extends NioSerializer {
             oos = new MarshalOutputStream(bos);
         else
             oos.reset();
-        oos.writeObject(obj);
+        IOUtils.writeObject(oos, obj);
         oos.flush();
     }
 
@@ -64,7 +65,7 @@ public class NioReusableMarshalSerializer extends NioSerializer {
             ois = new MarshalInputStream(bis);
 
         try {
-            return (T) ois.readObject();
+            return IOUtils.readObject(ois);
         } catch (ClassNotFoundException e) {
             throw new IOException(e);
         }
