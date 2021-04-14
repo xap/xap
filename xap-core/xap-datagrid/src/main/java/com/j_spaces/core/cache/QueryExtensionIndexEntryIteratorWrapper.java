@@ -128,4 +128,9 @@ public class QueryExtensionIndexEntryIteratorWrapper implements IScanListIterato
     public int size() {
         return iterator.size();
     }
+
+    public boolean noRematchNeeded() {
+        return iterator.isNoRematchNeeded();
+    }
+
 }

@@ -83,6 +83,7 @@ public class LuceneSpatialConfiguration {
     private final DirectoryFactory _directoryFactory;
     private final int _maxUncommittedChanges;
     private final String _location;
+    private final boolean noRematchNeeded;
 
     private enum SupportedSpatialStrategy {
         RecursivePrefixTree, BBox, Composite;
@@ -140,6 +141,15 @@ public class LuceneSpatialConfiguration {
         this._location = initLocation(provider, info);
         //TODO: read from config
         this._maxUncommittedChanges = 1000;
+        this.noRematchNeeded = getDistErrPct(provider) == 0;
+    }
+
+    double getDistErrPct(LuceneSpatialQueryExtensionProvider provider){
+        return Double.parseDouble(provider.getCustomProperty(DIST_ERR_PCT, DIST_ERR_PCT_DEFAULT));
+    }
+
+    boolean getNoRematchNeeded(){
+        return this.noRematchNeeded;
     }
 
     private static RectangleImpl createSpatialContextWorldBounds(LuceneSpatialQueryExtensionProvider provider) {
@@ -202,8 +212,7 @@ public class LuceneSpatialConfiguration {
         switch (spatialStrategy) {
             case RecursivePrefixTree: {
                 final SpatialPrefixTree geohashPrefixTree = createSpatialPrefixTree(provider, _spatialContext);
-                String distErrPctValue = provider.getCustomProperty(DIST_ERR_PCT, DIST_ERR_PCT_DEFAULT);
-                final double distErrPct = Double.valueOf(distErrPctValue);
+                final double distErrPct = getDistErrPct(provider);
 
                 return new StrategyFactory(spatialStrategy) {
                     @Override
@@ -312,6 +321,7 @@ public class LuceneSpatialConfiguration {
         return _spatialContext;
     }
 
+
     public int getMaxUncommittedChanges() {
         return _maxUncommittedChanges;
     }
@@ -337,5 +347,8 @@ public class LuceneSpatialConfiguration {
     public abstract class DirectoryFactory {
         public abstract Directory getDirectory(String relativePath) throws IOException;
     }
+
+
+
 
 }

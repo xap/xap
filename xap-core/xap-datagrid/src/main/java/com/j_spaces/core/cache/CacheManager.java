@@ -4716,8 +4716,12 @@ public class CacheManager extends AbstractCacheManager
             }
         }
 
+
+        // if distance error percentage is 0.0, no rematch needed, else rematch to get accuracy
+        boolean noRematchNeeded = GS_13953_ENABLED || (resultOIS instanceof QueryExtensionIndexEntryIteratorWrapper && resultOIS.noRematchNeeded());
+
         //if single index and is a lucene index
-        if (GS_13953_ENABLED && indexUsed && nameOfChosenCustomIndex != null
+        if ( noRematchNeeded  && indexUsed && nameOfChosenCustomIndex != null
                 && resultOIS != null && resultOIS.isExtensionIndex()) {
             //Remove already traversed paths of first custom index
             ((QueryExtensionIndexEntryIteratorWrapper) resultOIS).setAlreadyMatchedIndexPath(nameOfChosenCustomIndex);
@@ -4745,7 +4749,7 @@ public class CacheManager extends AbstractCacheManager
                     continue;
 
                 IStoredList<IEntryCacheInfo> entriesVector = null;
-                //what kind of match we need on the template ?
+                //what kind of noRematchNeeded we need on the template ?
                 switch (extendedMatchCode) {
                     case TemplateMatchCodes.NOT_NULL:    //any not null will do
                     case TemplateMatchCodes.REGEX:        //unusable index for this
