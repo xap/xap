@@ -407,6 +407,30 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 }
             }
 
+            if(tableConfig.getPeriod() != null){
+                if(tableConfig.getTimeColumn() == null){
+                    throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
+                            "timeColumn can not be null when period = "+tableConfig.getPeriod());
+                }
+
+                if(tableConfig.getCriteria() != null){
+                    throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
+                            "can not set both period and criteria");
+                }
+            }
+        }
+    }
+
+    private void validateTieredStorage(TieredStorageConfig storageConfig) {
+        for (TieredStorageTableConfig tableConfig : storageConfig.getTables().values()) {
+            if(tableConfig.isTransient()){
+                if(tableConfig.getCriteria() != null || tableConfig.getPeriod() != null
+                        || tableConfig.getTimeColumn() != null || tableConfig.getRetention() != null){
+                    throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
+                            "transient type should have only isTransient = true , actual: "+tableConfig);
+                }
+            }
+
             if(tableConfig.getTimeColumn() != null && tableConfig.getPeriod() == null){
                 throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
                         "period can not be null when timeColumn defined");
