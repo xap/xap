@@ -52,6 +52,7 @@ import java.util.List;
 
 public class SpaceRuntimeInfo implements Externalizable {
 
+//enhance com.j_spaces.core.admin.SpaceRuntimeInfo with disk num of entries
     private static final long serialVersionUID = -5586653306007649053L;
 
     /**
@@ -63,6 +64,7 @@ public class SpaceRuntimeInfo implements Externalizable {
      * List of numbers of entries for each class correlated to <code>m_ClassNames</code>.
      */
     public List<Integer> m_NumOFEntries;
+    public List<Integer> m_DiskNumOFEntries;
 
     /**
      * List of numbers of pending templates for each class correlated to <code>m_ClassNames</code>.
