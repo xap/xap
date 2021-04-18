@@ -65,6 +65,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
     final private boolean _memoryOnly;
     final private boolean _transientOnly;
 
+
     //FIFO-related +++++++++++++++++++++++++++++++++++++++++++
     private IEntryHolder _entryFromCache;
     private IEntryHolder _entryFromSA;

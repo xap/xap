@@ -59,6 +59,11 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     }
 
     @Override
+    public TieredStorageTableConfig getTableConfig(String typeName) {
+        return storageConfig.getTables().get(typeName);
+    }
+
+    @Override
     public TimePredicate getRetentionRule(String typeName) {
         return retentionRules.get(typeName);
     }
@@ -141,7 +146,6 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
 
 
     private CachePredicate createCacheRule(TieredStorageTableConfig tableConfig, IDirectSpaceProxy proxy) {
-        //TODO - validate transient has null criteria && period
         CachePredicate result = null;
         if (tableConfig.isTransient()) {
             result = Constants.TieredStorage.TRANSIENT_ALL_CACHE_PREDICATE;

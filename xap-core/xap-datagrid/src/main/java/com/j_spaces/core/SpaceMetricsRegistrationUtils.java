@@ -52,6 +52,10 @@ public class SpaceMetricsRegistrationUtils {
             spaceEngine.getDataTypeMetricRegistrar(typeName).register("read-count", wrapPrimaryOnly(serverTypeDesc.getReadCounter()));
         }
 
+        if( metricFlagsState.isTieredRamReadCountDataTypesMetricEnabled() ) {
+            spaceEngine.getDataTypeMetricRegistrar(typeName).register("read-count-ram", wrapPrimaryOnly(serverTypeDesc.getRAMReadCounter()));
+        }
+
         // register data-types
         if( metricFlagsState.isDataTypesMetricEnabled() ) {
             spaceEngine.getDataTypeMetricRegistrar(typeName).register("data-types", new Gauge<Integer>() {

@@ -89,6 +89,7 @@ import com.gigaspaces.internal.server.space.recovery.direct_persistency.StorageC
 import com.gigaspaces.internal.server.space.replication.SpaceReplicationInitializer;
 import com.gigaspaces.internal.server.space.replication.SpaceReplicationManager;
 import com.gigaspaces.internal.server.space.tiered_storage.*;
+import com.gigaspaces.internal.server.space.tiered_storage.error.TieredStorageConfigException;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.SynchronizationStorageAdapter;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridSAException;
@@ -389,9 +390,63 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         Object tieredStorage = this._clusterInfo.getCustomComponent(SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME);
         if(tieredStorage != null ){
             TieredStorageConfig storageConfig = (TieredStorageConfig) tieredStorage;
+            validateTieredStorage(storageConfig);
             String className = System.getProperty(TIERED_STORAGE_INTERNAL_RDBMS_CLASS_PROP, TIERED_STORAGE_INTERNAL_RDBMS_CLASS_DEFAULT);
             InternalRDBMS rdbms = ClassLoaderHelper.newInstance(className);
             this.tieredStorageManager = new TieredStorageManagerImpl(storageConfig, rdbms, space.getSpaceProxy().getDirectProxy(), _fullSpaceName);
+        }
+    }
+
+    private void validateTieredStorage(TieredStorageConfig storageConfig) {
+        for (TieredStorageTableConfig tableConfig : storageConfig.getTables().values()) {
+            if(tableConfig.isTransient()){
+                if(tableConfig.getCriteria() != null || tableConfig.getPeriod() != null
+                        || tableConfig.getTimeColumn() != null || tableConfig.getRetention() != null){
+                    throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
+                            "transient type should have only isTransient = true , actual: "+tableConfig);
+                }
+            }
+
+            if(tableConfig.getPeriod() != null){
+                if(tableConfig.getTimeColumn() == null){
+                    throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
+                            "timeColumn can not be null when period = "+tableConfig.getPeriod());
+                }
+
+                if(tableConfig.getCriteria() != null){
+                    throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
+                            "can not set both period and criteria");
+                }
+            }
+        }
+    }
+
+    private void validateTieredStorage(TieredStorageConfig storageConfig) {
+        for (TieredStorageTableConfig tableConfig : storageConfig.getTables().values()) {
+            if(tableConfig.isTransient()){
+                if(tableConfig.getCriteria() != null || tableConfig.getPeriod() != null
+                        || tableConfig.getTimeColumn() != null || tableConfig.getRetention() != null){
+                    throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
+                            "transient type should have only isTransient = true , actual: "+tableConfig);
+                }
+            }
+
+            if(tableConfig.getTimeColumn() != null && tableConfig.getPeriod() == null){
+                throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
+                        "period can not be null when timeColumn defined");
+            }
+
+            if(tableConfig.getPeriod() != null){
+                if(tableConfig.getTimeColumn() == null){
+                    throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
+                            "timeColumn can not be null when period = "+tableConfig.getPeriod());
+                }
+
+                if(tableConfig.getCriteria() != null){
+                    throw new TieredStorageConfigException("Illegal Config for type "+tableConfig.getName()+": " +
+                            "can not set both period and criteria");
+                }
+            }
         }
     }
 
@@ -1301,6 +1356,9 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         else
             _coreProcessor.handleDirectReadOrTakeSA(context, tHolder, fromReplication, origin);
 
+
+        updateTieredRAMObjectTypeReadCounts(tHolder.getServerTypeDesc() ,context.getTemplateTieredState());
+
         if (context.getReplicationContext() != null) {
             tHolder.getAnswerHolder().setSyncRelplicationLevel(context.getReplicationContext().getCompleted());
         }
@@ -1890,6 +1948,27 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         }
     }
 
+    public void updateTieredRAMObjectTypeReadCounts(IServerTypeDesc serverTypeDesc, TemplateMatchTier templateTieredState) {
+        if (templateTieredState == null){
+            return;
+        }
+
+        if(!this.getMetricManager().getMetricFlagsState().isTieredRamReadCountDataTypesMetricEnabled()){
+            return;
+        }
+
+        if( serverTypeDesc == null ){
+            //serverTypeDesc is null when read returns empty result
+            return;
+        }
+
+        if (serverTypeDesc.getTypeName() != null) {
+            if (templateTieredState == TemplateMatchTier.MATCH_HOT){
+                serverTypeDesc.getRAMReadCounter().inc(1);
+            }
+        }
+    }
+
     /**
      * call write for each EP in value, update value with the result
      */
@@ -2115,12 +2194,14 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         Integer counter = 0;
 
         Context context = null;
-
+        TemplateMatchTier templateTieredState = null;
         try {
             context = _cacheManager.getCacheContext();
             context.applyOperationContext(sc);
             context.setOperationID(template.getOperationID());
             counter = _cacheManager.count(context, tHolder, txnEntry);
+            templateTieredState = context.getTemplateTieredState();
+
         } catch (SAException ex) {
             JSpaceUtilities.throwEngineInternalSpaceException(ex.getMessage(), ex);
         } finally {
@@ -2130,6 +2211,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         }
 
         updateObjectTypeReadCounts(typeDesc, template);
+        updateTieredRAMObjectTypeReadCounts(typeDesc, templateTieredState);
 
         if (tHolder.getExplainPlan() != null) {
             return new Pair(counter, tHolder.getExplainPlan());
@@ -4003,6 +4085,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             if(context.getExplainPlanContext() != null){
                 context.getExplainPlanContext().getSingleExplainPlan().addTiersInfo(template.getServerTypeDesc().getTypeName(), TieredStorageUtils.getTiersAsList(context.getTemplateTieredState()));
             }
+           updateTieredRAMObjectTypeReadCounts(template.getServerTypeDesc(), context.getTemplateTieredState());
+
         }
 
         // If template is a multiple uids template:

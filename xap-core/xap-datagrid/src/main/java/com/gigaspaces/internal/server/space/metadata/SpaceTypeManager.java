@@ -28,13 +28,15 @@ import com.gigaspaces.internal.server.metadata.AddTypeDescResultType;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceConfigReader;
 import com.gigaspaces.internal.server.space.SpaceInstanceConfig;
-import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageManager;
+import com.gigaspaces.internal.server.space.tiered_storage.*;
+import com.gigaspaces.internal.server.space.tiered_storage.error.TieredStorageMetadataException;
 import com.gigaspaces.internal.transport.ITransportPacket;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.logger.LogLevel;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.metadata.SpaceMetadataException;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
+import com.gigaspaces.metadata.index.ISpaceIndex;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.DetailedUnusableEntryException;
@@ -45,21 +47,14 @@ import com.j_spaces.core.client.SpaceURL;
 import com.j_spaces.core.exception.internal.DirectoryInternalSpaceException;
 import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.SystemProperties;
-
 import net.jini.core.entry.Entry;
 import net.jini.core.entry.UnusableEntryException;
-
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.InetSocketAddress;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Niv Ingberg
@@ -286,12 +281,14 @@ public class SpaceTypeManager {
 
                 if (action == AddTypeDescResultType.CREATED) {
                     serverTypeDesc = createServerTypeDesc(typeDesc, localTypeMap);
-                    if(tieredStorageManager != null && (!tieredStorageManager.hasCacheRule(typeDesc.getTypeName()) ||
-                                    !tieredStorageManager.isTransient(typeDesc.getTypeName()))){
-                        try {
-                            tieredStorageManager.getInternalStorage().createTable(typeDesc);
-                        } catch (SAException e) {
-                            throw new RuntimeException(e);
+                    if(tieredStorageManager != null){
+                        validateTieredStorage(serverTypeDesc.getTypeDesc());
+                        if(!tieredStorageManager.isTransient(typeDesc.getTypeName())){
+                            try {
+                                tieredStorageManager.getInternalStorage().createTable(typeDesc);
+                            } catch (SAException e) {
+                                throw new RuntimeException(e);
+                            }
                         }
                     }
 
@@ -306,6 +303,52 @@ public class SpaceTypeManager {
 
             logExit("createOrUpdateServerTypeDesc", "typeName", typeName);
             return new AddTypeDescResult(serverTypeDesc, action);
+        }
+    }
+
+    private void validateTieredStorage(ITypeDesc typeDesc) {
+        String typeName = typeDesc.getTypeName();
+        if (tieredStorageManager.isTransient(typeName)) {
+            return; // Transient Types are never written to InternalRDBMS , supports all features
+        }
+
+        if (typeDesc.supportsDynamicProperties()) {
+            throw new TieredStorageMetadataException("Unsupported type " + typeName + ": dynamic properties not supported in tiered storage " +
+                    "(set com.gigaspaces.metadata.SpaceTypeDescriptorBuilder.supportsDynamicProperties(false) ");
+        }
+
+        String[] superClassesNames = typeDesc.getSuperClassesNames();
+
+        for (String superClassesName : superClassesNames) {
+            if(!superClassesName.equals(typeName) && !superClassesName.equals(Object.class.getName())){
+                throw new TieredStorageMetadataException("Unsupported type " + typeName + ": inheritance is not supported in tiered storage " +
+                        "(has non java.lang.Object super type : " + superClassesName + ")");
+            }
+        }
+
+        if (typeDesc.isFifoSupported() || typeDesc.getFifoGroupingPropertyPath() != null ||
+                (typeDesc.getFifoGroupingIndexesPaths() != null && !typeDesc.getFifoGroupingIndexesPaths().isEmpty())) {
+            throw new TieredStorageMetadataException("Unsupported type " + typeName + ": FIFO not supported in tiered storage");
+        }
+
+        TieredStorageTableConfig config = tieredStorageManager.getTableConfig(typeName);
+        if (config != null && config.getTimeColumn() != null && config.getPeriod() != null) {
+            Class<?> timeColumnType = typeDesc.getFixedProperty(config.getTimeColumn()).getType();
+            if (!TieredStorageUtils.isSupportedTimeColumn(timeColumnType)) {
+                throw new TieredStorageMetadataException("Unsupported type " + typeName + ": unsupported timeColumn type [" + config.getTimeColumn() + ": " + timeColumnType.getName() + "]");
+            }
+        }
+
+        for (SpaceIndex index : typeDesc.getIndexes().values()) {
+            if(((ISpaceIndex) index).isMultiValuePerEntryIndex() || ((ISpaceIndex) index).isCompoundIndex()){
+                throw new TieredStorageMetadataException("Unsupported type " + typeName + ": unsupported index type - " + index.getName() + "]");
+            }
+        }
+
+        for (PropertyInfo propertyInfo : typeDesc.getProperties()) {
+            if (!TieredStorageUtils.isSupportedPropertyType(propertyInfo.getType())) {
+                throw new TieredStorageMetadataException("Unsupported type " + typeName + ": unsupported property type ['" + propertyInfo.getName() + "': " + propertyInfo.getType().getName() + "]");
+            }
         }
     }
 
