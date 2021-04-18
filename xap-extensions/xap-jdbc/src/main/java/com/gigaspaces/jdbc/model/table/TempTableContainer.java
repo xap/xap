@@ -1,7 +1,9 @@
 package com.gigaspaces.jdbc.model.table;
 
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
+import com.gigaspaces.jdbc.explainplan.SubqueryPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.Range;
@@ -15,20 +17,31 @@ public class TempTableContainer extends TableContainer {
     private final String alias;
     private TableContainer joinedTable;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
+    private final List<QueryColumn> tableColumns = new ArrayList<>();
 
     public TempTableContainer(QueryResult tableResult, String alias) {
         this.tableResult = tableResult;
         this.alias = alias;
+        if (tableResult instanceof ExplainPlanResult) {
+            tableColumns.addAll(((ExplainPlanResult) tableResult).getVisibleColumns());
+        } else {
+            tableColumns.addAll(tableResult.getQueryColumns());
+        }
     }
 
     @Override
     public QueryResult executeRead(QueryExecutionConfig config) {
+        if (config.isExplainPlan()) {
+            ExplainPlanResult explainResult = ((ExplainPlanResult) tableResult);
+            SubqueryPlan subquery = new SubqueryPlan((alias == null ? config.getTempTableNameGenerator().generate() : alias), explainResult.getExplainPlanInfo());
+            return new ExplainPlanResult(visibleColumns, subquery);
+        }
         return new QueryResult(visibleColumns, tableResult);
     }
 
     @Override
     public QueryColumn addQueryColumn(String columnName, String alias, boolean visible) {
-        QueryColumn queryColumn = tableResult.getQueryColumns().stream().filter(qc -> qc.getName().equalsIgnoreCase(columnName)).findFirst().orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
+        QueryColumn queryColumn = tableColumns.stream().filter(qc -> qc.getName().equalsIgnoreCase(columnName)).findFirst().orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
         visibleColumns.add(queryColumn);
         return queryColumn;
     }
@@ -40,7 +53,7 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public List<String> getAllColumnNames() {
-        return tableResult.getQueryColumns().stream().map(QueryColumn::getName).collect(Collectors.toList());
+        return tableColumns.stream().map(QueryColumn::getName).collect(Collectors.toList());
     }
 
     @Override
@@ -74,7 +87,7 @@ public class TempTableContainer extends TableContainer {
     }
 
     @Override
-    public void setQueryTemplatePackage(QueryTemplatePacket queryTemplatePacket) {
+    public void setQueryTemplatePacket(QueryTemplatePacket queryTemplatePacket) {
         throw new UnsupportedOperationException("Not supported yet!");
     }
 
@@ -86,6 +99,11 @@ public class TempTableContainer extends TableContainer {
     @Override
     public boolean isJoined() {
         return false;
+    }
+
+    @Override
+    public boolean hasColumn(String columnName) {
+        return getAllColumnNames().contains(columnName);
     }
 
     @Override

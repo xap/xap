@@ -55,4 +55,9 @@ public class TextReportFormatter {
         return this;
     }
 
+    public void indent(Runnable function) {
+        indent();
+        function.run();
+        unindent();
+    }
 }

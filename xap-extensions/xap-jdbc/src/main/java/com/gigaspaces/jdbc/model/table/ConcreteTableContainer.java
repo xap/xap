@@ -82,7 +82,7 @@ public class ConcreteTableContainer extends TableContainer {
             queryTemplatePacket.prepareForSpace(typeDesc);
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
             if (explainPlanImpl != null) {
-                queryResult =  new ExplainPlanResult(explainPlanImpl.getExplainPlanInfo().toString(config.isExplainPlanVerbose()));
+                queryResult =  new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo());
             } else {
                 queryResult  = new QueryResult(res, visibleColumns, this);
             }
@@ -153,13 +153,18 @@ public class ConcreteTableContainer extends TableContainer {
     }
 
     @Override
-    public void setQueryTemplatePackage(QueryTemplatePacket queryTemplatePacket) {
+    public void setQueryTemplatePacket(QueryTemplatePacket queryTemplatePacket) {
         this.queryTemplatePacket = queryTemplatePacket;
     }
 
     @Override
     public boolean isJoined() {
         return joined;
+    }
+
+    @Override
+    public boolean hasColumn(String columnName) {
+        return allColumnNamesSorted.contains(columnName);
     }
 
     @Override

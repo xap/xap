@@ -1,21 +1,18 @@
 package com.gigaspaces.jdbc;
 
-import com.gigaspaces.internal.query.explainplan.TextReportFormatter;
+import com.gigaspaces.jdbc.explainplan.JoinExplainPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.JoinTablesIterator;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.result.TableRow;
-import com.gigaspaces.jdbc.model.table.ExplainPlanQueryColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.core.IJSpace;
 
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class JoinQueryExecutor {
     private final IJSpace space;
@@ -50,12 +47,13 @@ public class JoinQueryExecutor {
     }
 
     private QueryResult explain() {
-        TextReportFormatter formatter = new TextReportFormatter();
-        formatter.line("Nested Loop Join");
-        formatter.line("Select: " + String.join(", ",queryColumns.stream().map(QueryColumn::getName).collect(Collectors.toList())));
-        formatter.indent();
-        tables.forEach(t -> Arrays.stream(((ExplainPlanResult) t.getQueryResult()).getExplainPlanString().split("\n")).forEach(formatter::line));
-        formatter.unindent();
-        return new ExplainPlanResult(formatter.toString());
+        Iterator<TableContainer> iter = tables.iterator();
+        JoinExplainPlan joinExplainPlan = new JoinExplainPlan(((ExplainPlanResult) iter.next().getQueryResult()).getExplainPlanInfo(), ((ExplainPlanResult) iter.next().getQueryResult()).getExplainPlanInfo());
+
+        while (iter.hasNext()) {
+            joinExplainPlan = new JoinExplainPlan(joinExplainPlan, ((ExplainPlanResult) iter.next().getQueryResult()).getExplainPlanInfo());
+        }
+
+        return new ExplainPlanResult(queryColumns, joinExplainPlan);
     }
 }

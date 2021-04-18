@@ -36,8 +36,16 @@ public class MainTester {
 //            DumpUtils.dump(rs);
 
             Statement statement = connection.createStatement();
-//            execute(statement, "SELECT * FROM com.gigaspaces.jdbc.MyPojo where timestamp = '2001-09-10 05:20:00.231'");// WHERE rowNum <= 10");
-            execute(statement, "SELECT age, name, * FROM (SELECT name, age FROM com.gigaspaces.jdbc.MyPojo where name = 'Adler' ) where name = 'Adler' ");// WHERE rowNum <= 10");
+//            execute(statement, String.format("EXPLAIN SELECT A.id, B.name FROM %s A INNER JOIN %s B ON A.name=B.name", MyPojo.class.getName(), MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT * FROM (SELECT * FROM %s)", MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id, name FROM %s)", MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id,name FROM (SELECT * FROM %s))", MyPojo.class.getName()));
+
+            execute(statement, String.format("EXPLAIN SELECT A.id, B.name, C.name FROM %s A INNER JOIN %s B ON A.name=B.name INNER JOIN %s C ON B.name=C.name", MyPojo.class.getName(), MyPojo.class.getName(), MyPojo.class.getName()));
+
+
+            //            execute(statement, "SELECT * FROM com.gigaspaces.jdbc.MyPojo where timestamp = '2001-09-10 05:20:00.231'");// WHERE rowNum <= 10");
+//            execute(statement, "SELECT age, name, * FROM (SELECT name, age FROM com.gigaspaces.jdbc.MyPojo where name = 'Adler' ) where name = 'Adler' ");// WHERE rowNum <= 10");
 
 //            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo WHERE rowNum <= 10");
 //            execute(statement, "SELECT UID,* FROM com.gigaspaces.jdbc.MyPojo WHERE country like '%a%'");

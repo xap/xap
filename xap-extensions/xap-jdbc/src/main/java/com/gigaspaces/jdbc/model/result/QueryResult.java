@@ -1,8 +1,10 @@
 package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
+import com.j_spaces.jdbc.ResultEntry;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 
 import java.util.ArrayList;
@@ -12,7 +14,7 @@ import java.util.stream.Collectors;
 public class QueryResult {
     private final List<QueryColumn> queryColumns;
     private final List<TableRow> rows;
-    private final TableContainer tableContainer;
+    protected final TableContainer tableContainer;
     private Cursor<TableRow> cursor;
 
     public QueryResult(IQueryResultSet<IEntryPacket> res, List<QueryColumn> queryColumns, TableContainer tableContainer) {
@@ -95,5 +97,37 @@ public class QueryResult {
         if(cursor == null)
             cursor = new RowScanCursor(rows);
         return cursor;
+    }
+
+    public ResultEntry convertEntriesToResultArrays(QueryExecutionConfig config) {
+        QueryResult queryResult = this;
+        // Column (field) names and labels (aliases)
+        int columns = queryResult.getQueryColumns().size();
+
+        String[] fieldNames = queryResult.getQueryColumns().stream().map(QueryColumn::getName).toArray(String[]::new);
+        String[] columnLabels = queryResult.getQueryColumns().stream().map(qC -> qC.getAlias() == null ? qC.getName() : qC.getAlias()).toArray(String[]::new);
+
+        //the field values for the result
+        Object[][] fieldValues = new Object[queryResult.size()][columns];
+
+
+        int row = 0;
+
+        while (queryResult.next()) {
+            TableRow entry = queryResult.getCurrent();
+            int column = 0;
+            for (int i = 0; i < columns; i++) {
+                fieldValues[row][column++] = entry.getPropertyValue(i);
+            }
+
+            row++;
+        }
+
+
+        return new ResultEntry(
+                fieldNames,
+                columnLabels,
+                null, //TODO
+                fieldValues);
     }
 }

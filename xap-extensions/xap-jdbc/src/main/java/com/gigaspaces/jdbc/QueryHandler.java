@@ -49,12 +49,12 @@ public class QueryHandler {
         statement.accept(new StatementVisitorAdapter() {
             @Override
             public void visit(ExplainStatement explainStatement) {
-                QueryExecutionConfig context = new QueryExecutionConfig(true, explainStatement.getOption(ExplainStatement.OptionType.VERBOSE)!= null);
-                QueryExecutor qE = new QueryExecutor(space, context, preparedValues);
+                QueryExecutionConfig config = new QueryExecutionConfig(true, explainStatement.getOption(ExplainStatement.OptionType.VERBOSE)!= null);
+                QueryExecutor qE = new QueryExecutor(space, config, preparedValues);
                 QueryResult res;
                 try {
                     res = qE.execute(explainStatement.getStatement().getSelectBody());
-                    packet.setResultEntry(convertEntriesToResultArrays(res));
+                    packet.setResultEntry(res.convertEntriesToResultArrays(config));
                 } catch (SQLException e) {
                     throw new ExecutionException(e.getMessage(), e.getCause());
                 }
@@ -66,7 +66,7 @@ public class QueryHandler {
                 QueryResult res;
                 try {
                     res = qE.execute(select.getSelectBody());
-                    packet.setResultEntry(convertEntriesToResultArrays(res));
+                    packet.setResultEntry(res.convertEntriesToResultArrays(null));
                 } catch (SQLException e) {
                     throw new ExecutionException(e.getMessage(), e.getCause());
                 }
@@ -88,34 +88,5 @@ public class QueryHandler {
         }
     }
 
-    public ResultEntry convertEntriesToResultArrays(QueryResult queryResult) {
-        // Column (field) names and labels (aliases)
-        int columns = queryResult.getQueryColumns().size();
 
-        String[] fieldNames = queryResult.getQueryColumns().stream().map(QueryColumn::getName).toArray(String[]::new);
-        String[] columnLabels = queryResult.getQueryColumns().stream().map(qC -> qC.getAlias() == null ? qC.getName() : qC.getAlias()).toArray(String[]::new);
-
-        //the field values for the result
-        Object[][] fieldValues = new Object[queryResult.size()][columns];
-
-
-        int row = 0;
-
-        while (queryResult.next()) {
-            TableRow entry = queryResult.getCurrent();
-            int column = 0;
-            for (int i = 0; i < columns; i++) {
-                fieldValues[row][column++] = entry.getPropertyValue(i);
-            }
-
-            row++;
-        }
-
-
-        return new ResultEntry(
-                fieldNames,
-                columnLabels,
-                null, //TODO
-                fieldValues);
-    }
 }

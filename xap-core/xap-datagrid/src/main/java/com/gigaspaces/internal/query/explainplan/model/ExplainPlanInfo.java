@@ -16,7 +16,7 @@ import static com.gigaspaces.internal.remoting.routing.partitioned.PartitionedCl
  * @author Mishel Liberman
  * @since 16.0
  */
-public class ExplainPlanInfo {
+public class ExplainPlanInfo extends JdbcExplainPlan {
     private final String tableName;
     private final String tableAlias;
     private final PartitionedClusterExecutionType executionType;
@@ -36,11 +36,10 @@ public class ExplainPlanInfo {
 
     @Override
     public String toString() {
-        return toString(false);
+        return toString(false, new TextReportFormatter());
     }
 
-    public String toString(boolean verbose) {
-        TextReportFormatter formatter = new TextReportFormatter();
+    public String toString(boolean verbose, TextReportFormatter formatter) {
         String table = notEmpty(tableAlias) ? tableName + " as " + tableAlias : tableName;
         if (isIndexUsed()) {
             formatter.line("IndexScan: " + table);
@@ -272,4 +271,8 @@ public class ExplainPlanInfo {
         indexInspectionsPerPartition.add(indexInspection);
     }
 
+    @Override
+    public void format(TextReportFormatter formatter) {
+        toString(false, formatter);
+    }
 }

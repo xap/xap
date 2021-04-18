@@ -4,6 +4,7 @@ import com.gigaspaces.jdbc.exceptions.ExecutionException;
 import com.gigaspaces.jdbc.handlers.QueryColumnHandler;
 import com.gigaspaces.jdbc.handlers.WhereHandler;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
@@ -76,7 +77,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
             WhereHandler expressionVisitor = new WhereHandler(this.getTables(), preparedValues);
             plainSelect.getWhere().accept(expressionVisitor);
             for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : expressionVisitor.getQTPMap().entrySet()) {
-                tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePackage(tableContainerQueryTemplatePacketEntry.getValue());
+                tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
             }
         }
     }
@@ -131,7 +132,11 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         prepareForExecution(selectBody);
 
         if (tables.size() == 1) { //Simple Query
-            return tables.get(0).executeRead(config);
+            QueryResult queryResult = tables.get(0).executeRead(config);
+            if (queryResult instanceof ExplainPlanResult) {
+                queryResult = ((ExplainPlanResult) queryResult).wrapExplainPlan();
+            }
+            return queryResult;
         }
         JoinQueryExecutor joinE = new JoinQueryExecutor(tables, space, queryColumns, config);
         return joinE.execute();

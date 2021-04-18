@@ -24,7 +24,7 @@ public abstract class TableContainer {
 
     public abstract QueryTemplatePacket createQueryTemplatePacketWithRange(Range range);
 
-    public abstract void setQueryTemplatePackage(QueryTemplatePacket queryTemplatePacket);
+    public abstract void setQueryTemplatePacket(QueryTemplatePacket queryTemplatePacket);
 
     public abstract Object getColumnValue(String columnName, Object value) throws SQLException;
 
@@ -37,4 +37,6 @@ public abstract class TableContainer {
     public abstract void setJoined(boolean joined);
 
     public abstract boolean isJoined();
+
+    public abstract boolean hasColumn(String columnName);
 }
