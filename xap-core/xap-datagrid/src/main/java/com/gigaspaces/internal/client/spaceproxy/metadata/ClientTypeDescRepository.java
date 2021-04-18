@@ -20,6 +20,7 @@ import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.reflection.ReflectionUtil;
+import com.gigaspaces.internal.server.space.tiered_storage.error.TieredStorageMetadataException;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITransportPacket;
 import com.gigaspaces.internal.utils.ClassLoaderUtils;
@@ -30,15 +31,13 @@ import com.j_spaces.core.UnknownTypeException;
 import com.j_spaces.core.client.ExternalEntry;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.kernel.ClassLoaderHelper;
-
 import net.jini.core.entry.Entry;
 import org.jini.rio.boot.CodeChangeClassLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
 public class ClientTypeDescRepository {
@@ -466,6 +465,8 @@ public class ClientTypeDescRepository {
                     // Register new type descriptor in server(s) BEFORE caching:
                     if (typeDescFromServer == null)
                         _spaceProxy.registerTypeDescInServers(typeDesc);
+                } catch (TieredStorageMetadataException e) {
+                    throw e;
                 } catch (SpaceMetadataException e) {
 
                     if (ignoreException) {

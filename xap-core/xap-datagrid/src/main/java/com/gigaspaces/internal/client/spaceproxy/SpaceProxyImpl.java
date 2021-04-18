@@ -19,7 +19,6 @@ package com.gigaspaces.internal.client.spaceproxy;
 import com.gigaspaces.admin.demote.DemoteFailedException;
 import com.gigaspaces.admin.quiesce.QuiesceToken;
 import com.gigaspaces.client.DirectSpaceProxyFactory;
-import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.executor.SpaceTask;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.CommonProxyActionInfo;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.SnapshotProxyActionInfo;
@@ -42,6 +41,8 @@ import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.space.IClusterInfoChangedListener;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
 import com.gigaspaces.internal.server.space.SpaceImpl;
+import com.gigaspaces.internal.server.space.tiered_storage.error.TieredStorageMetadataException;
+import com.gigaspaces.internal.server.space.tiered_storage.error.TieredStorageOperationException;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
@@ -64,7 +65,6 @@ import com.sun.jini.proxy.DefaultProxyPivot;
 import com.sun.jini.proxy.MarshalPivot;
 import com.sun.jini.proxy.MarshalPivotProvider;
 import net.jini.admin.Administrable;
-import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 import net.jini.core.transaction.server.ServerTransaction;
@@ -419,6 +419,9 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
     }
 
     public void beforeSpaceAction(CommonProxyActionInfo action) {
+        if(action.txn != null && this.getSpaceClusterInfo().isTieredStorage()){
+           throw new TieredStorageOperationException("Transactions are not supported with tiered storage at this stage");
+        }
         action.txn = _transactionManager.beforeSpaceAction(action.txn);
     }
 
@@ -539,6 +542,8 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
             request.processExecutionException();
             // TODO: Return type descriptor from server instead.
             return typeDesc;
+        } catch (TieredStorageMetadataException e){
+            throw e;
         } catch (Throwable e) {
             throw new SpaceMetadataException("Error in registerTypeDescInServers() remote task execution. TypeName=" + typeDesc.getTypeName(), e);
         }

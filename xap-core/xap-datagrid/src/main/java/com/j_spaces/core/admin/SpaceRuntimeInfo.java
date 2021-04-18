@@ -17,6 +17,9 @@
 
 package com.j_spaces.core.admin;
 
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -52,6 +55,7 @@ import java.util.List;
 
 public class SpaceRuntimeInfo implements Externalizable {
 
+//enhance com.j_spaces.core.admin.SpaceRuntimeInfo with disk num of entries
     private static final long serialVersionUID = -5586653306007649053L;
 
     /**
@@ -62,12 +66,15 @@ public class SpaceRuntimeInfo implements Externalizable {
     /**
      * List of numbers of entries for each class correlated to <code>m_ClassNames</code>.
      */
-    public List<Integer> m_NumOFEntries;
+    public List<Integer> m_NumOFEntries;//total
+    public List<Integer> m_RamNumOFEntries;//only ram
 
     /**
      * List of numbers of pending templates for each class correlated to <code>m_ClassNames</code>.
      */
     public List<Integer> m_NumOFTemplates;
+
+    private long diskSize;
 
     /**
      * Empty constructor.
@@ -82,10 +89,12 @@ public class SpaceRuntimeInfo implements Externalizable {
      * @param numOfEntries list of numbers of entries for each class correlated to
      *                     <code>classNames</code>
      */
-    public SpaceRuntimeInfo(List<String> classNames, List<Integer> numOfEntries, List<Integer> numOFTemplates) {
+    public SpaceRuntimeInfo(List<String> classNames, List<Integer> numOfEntries, List<Integer> numOFTemplates, List<Integer> ramNumOFEntries,long diskSize) {
         m_ClassNames = classNames;
         m_NumOFEntries = numOfEntries;
         m_NumOFTemplates = numOFTemplates;
+        m_RamNumOFEntries = ramNumOFEntries;
+        this.diskSize = diskSize;
     }
 
     /**
@@ -104,7 +113,12 @@ public class SpaceRuntimeInfo implements Externalizable {
         for (Integer num : m_NumOFTemplates) {
             out.writeInt(num);
         }
-
+        if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)) {
+            for (Integer num : m_RamNumOFEntries) {
+                out.writeInt(num);
+            }
+            out.writeLong(diskSize);
+        }
     }
 
     /**
@@ -115,6 +129,7 @@ public class SpaceRuntimeInfo implements Externalizable {
         m_ClassNames = new ArrayList<String>(size);
         m_NumOFEntries = new ArrayList<Integer>(size);
         m_NumOFTemplates = new ArrayList<Integer>(size);
+        m_RamNumOFEntries = new ArrayList<Integer>(size);
 
         for (int i = 0; i < size; ++i) {
             m_ClassNames.add(in.readUTF());
@@ -126,6 +141,12 @@ public class SpaceRuntimeInfo implements Externalizable {
 
         for (int i = 0; i < size; ++i) {
             m_NumOFTemplates.add(in.readInt());
+        }
+        if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)) {
+            for (int i = 0; i < size; ++i) {
+                m_RamNumOFEntries.add(in.readInt());
+            }
+            diskSize = in.readLong();
         }
     }
 
@@ -155,13 +176,23 @@ public class SpaceRuntimeInfo implements Externalizable {
                                 spaceRuntimeInfo.m_NumOFTemplates.get(i).intValue();
                 m_NumOFTemplates.set(index, newNumTemplatesValue);
 
+                int newRamNumEntriesValue =
+                        m_RamNumOFEntries.get(index).intValue() +
+                                spaceRuntimeInfo.m_RamNumOFEntries.get(i).intValue();
+                m_RamNumOFEntries.set(index, newRamNumEntriesValue);
+
             } else {
                 m_ClassNames.add(className);
                 m_NumOFEntries.add(spaceRuntimeInfo.m_NumOFEntries.get(i));
                 m_NumOFTemplates.add(spaceRuntimeInfo.m_NumOFTemplates.get(i));
+                m_RamNumOFEntries.add(spaceRuntimeInfo.m_RamNumOFEntries.get(i));
             }
         }
-
+        diskSize = spaceRuntimeInfo.diskSize;
         return this;
+    }
+
+    public long getDiskSize() {
+        return diskSize;
     }
 }

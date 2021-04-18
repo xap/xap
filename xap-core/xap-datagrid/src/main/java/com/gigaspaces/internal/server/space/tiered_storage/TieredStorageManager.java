@@ -13,6 +13,8 @@ public interface TieredStorageManager {
 
     CachePredicate getCacheRule(String typeName); // get cache rule for a specific type
 
+    TieredStorageTableConfig getTableConfig(String typeName);
+
     TimePredicate getRetentionRule(String typeName); // get retention rule for a specific type
 
     void setCacheRule(String typeName, CachePredicate newRule); // dynamically change rule
