@@ -5968,6 +5968,7 @@ public class CacheManager extends AbstractCacheManager
     }
 
     private SpaceRuntimeInfo getRuntimeInfo(IServerTypeDesc serverTypeDesc, Map<String, Integer> entriesInfo) {
+
         final IServerTypeDesc[] subTypes = serverTypeDesc.getAssignableTypes();
         ArrayList<String> classes = new ArrayList<String>(subTypes.length);
         ArrayList<Integer> entries = new ArrayList<Integer>(subTypes.length);
