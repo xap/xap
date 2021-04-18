@@ -4,7 +4,7 @@
     <groupId>org.gigaspaces</groupId>
     <artifactId>hola-mundo-example</artifactId>
     <packaging>pom</packaging>
-    <version>15.8.1-SNAPSHOT</version>
+    <version>15.8.1-preview1</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-openspaces</artifactId>
-            <version>15.8.1-SNAPSHOT</version>
+            <version>15.8.1-preview1</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
