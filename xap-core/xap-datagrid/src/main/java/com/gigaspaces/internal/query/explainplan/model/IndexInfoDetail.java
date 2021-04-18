@@ -86,20 +86,20 @@ public class IndexInfoDetail {
             return getString(false);
         }
 
-        return String.format("- (%s %s %s), IndexSize=[min=%s, max=%s], IndexType=%s"
+        return String.format("- (%s %s %s), size=[min=%s, max=%s]"
                 , getName(), getOperator().getOperatorString()
-                , getValue(), min, max, getType()); //TODO mishel - move to another method in my code instead of here.
+                , getValue(), min, max); //TODO mishel - move to another method in my code instead of here.
     }
 
     private String getString(boolean verbose) {
         if (verbose) {
-            return String.format("[#%s] (%s %s %s), IndexSize=%s, IndexType=%s"
+            return String.format("[#%s] (%s %s %s), size=%s, type=%s"
                     , getId(), getName(), getOperator().getOperatorString()
                     , getValue(), getSizeDesc(), getType());
         } else {
-            return String.format("- (%s %s %s), IndexSize=%s, IndexType=%s"
+            return String.format("- (%s %s %s), size=%s"
                     , getName(), getOperator().getOperatorString()
-                    , getValue(), getSizeDesc(), getType());
+                    , getValue(), getSizeDesc());
         }
     }
     private String getSizeDesc() {

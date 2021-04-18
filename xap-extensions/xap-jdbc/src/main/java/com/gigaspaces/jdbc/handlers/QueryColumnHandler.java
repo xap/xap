@@ -35,8 +35,7 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                     throw new IllegalArgumentException("Ambiguous column name [" + column.getColumnName() + "]");
                 }
             }
-            for (String columnName : table.getAllColumnNames()) {
-                if (column.getColumnName().equals(columnName)) {
+            if (table.hasColumn(column.getColumnName())) {
                     if (tableContainer == null) {
                         tableContainer = table;
                     } else {
@@ -44,7 +43,6 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                     }
                 }
             }
-        }
         if (tableContainer == null) {
             throw new ColumnNotFoundException("Could not find column [" + column.getColumnName() + "]");
         }
