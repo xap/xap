@@ -2,11 +2,13 @@ package com.gigaspaces.internal.query.explainplan.model;
 
 import com.gigaspaces.internal.query.explainplan.ExplainPlanV3;
 import com.gigaspaces.internal.query.explainplan.TextReportFormatter;
+import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterExecutionType;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.gigaspaces.internal.query.explainplan.ExplainPlanUtil.notEmpty;
+import static com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterExecutionType.SINGLE;
 
 /**
  * Base class representing the format of ExplainPlan
@@ -17,6 +19,7 @@ import static com.gigaspaces.internal.query.explainplan.ExplainPlanUtil.notEmpty
 public class ExplainPlanInfo {
     private final String tableName;
     private final String tableAlias;
+    private final PartitionedClusterExecutionType executionType;
     private final Map<String, String> visibleColumnsAndAliasMap;
     private List<PartitionIndexInspectionDetail> indexInspectionsPerPartition = new ArrayList<>();
     private String criteria;
@@ -28,6 +31,7 @@ public class ExplainPlanInfo {
         tableName = explainPlan.getTableName();
         tableAlias = explainPlan.getTableAlias();
         visibleColumnsAndAliasMap = explainPlan.getVisibleColumnsAndAliasMap();
+        executionType = explainPlan.getExecutionType();
     }
 
     @Override
@@ -56,6 +60,10 @@ public class ExplainPlanInfo {
 
         if (notEmpty(criteria)) {
             formatter.line("Criteria: " + criteria);
+        }
+
+        if (executionType != null && executionType.equals(SINGLE)) {
+            formatter.line("Execution type: " + "Single Partition");
         }
 
         if (!verbose) {
