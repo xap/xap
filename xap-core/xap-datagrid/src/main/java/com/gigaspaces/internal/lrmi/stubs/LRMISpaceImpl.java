@@ -55,10 +55,7 @@ import com.gigaspaces.security.service.RemoteSecuredService;
 import com.gigaspaces.server.space.suspend.SuspendType;
 import com.gigaspaces.transport.NioChannel;
 import com.gigaspaces.transport.PocSettings;
-import com.gigaspaces.transport.client.NioConnectionPool;
-import com.gigaspaces.transport.client.NioConnectionPoolDynamic;
-import com.gigaspaces.transport.client.NioConnectionPoolFixed;
-import com.gigaspaces.transport.client.NioConnectionPoolThreadLocal;
+import com.gigaspaces.transport.client.*;
 import com.j_spaces.core.DropClassException;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.SpaceContext;
@@ -104,9 +101,18 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
         implements IRemoteSpace, IInternalRemoteJSpaceAdmin, Service {
     static final long serialVersionUID = 2L;
 
-    private static final NioConnectionPool connectionPool = PocSettings.clientConnectionPoolDynamic
-            ? new NioConnectionPoolDynamic()
-            : new NioConnectionPoolThreadLocal();
+    private static final NioConnectionPool connectionPool = initConnectionPool(PocSettings.clientConnectionPoolType);
+
+    private static NioConnectionPool initConnectionPool(String type) {
+        switch (type) {
+            case "singleton": return new NioConnectionPoolSingleton();
+            case "thread-local": return new NioConnectionPoolThreadLocal();
+            case "fixed": return new NioConnectionPoolFixed();
+            case "dynamic": return new NioConnectionPoolDynamic();
+            default: throw new IllegalArgumentException("Unsupported connection pool type: " + type);
+        }
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(LRMISpaceImpl.class);
 
     private transient Uuid _spaceUuid; //cache at client side to avoid remote calls

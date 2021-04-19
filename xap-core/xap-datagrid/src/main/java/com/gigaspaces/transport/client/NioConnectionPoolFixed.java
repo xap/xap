@@ -19,11 +19,7 @@ public class NioConnectionPoolFixed implements NioConnectionPool {
     private final int connectionTimeout;
 
     public NioConnectionPoolFixed() {
-        this(new InetSocketAddress(PocSettings.host, PocSettings.port));
-    }
-
-    public NioConnectionPoolFixed(InetSocketAddress address) {
-        this(address, PocSettings.clientConnectionPoolSize, 10_000);
+        this(new InetSocketAddress(PocSettings.host, PocSettings.port), PocSettings.clientConnectionPoolSize, 10_000);
     }
 
     public NioConnectionPoolFixed(InetSocketAddress address, int capacity, int connectionTimeout) {

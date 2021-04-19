@@ -12,7 +12,7 @@ public class PocSettings {
     public static final boolean cacheRequest = GsEnv.propertyBoolean("com.gs.nio.cache-request").get(false);
     public static final boolean cacheResponse = GsEnv.propertyBoolean("com.gs.nio.cache-response").get(false);
     //public static final boolean customMarshal = GsEnv.propertyBoolean("com.gs.nio.custom-marshal").get(true);
-    public static final boolean clientConnectionPoolDynamic = GsEnv.propertyBoolean("com.gs.nio.client.connection-pool.dynamic").get(false);
+    public static final String clientConnectionPoolType = GsEnv.property("com.gs.nio.client.connection-pool.type").get("thread-local");
     public static final int clientConnectionPoolSize = GsEnv.propertyInt("com.gs.nio.client.connection-pool.size").get(4);
     public static final int serverReaderPoolSize = GsEnv.propertyInt("com.gs.nio.server.reader-pool-size").get(4);
     public static final boolean serverLrmiExecutor = GsEnv.propertyBoolean("com.gs.nio.server.lrmi-executor").get(true);
@@ -26,7 +26,7 @@ public class PocSettings {
                 "port: " + port + ", " +
                 "direct-buffers: " + directBuffers + ", " +
                 //"custom-marshal: " + customMarshal + ", " +
-                "client.connection-pool.dynamic: " + clientConnectionPoolDynamic + ", " +
+                "client.connection-pool.type: " + clientConnectionPoolType + ", " +
                 "client.connection-pool.size: " + clientConnectionPoolSize + ", " +
                 "server.reader-pool-size: " + serverReaderPoolSize;
     }

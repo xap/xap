@@ -2,33 +2,31 @@ package com.gigaspaces.transport.client;
 
 import com.gigaspaces.transport.NioChannel;
 import com.gigaspaces.transport.PocSettings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 
-public class NioConnectionPoolThreadLocal implements NioConnectionPool {
-    private static final Logger logger = LoggerFactory.getLogger(NioConnectionPoolThreadLocal.class);
+public class NioConnectionPoolSingleton implements NioConnectionPool {
 
-    private final InetSocketAddress serverAddress;
-    private final ThreadLocal<NioChannel> threadLocal;
+    private final InetSocketAddress address;
     private final int connectionTimeout;
+    private NioChannel instance;
 
-    public NioConnectionPoolThreadLocal() {
+    public NioConnectionPoolSingleton() {
         this(new InetSocketAddress(PocSettings.host, PocSettings.port), 10_000);
     }
 
-    public NioConnectionPoolThreadLocal(InetSocketAddress address, int connectionTimeout) {
-        this.serverAddress = address;
+    public NioConnectionPoolSingleton(InetSocketAddress address, int connectionTimeout) {
+        this.address = address;
         this.connectionTimeout = connectionTimeout;
-        threadLocal = ThreadLocal.withInitial(() -> new NioChannel(createChannel()));
     }
 
     public NioChannel acquire() throws IOException {
-        return threadLocal.get();
+        if (instance == null)
+            instance = new NioChannel(createChannel(address, connectionTimeout));
+        return instance;
     }
 
     public void release(NioChannel channel) {
@@ -36,11 +34,10 @@ public class NioConnectionPoolThreadLocal implements NioConnectionPool {
 
     @Override
     public void close() throws IOException {
-        threadLocal.get().close();
-        threadLocal.remove();
+        instance.close();
     }
 
-    private SocketChannel createChannel()  {
+    private SocketChannel createChannel(InetSocketAddress serverAddress, int connectionTimeout) {
         try {
             SocketChannel socketChannel = SocketChannel.open();
             socketChannel.configureBlocking(true);
@@ -49,14 +46,6 @@ public class NioConnectionPoolThreadLocal implements NioConnectionPool {
             return socketChannel;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
-        }
-    }
-
-    private void closeSilently(NioChannel channel) {
-        try {
-            channel.close();
-        } catch (IOException e) {
-            logger.warn("Failed to close socket channel", e);
         }
     }
 }
