@@ -33,6 +33,7 @@ public class NioChannel {
 
     private final AtomicBoolean acquisitionLock = new AtomicBoolean();
 
+    private byte[] cachedRequest;
     private byte[] cachedResponse;
 
     public NioChannel(SocketChannel socketChannel) {
@@ -154,6 +155,14 @@ public class NioChannel {
     public void close() throws IOException {
         serializer.close();
         socketChannel.close();
+    }
+
+    public byte[] getCachedRequest() {
+        return cachedRequest;
+    }
+
+    public void setCachedRequest(byte[] cachedRequest) {
+        this.cachedRequest = cachedRequest;
     }
 
     public byte[] getCachedResponse() {

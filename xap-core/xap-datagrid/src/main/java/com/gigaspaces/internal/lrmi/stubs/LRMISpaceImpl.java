@@ -24,6 +24,7 @@ import com.gigaspaces.cluster.activeelection.ISpaceModeListener;
 import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.grid.zone.GridZoneProvider;
 import com.gigaspaces.internal.client.spaceproxy.DirectSpaceProxyFactoryImpl;
+import com.gigaspaces.internal.client.spaceproxy.operations.ReadTakeEntrySpaceOperationRequest;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectRequest;
 import com.gigaspaces.internal.client.spaceproxy.operations.SpaceConnectResult;
 import com.gigaspaces.internal.cluster.ClusterTopology;
@@ -637,7 +638,18 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
             NioChannel connection = null;
             try {
                 connection = connectionPool.acquire();
-                ByteBuffer requestBuffer = connection.serialize(request);
+                ByteBuffer requestBuffer;
+                byte[] cachedRequest = connection.getCachedRequest();
+                if (cachedRequest != null)
+                    requestBuffer = ByteBuffer.wrap(cachedRequest);
+                else {
+                    requestBuffer = connection.serialize(request);
+                    if (PocSettings.cacheRequest && request instanceof ReadTakeEntrySpaceOperationRequest) {
+                        cachedRequest = toByteArray(connection.serialize(request));
+                        connection.setCachedRequest(cachedRequest);
+                        logger.info("Cached request for future executions - length: {}", cachedRequest.length);
+                    }
+                }
                 connection.writeBlocking(requestBuffer);
                 ByteBuffer reponseBuffer = connection.readBlocking();
                 T response = (T) connection.deserialize(reponseBuffer);
@@ -653,6 +665,12 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
         } else {
             return getProxy().executeOperation(request);
         }
+    }
+
+    private byte[] toByteArray(ByteBuffer buffer) {
+        byte[] result = new byte[buffer.limit()];
+        buffer.get(result);
+        return result;
     }
 
     @Override

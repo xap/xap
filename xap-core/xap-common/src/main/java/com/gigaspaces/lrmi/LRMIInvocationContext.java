@@ -17,6 +17,7 @@
 package com.gigaspaces.lrmi;
 
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.transport.PocSettings;
 
 import java.net.InetSocketAddress;
 
@@ -147,6 +148,8 @@ public class LRMIInvocationContext {
      * version is returned.
      */
     public static PlatformLogicalVersion getEndpointLogicalVersion() {
+        if (PocSettings.directVersion)
+            return PlatformLogicalVersion.getLogicalVersion();
         LRMIInvocationContext currentContext = LRMIInvocationContext.getCurrentContext();
         if (currentContext == null || currentContext.isEmpty())
             return PlatformLogicalVersion.getLogicalVersion();
