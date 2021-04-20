@@ -63,8 +63,8 @@ public class SpaceRuntimeInfo implements Externalizable {
     /**
      * List of numbers of entries for each class correlated to <code>m_ClassNames</code>.
      */
-    public List<Integer> m_NumOFEntries;
-    public List<Integer> m_DiskNumOFEntries;
+    public List<Integer> m_NumOFEntries;//total
+    public List<Integer> m_RamNumOFEntries;//only ram
 
     /**
      * List of numbers of pending templates for each class correlated to <code>m_ClassNames</code>.
@@ -84,10 +84,11 @@ public class SpaceRuntimeInfo implements Externalizable {
      * @param numOfEntries list of numbers of entries for each class correlated to
      *                     <code>classNames</code>
      */
-    public SpaceRuntimeInfo(List<String> classNames, List<Integer> numOfEntries, List<Integer> numOFTemplates) {
+    public SpaceRuntimeInfo(List<String> classNames, List<Integer> numOfEntries, List<Integer> numOFTemplates, List<Integer> ramNumOFEntries) {
         m_ClassNames = classNames;
         m_NumOFEntries = numOfEntries;
         m_NumOFTemplates = numOFTemplates;
+        m_RamNumOFEntries = ramNumOFEntries;
     }
 
     /**
@@ -106,6 +107,9 @@ public class SpaceRuntimeInfo implements Externalizable {
         for (Integer num : m_NumOFTemplates) {
             out.writeInt(num);
         }
+        for (Integer num : m_RamNumOFEntries) {
+            out.writeInt(num);
+        }
 
     }
 
@@ -117,6 +121,7 @@ public class SpaceRuntimeInfo implements Externalizable {
         m_ClassNames = new ArrayList<String>(size);
         m_NumOFEntries = new ArrayList<Integer>(size);
         m_NumOFTemplates = new ArrayList<Integer>(size);
+        m_RamNumOFEntries = new ArrayList<Integer>(size);
 
         for (int i = 0; i < size; ++i) {
             m_ClassNames.add(in.readUTF());
@@ -128,6 +133,9 @@ public class SpaceRuntimeInfo implements Externalizable {
 
         for (int i = 0; i < size; ++i) {
             m_NumOFTemplates.add(in.readInt());
+        }
+        for (int i = 0; i < size; ++i) {
+            m_RamNumOFEntries.add(in.readInt());
         }
     }
 
@@ -157,10 +165,16 @@ public class SpaceRuntimeInfo implements Externalizable {
                                 spaceRuntimeInfo.m_NumOFTemplates.get(i).intValue();
                 m_NumOFTemplates.set(index, newNumTemplatesValue);
 
+                int newRamNumEntriesValue =
+                        m_RamNumOFEntries.get(index).intValue() +
+                                spaceRuntimeInfo.m_RamNumOFEntries.get(i).intValue();
+                m_RamNumOFEntries.set(index, newRamNumEntriesValue);
+
             } else {
                 m_ClassNames.add(className);
                 m_NumOFEntries.add(spaceRuntimeInfo.m_NumOFEntries.get(i));
                 m_NumOFTemplates.add(spaceRuntimeInfo.m_NumOFTemplates.get(i));
+                m_RamNumOFEntries.add(spaceRuntimeInfo.m_RamNumOFEntries.get(i));
             }
         }
 

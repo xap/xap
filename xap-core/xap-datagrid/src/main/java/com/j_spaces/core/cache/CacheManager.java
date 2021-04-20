@@ -5947,12 +5947,14 @@ public class CacheManager extends AbstractCacheManager
             throw new IllegalArgumentException("Runtime info couldn't be extracted. Unknown class [" + typeName + "] for space [" + _engine.getFullSpaceName() + "]");
 
         Map<String, Integer> entriesInfo;
+        Map<String, Integer> ramEntriesInfo;
         boolean memoryOnlyIter;
 
-
         if(isTieredStorage()){
-            entriesInfo = countEntries(serverTypeDesc, false);
+            entriesInfo = countEntries(serverTypeDesc, false , false);
+            ramEntriesInfo = countEntries(serverTypeDesc, false , true);
         }else {
+            ramEntriesInfo = new HashMap<>();
 //             APP-833 (Guy K): 18.12.2006 in order to avoid
 //             Searching the DB when using all in cache/externalDB
             memoryOnlyIter = isCacheExternalDB() || isResidentEntriesCachePolicy();
@@ -5960,18 +5962,19 @@ public class CacheManager extends AbstractCacheManager
                 entriesInfo = null;
             else {
                 boolean loadPersistent = !(isMemorySpace() || isResidentEntriesCachePolicy()) && !memoryOnlyIter;
-                entriesInfo = countEntries(serverTypeDesc, loadPersistent);
+                entriesInfo = countEntries(serverTypeDesc, loadPersistent, true);
             }
         }
 
-        return getRuntimeInfo(serverTypeDesc, entriesInfo);
+        return getRuntimeInfo(serverTypeDesc, entriesInfo, ramEntriesInfo);
     }
 
-    private SpaceRuntimeInfo getRuntimeInfo(IServerTypeDesc serverTypeDesc, Map<String, Integer> entriesInfo) {
+    private SpaceRuntimeInfo getRuntimeInfo(IServerTypeDesc serverTypeDesc, Map<String, Integer> entriesInfo, Map<String, Integer> ramEntriesInfo) {
 
         final IServerTypeDesc[] subTypes = serverTypeDesc.getAssignableTypes();
         ArrayList<String> classes = new ArrayList<String>(subTypes.length);
         ArrayList<Integer> entries = new ArrayList<Integer>(subTypes.length);
+        ArrayList<Integer> ramOnlyEntries = new ArrayList<Integer>(subTypes.length);
         ArrayList<Integer> templates = new ArrayList<Integer>(subTypes.length);
 
         for (IServerTypeDesc subType : subTypes) {
@@ -5984,10 +5987,16 @@ public class CacheManager extends AbstractCacheManager
                 Integer count = entriesInfo.get(subType.getTypeName());
                 entries.add(count != null ? count : 0);
             }
+            if (ramEntriesInfo == null)
+                ramOnlyEntries.add(getNumberOfEntries(subType, false));
+            else {
+                Integer count = ramEntriesInfo.get(subType.getTypeName());
+                ramOnlyEntries.add(count != null ? count : 0);
+            }
             templates.add(getNumberOfNotifyTemplates(subType, false));
         }
 
-        return new SpaceRuntimeInfo(classes, entries, templates);
+        return new SpaceRuntimeInfo(classes, entries, templates,ramOnlyEntries);
     }
 
     private void countPersistentEntries(Map<String, Integer> classCountMap, ITemplateHolder template, IServerTypeDesc[] subTypes) {
@@ -6008,7 +6017,7 @@ public class CacheManager extends AbstractCacheManager
         }
     }
 
-    private Map<String, Integer> countEntries(IServerTypeDesc serverTypeDesc, boolean loadPersistent) {
+    private Map<String, Integer> countEntries(IServerTypeDesc serverTypeDesc, boolean loadPersistent,boolean memoryOnly) {
         // build null Template Holder and mark it stable
         final ITemplateHolder template = TemplateHolderFactory.createEmptyTemplateHolder(_engine,
                 _engine.createUIDFromCounter(), LeaseManager.toAbsoluteTime(0) /* expiration time*/, false /*isFifo*/);
@@ -6026,7 +6035,7 @@ public class CacheManager extends AbstractCacheManager
         ISAdapterIterator<IEntryHolder> entriesIter = null;
         try {
             context = getCacheContext();
-            entriesIter = makeEntriesIter(context, template, serverTypeDesc, 0, SystemTime.timeMillis(), !isTieredStorage());
+            entriesIter = makeEntriesIter(context, template, serverTypeDesc, 0, SystemTime.timeMillis(),memoryOnly || !isTieredStorage());
 
             String curClass = null;
             int currCount = 0;
