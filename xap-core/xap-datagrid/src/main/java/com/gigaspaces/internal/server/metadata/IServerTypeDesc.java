@@ -64,4 +64,6 @@ public interface IServerTypeDesc {
     void setMaybeOutdated();
 
     LongCounter getReadCounter();
+
+    LongCounter getRAMReadCounter();
 }
