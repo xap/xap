@@ -101,7 +101,7 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
         implements IRemoteSpace, IInternalRemoteJSpaceAdmin, Service {
     static final long serialVersionUID = 2L;
 
-    private static final NioConnectionPool connectionPool = initConnectionPool(PocSettings.clientConnectionPoolType);
+    private final NioConnectionPool connectionPool = initConnectionPool(PocSettings.clientConnectionPoolType);
 
     private static NioConnectionPool initConnectionPool(String type) {
         switch (type) {
@@ -129,6 +129,7 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     public LRMISpaceImpl(IRemoteSpace directRefObj, IRemoteSpace dynamicProxy) {
         super(directRefObj, dynamicProxy);
         initialize();
+        System.out.println("NIV_DEBUG: LRMISpaceImpl ctor #2");
     }
 
     private void initialize() {
