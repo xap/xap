@@ -1,7 +1,7 @@
 package com.gigaspaces.jdbc.model.table;
 
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
-import com.gigaspaces.jdbc.explainplan.SubqueryPlan;
+import com.gigaspaces.jdbc.explainplan.SubqueryExplainPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
@@ -33,7 +33,7 @@ public class TempTableContainer extends TableContainer {
     public QueryResult executeRead(QueryExecutionConfig config) {
         if (config.isExplainPlan()) {
             ExplainPlanResult explainResult = ((ExplainPlanResult) tableResult);
-            SubqueryPlan subquery = new SubqueryPlan(visibleColumns, (alias == null ? config.getTempTableNameGenerator().generate() : alias), explainResult.getExplainPlanInfo());
+            SubqueryExplainPlan subquery = new SubqueryExplainPlan(visibleColumns, (alias == null ? config.getTempTableNameGenerator().generate() : alias), explainResult.getExplainPlanInfo());
             return new ExplainPlanResult(visibleColumns, subquery);
         }
         return new QueryResult(visibleColumns, tableResult);
