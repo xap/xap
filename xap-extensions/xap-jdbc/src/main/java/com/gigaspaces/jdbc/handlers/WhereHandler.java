@@ -3,6 +3,7 @@ package com.gigaspaces.jdbc.handlers;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
+import com.j_spaces.jdbc.builder.UnionTemplatePacket;
 import com.j_spaces.jdbc.builder.range.*;
 import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -73,6 +74,8 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
             QueryTemplatePacket rightTable = rightHandler.getQTPMap().get(leftTable.getKey());
             if (rightTable == null) {
                 this.qtpMap.put(leftTable.getKey(), leftTable.getValue());
+            } else if (rightTable instanceof UnionTemplatePacket) {
+                this.qtpMap.put(leftTable.getKey(), leftTable.getValue().union(((UnionTemplatePacket) rightTable)));
             } else {
                 this.qtpMap.put(leftTable.getKey(), leftTable.getValue().union(rightTable));
             }
