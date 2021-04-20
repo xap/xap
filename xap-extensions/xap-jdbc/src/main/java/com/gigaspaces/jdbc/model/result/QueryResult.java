@@ -9,11 +9,12 @@ import com.j_spaces.jdbc.query.IQueryResultSet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class QueryResult {
     private final List<QueryColumn> queryColumns;
-    private final List<TableRow> rows;
+    private List<TableRow> rows;
     protected final TableContainer tableContainer;
     private Cursor<TableRow> cursor;
 
@@ -134,5 +135,12 @@ public class QueryResult {
                 columnLabels,
                 null, //TODO
                 fieldValues);
+    }
+
+    public List<TableRow> getRows() {
+        return rows;
+    }
+    public void filter(Predicate<TableRow> predicate) {
+        rows = rows.stream().filter(predicate).collect(Collectors.toList());
     }
 }

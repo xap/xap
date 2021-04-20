@@ -1,16 +1,20 @@
 package com.gigaspaces.jdbc.model.table;
 
+import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.explainplan.SubqueryExplainPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.QueryResult;
+import com.j_spaces.jdbc.SQLUtil;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.Range;
+import com.j_spaces.jdbc.query.QueryTableData;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TempTableContainer extends TableContainer {
@@ -19,6 +23,7 @@ public class TempTableContainer extends TableContainer {
     private TableContainer joinedTable;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
     private final List<QueryColumn> tableColumns = new ArrayList<>();
+    private TempTableQTPI qtp;
 
     public TempTableContainer(QueryResult tableResult, String alias) {
         this.tableResult = tableResult;
@@ -36,6 +41,9 @@ public class TempTableContainer extends TableContainer {
             ExplainPlanResult explainResult = ((ExplainPlanResult) tableResult);
             SubqueryExplainPlan subquery = new SubqueryExplainPlan(visibleColumns, (alias == null ? config.getTempTableNameGenerator().generate() : alias), explainResult.getExplainPlanInfo());
             return new ExplainPlanResult(visibleColumns, subquery);
+        }
+        if (qtp != null) {
+            tableResult.filter(row -> qtp.matches(row));
         }
         return new QueryResult(visibleColumns, tableResult);
     }
@@ -59,7 +67,7 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public String getTableNameOrAlias() {
-        throw new UnsupportedOperationException("Not supported yet!");
+        return alias;
     }
 
     @Override
@@ -84,12 +92,12 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public QueryTemplatePacket createQueryTemplatePacketWithRange(Range range) {
-        throw new UnsupportedOperationException("Not supported yet!");
+        return new TempTableQTP(range);
     }
 
     @Override
     public void setQueryTemplatePacket(QueryTemplatePacket queryTemplatePacket) {
-        throw new UnsupportedOperationException("Not supported yet!");
+        this.qtp = (TempTableQTPI) queryTemplatePacket;
     }
 
     @Override
