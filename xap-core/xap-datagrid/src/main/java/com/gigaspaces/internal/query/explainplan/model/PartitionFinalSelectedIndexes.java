@@ -52,6 +52,12 @@ public class PartitionFinalSelectedIndexes {
             for (int i = 0; i < firstSelectedIndexes.size(); i++) {
                 final IndexInfoDetail firstDetail = firstSelectedIndexes.get(i);
                 final IndexInfoDetail secondDetail = secondSelectedIndexes.get(i);
+                if (firstDetail.getValue() == null && secondDetail.getValue() == null) {
+                    continue;
+                } else if (firstDetail.getValue() == null || secondDetail.getValue() == null) {
+                    return false;
+                }
+
                 if (!firstDetail.getName().equals(secondDetail.getName())
                         || !firstDetail.getValue().equals(secondDetail.getValue())
                         || !firstDetail.getOperator().equals(secondDetail.getOperator())
