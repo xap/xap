@@ -24,7 +24,7 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
     private List<PartitionIndexInspectionDetail> indexInspectionsPerPartition = new ArrayList<>();
     private String criteria;
 
-    private static final String SELECTED_INDEX_STRING = "Selected Index:";
+    private static final String SELECTED_INDEX_STRING = "Selected index:";
 
 
     public ExplainPlanInfo(ExplainPlanV3 explainPlan) {
@@ -58,7 +58,7 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
         }
 
         if (notEmpty(criteria)) {
-            formatter.line("Criteria: " + criteria);
+            formatter.line("Filter: " + criteria);
         }
 
         if (executionType != null && executionType.equals(SINGLE)) {
@@ -172,7 +172,7 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
                     IndexChoiceDetail indexChoice = inspectionDetail.getIndexes().get(i);
                     formatter.line(indexChoice.getOperator());
                     formatter.indent();
-                    formatter.line("Inspected Index: ");
+                    formatter.line("Inspected index: ");
                     formatter.indent();
                     indexChoice.getInspectedIndexes().forEach(inspected -> formatter.line(inspected.toString()));
                     formatter.unindent();

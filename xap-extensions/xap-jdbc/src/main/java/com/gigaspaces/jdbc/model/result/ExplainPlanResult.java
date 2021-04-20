@@ -2,7 +2,6 @@ package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.internal.query.explainplan.TextReportFormatter;
 import com.gigaspaces.internal.query.explainplan.model.JdbcExplainPlan;
-import com.gigaspaces.jdbc.explainplan.GenericExplainPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.table.ExplainPlanQueryColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
@@ -10,7 +9,6 @@ import com.j_spaces.jdbc.ResultEntry;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ExplainPlanResult extends QueryResult {
     private final JdbcExplainPlan jdbcExplainPlan;
@@ -34,8 +32,8 @@ public class ExplainPlanResult extends QueryResult {
     public ResultEntry convertEntriesToResultArrays(QueryExecutionConfig config) {
         // Column (field) names and labels (aliases)
 
-        String[] fieldNames = new String[] { ExplainPlanQueryColumn.EXPLAIN_PLAN_COL_NAME};
-        String[] columnLabels = new String[] { ExplainPlanQueryColumn.EXPLAIN_PLAN_COL_NAME};
+        String[] fieldNames = new String[]{ExplainPlanQueryColumn.EXPLAIN_PLAN_COL_NAME};
+        String[] columnLabels = new String[]{ExplainPlanQueryColumn.EXPLAIN_PLAN_COL_NAME};
 
 
         //the field values for the result
@@ -57,8 +55,4 @@ public class ExplainPlanResult extends QueryResult {
                 fieldValues);
     }
 
-    public ExplainPlanResult wrapExplainPlan() {
-        GenericExplainPlan fullQueryExplainPlan = new GenericExplainPlan(visibleColumns.stream().map(x-> x.getAlias() == null ? x.getName() : x.getAlias()).collect(Collectors.toList()), jdbcExplainPlan);
-        return new ExplainPlanResult(visibleColumns, fullQueryExplainPlan);
-    }
 }

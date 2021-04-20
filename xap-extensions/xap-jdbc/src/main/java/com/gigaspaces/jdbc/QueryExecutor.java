@@ -132,11 +132,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         prepareForExecution(selectBody);
 
         if (tables.size() == 1) { //Simple Query
-            QueryResult queryResult = tables.get(0).executeRead(config);
-            if (queryResult instanceof ExplainPlanResult) {
-                queryResult = ((ExplainPlanResult) queryResult).wrapExplainPlan();
-            }
-            return queryResult;
+            return tables.get(0).executeRead(config);
         }
         JoinQueryExecutor joinE = new JoinQueryExecutor(tables, space, queryColumns, config);
         return joinE.execute();

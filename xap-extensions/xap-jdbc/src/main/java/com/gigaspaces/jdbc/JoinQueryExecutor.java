@@ -48,10 +48,13 @@ public class JoinQueryExecutor {
 
     private QueryResult explain() {
         Iterator<TableContainer> iter = tables.iterator();
-        JoinExplainPlan joinExplainPlan = new JoinExplainPlan(((ExplainPlanResult) iter.next().getQueryResult()).getExplainPlanInfo(), ((ExplainPlanResult) iter.next().getQueryResult()).getExplainPlanInfo());
+        TableContainer first = iter.next();
+        TableContainer second = iter.next();
+        JoinExplainPlan joinExplainPlan = new JoinExplainPlan(((ExplainPlanResult) first.getQueryResult()).getExplainPlanInfo(), ((ExplainPlanResult) second.getQueryResult()).getExplainPlanInfo());
 
         while (iter.hasNext()) {
-            joinExplainPlan = new JoinExplainPlan(joinExplainPlan, ((ExplainPlanResult) iter.next().getQueryResult()).getExplainPlanInfo());
+            TableContainer curr = iter.next();
+            joinExplainPlan = new JoinExplainPlan(joinExplainPlan, ((ExplainPlanResult) curr.getQueryResult()).getExplainPlanInfo());
         }
 
         return new ExplainPlanResult(queryColumns, joinExplainPlan);

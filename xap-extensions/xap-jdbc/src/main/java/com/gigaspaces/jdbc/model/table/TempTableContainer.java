@@ -33,7 +33,7 @@ public class TempTableContainer extends TableContainer {
     public QueryResult executeRead(QueryExecutionConfig config) {
         if (config.isExplainPlan()) {
             ExplainPlanResult explainResult = ((ExplainPlanResult) tableResult);
-            SubqueryPlan subquery = new SubqueryPlan((alias == null ? config.getTempTableNameGenerator().generate() : alias), explainResult.getExplainPlanInfo());
+            SubqueryPlan subquery = new SubqueryPlan(visibleColumns, (alias == null ? config.getTempTableNameGenerator().generate() : alias), explainResult.getExplainPlanInfo());
             return new ExplainPlanResult(visibleColumns, subquery);
         }
         return new QueryResult(visibleColumns, tableResult);
