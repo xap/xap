@@ -206,6 +206,7 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
         TableContainer table = handlerStart.getTable();
 
         SingleConditionHandler handlerEnd = new SingleConditionHandler(tables, preparedValues);
+        between.getLeftExpression().accept(handlerEnd);
         between.getBetweenExpressionEnd().accept(handlerEnd);
 
         if (!between.isNot()) {
