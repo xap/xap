@@ -24,7 +24,7 @@ public class JoinExplainPlan extends JdbcExplainPlan {
     }
 
     @Override
-    public void format(TextReportFormatter formatter) {
+    public void format(TextReportFormatter formatter, boolean verbose) {
         JoinInfo.JoinAlgorithm joinAlgorithm = joinInfo.getRightColumn().getTableContainer().getQueryResult().getCursorType().equals(Cursor.Type.HASH) ? JoinInfo.JoinAlgorithm.Hash : JoinInfo.JoinAlgorithm.Nested;
         boolean hashJoin = joinAlgorithm.equals(JoinInfo.JoinAlgorithm.Hash);
         formatter.line(String.format("%s Join (%s)", joinInfo.getJoinType(), joinAlgorithm));
@@ -37,9 +37,9 @@ public class JoinExplainPlan extends JdbcExplainPlan {
                 {
                     if (hashJoin) {
                         formatter.line(String.format("BuildPhase - Hash by: %s", joinInfo.getRightColumn()));
-                        formatter.indent(() -> left.format(formatter));
+                        formatter.indent(() -> left.format(formatter, verbose));
                     } else {
-                        left.format(formatter);
+                        left.format(formatter, verbose);
                     }
                 });
 
@@ -47,9 +47,9 @@ public class JoinExplainPlan extends JdbcExplainPlan {
             formatter.withFirstLine("|->", () -> {
                 if (hashJoin) {
                     formatter.line("ProbePhase");
-                    formatter.indent(() -> right.format(formatter));
+                    formatter.indent(() -> right.format(formatter, verbose));
                 } else {
-                    right.format(formatter);
+                    right.format(formatter, verbose);
                 }
             });
 
