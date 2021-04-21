@@ -18,7 +18,7 @@ db:
     class: org.hsqldb.jdbc.JDBCDriver
     groupId: org.hsqldb
     artifactId: hsqldb
-    version: 2.3.2
+    version: 2.5.2
   demo:
     enabled: true
 
