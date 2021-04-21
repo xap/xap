@@ -272,7 +272,7 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
     }
 
     @Override
-    public void format(TextReportFormatter formatter) {
-        toString(false, formatter);
+    public void format(TextReportFormatter formatter, boolean verbose) {
+        toString(verbose, formatter);
     }
 }

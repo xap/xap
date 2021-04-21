@@ -11,6 +11,9 @@ import java.util.Date;
 public class MyPojo {
     private String id;
     private String name;
+    private String first_name;
+    private String last_name;
+    private String email;
     private Integer age;
     private String country;
     private Date birthDate;
@@ -20,9 +23,14 @@ public class MyPojo {
 
     public MyPojo() {
     }
-
     public MyPojo(String name, Integer age, String country, Date birthDate, Time birthTime, Timestamp timestamp) {
-        this.name = name;
+        this(name.split(" ")[0], name.split(" ")[1], name.split(" ")[0]+"@msn.com", age, country, birthDate, birthTime, timestamp);
+    }
+    public MyPojo(String first_name, String last_name, String email, Integer age, String country, Date birthDate, Time birthTime, Timestamp timestamp) {
+        this.first_name = first_name;
+        this.name = first_name;
+        this.last_name = last_name;
+        this.email = email;
         this.age = age;
         this.country = country;
         this.birthDate = birthDate;
@@ -42,12 +50,30 @@ public class MyPojo {
     }
 
     @SpaceIndex
-    public String getName() {
-        return name;
+    public String getFirst_name() {
+        return first_name;
     }
 
-    public MyPojo setName(String name) {
-        this.name = name;
+    public String getLast_name() {
+        return last_name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public MyPojo setFirst_name(String first_name) {
+        this.first_name = first_name;
+        return this;
+    }
+
+    public MyPojo setLast_name(String last_name) {
+        this.last_name = last_name;
+        return this;
+    }
+
+    public MyPojo setEmail(String email) {
+        this.email = email;
         return this;
     }
 
@@ -106,16 +132,28 @@ public class MyPojo {
         return this;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public MyPojo setName(String name) {
+        this.name = name;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "MyPojo{" +
                 "id='" + id + '\'' +
-                ", name='" + name + '\'' +
+                ", first_name='" + first_name + '\'' +
+                ", last_name='" + last_name + '\'' +
+                ", email='" + email + '\'' +
                 ", age=" + age +
                 ", country='" + country + '\'' +
                 ", birthDate=" + birthDate +
                 ", birthTime=" + birthTime +
                 ", timestamp=" + timestamp +
+                ", birthLong=" + birthLong +
                 '}';
     }
 }

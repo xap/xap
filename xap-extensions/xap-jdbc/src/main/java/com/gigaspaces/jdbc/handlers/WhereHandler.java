@@ -5,6 +5,7 @@ import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.UnionTemplatePacket;
 import com.j_spaces.jdbc.builder.range.*;
+import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
@@ -17,15 +18,21 @@ import java.util.Map;
 public class WhereHandler extends UnsupportedExpressionVisitor {
     private final List<TableContainer> tables;
     private final Map<TableContainer, QueryTemplatePacket> qtpMap;
+    private final Map<TableContainer, Expression> expTree;
     private final Object[] preparedValues;
 
     public Map<TableContainer, QueryTemplatePacket> getQTPMap() {
         return qtpMap;
     }
 
+    public Map<TableContainer, Expression> getExpTree() {
+        return expTree;
+    }
+
     public WhereHandler(List<TableContainer> tables, Object[] preparedValues) {
         this.tables = tables;
         this.qtpMap = new LinkedHashMap<>();
+        this.expTree = new LinkedHashMap<>();
         this.preparedValues = preparedValues;
     }
 
@@ -40,6 +47,7 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
     }
 
     private void and(WhereHandler leftHandler, WhereHandler rightHandler) {
+        //fill qtpMap
         for (Map.Entry<TableContainer, QueryTemplatePacket> leftTable : leftHandler.getQTPMap().entrySet()) {
             QueryTemplatePacket rightTable = rightHandler.getQTPMap().get(leftTable.getKey());
             if (rightTable == null) {
@@ -59,8 +67,26 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
                 // already handled
             }
         }
-    }
 
+        //fill expTree
+        for (Map.Entry<TableContainer, Expression> leftTable : leftHandler.getExpTree().entrySet()) {
+            Expression rightTable = rightHandler.getExpTree().get(leftTable.getKey());
+            if (rightTable == null) {
+                this.expTree.put(leftTable.getKey(), leftTable.getValue());
+            } else {
+                this.expTree.put(leftTable.getKey(), new AndExpression(leftTable.getValue(), rightTable));
+            }
+        }
+
+        for (Map.Entry<TableContainer, Expression> rightTable : rightHandler.getExpTree().entrySet()) {
+            Expression leftTable = leftHandler.getExpTree().get(rightTable.getKey());
+            if (leftTable == null) {
+                this.expTree.put(rightTable.getKey(), rightTable.getValue());
+            } else {
+                // already handled
+            }
+        }
+    }
     @Override
     public void visit(OrExpression orExpression) {
         WhereHandler leftHandler = new WhereHandler(tables, preparedValues);
@@ -72,6 +98,7 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
     }
 
     private void or(WhereHandler leftHandler, WhereHandler rightHandler) {
+        //fill qtpMap
         for (Map.Entry<TableContainer, QueryTemplatePacket> leftTable : leftHandler.getQTPMap().entrySet()) {
             QueryTemplatePacket rightTable = rightHandler.getQTPMap().get(leftTable.getKey());
             if (rightTable == null) {
@@ -91,6 +118,25 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
                 // Already handled above
             }
         }
+
+        //fill expTree
+        for (Map.Entry<TableContainer, Expression> leftTable : leftHandler.getExpTree().entrySet()) {
+            Expression rightTable = rightHandler.getExpTree().get(leftTable.getKey());
+            if (rightTable == null) {
+                this.expTree.put(leftTable.getKey(), leftTable.getValue());
+            } else {
+                this.expTree.put(leftTable.getKey(), new OrExpression(leftTable.getValue(), rightTable));
+            }
+        }
+
+        for (Map.Entry<TableContainer, Expression> rightTable : rightHandler.getExpTree().entrySet()) {
+            Expression leftTable = leftHandler.getExpTree().get(rightTable.getKey());
+            if (leftTable == null) {
+                this.expTree.put(rightTable.getKey(), rightTable.getValue());
+            } else {
+                // Already handled above
+            }
+        }
     }
 
     @Override
@@ -102,6 +148,7 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
         TableContainer table = handler.getTable();
         Range range = new EqualValueRange(handler.getColumn().getColumnName(), handler.getValue());
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+        expTree.put(table, equalsTo);
     }
 
     @Override
@@ -113,6 +160,7 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
         TableContainer table = handler.getTable();
         Range range = new NotEqualValueRange(handler.getColumn().getColumnName(), handler.getValue());
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+        expTree.put(table, notEqualsTo);
     }
 
     @Override
@@ -127,7 +175,9 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
             TableContainer table = handler.getTable();
             Range range = new SegmentRange(handler.getColumn().getColumnName(), null, false, castToComparable(handler.getValue()), true);
             qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+            expTree.put(table, minorThanEquals);
         }
+
     }
 
     @Override
@@ -142,6 +192,7 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
             TableContainer table = handler.getTable();
             Range range = new SegmentRange(handler.getColumn().getColumnName(), null, false, castToComparable(handler.getValue()), false);
             qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+            expTree.put(table, minorThan);
         }
     }
 
@@ -153,6 +204,7 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
         TableContainer table = handler.getTable();
         Range range = new SegmentRange(handler.getColumn().getColumnName(), castToComparable(handler.getValue()), false, null, false);
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+        expTree.put(table, greaterThan);
     }
 
     @Override
@@ -163,6 +215,7 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
         TableContainer table = handler.getTable();
         Range range = new SegmentRange(handler.getColumn().getColumnName(), castToComparable(handler.getValue()), true, null, false);
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+        expTree.put(table, greaterThanEquals);
     }
 
     /**
@@ -186,6 +239,7 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
         TableContainer table = handler.getTable();
         Range range = isNullExpression.isNot() ? new NotNullRange(handler.getColumn().getColumnName()) : new IsNullRange(handler.getColumn().getColumnName());
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+        expTree.put(table, isNullExpression);
     }
 
     @Override
@@ -198,6 +252,7 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
 
         Range range = likeExpression.isNot() ? new NotRegexRange(handler.getColumn().getColumnName(), regex) : new RegexRange(handler.getColumn().getColumnName(), regex);
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+        expTree.put(table, likeExpression);
     }
 
     @Override
@@ -214,6 +269,7 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
         if (!between.isNot()) {
             Range range = new SegmentRange(handlerStart.getColumn().getColumnName(), castToComparable(handlerStart.getValue()), true, castToComparable(handlerEnd.getValue()), true);
             qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+            expTree.put(table, between);
         } else {
             throw new UnsupportedOperationException("NOT BETWEEN is not supported");
         }

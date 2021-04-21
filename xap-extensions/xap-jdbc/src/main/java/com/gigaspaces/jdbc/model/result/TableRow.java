@@ -62,4 +62,13 @@ public class TableRow {
         }
         return null;
     }
+
+    public Object getPropertyValue(String name) {
+        for (int i = 0; i < columns.length; i++) {
+            if (columns[i].getName().equals(name)) {
+                return values[i];
+            }
+        }
+        return null;
+    }
 }
