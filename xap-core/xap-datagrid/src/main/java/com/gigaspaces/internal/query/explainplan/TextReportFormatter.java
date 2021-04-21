@@ -17,16 +17,19 @@ package com.gigaspaces.internal.query.explainplan;
 
 import com.gigaspaces.internal.utils.StringUtils;
 
+import java.util.Collections;
+
 /**
  * @author Niv Ingberg
  * @since 12.0.1
  */
 public class TextReportFormatter {
+
     private final StringBuilder sb;
-    private int indents;
-    private String firstLinePrefix;
-    private String prefix;
     private int prefixPosition;
+
+    private String indentation = "";
+    private String firstLinePrefix;
 
     public TextReportFormatter() {
         this(new StringBuilder());
@@ -41,25 +44,10 @@ public class TextReportFormatter {
     }
 
     public TextReportFormatter line(String s) {
-        System.out.println();
-        System.out.println("Writing ["+s+"] with ["+indents+"] indentations");
-        if (prefix != null) {
-            for (int i = 0; i < prefixPosition-1; i++) {
-                sb.append(" ");
-            }
-            sb.append(prefix);
-            for (int i = 0; i < indents - prefixPosition -1; i++) {
-                sb.append(" ");
-            }
-        } else {
-            System.out.println("Will add ["+(indents)+"] indentations to the start of the line");
-            for (int i = 0; i < indents; i++)
-                sb.append(" ");
-        }
+        sb.append(indentation);
         if (firstLinePrefix != null) {
             sb.append(firstLinePrefix).append(" ");
-            indents+= (firstLinePrefix.length() + 1);
-            System.out.println("Adding ["+(firstLinePrefix.length() + 1)+"] indentation. Current: "+ indents);
+            indentation = indentation + String.join("", Collections.nCopies(firstLinePrefix.length() + 1, " "));
             firstLinePrefix = null;
         }
         sb.append(s);
@@ -68,12 +56,12 @@ public class TextReportFormatter {
     }
 
     public TextReportFormatter indent() {
-        indents+=2;
+        indentation = indentation+'\t';
         return this;
     }
 
     public TextReportFormatter unindent() {
-        indents-=2;
+        indentation = indentation.substring(indentation.length() - 1);
         return this;
     }
 
@@ -82,38 +70,19 @@ public class TextReportFormatter {
         function.run();
         unindent();
     }
-//    public void indent(String s, Runnable function) {
-//        indent();
-//        firstLinePrefix = s;
-//        function.run();
-//        unindent();
-//        indents-= (s.length() + 1);
-//    }
-
-//    public void line(String s, String format) {
-//        firstLinePrefix = s;
-//        line(format);
-//    }
-
-//    public void setFirstLinePrefix(String prefix) {
-//        this.firstLinePrefix = prefix;
-//    }
 
     public void withFirstLine(String firstLinePrefix, Runnable function) {
+        String orgIndenation = indentation;
         this.firstLinePrefix = firstLinePrefix;
         function.run();
-        this.firstLinePrefix = null;
-        indents -= (firstLinePrefix.length() + 1);
-        System.out.println("Removing ["+(firstLinePrefix.length() + 1)+"] indentations. current: " + indents);
+        this.indentation = orgIndenation;
     }
 
     public void withPrefix(String prefix, Runnable function) {
-        this.prefix = prefix;
-        int org = indents;
-        prefixPosition= indents + 1;
+        String orgIndentation = indentation;
+        indentation = indentation + prefix;
         function.run();
-        prefixPosition = org;
-        this.prefix = null;
+        indentation = orgIndentation;
 
     }
 }

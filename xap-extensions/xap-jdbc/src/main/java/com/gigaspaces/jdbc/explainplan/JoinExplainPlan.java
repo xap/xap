@@ -37,7 +37,7 @@ public class JoinExplainPlan extends JdbcExplainPlan {
                 {
                     if (hashJoin) {
                         formatter.line(String.format("BuildPhase - Hash by: %s", joinInfo.getRightColumn()));
-                        formatter.indent(() -> formatter.indent(() -> left.format(formatter)));
+                        formatter.indent(() -> left.format(formatter));
                     } else {
                         left.format(formatter);
                     }
