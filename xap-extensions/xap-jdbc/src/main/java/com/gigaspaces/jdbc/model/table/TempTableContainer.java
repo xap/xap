@@ -3,11 +3,14 @@ package com.gigaspaces.jdbc.model.table;
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.explainplan.SubqueryExplainPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
-import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
+import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
+import com.gigaspaces.jdbc.model.result.TempTableQTP;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
+import com.j_spaces.jdbc.builder.range.EqualValueRange;
 import com.j_spaces.jdbc.builder.range.Range;
+import com.j_spaces.jdbc.builder.range.SegmentRange;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +22,7 @@ public class TempTableContainer extends TableContainer {
     private TableContainer joinedTable;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
     private final List<QueryColumn> tableColumns = new ArrayList<>();
+    private TempTableQTP queryTemplatePacket;
 
     public TempTableContainer(QueryResult tableResult, String alias) {
         this.tableResult = tableResult;
@@ -34,16 +38,18 @@ public class TempTableContainer extends TableContainer {
     public QueryResult executeRead(QueryExecutionConfig config) {
         if (config.isExplainPlan()) {
             ExplainPlanResult explainResult = ((ExplainPlanResult) tableResult);
-            SubqueryExplainPlan subquery = new SubqueryExplainPlan(visibleColumns, (alias == null ? config.getTempTableNameGenerator().generate() : alias), explainResult.getExplainPlanInfo());
+            SubqueryExplainPlan subquery = new SubqueryExplainPlan(visibleColumns, (alias == null ? config.getTempTableNameGenerator().generate() : alias), explainResult.getExplainPlanInfo(), getExprTree());
             return new ExplainPlanResult(visibleColumns, subquery, this);
         }
+        if (queryTemplatePacket != null)
+            tableResult.filter(x -> queryTemplatePacket.eval(x));
         return new QueryResult(visibleColumns, tableResult);
     }
 
     @Override
     public QueryColumn addQueryColumn(String columnName, String alias, boolean visible) {
         QueryColumn queryColumn = tableColumns.stream().filter(qc -> qc.getName().equalsIgnoreCase(columnName)).findFirst().orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
-        visibleColumns.add(queryColumn);
+        if (visible) visibleColumns.add(queryColumn);
         return queryColumn;
     }
 
@@ -84,12 +90,19 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public QueryTemplatePacket createQueryTemplatePacketWithRange(Range range) {
-        throw new UnsupportedOperationException("Not supported yet!");
+        addQueryColumn(range.getPath(), null, false);
+        if (range instanceof EqualValueRange) {
+            return new TempTableQTP((EqualValueRange) range);
+        } else if (range instanceof SegmentRange) {
+            return new TempTableQTP((SegmentRange) range);
+        } else {
+            throw new UnsupportedOperationException("Range: " + range);
+        }
     }
 
     @Override
     public void setQueryTemplatePacket(QueryTemplatePacket queryTemplatePacket) {
-        throw new UnsupportedOperationException("Not supported yet!");
+        this.queryTemplatePacket = ((TempTableQTP) queryTemplatePacket);
     }
 
     @Override
@@ -109,6 +122,7 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public Object getColumnValue(String columnName, Object value) {
+        if (value instanceof Long) return Integer.valueOf(value.toString());
         return value;
     }
 

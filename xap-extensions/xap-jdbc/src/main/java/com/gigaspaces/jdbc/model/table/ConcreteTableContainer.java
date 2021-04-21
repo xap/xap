@@ -55,7 +55,7 @@ public class ConcreteTableContainer extends TableContainer {
 
     @Override
     public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
-        if(queryResult != null)
+        if (queryResult != null)
             return queryResult;
         String[] projectionC = visibleColumns.stream().map(QueryColumn::getName).toArray(String[]::new);
 
@@ -84,9 +84,9 @@ public class ConcreteTableContainer extends TableContainer {
             queryTemplatePacket.prepareForSpace(typeDesc);
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
             if (explainPlanImpl != null) {
-                queryResult =  new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
+                queryResult = new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
             } else {
-                queryResult  = new QueryResult(res, visibleColumns, this);
+                queryResult = new QueryResult(res, visibleColumns, this);
             }
             return queryResult;
         } catch (Exception e) {
@@ -192,7 +192,7 @@ public class ConcreteTableContainer extends TableContainer {
 
     @Override
     public boolean checkJoinCondition() {
-        if(joinInfo == null)
+        if (joinInfo == null)
             return true;
         return joinInfo.checkJoinCondition();
     }

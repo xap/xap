@@ -5,11 +5,14 @@ import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.Range;
+import net.sf.jsqlparser.expression.Expression;
 
 import java.sql.SQLException;
 import java.util.List;
 
 public abstract class TableContainer {
+
+    private Expression exprTree;
 
     public abstract QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
 
@@ -46,4 +49,12 @@ public abstract class TableContainer {
     public abstract void setJoinInfo(JoinInfo joinInfo);
 
     public abstract boolean checkJoinCondition();
+
+    public void setExpTree(Expression value) {
+        this.exprTree = value;
+    }
+
+    public Expression getExprTree() {
+        return exprTree;
+    }
 }

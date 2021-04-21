@@ -3,7 +3,6 @@ package com.gigaspaces.jdbc.model.result;
 import com.gigaspaces.internal.query.explainplan.TextReportFormatter;
 import com.gigaspaces.internal.query.explainplan.model.JdbcExplainPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
-import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
 import com.gigaspaces.jdbc.model.table.ExplainPlanQueryColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
@@ -35,13 +34,13 @@ public class ExplainPlanResult extends QueryResult {
     public ResultEntry convertEntriesToResultArrays(QueryExecutionConfig config) {
         // Column (field) names and labels (aliases)
 
-        String[] fieldNames = new String[]{ExplainPlanQueryColumn.EXPLAIN_PLAN_COL_NAME};
-        String[] columnLabels = new String[]{ExplainPlanQueryColumn.EXPLAIN_PLAN_COL_NAME};
+        String[] fieldNames = new String[]{config.isExplainPlanVerbose() ? ExplainPlanQueryColumn.EXPLAIN_PLAN_VERBOSE_COL_NAME: ExplainPlanQueryColumn.EXPLAIN_PLAN_COL_NAME};
+        String[] columnLabels = new String[]{config.isExplainPlanVerbose() ? ExplainPlanQueryColumn.EXPLAIN_PLAN_VERBOSE_COL_NAME: ExplainPlanQueryColumn.EXPLAIN_PLAN_COL_NAME};
 
 
         //the field values for the result
         TextReportFormatter formatter = new TextReportFormatter();
-        jdbcExplainPlan.format(formatter);
+        jdbcExplainPlan.format(formatter, config.isExplainPlanVerbose());
 
         String[] lines = formatter.toString().split("\n");
         Object[][] fieldValues = new Object[lines.length][1];

@@ -94,6 +94,10 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
             for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : expressionVisitor.getQTPMap().entrySet()) {
                 tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
             }
+
+            for (Map.Entry<TableContainer, Expression> tableContainerExpressionEntry : expressionVisitor.getExpTree().entrySet()) {
+                tableContainerExpressionEntry.getKey().setExpTree(tableContainerExpressionEntry.getValue());
+            }
         }
     }
 
