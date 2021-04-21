@@ -84,7 +84,7 @@ public class ConcreteTableContainer extends TableContainer {
             queryTemplatePacket.prepareForSpace(typeDesc);
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
             if (explainPlanImpl != null) {
-                queryResult =  new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo());
+                queryResult =  new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
             } else {
                 queryResult  = new QueryResult(res, visibleColumns, this);
             }

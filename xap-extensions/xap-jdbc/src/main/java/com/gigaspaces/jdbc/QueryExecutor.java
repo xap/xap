@@ -5,8 +5,6 @@ import com.gigaspaces.jdbc.handlers.QueryColumnHandler;
 import com.gigaspaces.jdbc.handlers.WhereHandler;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
-import com.gigaspaces.jdbc.model.join.JoinType;
-import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
@@ -68,7 +66,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
             TableContainer leftTable = QueryColumnHandler.getTableForColumn(lColumn, tables);
             QueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false);
             QueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false);
-            rightTable.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinType.getType(join)));
+            rightTable.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinInfo.JoinType.getType(join)));
             if (leftTable.getJoinedTable() == null) { // TODO set right table every time and align it to recursive form in JoinTablesIterator
                 if (!rightTable.isJoined()) {
                     leftTable.setJoinedTable(rightTable);
