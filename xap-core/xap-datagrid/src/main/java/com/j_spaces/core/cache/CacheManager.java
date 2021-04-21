@@ -5998,7 +5998,9 @@ public class CacheManager extends AbstractCacheManager
         }
         long diskSize = 0;
         try {
-            diskSize = getEngine().getTieredStorageManager().getInternalStorage().getDiskSize();
+            if (getEngine().isTieredStorage()) {
+                diskSize = getEngine().getTieredStorageManager().getInternalStorage().getDiskSize();
+            }
         } catch (SAException e) {
             e.printStackTrace();
         } catch (IOException e) {
