@@ -11,8 +11,9 @@ import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.core.IJSpace;
 
 import java.sql.SQLException;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Stack;
+import java.util.stream.Collectors;
 
 public class JoinQueryExecutor {
     private final IJSpace space;
@@ -36,10 +37,11 @@ public class JoinQueryExecutor {
                 throw new IllegalArgumentException(e);
             }
         }
-        if(config.isExplainPlan())
-            return explain();
-        QueryResult res = new QueryResult(this.queryColumns);
         JoinTablesIterator joinTablesIterator = new JoinTablesIterator(tables);
+        if(config.isExplainPlan()) {
+            return explain(joinTablesIterator);
+        }
+        QueryResult res = new QueryResult(this.queryColumns);
         while (joinTablesIterator.hasNext()) {
             if(tables.stream().allMatch(TableContainer::checkJoinCondition))
                 res.add(new TableRow(this.queryColumns));
@@ -47,17 +49,24 @@ public class JoinQueryExecutor {
         return res;
     }
 
-    private QueryResult explain() {
-        Iterator<TableContainer> iter = tables.iterator();
-        TableContainer first = iter.next();
-        TableContainer second = iter.next();
-        JoinExplainPlan joinExplainPlan = new JoinExplainPlan(((ExplainPlanResult) first.getQueryResult()).getExplainPlanInfo(), ((ExplainPlanResult) second.getQueryResult()).getExplainPlanInfo());
-
-        while (iter.hasNext()) {
-            TableContainer curr = iter.next();
-            joinExplainPlan = new JoinExplainPlan(joinExplainPlan, ((ExplainPlanResult) curr.getQueryResult()).getExplainPlanInfo());
+    private QueryResult explain(JoinTablesIterator joinTablesIterator) {
+        Stack<TableContainer> stack = new Stack<>();
+        TableContainer current = joinTablesIterator.getStartingPoint();
+        stack.push(current);
+        while (current.getJoinedTable() != null){
+            current = current.getJoinedTable();
+            stack.push(current);
         }
-
-        return new ExplainPlanResult(queryColumns, joinExplainPlan);
+        TableContainer first = stack.pop();
+        TableContainer second = stack.pop();
+        JoinExplainPlan joinExplainPlan = new JoinExplainPlan(first.getJoinInfo(), ((ExplainPlanResult) first.getQueryResult()).getExplainPlanInfo(), ((ExplainPlanResult) second.getQueryResult()).getExplainPlanInfo());
+        TableContainer last = second;
+        while (!stack.empty()) {
+            TableContainer curr = stack.pop();
+            joinExplainPlan = new JoinExplainPlan(last.getJoinInfo(), joinExplainPlan, ((ExplainPlanResult) curr.getQueryResult()).getExplainPlanInfo());
+            last = curr;
+        }
+        joinExplainPlan.setSelectColumns(queryColumns.stream().map(QueryColumn::toString).collect(Collectors.toList()));
+        return new ExplainPlanResult(queryColumns, joinExplainPlan, null);
     }
 }

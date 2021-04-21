@@ -22,7 +22,7 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
     private final PartitionedClusterExecutionType executionType;
     private final Map<String, String> visibleColumnsAndAliasMap;
     private List<PartitionIndexInspectionDetail> indexInspectionsPerPartition = new ArrayList<>();
-    private String criteria;
+    private String filter;
 
     private static final String SELECTED_INDEX_STRING = "Selected index:";
 
@@ -57,8 +57,8 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
             }
         }
 
-        if (notEmpty(criteria)) {
-            formatter.line("Filter: " + criteria);
+        if (notEmpty(filter)) {
+            formatter.line("Filter: " + filter);
         }
 
         if (executionType != null && executionType.equals(SINGLE)) {
@@ -251,12 +251,12 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
         return tableName;
     }
 
-    public String getCriteria() {
-        return criteria;
+    public String getFilter() {
+        return filter;
     }
 
-    public void setCriteria(String criteria) {
-        this.criteria = criteria;
+    public void setFilter(String filter) {
+        this.filter = filter;
     }
 
     public List<PartitionIndexInspectionDetail> getIndexInspectionsPerPartition() {

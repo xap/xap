@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class JoinTablesIterator {
-    private TableContainer startingPoint;
+    private final TableContainer startingPoint;
 
     public JoinTablesIterator(List<TableContainer> tableContainers) {
         startingPoint = findStartingPoint(tableContainers);
@@ -45,5 +45,9 @@ public class JoinTablesIterator {
         if(startingPoint == null)
             return false;
         return startingPoint.getQueryResult().next();
+    }
+
+    public TableContainer getStartingPoint() {
+        return startingPoint;
     }
 }

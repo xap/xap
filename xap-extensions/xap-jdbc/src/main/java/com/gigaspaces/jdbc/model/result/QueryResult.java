@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class QueryResult {
     private final List<QueryColumn> queryColumns;
     private final List<TableRow> rows;
-    protected final TableContainer tableContainer;
+    protected TableContainer tableContainer;
     private Cursor<TableRow> cursor;
 
     public QueryResult(IQueryResultSet<IEntryPacket> res, List<QueryColumn> queryColumns, TableContainer tableContainer) {
@@ -94,14 +94,18 @@ public class QueryResult {
 
     public Cursor<TableRow> getCursor() {
         if(cursor == null) {
-            if(tableContainer != null && tableContainer.getJoinInfo() != null) {
-                cursor = new HashedRowCursor(tableContainer.getJoinInfo(), rows);
-            }
-            else {
-                cursor = new RowScanCursor(rows);
-            }
+            cursor = getCursorType().equals(Cursor.Type.SCAN) ? new RowScanCursor(rows) : new HashedRowCursor(tableContainer.getJoinInfo(), rows);
         }
         return cursor;
+    }
+
+    public Cursor.Type getCursorType(){
+        if(tableContainer != null && tableContainer.getJoinInfo() != null) {
+            return Cursor.Type.HASH;
+        }
+        else {
+            return Cursor.Type.SCAN;
+        }
     }
 
     public ResultEntry convertEntriesToResultArrays(QueryExecutionConfig config) {

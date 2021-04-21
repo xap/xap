@@ -1,7 +1,6 @@
 package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.jdbc.model.join.JoinInfo;
-import com.gigaspaces.jdbc.model.join.JoinType;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 
 import java.util.*;
@@ -31,7 +30,7 @@ public class HashedRowCursor implements Cursor<TableRow>{
         if(iterator == null){
             List<TableRow> match = hashMap.get(joinInfo.getLeftColumn().getCurrentValue());
             if(match == null) {
-                if(!joinInfo.getJoinType().equals(JoinType.LEFT))
+                if(!joinInfo.getJoinType().equals(JoinInfo.JoinType.LEFT))
                     return false;
                 match = SINGLE_NULL;
             }

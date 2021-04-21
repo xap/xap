@@ -3,8 +3,10 @@ package com.gigaspaces.jdbc.model.result;
 import com.gigaspaces.internal.query.explainplan.TextReportFormatter;
 import com.gigaspaces.internal.query.explainplan.model.JdbcExplainPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
 import com.gigaspaces.jdbc.model.table.ExplainPlanQueryColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
+import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.jdbc.ResultEntry;
 
 import java.util.Collections;
@@ -14,8 +16,9 @@ public class ExplainPlanResult extends QueryResult {
     private final JdbcExplainPlan jdbcExplainPlan;
     private final List<QueryColumn> visibleColumns;
 
-    public ExplainPlanResult(List<QueryColumn> visibleColumns, JdbcExplainPlan jdbcExplainPlan) {
+    public ExplainPlanResult(List<QueryColumn> visibleColumns, JdbcExplainPlan jdbcExplainPlan, TableContainer tableContainer) {
         super(Collections.singletonList(new ExplainPlanQueryColumn()));
+        this.tableContainer = tableContainer;
         this.jdbcExplainPlan = jdbcExplainPlan;
         this.visibleColumns = visibleColumns;
     }
