@@ -44,6 +44,8 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
             QueryTemplatePacket rightTable = rightHandler.getQTPMap().get(leftTable.getKey());
             if (rightTable == null) {
                 this.qtpMap.put(leftTable.getKey(), leftTable.getValue());
+            } else if (rightTable instanceof UnionTemplatePacket) {
+                this.qtpMap.put(leftTable.getKey(), leftTable.getValue().and(((UnionTemplatePacket) rightTable)));
             } else {
                 this.qtpMap.put(leftTable.getKey(), leftTable.getValue().and(rightTable));
             }

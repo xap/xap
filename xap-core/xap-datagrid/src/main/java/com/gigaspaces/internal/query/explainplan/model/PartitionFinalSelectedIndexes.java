@@ -54,10 +54,11 @@ public class PartitionFinalSelectedIndexes {
                 final IndexInfoDetail secondDetail = secondSelectedIndexes.get(i);
                 if (firstDetail.getValue() == null && secondDetail.getValue() == null) {
                     continue;
+                } else if (firstDetail.getValue() == null || secondDetail.getValue() == null) {
+                    return false;
                 }
 
                 if (!firstDetail.getName().equals(secondDetail.getName())
-                        || firstDetail.getValue() == null
                         || !firstDetail.getValue().equals(secondDetail.getValue())
                         || !firstDetail.getOperator().equals(secondDetail.getOperator())
                         || !firstDetail.getType().equals(secondDetail.getType())) {
