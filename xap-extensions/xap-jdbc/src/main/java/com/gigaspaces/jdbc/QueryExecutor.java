@@ -53,6 +53,9 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     private void handleJoin(Join join){
         Expression onExpression = join.getOnExpression();
         if(onExpression instanceof EqualsTo) {
+            if (! (join.getRightItem() instanceof Table)) {
+                throw new UnsupportedOperationException("Join is currently supported with concrete tables only");
+            }
             Table rTable = (Table) join.getRightItem();
             tables.add(createTableContainer(rTable));
             Column rColumn = (Column) ((EqualsTo) onExpression).getRightExpression();
