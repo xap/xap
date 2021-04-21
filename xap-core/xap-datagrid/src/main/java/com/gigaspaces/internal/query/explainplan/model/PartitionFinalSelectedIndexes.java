@@ -57,7 +57,7 @@ public class PartitionFinalSelectedIndexes {
                 }
 
                 if (!firstDetail.getName().equals(secondDetail.getName())
-                        || firstDetail.getValue() == null && secondDetail.getValue() != null
+                        || firstDetail.getValue() == null
                         || !firstDetail.getValue().equals(secondDetail.getValue())
                         || !firstDetail.getOperator().equals(secondDetail.getOperator())
                         || !firstDetail.getType().equals(secondDetail.getType())) {
