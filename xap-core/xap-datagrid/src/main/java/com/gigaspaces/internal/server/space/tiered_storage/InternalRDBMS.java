@@ -8,9 +8,13 @@ import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 
+import java.io.IOException;
+
 public interface InternalRDBMS {
 
     void initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager) throws SAException;
+
+    long getDiskSize() throws SAException, IOException;
 
     void createTable(ITypeDesc typeDesc) throws SAException;
 

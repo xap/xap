@@ -71,6 +71,8 @@ public class SpaceRuntimeInfo implements Externalizable {
      */
     public List<Integer> m_NumOFTemplates;
 
+    private long diskSize;
+
     /**
      * Empty constructor.
      */
@@ -84,11 +86,12 @@ public class SpaceRuntimeInfo implements Externalizable {
      * @param numOfEntries list of numbers of entries for each class correlated to
      *                     <code>classNames</code>
      */
-    public SpaceRuntimeInfo(List<String> classNames, List<Integer> numOfEntries, List<Integer> numOFTemplates, List<Integer> ramNumOFEntries) {
+    public SpaceRuntimeInfo(List<String> classNames, List<Integer> numOfEntries, List<Integer> numOFTemplates, List<Integer> ramNumOFEntries,long diskSize) {
         m_ClassNames = classNames;
         m_NumOFEntries = numOfEntries;
         m_NumOFTemplates = numOFTemplates;
         m_RamNumOFEntries = ramNumOFEntries;
+        this.diskSize = diskSize;
     }
 
     /**
@@ -110,7 +113,7 @@ public class SpaceRuntimeInfo implements Externalizable {
         for (Integer num : m_RamNumOFEntries) {
             out.writeInt(num);
         }
-
+        out.writeLong(diskSize);
     }
 
     /**
@@ -137,6 +140,7 @@ public class SpaceRuntimeInfo implements Externalizable {
         for (int i = 0; i < size; ++i) {
             m_RamNumOFEntries.add(in.readInt());
         }
+        diskSize = in.readLong();
     }
 
     /**
@@ -177,7 +181,11 @@ public class SpaceRuntimeInfo implements Externalizable {
                 m_RamNumOFEntries.add(spaceRuntimeInfo.m_RamNumOFEntries.get(i));
             }
         }
-
+        diskSize = spaceRuntimeInfo.diskSize;
         return this;
+    }
+
+    public long getDiskSize() {
+        return diskSize;
     }
 }
