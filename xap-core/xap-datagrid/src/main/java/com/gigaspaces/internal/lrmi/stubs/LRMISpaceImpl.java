@@ -659,7 +659,14 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
                 }
                 connection.writeBlocking(requestBuffer);
                 ByteBuffer reponseBuffer = connection.readBlocking();
+                Object cachedResult = connection.getCachedResult();
+                if (cachedResult != null)
+                    return (T)cachedResult;
                 T response = (T) connection.deserialize(reponseBuffer);
+                if (PocSettings.cacheResult && request instanceof ReadTakeEntrySpaceOperationRequest) {
+                    logger.info("Cached result for future executions: {}", response);
+                    connection.setCachedResult(response);
+                }
                 return response;
             } catch (IOException | ClassNotFoundException e) {
                 logger.error("Failed to execute request", e);

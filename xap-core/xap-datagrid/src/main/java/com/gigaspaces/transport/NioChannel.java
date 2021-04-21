@@ -35,6 +35,7 @@ public class NioChannel {
 
     private byte[] cachedRequest;
     private byte[] cachedResponse;
+    private Object cachedResult;
 
     public NioChannel(SocketChannel socketChannel) {
         this.socketChannel = socketChannel;
@@ -171,5 +172,13 @@ public class NioChannel {
 
     public void setCachedResponse(byte[] cachedResponse) {
         this.cachedResponse = cachedResponse;
+    }
+
+    public Object getCachedResult() {
+        return cachedResult;
+    }
+
+    public void setCachedResult(Object cachedResult) {
+        this.cachedResult = cachedResult;
     }
 }

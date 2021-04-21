@@ -11,6 +11,7 @@ public class PocSettings {
     public static final boolean directVersion = GsEnv.propertyBoolean("com.gs.nio.direct-version").get(false);
     public static final boolean cacheRequest = GsEnv.propertyBoolean("com.gs.nio.cache-request").get(false);
     public static final boolean cacheResponse = GsEnv.propertyBoolean("com.gs.nio.cache-response").get(false);
+    public static final boolean cacheResult = GsEnv.propertyBoolean("com.gs.nio.cache-result").get(false);
     //public static final boolean customMarshal = GsEnv.propertyBoolean("com.gs.nio.custom-marshal").get(true);
     public static final String clientConnectionPoolType = GsEnv.property("com.gs.nio.client.connection-pool.type").get("thread-local");
     public static final int clientConnectionPoolSize = GsEnv.propertyInt("com.gs.nio.client.connection-pool.size").get(4);
