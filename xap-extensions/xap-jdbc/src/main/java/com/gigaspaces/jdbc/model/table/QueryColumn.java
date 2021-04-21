@@ -32,9 +32,24 @@ public class QueryColumn {
         return isUUID;
     }
 
+    public TableContainer getTableContainer() {
+        return tableContainer;
+    }
+
     public Object getCurrentValue(){
         if(tableContainer.getQueryResult().getCurrent() == null)
             return null;
         return tableContainer.getQueryResult().getCurrent().getPropertyValue(this);
+    }
+
+    @Override
+    public String toString() {
+        return tableContainer.getTableNameOrAlias() + "." + getNameOrAlias() ;
+    }
+
+    private String getNameOrAlias() {
+        if(alias != null)
+            return alias;
+        return name;
     }
 }

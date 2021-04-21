@@ -4,7 +4,6 @@ import com.gigaspaces.internal.query.explainplan.model.ExplainPlanInfo;
 import com.gigaspaces.internal.query.explainplan.model.IndexChoiceDetail;
 import com.gigaspaces.internal.query.explainplan.model.IndexInfoDetail;
 import com.gigaspaces.internal.query.explainplan.model.PartitionIndexInspectionDetail;
-import com.j_spaces.core.client.SQLQuery;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -62,7 +61,7 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
     private void appendScanDetails(ExplainPlanInfo planInfo) {
         indexInfoDescCache.clear();
         String queryFilterTree = getQueryFilterTree(plans.values().iterator().next().getRoot());
-        planInfo.setCriteria(queryFilterTree);
+        planInfo.setFilter(queryFilterTree);
         for (Map.Entry<String, SingleExplainPlan> entry : plans.entrySet()) {
             planInfo.addIndexInspection(getPartitionPlan(entry.getKey(), entry.getValue()));
         }
