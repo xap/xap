@@ -112,6 +112,7 @@ import net.jini.space.InternalSpaceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -5995,8 +5996,15 @@ public class CacheManager extends AbstractCacheManager
             }
             templates.add(getNumberOfNotifyTemplates(subType, false));
         }
-
-        return new SpaceRuntimeInfo(classes, entries, templates,ramOnlyEntries);
+        long diskSize = 0;
+        try {
+            diskSize = getEngine().getTieredStorageManager().getInternalStorage().getDiskSize();
+        } catch (SAException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new SpaceRuntimeInfo(classes, entries, templates,ramOnlyEntries, diskSize);
     }
 
     private void countPersistentEntries(Map<String, Integer> classCountMap, ITemplateHolder template, IServerTypeDesc[] subTypes) {
