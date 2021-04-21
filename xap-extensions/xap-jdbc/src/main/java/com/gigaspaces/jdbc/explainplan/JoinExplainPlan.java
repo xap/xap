@@ -29,27 +29,30 @@ public class JoinExplainPlan extends JdbcExplainPlan {
         boolean hashJoin = joinAlgorithm.equals(JoinInfo.JoinAlgorithm.Hash);
         formatter.line(String.format("%s Join (%s)", joinInfo.getJoinType(), joinAlgorithm));
         formatter.indent(() -> {
-            if(selectColumns != null)
+            if (selectColumns != null)
                 formatter.line(String.format("Select: %s", String.join(", ", selectColumns)));
             formatter.line(String.format("Join condition: (%s = %s)", joinInfo.getLeftColumn(), joinInfo.getRightColumn()));
-            formatter.indent(() -> {
-                if(hashJoin) {
-                    formatter.line(String.format("BuildPhase - Hash by: %s", joinInfo.getRightColumn()));
-                    formatter.indent(() -> left.format(formatter));
-                }
-                else{
-                    left.format(formatter);
-                }
+            formatter.withPrefix("|", () -> {
+                formatter.withFirstLine("->", () ->
+                {
+                    if (hashJoin) {
+                        formatter.line(String.format("BuildPhase - Hash by: %s", joinInfo.getRightColumn()));
+                        formatter.indent(() -> formatter.indent(() -> left.format(formatter)));
+                    } else {
+                        left.format(formatter);
+                    }
+                });
+
             });
-            formatter.indent(() -> {
-                if(hashJoin) {
+            formatter.withFirstLine("|->", () -> {
+                if (hashJoin) {
                     formatter.line("ProbePhase");
                     formatter.indent(() -> right.format(formatter));
-                }
-                else{
+                } else {
                     right.format(formatter);
                 }
             });
+
         });
     }
 

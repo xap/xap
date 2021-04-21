@@ -24,9 +24,11 @@ public class SubqueryExplainPlan extends JdbcExplainPlan {
         formatter.indent(() -> {
             formatter.line(String.format("Select: %s", String.join(", ", visibleColumns)));
 //            formatter.line("Filter: <placeholder>"); //TODO EP
-            formatter.indent(() -> {
+            formatter.withFirstLine("->", () -> {
                 formatter.line(String.format("TempView: %s", tempViewName));
-                formatter.indent(() -> plan.format(formatter));
+                formatter.withFirstLine("->", () -> {
+                    plan.format(formatter);
+                });
             });
         });
     }
