@@ -41,6 +41,7 @@ public class MainTester {
             execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id, name FROM %s)", MyPojo.class.getName()));
             execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id,name FROM (SELECT * FROM %s))", MyPojo.class.getName()));
             execute(statement, String.format("EXPLAIN SELECT A.id, B.name, C.name FROM %s A INNER JOIN %s B ON A.name=B.name INNER JOIN %s C ON B.name=C.name", MyPojo.class.getName(), MyPojo.class.getName(), MyPojo.class.getName()));
+            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT E.id, B.age, E.name FROM %s as E INNER JOIN %s as B ON E.name = B.name)", MyPojo.class.getName(), MyPojo.class.getName()));
 
 
             //            execute(statement, "SELECT * FROM com.gigaspaces.jdbc.MyPojo where timestamp = '2001-09-10 05:20:00.231'");// WHERE rowNum <= 10");

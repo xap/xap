@@ -17,13 +17,19 @@ package com.gigaspaces.internal.query.explainplan;
 
 import com.gigaspaces.internal.utils.StringUtils;
 
+import java.util.Collections;
+
 /**
  * @author Niv Ingberg
  * @since 12.0.1
  */
 public class TextReportFormatter {
+
     private final StringBuilder sb;
-    private int indents;
+    private int prefixPosition;
+
+    private String indentation = "";
+    private String firstLinePrefix;
 
     public TextReportFormatter() {
         this(new StringBuilder());
@@ -38,20 +44,24 @@ public class TextReportFormatter {
     }
 
     public TextReportFormatter line(String s) {
-        for (int i=0 ; i < indents ; i++)
-            sb.append('\t');
+        sb.append(indentation);
+        if (firstLinePrefix != null) {
+            sb.append(firstLinePrefix).append(" ");
+            indentation = indentation + String.join("", Collections.nCopies(firstLinePrefix.length() + 1, " "));
+            firstLinePrefix = null;
+        }
         sb.append(s);
         sb.append(StringUtils.NEW_LINE);
         return this;
     }
 
     public TextReportFormatter indent() {
-        indents++;
+        indentation = indentation+'\t';
         return this;
     }
 
     public TextReportFormatter unindent() {
-        indents--;
+        indentation = indentation.substring(indentation.length() - 1);
         return this;
     }
 
@@ -59,5 +69,20 @@ public class TextReportFormatter {
         indent();
         function.run();
         unindent();
+    }
+
+    public void withFirstLine(String firstLinePrefix, Runnable function) {
+        String orgIndenation = indentation;
+        this.firstLinePrefix = firstLinePrefix;
+        function.run();
+        this.indentation = orgIndenation;
+    }
+
+    public void withPrefix(String prefix, Runnable function) {
+        String orgIndentation = indentation;
+        indentation = indentation + prefix;
+        function.run();
+        indentation = orgIndentation;
+
     }
 }
