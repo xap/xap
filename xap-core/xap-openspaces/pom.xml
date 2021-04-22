@@ -133,6 +133,7 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>
+            <version>${spring.security.version}</version>
             <scope>compile</scope>
         </dependency>
 
@@ -144,11 +145,13 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-web</artifactId>
+            <version>${spring.security.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-config</artifactId>
+            <version>${spring.security.version}</version>
             <scope>compile</scope>
         </dependency>
 
