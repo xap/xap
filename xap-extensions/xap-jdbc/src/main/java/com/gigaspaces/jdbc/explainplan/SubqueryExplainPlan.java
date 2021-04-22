@@ -29,7 +29,7 @@ public class SubqueryExplainPlan extends JdbcExplainPlan {
             formatter.line(String.format("Select: %s", String.join(", ", visibleColumns)));
 //            formatter.line("Filter: <placeholder>"); //TODO EP
             if (exprTree != null) {
-                ExpressionDeParser expressionDeParser = new ExpressionDeParser();
+                ExpressionDeParser expressionDeParser = new ExpressionTreeDeParser();
                 exprTree.accept(expressionDeParser);
                 formatter.line("Filter: " + expressionDeParser.getBuffer().toString());
             }
