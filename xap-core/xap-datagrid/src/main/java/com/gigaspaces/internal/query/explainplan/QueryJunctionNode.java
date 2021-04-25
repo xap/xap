@@ -59,7 +59,7 @@ public class QueryJunctionNode implements QueryOperationNode{
     @Override
     public String getPrettifiedString() {
         StringBuilder result = new StringBuilder();
-        final boolean surroundParentheses = name.equalsIgnoreCase("AND");
+        final boolean surroundParentheses = name.equalsIgnoreCase("AND") && subTrees.size() > 1;
         final Iterator<QueryOperationNode> iterator = subTrees.iterator();
         if (surroundParentheses) {
             result.append("(");
