@@ -397,7 +397,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         }
     }
 
-    private void validateTieredStorage(TieredStorageConfig storageConfig) {
+    /*private void validateTieredStorage(TieredStorageConfig storageConfig) {
         for (TieredStorageTableConfig tableConfig : storageConfig.getTables().values()) {
             if(tableConfig.isTransient()){
                 if(tableConfig.getCriteria() != null || tableConfig.getPeriod() != null
@@ -419,7 +419,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 }
             }
         }
-    }
+    }*/
 
     private void validateTieredStorage(TieredStorageConfig storageConfig) {
         for (TieredStorageTableConfig tableConfig : storageConfig.getTables().values()) {
