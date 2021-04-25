@@ -84,6 +84,11 @@ public class RemoteStub<T>
         _dynamicProxy = dynamicProxy;
     }
 
+    protected RemoteStub(RemoteStub<T> other) {
+        this._directObjRef = other._directObjRef;
+        this._dynamicProxy = other._dynamicProxy;
+    }
+
     /**
      * @return the direct object reference or dynamic proxy if this stub was serialized.
      */

@@ -129,7 +129,15 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     public LRMISpaceImpl(IRemoteSpace directRefObj, IRemoteSpace dynamicProxy) {
         super(directRefObj, dynamicProxy);
         initialize();
-        System.out.println("NIV_DEBUG: LRMISpaceImpl ctor #2");
+    }
+
+    protected LRMISpaceImpl(LRMISpaceImpl other) {
+        super(other);
+        this.nioEnabled = other.nioEnabled;
+    }
+
+    public LRMISpaceImpl createCopy() {
+        return new LRMISpaceImpl(this);
     }
 
     private void initialize() {
@@ -637,6 +645,10 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
         return getProxy().loadRemoteClass(className);
     }
 
+    public NioConnectionPool getConnectionPool() {
+        return connectionPool;
+    }
+
     @Override
     public <T extends RemoteOperationResult> T executeOperation(RemoteOperationRequest<T> request)
             throws RemoteException {
@@ -651,10 +663,13 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
                     requestBuffer = ByteBuffer.wrap(cachedRequest);
                 else {
                     requestBuffer = connection.serialize(request);
-                    if (PocSettings.cacheRequest && request instanceof ReadTakeEntrySpaceOperationRequest) {
-                        cachedRequest = toByteArray(connection.serialize(request));
-                        connection.setCachedRequest(cachedRequest);
-                        logger.info("Cached request for future executions - length: {}", cachedRequest.length);
+                    if (request instanceof ReadTakeEntrySpaceOperationRequest) {
+                        connection.cachedRequestObject = (ReadTakeEntrySpaceOperationRequest) request;
+                        if (PocSettings.cacheRequest) {
+                            cachedRequest = toByteArray(connection.serialize(request));
+                            connection.setCachedRequest(cachedRequest);
+                            logger.info("Cached request for future executions - length: {}", cachedRequest.length);
+                        }
                     }
                 }
                 connection.writeBlocking(requestBuffer);

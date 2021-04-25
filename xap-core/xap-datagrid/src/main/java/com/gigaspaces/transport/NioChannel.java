@@ -1,5 +1,6 @@
 package com.gigaspaces.transport;
 
+import com.gigaspaces.internal.client.spaceproxy.operations.ReadTakeEntrySpaceOperationRequest;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.LRMIUtilities;
 import com.gigaspaces.transport.serializers.NioReusableMarshalSerializer;
@@ -33,6 +34,7 @@ public class NioChannel {
 
     private final AtomicBoolean acquisitionLock = new AtomicBoolean();
 
+    public ReadTakeEntrySpaceOperationRequest cachedRequestObject;
     private byte[] cachedRequest;
     private byte[] cachedResponse;
     private Object cachedResult;
