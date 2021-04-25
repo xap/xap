@@ -301,7 +301,7 @@
     <parent>
         <artifactId>xap</artifactId>
         <groupId>org.gigaspaces</groupId>
-        <version>16.0.0-SNAPSHOT</version>
+        <version>15.8.0-patch-c-2</version>
         <relativePath>../../</relativePath>
     </parent>
     <repositories>
