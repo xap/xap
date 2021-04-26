@@ -4,6 +4,7 @@ import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
+import com.gigaspaces.metadata.SpaceMetadataException;
 import com.j_spaces.core.cache.context.TemplateMatchTier;
 import com.j_spaces.jdbc.builder.range.SegmentRange;
 
@@ -38,9 +39,10 @@ public class TimePredicate implements CachePredicate, InternalCachePredicate {
     }
 
     //eviction from hot tier
-    public long getExpirationTime(IEntryPacket entry, long gracePeriod) {
-        //assumes time column field not null when this method is reached
-        Object value = entry.getPropertyValue(getTimeColumn());
+    public long getExpirationTime(Object value, long gracePeriod) {
+        if (value == null){
+            throw new SpaceMetadataException("property of type [" + timeColumn + "] which set as time rule cannot be null.");
+        }
         long originalValueInLong = Long.class.equals(value.getClass())? (long)value : SqliteUtils.convertTimeTypeToInstant(value).toEpochMilli();
         return originalValueInLong + period.toMillis() + gracePeriod;
     }

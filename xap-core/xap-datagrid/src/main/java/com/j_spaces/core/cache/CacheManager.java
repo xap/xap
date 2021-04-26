@@ -1034,6 +1034,12 @@ public class CacheManager extends AbstractCacheManager
                     if (insertBlobStoreEntryToCache) {
                         if (isTieredStorage()){
                             context.setEntryTieredState(_engine.getTieredStorageManager().getEntryTieredState(eh.getEntryData()));
+                            if (context.isHotEntry()){
+                                long expiration = _engine.getLeaseManager().getExpirationByTimeRuleOnInitialLoad(eh.getEntryData());
+                                if(expiration != -1){
+                                    eh.updateEntryData(eh.getEntryData(), expiration);
+                                }
+                            }
                             insertEntry(context,eh,false,true,true, InitialLoadOrigin.FROM_NON_BLOBSTORE);
                         }
                         else {

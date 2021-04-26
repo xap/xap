@@ -2446,7 +2446,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         String entryId = updated_entry.getUID();
         final long startTime = SystemTime.timeMillis();
-        long expiration_time = _leaseManager.getExpirationOnUpdateOrChangeByLeaseOrByTimeRule(lease, startTime, updated_entry, fromReplication);
+        long expiration_time = _leaseManager.getExpirationOnUpdateByLeaseOrByTimeRule(lease, startTime, updated_entry, fromReplication);
 
         //create an update template that will contain the updated_entry
         // with the UID of the original entry. Note that it is assumed that primary key fields
