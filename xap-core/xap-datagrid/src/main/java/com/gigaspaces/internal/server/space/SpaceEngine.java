@@ -1302,7 +1302,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             _coreProcessor.handleDirectReadOrTakeSA(context, tHolder, fromReplication, origin);
 
 
-        updateTieredRAMObjectTypeReadCounts(tHolder.getServerTypeDesc(), template,context.getTemplateTieredState());
+        updateTieredRAMObjectTypeReadCounts(tHolder.getServerTypeDesc() ,context.getTemplateTieredState());
 
         if (context.getReplicationContext() != null) {
             tHolder.getAnswerHolder().setSyncRelplicationLevel(context.getReplicationContext().getCompleted());
@@ -1893,8 +1893,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         }
     }
 
-    public void updateTieredRAMObjectTypeReadCounts(IServerTypeDesc serverTypeDesc, ITemplatePacket template, TemplateMatchTier templateTieredState) {
-        if (!isTieredStorage()){
+    public void updateTieredRAMObjectTypeReadCounts(IServerTypeDesc serverTypeDesc, TemplateMatchTier templateTieredState) {
+        if (templateTieredState == null){
             return;
         }
 
@@ -1907,8 +1907,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             return;
         }
 
-        String typeName = template.getTypeName();
-        if (typeName != null) {
+        if (serverTypeDesc.getTypeName() != null) {
             if (templateTieredState == TemplateMatchTier.MATCH_HOT){
                 serverTypeDesc.getRAMReadCounter().inc(1);
             }
@@ -2157,7 +2156,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         }
 
         updateObjectTypeReadCounts(typeDesc, template);
-        updateTieredRAMObjectTypeReadCounts(typeDesc, template,templateTieredState);
+        updateTieredRAMObjectTypeReadCounts(typeDesc, templateTieredState);
 
         if (tHolder.getExplainPlan() != null) {
             return new Pair(counter, tHolder.getExplainPlan());
@@ -4031,13 +4030,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             if(context.getExplainPlanContext() != null){
                 context.getExplainPlanContext().getSingleExplainPlan().addTiersInfo(template.getServerTypeDesc().getTypeName(), TieredStorageUtils.getTiersAsList(context.getTemplateTieredState()));
             }
-            //add metric boolean
-                TemplateMatchTier templateTieredState = context.getTemplateTieredState();
-                if (templateTieredState != null){
-                    if (templateTieredState == TemplateMatchTier.MATCH_HOT){
-                        template.getServerTypeDesc().getRAMReadCounter().inc(1);
-                    }
-                }
+           updateTieredRAMObjectTypeReadCounts(template.getServerTypeDesc(), context.getTemplateTieredState());
 
         }
 
