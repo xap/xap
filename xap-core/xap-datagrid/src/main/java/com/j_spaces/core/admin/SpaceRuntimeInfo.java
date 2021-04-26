@@ -17,6 +17,9 @@
 
 package com.j_spaces.core.admin;
 
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -110,10 +113,12 @@ public class SpaceRuntimeInfo implements Externalizable {
         for (Integer num : m_NumOFTemplates) {
             out.writeInt(num);
         }
-        for (Integer num : m_RamNumOFEntries) {
-            out.writeInt(num);
+        if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)) {
+            for (Integer num : m_RamNumOFEntries) {
+                out.writeInt(num);
+            }
+            out.writeLong(diskSize);
         }
-        out.writeLong(diskSize);
     }
 
     /**
@@ -137,10 +142,12 @@ public class SpaceRuntimeInfo implements Externalizable {
         for (int i = 0; i < size; ++i) {
             m_NumOFTemplates.add(in.readInt());
         }
-        for (int i = 0; i < size; ++i) {
-            m_RamNumOFEntries.add(in.readInt());
+        if (LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)) {
+            for (int i = 0; i < size; ++i) {
+                m_RamNumOFEntries.add(in.readInt());
+            }
+            diskSize = in.readLong();
         }
-        diskSize = in.readLong();
     }
 
     /**
