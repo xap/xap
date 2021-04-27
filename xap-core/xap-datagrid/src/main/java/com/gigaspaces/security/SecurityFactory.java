@@ -179,10 +179,7 @@ public class SecurityFactory {
                 try {
                     resourceAsStream = new URL(resourceName).openStream();
                 } catch (IOException e) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Security properties file url is malformed");
-                    }
-                    e.printStackTrace();
+                    throw new RuntimeException("Unable to load security properties from url: " + resourceNameTrimmed, e);
                 }
             } else {
                 //try loading it using direct path, otherwise look it up in the classpath
