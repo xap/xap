@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.URL;
 import java.util.Properties;
 
 /**
@@ -34,11 +35,9 @@ import java.util.Properties;
 
 public class SecurityFactory {
 
-    private static final Logger logger = LoggerFactory.getLogger("com.gigaspaces.security");
-
     public final static String DEFAULT_SECURITY_RESOURCE = "security.properties";
     public final static String DEFAULT_SECURITY_DIRECTORY = "config/security/";
-
+    private static final Logger logger = LoggerFactory.getLogger("com.gigaspaces.security");
     /**
      * Reference-implementation for backwards compatibility
      */
@@ -113,7 +112,8 @@ public class SecurityFactory {
 
     /**
      * Load a component's security properties file.
-     * @param component The component name, e.g. "grid"
+     *
+     * @param component     The component name, e.g. "grid"
      * @param useMinusDLast if -Dcom.gs.security.properties-file is set, use it after looking up default component file
      * @return The loaded properties
      * @throws SecurityException if couldn't locate/load security file
@@ -173,23 +173,37 @@ public class SecurityFactory {
     public static InputStream findSecurityProperties(String resourceName) {
         InputStream resourceAsStream = null;
         if (resourceName != null) {
-            //try loading it using direct path, otherwise look it up in the classpath
-            File file = new File(resourceName);
-            if (file.exists()) {
+            //try loading it using url
+            String resourceNameTrimmed = resourceName.trim().toLowerCase();
+            if (resourceNameTrimmed.startsWith("http://") || resourceNameTrimmed.startsWith("https://")) {
                 try {
-                    resourceAsStream = new FileInputStream(file);
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException("Should not happen", e);
+                    resourceAsStream = new URL(resourceName).openStream();
+                } catch (IOException e) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Security properties file url is malformed");
+                    }
+                    e.printStackTrace();
                 }
             } else {
-                //look for <resourceName>
-                resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourceName);
-                if (resourceAsStream == null) {
-                    //look for config/security/<resourceName>
-                    resourceName = DEFAULT_SECURITY_DIRECTORY + resourceName;
+                //try loading it using direct path, otherwise look it up in the classpath
+                File file = new File(resourceName);
+                if (file.exists()) {
+                    try {
+                        resourceAsStream = new FileInputStream(file);
+                    } catch (FileNotFoundException e) {
+                        throw new RuntimeException("Should not happen", e);
+                    }
+                } else {
+                    //look for <resourceName>
                     resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourceName);
+                    if (resourceAsStream == null) {
+                        //look for config/security/<resourceName>
+                        resourceName = DEFAULT_SECURITY_DIRECTORY + resourceName;
+                        resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourceName);
+                    }
                 }
             }
+
         }
 
         //could not locate, try to locate default file
