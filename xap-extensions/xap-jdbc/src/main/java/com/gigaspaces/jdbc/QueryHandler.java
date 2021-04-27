@@ -1,14 +1,11 @@
 package com.gigaspaces.jdbc;
 
-import com.gigaspaces.jdbc.exceptions.ExecutionException;
+import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.QueryResult;
-import com.gigaspaces.jdbc.model.result.TableRow;
-import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.ResponsePacket;
-import com.j_spaces.jdbc.ResultEntry;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.parser.feature.Feature;
@@ -23,7 +20,6 @@ import net.sf.jsqlparser.util.validation.validator.StatementValidator;
 
 import java.sql.SQLException;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Set;
 
 public class QueryHandler {
@@ -38,7 +34,9 @@ public class QueryHandler {
             return executeStatement(space, statement, preparedValues);
         } catch (JSQLParserException e) {
             throw new SQLException("Failed to parse query", e);
-        } catch (GenericJdbcException e) {
+        } catch (SQLExceptionWrapper e) {
+            throw e.getException();
+        } catch (GenericJdbcException | UnsupportedOperationException e) {
             throw new SQLException(e.getMessage(), e);
         }
     }
@@ -56,7 +54,7 @@ public class QueryHandler {
                     res = qE.execute(explainStatement.getStatement().getSelectBody());
                     packet.setResultEntry(res.convertEntriesToResultArrays(config));
                 } catch (SQLException e) {
-                    throw new ExecutionException(e.getMessage(), e.getCause());
+                    throw new SQLExceptionWrapper(e);
                 }
             }
 
@@ -68,7 +66,7 @@ public class QueryHandler {
                     res = qE.execute(select.getSelectBody());
                     packet.setResultEntry(res.convertEntriesToResultArrays(null));
                 } catch (SQLException e) {
-                    throw new ExecutionException(e.getMessage(), e.getCause());
+                    throw new SQLExceptionWrapper(e);
                 }
             }
         });

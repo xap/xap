@@ -1,6 +1,6 @@
 package com.gigaspaces.jdbc;
 
-import com.gigaspaces.jdbc.exceptions.ExecutionException;
+import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.handlers.QueryColumnHandler;
 import com.gigaspaces.jdbc.handlers.WhereHandler;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
@@ -117,7 +117,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         try {
             tables.add(new TempTableContainer(subQueryExecutor.execute(subSelect.getSelectBody()), subSelect.getAlias() == null ? null : subSelect.getAlias().getName()));
         } catch (SQLException e) {
-            throw new ExecutionException("Failed to execute subquery", e);
+            throw new SQLExceptionWrapper(e);
         }
 
     }
