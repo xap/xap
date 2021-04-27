@@ -11,26 +11,28 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
 import java.util.concurrent.Executor;
 
-public class ReadMonitor extends SelectMonitor {
+public class SpaceReadProcessor extends ReadProcessor {
     private final SpaceImpl space;
     private final Executor executorService = PocSettings.serverLrmiExecutor ? LRMIRuntime.getRuntime().getThreadPool() : null;
 
-    public ReadMonitor(NioServer server, int id) throws IOException {
-        super("read-" + id);
-        this.space = server.getSpace();
+    public SpaceReadProcessor(SpaceImpl space) {
+        this.space = space;
     }
 
     @Override
-    protected void onReady(SelectionKey key) throws IOException {
-        NioChannel nioChannel = (NioChannel) key.attachment();
-        ByteBuffer requestBuffer = nioChannel.readNonBlocking();
+    public String getName() {
+        return "space-operation-executor-" + (executorService == null ? "sync" : "async");
+    }
+
+    @Override
+    public void read(NioChannel channel) throws IOException {
+        ByteBuffer requestBuffer = channel.readNonBlocking();
         if (requestBuffer != null) {
             Runnable task = PocSettings.cacheResponse
-                    ? new CacheableSpaceOperationTask(requestBuffer, space, nioChannel)
-                    : new SpaceOperationTask(requestBuffer, space, nioChannel);
+                    ? new CacheableSpaceOperationTask(requestBuffer, space, channel)
+                    : new SpaceOperationTask(requestBuffer, space, channel);
             if (executorService != null)
                 executorService.execute(task);
             else

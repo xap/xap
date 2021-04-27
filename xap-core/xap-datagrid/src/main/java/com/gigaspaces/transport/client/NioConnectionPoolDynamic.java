@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.SocketChannel;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -32,7 +31,7 @@ public class NioConnectionPoolDynamic implements NioConnectionPool {
         NioChannel result = pool.poll();
         if (result == null) {
             logger.debug("No pooled resource - creating a new one");
-            result = new NioChannel(createChannel());
+            result = new NioChannel(createChannel(serverAddress, connectionTimeout));
         }
         return result;
     }
@@ -51,14 +50,6 @@ public class NioConnectionPoolDynamic implements NioConnectionPool {
             if (connection != null)
                 closeSilently(connection);
         }
-    }
-
-    private SocketChannel createChannel() throws IOException {
-        SocketChannel socketChannel = SocketChannel.open();
-        socketChannel.configureBlocking(true);
-        //LRMIUtilities.initNewSocketProperties(socketChannel);
-        socketChannel.socket().connect(serverAddress, connectionTimeout);
-        return socketChannel;
     }
 
     private void closeSilently(NioChannel channel) {

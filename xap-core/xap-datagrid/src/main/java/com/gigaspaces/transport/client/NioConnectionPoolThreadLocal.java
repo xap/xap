@@ -6,25 +6,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.SocketChannel;
 
 public class NioConnectionPoolThreadLocal implements NioConnectionPool {
     private static final Logger logger = LoggerFactory.getLogger(NioConnectionPoolThreadLocal.class);
 
-    private final InetSocketAddress serverAddress;
     private final ThreadLocal<NioChannel> threadLocal;
-    private final int connectionTimeout;
 
     public NioConnectionPoolThreadLocal() {
         this(new InetSocketAddress(PocSettings.host, PocSettings.port), 10_000);
     }
 
     public NioConnectionPoolThreadLocal(InetSocketAddress address, int connectionTimeout) {
-        this.serverAddress = address;
-        this.connectionTimeout = connectionTimeout;
-        threadLocal = ThreadLocal.withInitial(() -> new NioChannel(createChannel()));
+        threadLocal = ThreadLocal.withInitial(() -> new NioChannel(createChannel(address, connectionTimeout)));
     }
 
     public NioChannel acquire() throws IOException {
@@ -38,18 +32,6 @@ public class NioConnectionPoolThreadLocal implements NioConnectionPool {
     public void close() throws IOException {
         threadLocal.get().close();
         threadLocal.remove();
-    }
-
-    private SocketChannel createChannel()  {
-        try {
-            SocketChannel socketChannel = SocketChannel.open();
-            socketChannel.configureBlocking(true);
-            //LRMIUtilities.initNewSocketProperties(socketChannel);
-            socketChannel.socket().connect(serverAddress, connectionTimeout);
-            return socketChannel;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     private void closeSilently(NioChannel channel) {

@@ -5,6 +5,7 @@ import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.LRMIUtilities;
 import com.gigaspaces.transport.serializers.NioReusableMarshalSerializer;
 import com.gigaspaces.transport.serializers.NioSerializer;
+import com.gigaspaces.transport.server.ReadProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,8 @@ public class NioChannel {
     private byte[] cachedRequest;
     private byte[] cachedResponse;
     private Object cachedResult;
+
+    private ReadProcessor readProcessor;
 
     public NioChannel(SocketChannel socketChannel) {
         this.socketChannel = socketChannel;
@@ -182,5 +185,13 @@ public class NioChannel {
 
     public void setCachedResult(Object cachedResult) {
         this.cachedResult = cachedResult;
+    }
+
+    public ReadProcessor getReadProcessor() {
+        return readProcessor;
+    }
+
+    public void setReadProcessor(ReadProcessor readProcessor) {
+        this.readProcessor = readProcessor;
     }
 }

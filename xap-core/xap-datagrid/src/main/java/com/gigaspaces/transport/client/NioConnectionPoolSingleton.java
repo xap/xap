@@ -36,16 +36,4 @@ public class NioConnectionPoolSingleton implements NioConnectionPool {
     public void close() throws IOException {
         instance.close();
     }
-
-    private SocketChannel createChannel(InetSocketAddress serverAddress, int connectionTimeout) {
-        try {
-            SocketChannel socketChannel = SocketChannel.open();
-            socketChannel.configureBlocking(true);
-            //LRMIUtilities.initNewSocketProperties(socketChannel);
-            socketChannel.socket().connect(serverAddress, connectionTimeout);
-            return socketChannel;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
 }
