@@ -20,11 +20,8 @@ import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.start.SystemLocations;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.net.URL;
 import java.util.Enumeration;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -166,6 +163,34 @@ public class GSLogConfigLoader {
     // -Djava.util.logging.config.file
     private boolean loadGsLoggingPropertiesFileFromFullPath(String fileName) {
         InputStream in = null;
+        // try loading using url
+        try {
+            String fileNameTrimmed = fileName.trim().toLowerCase();
+            if(fileNameTrimmed.startsWith("http://") || fileNameTrimmed.startsWith("https://")) {
+                in = new URL(fileName).openStream();
+                _props.load(in);
+
+                if (_loggerConfig) {
+                    LogHelper.println(COM_GS_LOGGING, Level.FINE, "Loaded logging configuration file from: " + fileName);
+                }
+                return true; //stop trying, configuration loaded
+            }
+        } catch (IOException e) {
+            if (_loggerConfig) {
+                LogHelper.println(COM_GS_LOGGING, Level.FINE, "Failed to load logging configuration file from: " + fileName, e);
+            }
+            throw new RuntimeException("Failed to load logging configuration file from: " + fileName, e);
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    //ignore
+                }
+            }
+        }
+
+        //try loading using direct path
         File logConfigFile = new File(fileName);
         try {
             if (logConfigFile.exists() && logConfigFile.canRead()) {
@@ -177,6 +202,9 @@ public class GSLogConfigLoader {
                 }
                 return true; //stop trying, configuration loaded
             } else {
+                if (_loggerConfig) {
+                    LogHelper.println(COM_GS_LOGGING, Level.FINE, "Failed to load logging configuration file from: " + logConfigFile.getAbsolutePath());
+                }
                 return false; //not a full path, try next option
             }
         } catch (Exception e) {
