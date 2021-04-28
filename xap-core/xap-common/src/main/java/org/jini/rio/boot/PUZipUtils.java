@@ -205,11 +205,22 @@ public class PUZipUtils {
             }
         }
 
-        target.getParentFile().mkdirs();
+        boolean mkdirs = target.getParentFile().mkdirs();
+        logger.info("========> mkdirs "+ mkdirs);
+        File file = new File(target, "meshi.txt");
+        try {
+            boolean newFile = file.createNewFile();
+            logger.info("========> newFile " + newFile);
+            boolean delete = file.delete();
+            logger.info("========> delete " + delete);
+        } catch (IOException e) {
+            logger.info("========> IOException e " + e);
 
+        }
         try {
             try (InputStream in = new BufferedInputStream(conn.getInputStream());
                  OutputStream out = new FileOutputStream(target)) {
+                logger.info("========> after OutputStream out = new FileOutputStream(target) ");
                 byte[] buffer = new byte[4098];
                 int bytesRead = -1;
                 while ((bytesRead = in.read(buffer)) != -1) {
