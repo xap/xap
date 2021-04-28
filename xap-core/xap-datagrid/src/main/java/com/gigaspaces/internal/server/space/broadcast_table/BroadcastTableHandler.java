@@ -54,7 +54,7 @@ public class BroadcastTableHandler {
         return false;
     }
 
-    public void clearEntries(ITemplatePacket template, int modifiers) throws RemoteException{
+    public void clearEntries(ITemplatePacket template, int modifiers) {
         executeTask(new ClearBroadcastTableEntriesSpaceRequestInfo(template, modifiers), null);
     }
 
