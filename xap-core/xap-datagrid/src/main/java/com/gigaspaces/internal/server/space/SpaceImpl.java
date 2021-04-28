@@ -2013,7 +2013,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             if (txn != null && !_engine.isLocalCache() && !fromReplication)
                 _engine.getTransactionHandler().checkTransactionDisconnection(entry.getOperationID(), (ServerTransaction) txn);
-            if(pushBroadcastWriteToAllPartitions(entry, sc)){
+            if(isBroadcast(entry) && performBroadcastOperation(sc)){
                 checkReplicationIsHealthy();
                 WriteEntryResult result = _engine.write(entry, txn, lease, modifiers, fromReplication, true/*origin*/, sc);
                 pushBroadcastEntry(entry, lease, false, Long.MAX_VALUE, modifiers);
@@ -2059,7 +2059,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             if (txn != null && !_engine.isLocalCache() && entries.length >0)
                 _engine.getTransactionHandler().checkTransactionDisconnection(entries[0].getOperationID(), (ServerTransaction) txn);
-            if(pushBroadcastWriteToAllPartitions(entries[0], sc)) {
+            if(isBroadcast(entries[0]) && performBroadcastOperation(sc)) {
                 checkReplicationIsHealthy();
                 WriteEntriesResult writeEntriesResult = _engine.write(entries, txn, lease, leases, modifiers, sc, timeout, newRouter);
                 pushBroadcastEntries(entries, lease, leases, timeout, modifiers);
@@ -2119,7 +2119,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             if (txn != null && !_engine.isLocalCache())
                 _engine.getTransactionHandler().checkTransactionDisconnection(entry.getOperationID(), (ServerTransaction) txn);
-            boolean broadcastOperation = pushBroadcastWriteToAllPartitions(entry, sc);
+            boolean broadcastOperation = isBroadcast(entry) && performBroadcastOperation(sc);
             if(broadcastOperation)
                 checkReplicationIsHealthy();
             AnswerPacket result;
@@ -2209,10 +2209,11 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             if(txn != null && !_engine.isLocalCache())
                 _engine.getTransactionHandler().checkTransactionDisconnection(template.getOperationID(), (ServerTransaction) txn);
-            if(pushBroadcastTableClearToAllPartitions(template, sc)){
-                Pair<Integer,SingleExplainPlan> result =  _engine.clear(template, txn, sc, modifiers);
+            if(isRootType(template)){
+                return clearRootType(template, txn, modifiers, sc);
+            }
+            if(isBroadcast(template) && performBroadcastOperation(sc)){
                 _broadcastTableHandler.clearEntries(template, modifiers);
-                return result;
             }
             return _engine.clear(template, txn, sc, modifiers);
         } catch (RuntimeException e) {
@@ -2220,6 +2221,22 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         } finally {
             endPacketOperation();
         }
+    }
+
+    private boolean isRootType(ITemplatePacket templatePacket){
+        return _engine.getTypeManager().getServerTypeDesc(templatePacket.getTypeName()).isRootType();
+    }
+
+    private Pair<Integer,SingleExplainPlan> clearRootType(ITemplatePacket template, Transaction txn, int modifiers, SpaceContext sc)
+            throws UnusableEntryException, UnknownTypeException, TransactionException, RemoteException {
+        if(performBroadcastOperation(sc)){
+            getEngine().getTypeManager().getSafeTypeTable().values().stream()
+                    .map(IServerTypeDesc::getTypeDesc)
+                    .filter(ITypeDesc::isBroadcast)
+                    .map(TemplatePacket::new)
+                    .forEach(t -> _broadcastTableHandler.clearEntries(t, modifiers));
+        }
+        return _engine.clear(template, txn, sc, modifiers);
     }
 
     public AnswerHolder readNew(ITemplatePacket template, Transaction txn, long timeout, boolean ifExists,
@@ -3990,23 +4007,19 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         _broadcastTableHandler.pushEntries(entryPacket, lease ,leases, timeout, modifiers);
     }
 
-    private boolean pushBroadcastWriteToAllPartitions(IEntryPacket entryPacket, SpaceContext sc) {
+    private boolean isBroadcast(ITemplatePacket templatePacket){
+        return _engine.getTypeManager().getServerTypeDesc(templatePacket.getTypeName()).getTypeDesc().isBroadcast();
+    }
+
+    private boolean isBroadcast(IEntryPacket entryPacket){
         ITypeDesc typeDesc = entryPacket.getTypeDescriptor() != null ? entryPacket.getTypeDescriptor() : _engine.getClassTypeInfo(entryPacket.getTypeName());
-        boolean broadcast = typeDesc != null && typeDesc.isBroadcast();
-        boolean isClustered = sc != null && sc.isClustered();
-        return broadcast && _engine.getNumberOfPartitions() > 1 && _engine.getPartitionIdZeroBased() == 0 && isClustered;
+        return typeDesc != null && typeDesc.isBroadcast();
     }
 
-    private boolean pushBroadcastTableClearToAllPartitions(ITemplatePacket templatePacket, SpaceContext sc) {
+    private boolean performBroadcastOperation(SpaceContext sc){
         boolean isClustered = sc != null && sc.isClustered();
-        boolean isBroadcast;
-        if(templatePacket instanceof EmptyQueryPacket)
-            isBroadcast = true;
-        else
-            isBroadcast = _engine.getTypeManager().getServerTypeDesc(templatePacket.getTypeName()).getTypeDesc().isBroadcast();
-        return isBroadcast && _engine.getNumberOfPartitions() > 1 && _engine.getPartitionIdZeroBased() == 0 && isClustered;
+        return _engine.getNumberOfPartitions() > 1 && _engine.getPartitionIdZeroBased() == 0 && isClustered;
     }
-
 
     private void checkReplicationIsHealthy() {
         List<ReplicationStatistics.OutgoingChannel> backupChannels = getEngine().getReplicationNode().getAdmin().getStatistics().getOutgoingReplication().getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE);
