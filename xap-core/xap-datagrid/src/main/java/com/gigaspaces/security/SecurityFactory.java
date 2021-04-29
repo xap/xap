@@ -17,6 +17,7 @@
 
 package com.gigaspaces.security;
 
+import com.gigaspaces.internal.io.BootIOUtils;
 import com.j_spaces.kernel.SystemProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,12 +175,12 @@ public class SecurityFactory {
         InputStream resourceAsStream = null;
         if (resourceName != null) {
             //try loading it using url
-            String resourceNameTrimmed = resourceName.trim().toLowerCase();
-            if (resourceNameTrimmed.startsWith("http://") || resourceNameTrimmed.startsWith("https://")) {
+            if (BootIOUtils.isURL(resourceName)) {
                 try {
                     resourceAsStream = new URL(resourceName).openStream();
                 } catch (IOException e) {
-                    throw new RuntimeException("Unable to load security properties from url: " + resourceNameTrimmed, e);
+                    throw new SecurityException("Unable to load security properties from url: " + resourceName +
+                            ", Caused by: " + e);
                 }
             } else {
                 //try loading it using direct path, otherwise look it up in the classpath
