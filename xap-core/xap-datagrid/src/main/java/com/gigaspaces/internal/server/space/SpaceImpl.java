@@ -2141,7 +2141,9 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                     result = new AnswerPacket(leaseResult);
                 }
             } else {
+                long startTime = System.currentTimeMillis();
                 ExtendedAnswerHolder aHolder = _engine.update(entry, txn, lease, timeout, sc, false, true/*origin*/, newRouter, modifiers);
+                _logger.info( "> _engine.update took " + ( System.currentTimeMillis() - startTime ) + " msec." );
                 result = aHolder != null ? aHolder.m_AnswerPacket : null;
             }
             if(broadcastOperation)

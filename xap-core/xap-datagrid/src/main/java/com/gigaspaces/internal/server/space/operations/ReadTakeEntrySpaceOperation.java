@@ -38,7 +38,7 @@ public class ReadTakeEntrySpaceOperation extends AbstractSpaceOperation<ReadTake
         IResponseContext respContext = ResponseContext.getResponseContext();
         if (respContext != null)
             respContext.setInvokedFromNewRouter(true);
-
+        long startTime = System.currentTimeMillis();
         AnswerHolder answerHolder = space.readNew(request.getTemplatePacket(),
                 request.getTransaction(),
                 request.getTimeout(),
@@ -48,6 +48,9 @@ public class ReadTakeEntrySpaceOperation extends AbstractSpaceOperation<ReadTake
                 request.getSpaceContext(),
                 request.isReturnOnlyUid(),
                 request.getModifiers());
+
+
+        space.getOperationLogger().info( ">> space.readNew took " + ( System.currentTimeMillis() - startTime ) + " msec." );
 
         if (answerHolder != null && answerHolder.getAnswerPacket() != null) {
             if (answerHolder.getExplainPlan() != null) {

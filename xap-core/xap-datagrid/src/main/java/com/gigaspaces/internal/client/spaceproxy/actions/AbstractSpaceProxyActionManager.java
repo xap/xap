@@ -25,7 +25,6 @@ import com.gigaspaces.client.ClearException;
 import com.gigaspaces.executor.SpaceTask;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.client.ReadTakeEntriesUidsResult;
-import com.gigaspaces.internal.client.SpaceIteratorBatchResult;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.actioninfo.*;
 import com.gigaspaces.internal.client.spaceproxy.executors.TypeDescriptorActionsProxyExecutor;
@@ -36,13 +35,13 @@ import com.gigaspaces.internal.space.requests.AddTypeIndexesRequestInfo;
 import com.gigaspaces.internal.space.requests.RegisterTypeDescriptorRequestInfo;
 import com.gigaspaces.internal.space.requests.UnregisterTypeDescriptorRequestInfo;
 import com.gigaspaces.internal.transport.ITemplatePacket;
+import com.gigaspaces.logger.Constants;
 import com.gigaspaces.metadata.index.AddTypeIndexesResult;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.query.ISpaceQuery;
 import com.gigaspaces.query.aggregators.AggregationResult;
 import com.gigaspaces.query.aggregators.AggregationSet;
 import com.j_spaces.core.DropClassException;
-import com.j_spaces.core.GetBatchForIteratorException;
 import com.j_spaces.core.LeaseContext;
 import com.j_spaces.core.SpaceHealthStatus;
 import com.j_spaces.core.client.Modifiers;
@@ -52,9 +51,10 @@ import com.j_spaces.kernel.JSpaceUtilities;
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.rmi.RemoteException;
-import java.util.UUID;
 import java.util.concurrent.Future;
 
 /**
@@ -75,6 +75,8 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
     private final ReadTakeEntriesUidsProxyAction<TSpaceProxy> _readTakeEntriesUidsAction;
     private final ChangeProxyAction<TSpaceProxy> _changeAction;
     private final AggregateProxyAction<TSpaceProxy> _aggregationAction;
+
+    private static final Logger _devLogger = LoggerFactory.getLogger(Constants.LOGGER_DEV);
 
     protected AbstractSpaceProxyActionManager(TSpaceProxy spaceProxy) {
         _spaceProxy = spaceProxy;
@@ -158,8 +160,10 @@ public abstract class AbstractSpaceProxyActionManager<TSpaceProxy extends ISpace
 
     public Object read(Object template, Transaction txn, long timeout, int modifiers, boolean ifExists)
             throws UnusableEntryException, TransactionException, InterruptedException, RemoteException {
+        long start = System.currentTimeMillis();
         ReadTakeProxyActionInfo actionInfo = new ReadTakeProxyActionInfo(
                 _spaceProxy, template, txn, timeout, modifiers, ifExists, false);
+        _devLogger.info( "> READ, create of actionInfo took " + ( System.currentTimeMillis() - start ) + " msec." );
         return read(actionInfo);
     }
 
