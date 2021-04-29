@@ -2235,8 +2235,11 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             if (txn != null && take && !_engine.isLocalCache())
                 _engine.getTransactionHandler().checkTransactionDisconnection(template.getOperationID(), (ServerTransaction) txn);
 
+
+            long startTime = System.currentTimeMillis();
             AnswerHolder answerHolder = _engine.read(template, txn, timeout, ifExists, take, sc, returnOnlyUid, false/*fromRepl*/,
                     true/*origin*/, modifiers);
+            _logger.info( ">>> _engine.read=" + ( System.currentTimeMillis() - startTime ) + " msec." );
 
             AnswerPacket answerPacket = answerHolder != null ? answerHolder.getAnswerPacket() : null;
             if (answerPacket != null && answerPacket.m_EntryPacket != null)

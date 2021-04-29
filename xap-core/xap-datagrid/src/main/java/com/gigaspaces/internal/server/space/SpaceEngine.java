@@ -1224,10 +1224,19 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         try {
             if (!suppliedContext)
                 context = _cacheManager.getCacheContext();
-            return unsafeRead_impl(template, txn, timeout, ifExists,
+
+            long startTime = System.currentTimeMillis();
+
+            AnswerHolder answerHolder = unsafeRead_impl(template, txn, timeout, ifExists,
                     take, sc,
                     returnOnlyUid, fromReplication, origin,
                     operationModifiers, readByIdsInfo, prefetchedEntries, context);
+
+            long endTime = System.currentTimeMillis();
+
+            _logger.info( "After call to unsafeRead_impl, startTime=" + startTime + ", endTime=" + endTime );
+
+            return answerHolder;
         } finally {
             if (!suppliedContext)
                 context = _cacheManager.freeCacheContext(context);
@@ -1243,6 +1252,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                                          int operationModifiers, ReadByIdsInfo readByIdsInfo, Map<String, IEntryHolder> prefetchedNonBlobStoreEntries, Context context)
             throws UnusableEntryException, UnknownTypeException, TransactionException, RemoteException, InterruptedException {
 
+        long time1 = System.currentTimeMillis();
+
         if (take && TakeModifiers.isEvictOnly(operationModifiers)) {
             if (_cacheManager.isResidentEntriesCachePolicy())
                 throw new IllegalArgumentException("EVICT modifier is not supported in non-evictable policy.");
@@ -1250,10 +1261,13 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             txn = null;  //ignore
             timeout = 0; //ignore
         }
+        long time2 = System.currentTimeMillis();
         IServerTypeDesc typeDesc = _typeManager.loadServerTypeDesc(template);
+        long time3 = System.currentTimeMillis();
 
         // Check if FIFO:
         boolean isFifoOperation = template.isFifo() || ReadModifiers.isFifo(operationModifiers);
+        long time4 = System.currentTimeMillis();
         // Validate FIFO:
         if (isFifoOperation && !typeDesc.isFifoSupported())
             throw new InvalidFifoTemplateException(template.getTypeName());
@@ -1265,7 +1279,11 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         if (isFifoOperation && (template.getUID() != null || ReadModifiers.isFifoGroupingPoll(operationModifiers)))
             isFifoOperation = false;
 
+        long time5 = System.currentTimeMillis();
+
         final XtnEntry txnEntry = initTransactionEntry(txn, sc, fromReplication);
+
+        long time6 = System.currentTimeMillis();
 
         // create template UID
         String uid = null;
@@ -1276,6 +1294,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             throw new RuntimeException("operation with timeout = NO_WAIT came from replication");
         }
 
+        long time7 = System.currentTimeMillis();
 
         // build Template Holder and mark it stable
         IResponseContext respContext = ResponseContext.getResponseContext();
@@ -1292,10 +1311,14 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 txnEntry, startTime, templateOperation, respContext, returnOnlyUid,
                 operationModifiers, isFifoOperation, fromReplication);
 
+        long time8 = System.currentTimeMillis();
+
         tHolder.setAnswerHolder(new AnswerHolder());
         tHolder.getAnswerHolder().setServerTypeDesc(typeDesc);
         tHolder.setNonBlockingRead(isNonBlockingReadForOperation(tHolder));
         tHolder.setID(template.getID());
+
+        long time9 = System.currentTimeMillis();
 
         IEntryHolder entr;
 
@@ -1314,6 +1337,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             tHolder.setForAfterOperationFilter(FilterOperationCodes.AFTER_READ, sc, _filterManager, null);
         }
 
+        long time10 = System.currentTimeMillis();
 
         boolean answerSetByThisThread = false;
         int numOfEntriesMatched;
@@ -1323,6 +1347,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         context.setReadByIdsInfo(readByIdsInfo);
         context.setPrefetchedNonBlobStoreEntries(prefetchedNonBlobStoreEntries);
         context.applyOperationContext(sc);
+
+        long time11 = System.currentTimeMillis();
 
         if(take && Modifiers.contains(operationModifiers,Modifiers.BACKUP_ONLY)){
             context.setBackupOnly();
@@ -1334,28 +1360,65 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             _coreProcessor.handleDirectReadOrTakeSA(context, tHolder, fromReplication, origin);
 
 
+        long time12 = System.currentTimeMillis();
+
         updateTieredRAMObjectTypeReadCounts(tHolder.getServerTypeDesc() ,context.getTemplateTieredState());
+
+        long time13 = System.currentTimeMillis();
 
         if (context.getReplicationContext() != null) {
             tHolder.getAnswerHolder().setSyncRelplicationLevel(context.getReplicationContext().getCompleted());
         }
+        long time13_1 = System.currentTimeMillis();
         answerSetByThisThread = context.isOpResultByThread();
+        long time13_2 = System.currentTimeMillis();
         numOfEntriesMatched = context.getNumberOfEntriesMatched();
+        long time13_3 = System.currentTimeMillis();
 
         boolean callBackMode = ResponseContext.isCallBackMode();
+        long time13_4 = System.currentTimeMillis();
 
         // wait on Answer
-        if (!callBackMode && !answerSetByThisThread && !tHolder.hasAnswer())
+        if (!callBackMode && !answerSetByThisThread && !tHolder.hasAnswer()) {
+            _logger.info( "time before waitForBlockingAnswer:" + System.currentTimeMillis() );
             waitForBlockingAnswer(timeout, tHolder.getAnswerHolder(), startTime, tHolder);
-
+            _logger.info( "time after waitForBlockingAnswer:" + System.currentTimeMillis() );
+        }
+        long time13_5 = System.currentTimeMillis();
         if (answerSetByThisThread) {
             tHolder.getAnswerHolder().throwExceptionIfExists();
             tHolder.getAnswerHolder().setNumOfEntriesMatched(numOfEntriesMatched);
             return tHolder.getAnswerHolder();
         }
+        long time13_6 = System.currentTimeMillis();
 
         if (callBackMode)
             return prepareCallBackModeAnswer(tHolder, true);
+
+        long time14 = System.currentTimeMillis();
+
+        _logger.info( "Within unsafeRead_impl, time1=" + time1 + "," +
+                ",\n time2=" + time2 +
+                ",\n time3=" + time3 +
+                ",\n time4=" + time4 +
+                ",\n time5=" + time6 +
+                ",\n time6=" + time6 +
+                ",\n time7=" + time7 +
+                ",\n startTime=" + startTime +
+                ",\n time8=" + time8 +
+                ",\n time9=" + time9 +
+                ",\n time10=" + time10 +
+                ",\n time11=" + time11 +
+                ",\n time12=" + time12 +
+                ",\n time13=" + time13 +
+                ",\n time13_1=" + time13_1 +
+                ",\n time13_2=" + time13_2 +
+                ",\n time13_3=" + time13_3 +
+                ",\n time13_4=" + time13_4 +
+                ",\n time13_5=" + time13_5 +
+                ",\n time13_6=" + time13_6 +
+                ",\n time14=" + time14
+                );
 
         return prepareBlockingModeAnswer(tHolder, true);
     }
@@ -1422,8 +1485,14 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                     tHolder.getAnswerHolder().throwExceptionIfExists();
             }//synchronized
 
+            long startTime = System.currentTimeMillis();
             // we have an answer - return it to caller!
-            return tHolder.getAnswerHolder();
+            AnswerHolder answerHolder = tHolder.getAnswerHolder();
+            long endTime = System.currentTimeMillis();
+
+            _logger.info( ">> creating tHolder.getAnswerHolder, startTime=" + startTime + ", endTime=" + endTime );
+
+            return answerHolder;
 
         } finally {
             if (templateLock != null)

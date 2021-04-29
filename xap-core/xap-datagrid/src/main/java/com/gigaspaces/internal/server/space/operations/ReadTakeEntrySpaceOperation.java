@@ -50,7 +50,8 @@ public class ReadTakeEntrySpaceOperation extends AbstractSpaceOperation<ReadTake
                 request.getModifiers());
 
 
-        space.getOperationLogger().info( ">> space.readNew took " + ( System.currentTimeMillis() - startTime ) + " msec." );
+        long endTime = System.currentTimeMillis();
+        space.getOperationLogger().info( ">> space.readNew took " + ( endTime - startTime ) + " msec., startTime=" + startTime + ", endTime=" + endTime);
 
         if (answerHolder != null && answerHolder.getAnswerPacket() != null) {
             if (answerHolder.getExplainPlan() != null) {
