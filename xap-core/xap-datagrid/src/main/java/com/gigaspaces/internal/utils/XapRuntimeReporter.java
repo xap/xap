@@ -81,6 +81,7 @@ public class XapRuntimeReporter {
         append(PlatformVersion.getOfficialVersion());
         append("    Home: " + SystemLocations.singleton().home());
         append("    Lookup Groups: " + systemInfo.lookup().groups());
+        append("    User: " + System.getProperty("user.name"));
         if (systemInfo.getManagerClusterInfo().isEmpty()) {
             String locators = systemInfo.lookup().locators();
             append("    Lookup Locators: " + (locators != null ? locators : ""));
