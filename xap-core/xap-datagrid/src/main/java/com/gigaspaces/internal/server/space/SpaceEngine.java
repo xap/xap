@@ -1253,6 +1253,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             throws UnusableEntryException, UnknownTypeException, TransactionException, RemoteException, InterruptedException {
 
         long time1 = System.currentTimeMillis();
+        _logger.info("======START unsafeRead_impl======");
 
         if (take && TakeModifiers.isEvictOnly(operationModifiers)) {
             if (_cacheManager.isResidentEntriesCachePolicy())
@@ -1378,6 +1379,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         boolean callBackMode = ResponseContext.isCallBackMode();
         long time13_4 = System.currentTimeMillis();
 
+        //START MEASURING
+
         // wait on Answer
         if (!callBackMode && !answerSetByThisThread && !tHolder.hasAnswer()) {
             _logger.info( "time before waitForBlockingAnswer:" + System.currentTimeMillis() );
@@ -1385,6 +1388,9 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             _logger.info( "time after waitForBlockingAnswer:" + System.currentTimeMillis() );
         }
         long time13_5 = System.currentTimeMillis();
+
+        //STOP MEASURING
+
         if (answerSetByThisThread) {
             tHolder.getAnswerHolder().throwExceptionIfExists();
             tHolder.getAnswerHolder().setNumOfEntriesMatched(numOfEntriesMatched);
@@ -1397,7 +1403,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         long time14 = System.currentTimeMillis();
 
-        _logger.info( "Within unsafeRead_impl, time1=" + time1 + "," +
+        _logger.info( "Within unsafeRead_impl, " +
+/*                "time1=" + time1 +
                 ",\n time2=" + time2 +
                 ",\n time3=" + time3 +
                 ",\n time4=" + time4 +
@@ -1413,11 +1420,11 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 ",\n time13=" + time13 +
                 ",\n time13_1=" + time13_1 +
                 ",\n time13_2=" + time13_2 +
-                ",\n time13_3=" + time13_3 +
+                ",\n time13_3=" + time13_3 +*/
                 ",\n time13_4=" + time13_4 +
-                ",\n time13_5=" + time13_5 +
+                ",\n time13_5=" + time13_5 /*+
                 ",\n time13_6=" + time13_6 +
-                ",\n time14=" + time14
+                ",\n time14=" + time14*/
                 );
 
         return prepareBlockingModeAnswer(tHolder, true);
@@ -1432,24 +1439,34 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         long expirationTimeInMillis = getExpirationTimeInMillis(timeout,
                 startTime,
                 tHolder);
+        _logger.info( "expirationTimeInMillis=" + expirationTimeInMillis );
         while (true) {
             if (timeout != Long.MAX_VALUE) {
                 timeToWait = expirationTimeInMillis - SystemTime.timeMillis();
+                _logger.info( "TIME to WAIT=" + timeToWait );
             }
             if (timeout == Long.MAX_VALUE || timeToWait > 0) {
                 synchronized (aHolder) {
                     if (!tHolder.hasAnswer()) {
-                        if (timeout != Long.MAX_VALUE)
+                        if (timeout != Long.MAX_VALUE) {
+                            _logger.info( "Before wait for " + timeToWait + " msec.");
                             aHolder.wait(timeToWait);
-                        else
+                        }
+                        else {
+                            _logger.info( "Before regular wait");
                             aHolder.wait();
+                        }
                     }
-                    if (tHolder.hasAnswer())
+                    if (tHolder.hasAnswer()) {
+                        _logger.info("break 1");
                         break;
+                    }
                 }//synchronized
             }//if  (timeout == Long.MAX_VALUE || timeToWait > 0)
-            else
-                break; //no wating any more
+            else {
+                _logger.info("break 2");
+                break; //no waiting any more
+            }
         }//while
     }
 
