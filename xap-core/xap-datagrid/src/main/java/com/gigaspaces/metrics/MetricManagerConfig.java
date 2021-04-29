@@ -16,6 +16,7 @@
 
 package com.gigaspaces.metrics;
 
+import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.xml.XmlParser;
@@ -76,8 +77,12 @@ public class MetricManagerConfig {
     public static MetricManagerConfig loadFromXml(String fileName) {
         final MetricManagerConfig config = new MetricManagerConfig();
         final File file = new File(fileName);
-
-        if (file.exists()) {
+        if(BootIOUtils.isURL(fileName)) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Loading metrics configuration from " + fileName);
+            }
+            config.loadXml(fileName);
+        } else if (file.exists()) {
             if (file.canRead()) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Loading metrics configuration from " + file.getAbsolutePath());

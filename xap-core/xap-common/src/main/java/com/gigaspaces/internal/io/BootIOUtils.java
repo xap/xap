@@ -445,4 +445,9 @@ public class BootIOUtils {
             throw e.getCause();
         }
     }
+
+    public static boolean isURL(String path) {
+        final String pathTrimmed = path.trim().toLowerCase();
+        return pathTrimmed.startsWith("http://") || pathTrimmed.startsWith("https://");
+    }
 }

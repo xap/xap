@@ -17,6 +17,7 @@
 package com.gigaspaces.logger;
 
 import com.gigaspaces.CommonSystemProperties;
+import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.start.SystemLocations;
 
@@ -165,8 +166,7 @@ public class GSLogConfigLoader {
         InputStream in = null;
         // try loading using url
         try {
-            String fileNameTrimmed = fileName.trim().toLowerCase();
-            if(fileNameTrimmed.startsWith("http://") || fileNameTrimmed.startsWith("https://")) {
+            if(BootIOUtils.isURL(fileName)) {
                 in = new URL(fileName).openStream();
                 _props.load(in);
 
