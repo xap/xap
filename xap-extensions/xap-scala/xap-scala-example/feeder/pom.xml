@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.gigaspaces</groupId>
         <artifactId>xap-scala-example</artifactId>
-        <version>16.0.0-SNAPSHOT</version>
+        <version>16.0.0-m14-sat-32</version>
     </parent>
 
     <artifactId>feeder</artifactId>
