@@ -1456,10 +1456,12 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                             aHolder.wait(timeToWait);
                         }
                         else {
-                            _logger.info( "Before regular wait");
+                            _logger.info( "Before regular aHolder.wait");
                             aHolder.wait();
+                            _logger.info( "After regular aHolder.wait");
                         }
                     }
+                    _logger.info("Before check tHolder.hasAnswer()");
                     if (tHolder.hasAnswer()) {
                         _logger.info("break 1");
                         break;
