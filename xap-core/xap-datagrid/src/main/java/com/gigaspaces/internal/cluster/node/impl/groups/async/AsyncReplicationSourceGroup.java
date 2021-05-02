@@ -97,7 +97,7 @@ public class AsyncReplicationSourceGroup
             IReplicationChannelDataFilter dataFilter,
             IReplicationGroupHistory groupHistory, boolean dynamicMember,
             SourceGroupConfig groupConfig,
-            Object customBacklogMetadata) {
+            Object customBacklogMetadata, boolean resetTarget) {
         AsyncSourceGroupConfig asyncGroupConfig = (AsyncSourceGroupConfig) groupConfig;
         int batchSize = _batchSize;
         long intervalMilis = _interval;
@@ -129,7 +129,7 @@ public class AsyncReplicationSourceGroup
                 groupHistory,
                 channelType,
                 customBacklogMetadata,
-                tag);
+                tag, resetTarget);
         _channelsMap.put(memberLookupName, channel);
         _channels.add(channel);
         return channel;

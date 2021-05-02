@@ -75,9 +75,9 @@ public class DynamicSourceGroupConfigHolder {
             Object customData,
             BacklogMemberLimitationConfig memberBacklogLimitations,
             IReplicationChannelDataFilter filter,
-            DynamicSourceGroupMemberLifeCycle lifeCycle) {
+            DynamicSourceGroupMemberLifeCycle lifeCycle, boolean resetTarget) {
 
-        final MemberAddedEvent memberAddedEvent = new MemberAddedEvent(memberName, customData, memberBacklogLimitations, filter, lifeCycle);
+        final MemberAddedEvent memberAddedEvent = new MemberAddedEvent(memberName, customData, memberBacklogLimitations, filter, lifeCycle, resetTarget);
         triggerBeforeMemberAdded(memberAddedEvent);
 
         //Keep the new config before addition because reliable async
@@ -147,6 +147,15 @@ public class DynamicSourceGroupConfigHolder {
             BacklogMemberLimitationConfig memberBacklogLimitations,
             Object metadata,
             DynamicSourceGroupMemberLifeCycle lifeCycle) {
+        addMember(memberName, filter, memberBacklogLimitations, metadata, lifeCycle, false);
+    }
+
+    public synchronized void addMember(
+            String memberName,
+            IReplicationChannelDataFilter filter,
+            BacklogMemberLimitationConfig memberBacklogLimitations,
+            Object metadata,
+            DynamicSourceGroupMemberLifeCycle lifeCycle, boolean resetTarget) {
         SourceGroupConfig config = getConfig();
 
         if (Arrays.asList(config.getMembersLookupNames()).contains(memberName))
@@ -177,7 +186,7 @@ public class DynamicSourceGroupConfigHolder {
         copyAndApplyCommonProperties(config, newConfig);
 
         //update config and notify member added
-        updateConfigWithNewMember(newConfig, memberName, metadata, memberBacklogLimitations, filter, lifeCycle);
+        updateConfigWithNewMember(newConfig, memberName, metadata, memberBacklogLimitations, filter, lifeCycle, resetTarget);
     }
 
     public synchronized void removeMember(String memberName) {

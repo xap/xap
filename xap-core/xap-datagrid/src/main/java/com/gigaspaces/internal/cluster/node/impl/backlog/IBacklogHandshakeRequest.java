@@ -21,5 +21,12 @@ import java.io.Externalizable;
 public interface IBacklogHandshakeRequest extends Externalizable {
     boolean isFirstHandshake();
 
+    default boolean isResetTarget(){
+        return false;
+    }
+
+    default void setResetTarget(boolean resetTarget){
+    }
+
     String toLogMessage();
 }

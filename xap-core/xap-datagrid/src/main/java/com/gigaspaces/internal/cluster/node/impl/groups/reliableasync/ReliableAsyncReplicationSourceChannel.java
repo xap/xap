@@ -62,7 +62,7 @@ public class ReliableAsyncReplicationSourceChannel
             IReplicationSourceGroupStateListener stateListener,
             IReplicationGroupHistory groupHistory, ReplicationMode channelType,
             Object customBacklogMetadata,
-            String tag) {
+            String tag, boolean resetTarget) {
         super(groupConfig,
                 groupName,
                 memberName,
@@ -80,7 +80,7 @@ public class ReliableAsyncReplicationSourceChannel
                 groupHistory,
                 channelType,
                 customBacklogMetadata,
-                tag);
+                tag, resetTarget);
 
         _groupBacklog = groupBacklog;
         _keeperSyncChannels = keeperSyncChannelsCollection.toArray(new AbstractReplicationSourceChannel[keeperSyncChannelsCollection.size()]);

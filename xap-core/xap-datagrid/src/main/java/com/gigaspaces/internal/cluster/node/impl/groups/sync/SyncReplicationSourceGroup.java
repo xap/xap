@@ -180,7 +180,7 @@ public class SyncReplicationSourceGroup
             IReplicationMonitoredConnection connection,
             IReplicationChannelDataFilter dataFilter,
             IReplicationGroupHistory groupHistory, boolean dynamicMember,
-            SourceGroupConfig groupConfig, Object customBacklogMetadata) {
+            SourceGroupConfig groupConfig, Object customBacklogMetadata, boolean resetTarget) {
         // TODO LV: support dynamic addition for sync for code completion and
         // future capabilities
         if (dynamicMember)

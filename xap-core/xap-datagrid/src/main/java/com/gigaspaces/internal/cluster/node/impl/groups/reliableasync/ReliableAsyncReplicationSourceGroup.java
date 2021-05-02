@@ -134,7 +134,7 @@ public class ReliableAsyncReplicationSourceGroup
             IReplicationMonitoredConnection connection,
             IReplicationChannelDataFilter dataFilter,
             IReplicationGroupHistory groupHistory, boolean dynamicMember,
-            SourceGroupConfig groupConfig, Object customBacklogMetadata) {
+            SourceGroupConfig groupConfig, Object customBacklogMetadata, boolean resetTarget) {
         ReliableAsyncSourceGroupConfig config = (ReliableAsyncSourceGroupConfig) groupConfig;
         if (Arrays.asList(config.getSyncMembersLookupNames())
                 .contains(memberLookupName))
@@ -153,7 +153,7 @@ public class ReliableAsyncReplicationSourceGroup
                 dataFilter,
                 groupHistory,
                 config,
-                customBacklogMetadata);
+                customBacklogMetadata, resetTarget);
 
     }
 
@@ -176,7 +176,7 @@ public class ReliableAsyncReplicationSourceGroup
             IReplicationMonitoredConnection connection,
             IReplicationChannelDataFilter dataFilter,
             IReplicationGroupHistory groupHistory,
-            ReliableAsyncSourceGroupConfig groupConfig, Object customBacklogMetadata) {
+            ReliableAsyncSourceGroupConfig groupConfig, Object customBacklogMetadata, boolean resetTarget) {
         int batchSize = _asyncChannelBatchSize;
         long intervalMilis = _asyncChannelIntervalMilis;
         int intervalOperations = _asyncChannelIntervalOperations;
@@ -209,7 +209,7 @@ public class ReliableAsyncReplicationSourceGroup
                 groupHistory,
                 channelType,
                 customBacklogMetadata,
-                tag);
+                tag, resetTarget);
         _asyncChannelsMap.put(memberLookupName, channel);
         _asyncChannels.add(channel);
         return channel;
@@ -475,7 +475,7 @@ public class ReliableAsyncReplicationSourceGroup
             //Create channels to sync member synchronously, this process will provide backlog completion of this source
             //in case the target is at a newer replication state before continuing on to the next channel and with becoming fully active.
             for (String memberLookupName : config.getSyncMembersLookupNames()) {
-                createChannel(memberLookupName, false, config, true, null);
+                createChannel(memberLookupName, false, config, true, null, false);
                 final AbstractReplicationSourceChannel channel = getChannel(memberLookupName);
                 ConditionLatch conditionLatch = new ConditionLatch().timeout(30, TimeUnit.SECONDS).pollingInterval(50, TimeUnit.MILLISECONDS);
                 try {
@@ -498,7 +498,7 @@ public class ReliableAsyncReplicationSourceGroup
             }
             //Create channels to async members
             for (String memberLookupName : config.getAsyncMembersLookupNames()) {
-                createChannel(memberLookupName, false, config, false, null);
+                createChannel(memberLookupName, false, config, false, null, false);
                 if (_specificLogger.isTraceEnabled())
                     _specificLogger.trace(getLogPrefix() + "created channel to "
                             + memberLookupName);

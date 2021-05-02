@@ -136,6 +136,8 @@ public abstract class AbstractReplicationSourceChannel
     private IAsyncHandler _inconsistentDuringHandshakeStateHandler;
     private IAsyncHandler _iterativeHandshakeHandler;
     private final String _tag;
+    private volatile boolean resetTarget;
+
 
     public AbstractReplicationSourceChannel(DynamicSourceGroupConfigHolder groupConfig,
                                             String groupName, String memberName,
@@ -149,7 +151,24 @@ public abstract class AbstractReplicationSourceChannel
                                             IReplicationGroupHistory groupHistory,
                                             ReplicationMode channelType,
                                             Object customBacklogMetadata,
-                                            String tag) {
+                                            String tag){
+        this(groupConfig,groupName,memberName,replicationRouter,connection,groupBacklog,outFilter,
+                asyncHandlerProvider, dataFilter, stateListener, groupHistory, channelType, customBacklogMetadata, tag, false);
+    }
+
+    public AbstractReplicationSourceChannel(DynamicSourceGroupConfigHolder groupConfig,
+                                            String groupName, String memberName,
+                                            IReplicationRouter replicationRouter,
+                                            IReplicationMonitoredConnection connection,
+                                            IReplicationGroupBacklog groupBacklog,
+                                            IReplicationOutFilter outFilter,
+                                            IAsyncHandlerProvider asyncHandlerProvider,
+                                            IReplicationChannelDataFilter dataFilter,
+                                            IReplicationSourceGroupStateListener stateListener,
+                                            IReplicationGroupHistory groupHistory,
+                                            ReplicationMode channelType,
+                                            Object customBacklogMetadata,
+                                            String tag, boolean resetTarget) {
         _groupName = groupName;
         _replicationRouter = replicationRouter;
         _memberName = memberName;
@@ -178,6 +197,7 @@ public abstract class AbstractReplicationSourceChannel
         _receivedTrafficStatistics.addSample(SystemTime.timeMillis(), 0L);
         _isNetworkCompressionEnabled = groupConfig.getConfig().isNetworkCompressionEnabled();
         _tag = tag;
+        this.resetTarget = resetTarget;
         _packetsPool = new ThreadLocalPool<ReplicatedDataPacketResource>(new PoolFactory<ReplicatedDataPacketResource>() {
             public ReplicatedDataPacketResource create() {
                 return new ReplicatedDataPacketResource(getGroupName());
@@ -260,6 +280,9 @@ public abstract class AbstractReplicationSourceChannel
                 _specificLogger.debug("Performing handshake " + getConnectionDescription());
             // Create a connect channel packet with handshake details
             IBacklogHandshakeRequest backlogHandshakeRequest = getHandshakeRequest();
+            if(backlogHandshakeRequest!= null){
+                backlogHandshakeRequest.setResetTarget(this.resetTarget);
+            }
             ConnectChannelHandshakeRequest channelHandshakeRequest = new ConnectChannelHandshakeRequest(backlogHandshakeRequest);
             ConnectChannelPacket packet = new ConnectChannelPacket(getGroupName(),
                     _replicationRouter.getMyStubHolder(),
@@ -388,6 +411,9 @@ public abstract class AbstractReplicationSourceChannel
     private void moveToActive() {
         ChannelState prevState = _channelState;
         _channelState = ChannelState.ACTIVE;
+        if(resetTarget){
+            resetTarget = false;
+        }
         onActiveImpl();
 
         LogLevel logLevel = (requiresHighLevelLogging() || _wasEverActive) ? LogLevel.INFO : LogLevel.DEBUG;
