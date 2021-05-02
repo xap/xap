@@ -27,16 +27,25 @@ public class MemberAddedEvent {
     final private BacklogMemberLimitationConfig _backlogMemberLimitation;
     final private IReplicationChannelDataFilter _filter;
     final private DynamicSourceGroupMemberLifeCycle _lifeCycle;
+    private boolean resetTarget;
 
     public MemberAddedEvent(String memberName, Object customData,
                             BacklogMemberLimitationConfig backlogMemberLimitation,
                             IReplicationChannelDataFilter filter,
-                            DynamicSourceGroupMemberLifeCycle lifeCycle) {
+                            DynamicSourceGroupMemberLifeCycle lifeCycle){
+        this(memberName, customData, backlogMemberLimitation, filter, lifeCycle, false);
+    }
+
+    public MemberAddedEvent(String memberName, Object customData,
+                            BacklogMemberLimitationConfig backlogMemberLimitation,
+                            IReplicationChannelDataFilter filter,
+                            DynamicSourceGroupMemberLifeCycle lifeCycle, boolean resetTarget) {
         _memberName = memberName;
         _customData = customData;
         _backlogMemberLimitation = backlogMemberLimitation;
         _filter = filter;
         _lifeCycle = lifeCycle;
+        this.resetTarget = resetTarget;
     }
 
     public String getMemberName() {
@@ -45,6 +54,10 @@ public class MemberAddedEvent {
 
     public Object getCustomData() {
         return _customData;
+    }
+
+    public boolean isResetTarget() {
+        return resetTarget;
     }
 
     public BacklogMemberLimitationConfig getBacklogMemberLimitation() {

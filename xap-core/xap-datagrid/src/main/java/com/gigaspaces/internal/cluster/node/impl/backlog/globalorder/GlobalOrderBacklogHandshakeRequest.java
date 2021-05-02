@@ -17,6 +17,8 @@
 package com.gigaspaces.internal.cluster.node.impl.backlog.globalorder;
 
 import com.gigaspaces.internal.cluster.node.impl.backlog.IBacklogHandshakeRequest;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -28,6 +30,7 @@ public class GlobalOrderBacklogHandshakeRequest
     private static final long serialVersionUID = 1L;
     private boolean _firstHandshake;
     private long _lastConfirmedKey;
+    private boolean resetTarget;
 
     public GlobalOrderBacklogHandshakeRequest() {
     }
@@ -41,11 +44,17 @@ public class GlobalOrderBacklogHandshakeRequest
             ClassNotFoundException {
         _firstHandshake = in.readBoolean();
         _lastConfirmedKey = in.readLong();
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)){
+            this.resetTarget = in.readBoolean();
+        }
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeBoolean(_firstHandshake);
         out.writeLong(_lastConfirmedKey);
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)){
+            out.writeBoolean(resetTarget);
+        }
     }
 
     public long getLastConfirmedKey() {
@@ -54,6 +63,16 @@ public class GlobalOrderBacklogHandshakeRequest
 
     public boolean isFirstHandshake() {
         return _firstHandshake;
+    }
+
+    @Override
+    public boolean isResetTarget() {
+        return resetTarget;
+    }
+
+    @Override
+    public void setResetTarget(boolean resetTarget) {
+        this.resetTarget = resetTarget;
     }
 
     public String toLogMessage() {
