@@ -1441,8 +1441,11 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 tHolder);
         _logger.info( "expirationTimeInMillis=" + expirationTimeInMillis );
         while (true) {
+            _logger.info( "START WHILE" );
             if (timeout != Long.MAX_VALUE) {
-                timeToWait = expirationTimeInMillis - SystemTime.timeMillis();
+                long timeMillis = SystemTime.timeMillis();
+                _logger.info( "> expirationTimeInMillis=" + expirationTimeInMillis + ", timeMillis=" + timeMillis + ", currentTime=" + System.currentTimeMillis());
+                timeToWait = expirationTimeInMillis - timeMillis;
                 _logger.info( "TIME to WAIT=" + timeToWait );
             }
             if (timeout == Long.MAX_VALUE || timeToWait > 0) {
@@ -1461,7 +1464,9 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                         _logger.info("break 1");
                         break;
                     }
+                    _logger.info( "End of synchronized block" );
                 }//synchronized
+                _logger.info( "End of If block" );
             }//if  (timeout == Long.MAX_VALUE || timeToWait > 0)
             else {
                 _logger.info("break 2");
