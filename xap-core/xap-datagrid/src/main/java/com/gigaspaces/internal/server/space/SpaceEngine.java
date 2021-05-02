@@ -1454,6 +1454,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                         if (timeout != Long.MAX_VALUE) {
                             _logger.info( "Before wait for " + timeToWait + " msec.");
                             aHolder.wait(timeToWait);
+                            _logger.info( "After wait for " + timeToWait + " msec.");
                         }
                         else {
                             _logger.info( "Before regular aHolder.wait");
