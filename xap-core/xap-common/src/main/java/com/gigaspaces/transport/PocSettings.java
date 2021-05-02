@@ -24,6 +24,8 @@ public class PocSettings {
     public static final int serverReaderPoolSize = GsEnv.propertyInt("com.gs.nio.server.reader-pool-size").get(4);
     public static final boolean serverLrmiExecutor = GsEnv.propertyBoolean("com.gs.nio.server.lrmi-executor").get(true);
     public static final int payload = GsEnv.propertyInt("com.gs.nio.payload").get(1024);
+    public static final boolean useForkJoinPool = GsEnv.propertyBoolean("com.gs.nio.fjp").get(false);
+    public static final boolean forkJoinPoolAsyncMode = GsEnv.propertyBoolean("com.gs.nio.fjp.async").get(false);
     private static final boolean CHANNEL_TCP_NODELAY = true;
 
     public static boolean isEnabled() {

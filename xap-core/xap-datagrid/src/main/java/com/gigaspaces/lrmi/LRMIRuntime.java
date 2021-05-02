@@ -30,13 +30,14 @@ import com.gigaspaces.logger.Constants;
 import com.gigaspaces.logger.LogUtils;
 import com.gigaspaces.lrmi.ProtocolAdapter.Side;
 import com.gigaspaces.lrmi.nio.Pivot;
+import com.gigaspaces.lrmi.nio.async.LRMIForkJoinPool;
 import com.gigaspaces.lrmi.nio.async.LRMIThreadPoolExecutor;
 import com.gigaspaces.lrmi.nio.watchdog.Watchdog;
 import com.gigaspaces.management.transport.ITransportConnection;
+import com.gigaspaces.transport.PocSettings;
 import com.j_spaces.core.service.ServiceConfigLoader;
 import com.j_spaces.kernel.ClassLoaderHelper;
 import com.j_spaces.kernel.SystemProperties;
-import com.j_spaces.kernel.threadpool.DynamicThreadPoolExecutor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
@@ -47,6 +48,7 @@ import java.security.SecureRandom;
 import java.util.List;
 import java.util.Random;
 
+import com.j_spaces.kernel.threadpool.GsPoolExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,10 +81,10 @@ public class LRMIRuntime {
     final private ProtocolRegistry _protocolRegistry;
     final private ObjectRegistry _objectRegistry;
     final private long _id;
-    final private LRMIThreadPoolExecutor _lrmiThreadPool;
-    final private LRMIThreadPoolExecutor _livenessPriorityThreadPool;
-    final private LRMIThreadPoolExecutor _monitoringPriorityThreadPool;
-    final private LRMIThreadPoolExecutor _customThreadPool;
+    final private GsPoolExecutorService _lrmiThreadPool;
+    final private GsPoolExecutorService _livenessPriorityThreadPool;
+    final private GsPoolExecutorService _monitoringPriorityThreadPool;
+    final private GsPoolExecutorService _customThreadPool;
     final private StubCache _stubCache;
     final private INetworkMapper _networkMapper = constructNetworkMapper();
     //Current lrmi usage simply doesn't support shutdown on last registrar since the client 
@@ -117,38 +119,38 @@ public class LRMIRuntime {
         }
         _id = random.nextLong();
 
-        ITransportConfig config = ServiceConfigLoader.getTransportConfiguration();
-        _lrmiThreadPool = new LRMIThreadPoolExecutor(
-                config.getMinThreads(), config.getMaxThreads(),
-                config.getThreadPoolIdleTimeout(), config.getThreadsQueueSize(),
-                Long.MAX_VALUE, Thread.NORM_PRIORITY, "LRMI-Connection", true, true);
-        NIOConfiguration nioConfig = (NIOConfiguration) config;
-        _livenessPriorityThreadPool = new LRMIThreadPoolExecutor(nioConfig.getSystemPriorityMinThreads(),
-                nioConfig.getSystemPriorityMaxThreads(),
+        NIOConfiguration config = (NIOConfiguration)ServiceConfigLoader.getTransportConfiguration();
+        _lrmiThreadPool = createExecutorService("LRMI-Connection",
+                config.getMinThreads(),
+                config.getMaxThreads(),
+                config.getThreadPoolIdleTimeout(),
+                config.getThreadsQueueSize(),
+                Thread.NORM_PRIORITY);
+        _livenessPriorityThreadPool = createExecutorService("LRMI-Liveness",
+                config.getSystemPriorityMinThreads(),
+                config.getSystemPriorityMaxThreads(),
                 config.getSystemPriorityThreadIdleTimeout(),
                 config.getSystemPriorityQueueCapacity(),
-                Long.MAX_VALUE,
-                Thread.MAX_PRIORITY,
-                "LRMI-Liveness",
-                true, true);
-        _monitoringPriorityThreadPool = new LRMIThreadPoolExecutor(nioConfig.getSystemPriorityMinThreads(),
-                nioConfig.getSystemPriorityMaxThreads(),
+                Thread.MAX_PRIORITY);
+        _monitoringPriorityThreadPool = createExecutorService("LRMI-Monitoring",
+                config.getSystemPriorityMinThreads(),
+                config.getSystemPriorityMaxThreads(),
                 config.getSystemPriorityThreadIdleTimeout(),
                 config.getSystemPriorityQueueCapacity(),
-                Long.MAX_VALUE,
-                Thread.NORM_PRIORITY,
-                "LRMI-Monitoring",
-                true, true);
-        _customThreadPool = new LRMIThreadPoolExecutor(nioConfig.getCustomMinThreads(),
-                nioConfig.getCustomMaxThreads(),
-                nioConfig.getCustomThreadIdleTimeout(),
-                nioConfig.getCustomQueueCapacity(),
-                Long.MAX_VALUE,
-                Thread.NORM_PRIORITY,
-                "LRMI-Custom",
-                true, true);
+                Thread.NORM_PRIORITY);
+        _customThreadPool = createExecutorService("LRMI-Custom",
+                config.getCustomMinThreads(),
+                config.getCustomMaxThreads(),
+                config.getCustomThreadIdleTimeout(),
+                config.getCustomQueueCapacity(),
+                Thread.NORM_PRIORITY);
     }
 
+    private static GsPoolExecutorService createExecutorService(String poolName, int min, int max, long keepAliveTime, int capacity, int priority) {
+        if (PocSettings.useForkJoinPool)
+            return new LRMIForkJoinPool(poolName, max, priority, PocSettings.forkJoinPoolAsyncMode);
+        return new LRMIThreadPoolExecutor(min, max, keepAliveTime, capacity, Long.MAX_VALUE, priority, poolName, true, true);
+    }
 
     @SuppressWarnings("unchecked")
     static private INetworkMapper constructNetworkMapper() {
@@ -199,19 +201,19 @@ public class LRMIRuntime {
         _protocolRegistry.init(config, initSide);
     }
 
-    public DynamicThreadPoolExecutor getThreadPool() {
+    public GsPoolExecutorService getThreadPool() {
         return _lrmiThreadPool;
     }
 
-    public DynamicThreadPoolExecutor getMonitoringPriorityThreadPool() {
+    public GsPoolExecutorService getMonitoringPriorityThreadPool() {
         return _monitoringPriorityThreadPool;
     }
 
-    public DynamicThreadPoolExecutor getLivenessPriorityThreadPool() {
+    public GsPoolExecutorService getLivenessPriorityThreadPool() {
         return _livenessPriorityThreadPool;
     }
 
-    public DynamicThreadPoolExecutor getCustomThreadPool() {
+    public GsPoolExecutorService getCustomThreadPool() {
         return _customThreadPool;
     }
 

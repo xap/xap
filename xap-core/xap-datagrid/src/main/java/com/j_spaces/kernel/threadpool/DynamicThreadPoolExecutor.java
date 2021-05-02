@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 6.5
  */
 @com.gigaspaces.api.InternalApi
-public class DynamicThreadPoolExecutor extends ThreadPoolExecutor {
+public class DynamicThreadPoolExecutor extends ThreadPoolExecutor implements GsPoolExecutorService {
     /**
      * number of threads that are actively executing tasks
      */
@@ -51,6 +51,11 @@ public class DynamicThreadPoolExecutor extends ThreadPoolExecutor {
     @Override
     public int getActiveCount() {
         return activeCount.get();
+    }
+
+    @Override
+    public int getQueueSize() {
+        return getQueue().size();
     }
 
     @Override

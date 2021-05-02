@@ -22,8 +22,7 @@ import com.gigaspaces.lrmi.nio.filters.SSLFilterFactory;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.service.ServiceConfigLoader;
 import com.j_spaces.kernel.SystemProperties;
-
-import java.util.concurrent.ThreadPoolExecutor;
+import com.j_spaces.kernel.threadpool.GsPoolExecutorService;
 
 /**
  * @author kimchy
@@ -58,10 +57,10 @@ public abstract class NIOInfoHelper {
 
     public static NIOStatistics getNIOStatistics() {
         LRMIRuntime lrmiRuntime = LRMIRuntime.getRuntime();
-        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) lrmiRuntime.getThreadPool();
+        GsPoolExecutorService threadPoolExecutor = lrmiRuntime.getThreadPool();
         return new NIOStatistics(System.currentTimeMillis(),
                 threadPoolExecutor.getCompletedTaskCount(), threadPoolExecutor.getActiveCount(),
-                threadPoolExecutor.getQueue().size());
+                threadPoolExecutor.getQueueSize());
     }
 
     public static LRMIMonitoringDetails fetchMonitoringDetails() {

@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 @com.gigaspaces.api.InternalApi
 public class LRMIThreadPoolExecutor extends DynamicThreadPoolExecutor {
+    private static final Logger logger = LoggerFactory.getLogger(LRMIThreadPoolExecutor.class);
     private final static Logger _warnLogger = LoggerFactory.getLogger(Constants.LOGGER_LRMI + ".resources");
     private final static double _warnFactor = Double.parseDouble(System.getProperty(SystemProperties.LRMI_RESOURCE_WARN_THRESHOLD_FACTOR, "10.0"));
 
@@ -69,6 +70,7 @@ public class LRMIThreadPoolExecutor extends DynamicThreadPoolExecutor {
         ((DynamicQueue) getQueue()).setThreadPoolExecutor(this);
         if (preStart)
             prestartAllCoreThreads();
+        logger.info("Created {} (min={}, max={}, capacity={}, priority={}, keepAliveTime={}, waitTime={})", poolName, min, max, capacity, priority, keepAliveTime, waitTime);
     }
 
     @Override

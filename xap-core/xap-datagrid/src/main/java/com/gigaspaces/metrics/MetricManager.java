@@ -33,7 +33,7 @@ import com.gigaspaces.metrics.factories.*;
 import com.gigaspaces.start.SystemBoot;
 import com.gigaspaces.start.SystemInfo;
 import com.gigaspaces.start.SystemLocations;
-import com.j_spaces.kernel.threadpool.DynamicThreadPoolExecutor;
+import com.j_spaces.kernel.threadpool.GsPoolExecutorService;
 import com.sun.jini.thread.TaskManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -396,18 +396,17 @@ public class MetricManager implements Closeable {
         return registrator;
     }
 
-    public static void registerThreadPoolMetrics(MetricRegistrator registrator, final DynamicThreadPoolExecutor dynamicThreadPoolExecutor) {
+    public static void registerThreadPoolMetrics(MetricRegistrator registrator, final GsPoolExecutorService executorService) {
         registrator.register("active-threads", new Gauge<Integer>() {
             @Override
             public Integer getValue() throws Exception {
-                return dynamicThreadPoolExecutor.getActiveCount();
+                return executorService.getActiveCount();
             }
         });
-        final BlockingQueue<Runnable> q = dynamicThreadPoolExecutor.getQueue();
         registrator.register("queueSize", new Gauge<Integer>() {
             @Override
             public Integer getValue() throws Exception {
-                return q.size();
+                return executorService.getQueueSize();
             }
         });
     }
