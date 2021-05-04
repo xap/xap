@@ -14,8 +14,8 @@ public class NioConnectionPoolSingleton implements NioConnectionPool {
     private final int connectionTimeout;
     private NioChannel instance;
 
-    public NioConnectionPoolSingleton() {
-        this(new InetSocketAddress(PocSettings.host, PocSettings.port), 10_000);
+    public NioConnectionPoolSingleton(InetSocketAddress address) {
+        this(address, 10_000);
     }
 
     public NioConnectionPoolSingleton(InetSocketAddress address, int connectionTimeout) {

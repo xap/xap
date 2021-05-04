@@ -1,6 +1,9 @@
 package com.gigaspaces.transport.server;
 
+import com.gigaspaces.config.lrmi.nio.NIOConfiguration;
 import com.gigaspaces.internal.server.space.SpaceImpl;
+import com.gigaspaces.lrmi.LRMIRuntime;
+import com.gigaspaces.lrmi.ProtocolAdapter;
 import com.gigaspaces.transport.NioChannel;
 import com.gigaspaces.transport.PocSettings;
 import org.slf4j.Logger;
@@ -8,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.Set;
@@ -23,16 +27,26 @@ public class NioServer implements Closeable {
     private int nextWorker;
 
     public NioServer(SpaceImpl space) throws IOException {
+        InetSocketAddress bindAddress = calcBindAddress();
         int numOfWorkers = PocSettings.serverReaderPoolSize;
-        logger.info("Binding to {} (I/O workers: {})", PocSettings.ADDRESS, numOfWorkers);
+        logger.info("Listening to incoming connections at {} (I/O workers: {})", bindAddress, numOfWorkers);
         this.space = space;
         ssc = ServerSocketChannel.open();
         ssc.configureBlocking(false);
-        ssc.socket().bind(PocSettings.ADDRESS);
+        ssc.socket().bind(bindAddress);
         boss = new SelectorHandler("boss");
         workers = numOfWorkers != -1 ? initWorkers(numOfWorkers) : new SelectorHandler[] {boss};
         ssc.register(boss.selector, SelectionKey.OP_ACCEPT);
         initDaemon(boss, "boss");
+    }
+
+    public static InetSocketAddress calcBindAddress() {
+        ProtocolAdapter<?> protocolAdapter = LRMIRuntime.getRuntime().getProtocolRegistry().get(NIOConfiguration.PROTOCOL_NAME);
+        if (protocolAdapter == null) {
+            LRMIRuntime.getRuntime().initServerSide();
+            protocolAdapter = LRMIRuntime.getRuntime().getProtocolRegistry().get(NIOConfiguration.PROTOCOL_NAME);
+        }
+        return new InetSocketAddress(protocolAdapter.getHostName(), protocolAdapter.getPort() + PocSettings.portDelta);
     }
 
     @Override

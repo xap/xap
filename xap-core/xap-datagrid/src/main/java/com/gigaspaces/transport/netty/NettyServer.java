@@ -4,6 +4,7 @@ import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.lrmi.LRMIRuntime;
 import com.gigaspaces.lrmi.LRMIUtilities;
 import com.gigaspaces.transport.PocSettings;
+import com.gigaspaces.transport.server.NioServer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
@@ -27,7 +28,7 @@ public class NettyServer implements Closeable {
     private final Channel channel;
 
     public NettyServer(SpaceImpl space, PocSettings.ServerType serverType) {
-        this(space, new InetSocketAddress(PocSettings.host, PocSettings.port), serverType);
+        this(space, NioServer.calcBindAddress(), serverType);
     }
 
     public NettyServer(SpaceImpl space, SocketAddress address, PocSettings.ServerType serverType) {

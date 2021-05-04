@@ -9,9 +9,7 @@ import java.nio.channels.SocketChannel;
 
 public class PocSettings {
     public static final ServerType serverType = Enum.valueOf(ServerType.class, GsEnv.property("com.gs.nio.type").get("lrmi").toUpperCase());
-    public static final String host = GsEnv.property("com.gs.nio.host").get("localhost");
-    public static final int port = GsEnv.propertyInt("com.gs.nio.port").get(8080);
-    public static final InetSocketAddress ADDRESS = new InetSocketAddress(host, port);
+    public static final int portDelta = GsEnv.propertyInt("com.gs.nio.port-delta").get(100);
     public static final boolean directBuffers = GsEnv.propertyBoolean("com.gs.nio.direct-buffers").get(false);
     public static final boolean directExternalizable = GsEnv.propertyBoolean("com.gs.nio.direct-externalizable").get(false);
     public static final boolean directVersion = GsEnv.propertyBoolean("com.gs.nio.direct-version").get(false);
@@ -33,9 +31,7 @@ public class PocSettings {
     }
 
     public static String dump() {
-        return "host: " + host + ", " +
-                "port: " + port + ", " +
-                "direct-buffers: " + directBuffers + ", " +
+        return "direct-buffers: " + directBuffers + ", " +
                 //"custom-marshal: " + customMarshal + ", " +
                 "client.connection-pool.type: " + clientConnectionPoolType + ", " +
                 "client.connection-pool.size: " + clientConnectionPoolSize + ", " +

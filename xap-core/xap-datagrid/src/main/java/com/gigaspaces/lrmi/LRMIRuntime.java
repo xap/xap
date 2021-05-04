@@ -45,8 +45,8 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.security.SecureRandom;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.*;
 
 import com.j_spaces.kernel.threadpool.GsPoolExecutorService;
 import org.slf4j.Logger;
@@ -257,6 +257,13 @@ public class LRMIRuntime {
         return getRuntime().getProtocolRegistry().getMonitoringDetails(config);
     }
 
+    public void initServerSide()  {
+        try {
+            init(ServiceConfigLoader.getTransportConfiguration(), Side.SERVER);
+        } catch (ConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+    }
     /**
      * Exports the specified remote object on the specified protocol. The returned ServerPeer may be
      * used to retrieve both the remote object id and the connection URL.

@@ -43,12 +43,13 @@ import org.slf4j.LoggerFactory;
 public class NIOConfiguration implements ITransportConfig, Cloneable, Externalizable {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(NIOConfiguration.class.getName());
+    public static final String PROTOCOL_NAME = "NIO";
 
     private static final int DEFAULT_MIN_THREADS = 1;
     private static final int DEFAULT_MAX_THREADS = 128;
     private static final int DEFAULT_THREAD_QUEUE_SIZE = Integer.MAX_VALUE;
     private static final int DEFAULT_MAX_CONN_POOL = 1024;
-    private static final String DEFAULT_BIND_PORT = "0";
+    private static final String DEFAULT_BIND_PORT = "8200-8299";
     private static final int DEFAULT_SLOW_CONSUMER_LATENCY = 500;
     private static final int DEFAULT_SLOW_CONSUMER_TP = 5000;
     private static final int DEFAULT_SLOW_CONSUMER_RETRIES = 3;
@@ -59,7 +60,7 @@ public class NIOConfiguration implements ITransportConfig, Cloneable, Externaliz
     private int _maxThreads = DEFAULT_MAX_THREADS;
     private int _threadsQueueSize = DEFAULT_THREAD_QUEUE_SIZE;
     private int _maxConnPool = DEFAULT_MAX_CONN_POOL;
-    private String _bindPort = DEFAULT_BIND_PORT; // any anonymous port
+    private String _bindPort = DEFAULT_BIND_PORT;
     private String _bindHostName;
     private boolean _blockingConnection = true; // set this client connection as blocking
     private int _slowConsumerLatency = DEFAULT_SLOW_CONSUMER_LATENCY;
@@ -349,7 +350,7 @@ public class NIOConfiguration implements ITransportConfig, Cloneable, Externaliz
      */
     public static NIOConfiguration create() {
         String bindHost = SystemInfo.singleton().network().getHostId();
-        String bindPort = GsEnv.property("com.gs.transport_protocol.lrmi.bind-port", "LRMI_PORT").get("0");
+        String bindPort = GsEnv.property("com.gs.transport_protocol.lrmi.bind-port", "LRMI_PORT").get(DEFAULT_BIND_PORT);
 
         int minThreads = Integer.parseInt(System.getProperty("com.gs.transport_protocol.lrmi.min-threads", "1"));
         int maxThreads = Integer.parseInt(System.getProperty("com.gs.transport_protocol.lrmi.max-threads", "128"));
@@ -602,7 +603,7 @@ public class NIOConfiguration implements ITransportConfig, Cloneable, Externaliz
      * @see com.gigaspaces.transport.ITransportConfig#getProtocolName()
      */
     final public String getProtocolName() {
-        return "NIO";
+        return PROTOCOL_NAME;
     }
 
     public boolean isBlockingConnection() {

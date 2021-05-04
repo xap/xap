@@ -13,8 +13,8 @@ public class NioConnectionPoolThreadLocal implements NioConnectionPool {
 
     private final ThreadLocal<NioChannel> threadLocal;
 
-    public NioConnectionPoolThreadLocal() {
-        this(new InetSocketAddress(PocSettings.host, PocSettings.port), 10_000);
+    public NioConnectionPoolThreadLocal(InetSocketAddress address) {
+        this(address, 10_000);
     }
 
     public NioConnectionPoolThreadLocal(InetSocketAddress address, int connectionTimeout) {

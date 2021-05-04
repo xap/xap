@@ -17,8 +17,8 @@ public class NioConnectionPoolDynamic implements NioConnectionPool {
     private final Queue<NioChannel> pool;
     private final int connectionTimeout;
 
-    public NioConnectionPoolDynamic() {
-        this(new InetSocketAddress(PocSettings.host, PocSettings.port), PocSettings.clientConnectionPoolSize, 10_000);
+    public NioConnectionPoolDynamic(InetSocketAddress address) {
+        this(address, PocSettings.clientConnectionPoolSize, 10_000);
     }
 
     public NioConnectionPoolDynamic(InetSocketAddress address, int capacity, int connectionTimeout) {

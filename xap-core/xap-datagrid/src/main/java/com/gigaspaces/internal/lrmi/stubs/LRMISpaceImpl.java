@@ -84,6 +84,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.rmi.RemoteException;
 import java.util.List;
@@ -101,14 +102,14 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
         implements IRemoteSpace, IInternalRemoteJSpaceAdmin, Service {
     static final long serialVersionUID = 2L;
 
-    private final NioConnectionPool connectionPool = initConnectionPool(PocSettings.clientConnectionPoolType);
+    private NioConnectionPool connectionPool;
 
-    private static NioConnectionPool initConnectionPool(String type) {
+    private NioConnectionPool initConnectionPool(String type, InetSocketAddress address) {
         switch (type) {
-            case "singleton": return new NioConnectionPoolSingleton();
-            case "thread-local": return new NioConnectionPoolThreadLocal();
-            case "fixed": return new NioConnectionPoolFixed();
-            case "dynamic": return new NioConnectionPoolDynamic();
+            case "singleton": return new NioConnectionPoolSingleton(address);
+            case "thread-local": return new NioConnectionPoolThreadLocal(address);
+            case "fixed": return new NioConnectionPoolFixed(address);
+            case "dynamic": return new NioConnectionPoolDynamic(address);
             default: throw new IllegalArgumentException("Unsupported connection pool type: " + type);
         }
     }
@@ -142,8 +143,12 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
 
     private void initialize() {
         this.nioEnabled = !isDirect() && PocSettings.isEnabled();
-        if (nioEnabled)
-            logger.info("Created (nio enabled, {})", PocSettings.dump());
+        if (nioEnabled) {
+            InetSocketAddress lrmiAddress = getRemoteNetworkAddress();
+            InetSocketAddress nioAddress = new InetSocketAddress(lrmiAddress.getHostName(), lrmiAddress.getPort() + PocSettings.portDelta);
+            logger.info("Created (nio enabled at {}, {})", nioAddress, PocSettings.dump());
+            this.connectionPool = initConnectionPool(PocSettings.clientConnectionPoolType, nioAddress);
+        }
         else
             logger.info("Created (nio disabled)");
     }

@@ -259,13 +259,13 @@ public class Pivot {
                 config.getBindPort(),
                 config.getReadSelectorThreads());
 
-
         _threadPool = PocSettings.serverLrmiExecutor ? LRMIRuntime.getRuntime().getThreadPool() : Executors.newDirectExecutor();
         _livenessPriorityThreadPool = LRMIRuntime.getRuntime().getLivenessPriorityThreadPool();
         _monitoringPriorityThreadPool = LRMIRuntime.getRuntime().getMonitoringPriorityThreadPool();
         _customThreadPool = LRMIRuntime.getRuntime().getCustomThreadPool();
 
         _protocolValidationEnabled = config.isProtocolValidationEnabled();
+        _logger.info("Listening to incoming connections at {}", _selectorManager.getBindInetSocketAddress());
     }
 
     void shutdown() {
