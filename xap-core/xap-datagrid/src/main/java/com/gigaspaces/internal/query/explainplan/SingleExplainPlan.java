@@ -50,14 +50,14 @@ public class SingleExplainPlan implements Externalizable {
     private Map<String, List<String>> tiersInfo;
 
     public SingleExplainPlan() {
-        this.scanningInfo = new HashMap<String, ScanningInfo>();
-        this.indexesInfo = new HashMap<String, List<IndexChoiceNode>>();
+        this.scanningInfo = new HashMap<>();
+        this.indexesInfo = new HashMap<>();
         this.tiersInfo = new HashMap<>();
     }
 
     public SingleExplainPlan(ICustomQuery customQuery) {
-        this.scanningInfo = new HashMap<String, ScanningInfo>();
-        this.indexesInfo = new HashMap<String, List<IndexChoiceNode>>();
+        this.scanningInfo = new HashMap<>();
+        this.indexesInfo = new HashMap<>();
         this.tiersInfo = new HashMap<>();
         this.root = ExplainPlanUtil.buildQueryTree(customQuery);
     }
@@ -108,7 +108,7 @@ public class SingleExplainPlan implements Externalizable {
 
     public void addScanIndexChoiceNode(String clazz, IndexChoiceNode indexChoiceNode) {
         if (!indexesInfo.containsKey(clazz)) {
-            List<IndexChoiceNode> scanSelectionTree = new ArrayList<IndexChoiceNode>();
+            List<IndexChoiceNode> scanSelectionTree = new ArrayList<>();
             indexesInfo.put(clazz, scanSelectionTree);
         }
         indexesInfo.get(clazz).add(indexChoiceNode);
@@ -256,7 +256,7 @@ public class SingleExplainPlan implements Externalizable {
 
     private Map<String, ScanningInfo> readScanningInfo(ObjectInput objectInput) throws IOException, ClassNotFoundException {
         int length = objectInput.readInt();
-        Map<String, ScanningInfo> map = new HashMap<String, ScanningInfo>();
+        Map<String, ScanningInfo> map = new HashMap<>();
         for (int i = 0; i < length; i++) {
             String key = (String) objectInput.readObject();
             ScanningInfo val = (ScanningInfo) objectInput.readObject();
@@ -269,13 +269,13 @@ public class SingleExplainPlan implements Externalizable {
         Map<String, List<IndexChoiceNode>> map = null;
         int length = (int) objectInput.readInt();
         if (length >= 0) {
-            map = new HashMap<String, List<IndexChoiceNode>>(length);
+            map = new HashMap<>(length);
             for (int i = 0; i < length; i++) {
                 String key = (String) objectInput.readObject();
                 List<IndexChoiceNode> list = null;
                 int listLength = objectInput.readInt();
                 if (listLength >= 0) {
-                    list = new ArrayList<IndexChoiceNode>(listLength);
+                    list = new ArrayList<>(listLength);
                     for (int j = 0; j < listLength; j++)
                         list.add((IndexChoiceNode) objectInput.readObject());
                 }
@@ -314,15 +314,16 @@ public class SingleExplainPlan implements Externalizable {
     }
 
     private static void validateQueryTypes(ICustomQuery customQuery) {
+
         if(customQuery instanceof RelationRange){
             throw new UnsupportedOperationException("Sql explain plan does not support geo-spatial type queries");
         }
         if(customQuery instanceof RegexRange || customQuery instanceof NotRegexRange){
             throw new UnsupportedOperationException("Sql explain plan does not support regular expression type queries");
         }
-        if(customQuery instanceof IsNullRange || customQuery instanceof NotNullRange){
+/*        if(customQuery instanceof IsNullRange || customQuery instanceof NotNullRange){
             throw new UnsupportedOperationException("Sql explain plan does not support is null / is not null type queries");
-        }
+        }*/
         if(customQuery instanceof Range && ((Range) customQuery).getFunctionCallDescription() != null){
             throw new UnsupportedOperationException("Sql explain plan does not support sql function type queries");
         }

@@ -1533,4 +1533,30 @@ public class JSpaceUtilities {
     public static Set<String> getSpaceSchemas() {
         return ALL_SPACE_SCHEMAS;
     }
+
+    public static Integer[] getArrayValuesIndexes(short[] array, Short... checkedValues ){
+        List<Short> checkedValuesList = Arrays.asList(checkedValues);
+        List<Integer> foundIndexes = new ArrayList<>();
+        for( int i = 0; i < array.length; i++ ){
+            short arrayElement = array[ i ];
+            if( checkedValuesList.contains( arrayElement ) ){
+                foundIndexes.add( i );
+                break;
+            }
+        }
+
+        return foundIndexes.toArray( new Integer[0] );
+    }
+
+    public static boolean areAllArrayElementsNull( Object[] array ){
+        boolean hasAllElementsAsNulls = true;
+        for ( Object obj : array ) {
+            if (obj != null) {
+                hasAllElementsAsNulls = false;
+                break;
+            }
+        }
+
+        return hasAllElementsAsNulls;
+    }
 }

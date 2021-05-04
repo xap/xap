@@ -22,8 +22,8 @@ import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.query.EntryHolderAggregatorContext;
 import com.gigaspaces.internal.query.ICustomQuery;
 import com.gigaspaces.internal.query.RegexCache;
-import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.query.explainplan.ExplainPlanUtil;
+import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.BatchQueryOperationContext;
 import com.gigaspaces.internal.server.space.FifoSearch;
@@ -34,29 +34,21 @@ import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.lrmi.nio.IResponseContext;
-import com.j_spaces.core.AnswerHolder;
-import com.j_spaces.core.OperationID;
-import com.j_spaces.core.PendingFifoSearch;
-import com.j_spaces.core.SpaceContext;
-import com.j_spaces.core.SpaceOperations;
-import com.j_spaces.core.UpdateOrWriteContext;
-import com.j_spaces.core.XtnEntry;
+import com.j_spaces.core.*;
 import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.TerminatingFifoXtnsInfo;
 import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.context.Context;
-import com.j_spaces.core.client.Modifiers;
-import com.j_spaces.core.client.ReadModifiers;
-import com.j_spaces.core.client.SQLQuery;
-import com.j_spaces.core.client.TakeModifiers;
+import com.j_spaces.core.client.*;
 import com.j_spaces.core.filters.FilterManager;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.kernel.locks.ILockObject;
-
 import net.jini.core.transaction.server.ServerTransaction;
-
-import java.util.*;
 import org.slf4j.Logger;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * This class represents a template in a J-Space. Each instance of this class contains a reference
@@ -216,7 +208,7 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
         if (Modifiers.contains(_operationModifiers, Modifiers.EXPLAIN_PLAN)) {
             QueryTemplatePacket templatePacket = (QueryTemplatePacket) packet;
             SingleExplainPlan plan = new SingleExplainPlan();
-            if (HasMatchCodes(packet)) {
+            if (hasMatchCodes(templatePacket)) {
                 plan.setRoot(ExplainPlanUtil.BuildMatchCodes(templatePacket));
                 if (templatePacket.getCustomQuery() != null) {
                     plan.getRoot().getChildren().add(ExplainPlanUtil.buildQueryTree(templatePacket.getCustomQuery()));
@@ -228,12 +220,21 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
         }
     }
 
-    private boolean HasMatchCodes(IEntryPacket packet) {
+    private boolean hasMatchCodes(QueryTemplatePacket packet) {
         Object[] fieldValues = packet.getFieldValues();
         for (Object fieldValue : fieldValues) {
             if(fieldValue != null)
                 return  true;
         }
+
+        //added by Evgeny on 4.05 in order to display Filter's info in explain plan for IS NULL and NOT NULL operations
+        short[] extendedMatchCodes = packet.getExtendedMatchCodes();
+        for (short extendedMatchCode : extendedMatchCodes) {
+            if(extendedMatchCode == TemplateMatchCodes.IS_NULL || extendedMatchCode == TemplateMatchCodes.NOT_NULL) {
+                return true;
+            }
+        }
+
         return false;
     }
 
@@ -558,7 +559,7 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
     }
 
     /**
-     * @param m_XidOriginated the m_XidOriginated to set
+     *
      */
     public void resetXidOriginated() {
         _templateXtnOriginated = null;
@@ -1022,7 +1023,7 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
     //NOTE- call only when template is locked
     public void addEntryWaitingForTemplate(IEntryHolder entry) {
         if (_waitingFor == null)
-            _waitingFor = new HashSet<IEntryHolder>();
+            _waitingFor = new HashSet<>();
 
         if (!_waitingFor.contains(entry))
             _waitingFor.add(entry);
