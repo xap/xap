@@ -19,9 +19,11 @@ import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.query.*;
 import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.TypeDataIndex;
+import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.CompositeRange;
 import com.j_spaces.jdbc.builder.range.Range;
+import com.j_spaces.kernel.JSpaceUtilities;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -102,16 +104,25 @@ public class ExplainPlanUtil {
         String[] propertiesNames = packet.getTypeDescriptor().getPropertiesNames();
         boolean[] valuesInclusion = packet.getRangeValuesInclusion();
 
-        for (int i = 0; i < fieldValues.length; i++) {
-            if (fieldValues[i] == null){
-                continue;
-            }
-            if (rangeValues == null) {
+        //GS-14491, added by Evgeny on 4.05 in order to display Filter's info in explain plan for IS NULL and NOT NULL operations
+        if( JSpaceUtilities.areAllArrayElementsNull( fieldValues ) && extendedMatchCodes.length > 0 ){
+            Integer[] elementIndexes =
+                    JSpaceUtilities.getArrayValuesIndexes(extendedMatchCodes, TemplateMatchCodes.IS_NULL, TemplateMatchCodes.NOT_NULL);
+            for( int i : elementIndexes ) {
                 and.getChildren().add(getMatchNode(propertiesNames[i], fieldValues[i], getQueryOperator(extendedMatchCodes[i]), null, false));
-            }else {
-                and.getChildren().add(getMatchNode(propertiesNames[i], fieldValues[i], getQueryOperator(extendedMatchCodes[i]), rangeValues[i], valuesInclusion[i]));
             }
-
+        }
+        else {
+            for (int i = 0; i < fieldValues.length; i++) {
+                if (fieldValues[i] == null) {
+                    continue;
+                }
+                if (rangeValues == null) {
+                    and.getChildren().add(getMatchNode(propertiesNames[i], fieldValues[i], getQueryOperator(extendedMatchCodes[i]), null, false));
+                } else {
+                    and.getChildren().add(getMatchNode(propertiesNames[i], fieldValues[i], getQueryOperator(extendedMatchCodes[i]), rangeValues[i], valuesInclusion[i]));
+                }
+            }
         }
         return and;
     }
@@ -154,7 +165,7 @@ public class ExplainPlanUtil {
             return currentNode;
         }
 
-        List<ICustomQuery> finalSubqueries = new ArrayList<ICustomQuery>();
+        List<ICustomQuery> finalSubqueries = new ArrayList<>();
         finalSubqueries.addAll(subQueries);
         for (ICustomQuery subQuery : subQueries) {
             if (subQuery instanceof CompositeRange) {
@@ -188,7 +199,7 @@ public class ExplainPlanUtil {
     }
 
     public static List<ICustomQuery> rangeConvertList(LinkedList<Range> ranges) {
-        List<ICustomQuery> res = new ArrayList<ICustomQuery>();
+        List<ICustomQuery> res = new ArrayList<>();
         for (Range range : ranges) {
             res.add(range);
         }
@@ -196,7 +207,7 @@ public class ExplainPlanUtil {
     }
 
     public static List<ICustomQuery> compoundConvertList(List<IContainsItemsCustomQuery> subQueries) {
-        List<ICustomQuery> res = new ArrayList<ICustomQuery>();
+        List<ICustomQuery> res = new ArrayList<>();
         for (IContainsItemsCustomQuery subQuery : subQueries) {
             res.add(subQuery);
         }
@@ -207,4 +218,7 @@ public class ExplainPlanUtil {
         return str != null && !str.isEmpty();
     }
 
+    public static Object getValueDesc( Object value ){
+         return ( value == null ) ? "" : " " + value;
+    }
 }

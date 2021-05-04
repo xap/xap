@@ -4,6 +4,8 @@ import com.gigaspaces.internal.query.explainplan.IndexInfo;
 import com.gigaspaces.internal.query.explainplan.QueryOperator;
 import com.gigaspaces.metadata.index.SpaceIndexType;
 
+import static com.gigaspaces.internal.query.explainplan.ExplainPlanUtil.getValueDesc;
+
 /**
  * Single index choice detail
  *
@@ -86,22 +88,23 @@ public class IndexInfoDetail {
             return getString(false);
         }
 
-        return String.format("- (%s %s %s), size=[min=%s, max=%s]"
+        return String.format("- (%s %s%s), size=[min=%s, max=%s]"
                 , getName(), getOperator().getOperatorString()
-                , getValue(), min, max); //TODO mishel - move to another method in my code instead of here.
+                , getValueDesc(value), min, max); //TODO mishel - move to another method in my code instead of here.
     }
-
+//
     private String getString(boolean verbose) {
         if (verbose) {
-            return String.format("[#%s] (%s %s %s), size=%s, type=%s"
+            return String.format("[#%s] (%s %s%s), size=%s, type=%s"
                     , getId(), getName(), getOperator().getOperatorString()
-                    , getValue(), getSizeDesc(), getType());
+                    , getValueDesc(value), getSizeDesc(), getType());
         } else {
-            return String.format("- (%s %s %s), size=%s"
+            return String.format("- (%s %s%s), size=%s"
                     , getName(), getOperator().getOperatorString()
-                    , getValue(), getSizeDesc());
+                    , getValueDesc(value), getSizeDesc());
         }
     }
+
     private String getSizeDesc() {
         return size == null || size == -1 ? "unknown" : String.valueOf(size);
     }
