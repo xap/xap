@@ -280,7 +280,9 @@ public abstract class AbstractReplicationSourceChannel
                 _specificLogger.debug("Performing handshake " + getConnectionDescription());
             // Create a connect channel packet with handshake details
             IBacklogHandshakeRequest backlogHandshakeRequest = getHandshakeRequest();
-            backlogHandshakeRequest.setResetTarget(this.resetTarget);
+            if(backlogHandshakeRequest!= null){
+                backlogHandshakeRequest.setResetTarget(this.resetTarget);
+            }
             ConnectChannelHandshakeRequest channelHandshakeRequest = new ConnectChannelHandshakeRequest(backlogHandshakeRequest);
             ConnectChannelPacket packet = new ConnectChannelPacket(getGroupName(),
                     _replicationRouter.getMyStubHolder(),

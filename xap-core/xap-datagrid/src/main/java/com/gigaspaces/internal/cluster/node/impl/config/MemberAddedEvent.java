@@ -27,7 +27,7 @@ public class MemberAddedEvent {
     final private BacklogMemberLimitationConfig _backlogMemberLimitation;
     final private IReplicationChannelDataFilter _filter;
     final private DynamicSourceGroupMemberLifeCycle _lifeCycle;
-    private boolean resetTarget;
+    final private boolean resetTarget;
 
     public MemberAddedEvent(String memberName, Object customData,
                             BacklogMemberLimitationConfig backlogMemberLimitation,
