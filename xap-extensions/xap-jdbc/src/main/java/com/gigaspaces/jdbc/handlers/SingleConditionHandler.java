@@ -52,7 +52,13 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
 
     @Override
     public void visit(Column tableColumn) {
-        this.column = tableColumn;
+        String columnName = tableColumn.getColumnName();
+        if (columnName.equalsIgnoreCase("true")
+                || columnName.equalsIgnoreCase("false")) {
+            this.value = Boolean.parseBoolean(columnName);
+        } else {
+            this.column = tableColumn;
+        }
     }
 
     Column getColumn() {

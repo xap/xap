@@ -95,7 +95,7 @@ public class SQLUtil {
         }
     }
 
-    private static Class<?> getPropertyType(ITypeDesc typeDesc, String propertyName)
+    public static Class<?> getPropertyType(ITypeDesc typeDesc, String propertyName)
             throws SQLException {
         if (propertyName.contains("[*]"))
             return void.class;
