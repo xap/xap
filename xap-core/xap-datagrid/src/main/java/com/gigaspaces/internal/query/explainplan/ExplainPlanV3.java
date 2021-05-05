@@ -1,8 +1,12 @@
 package com.gigaspaces.internal.query.explainplan;
 
 import com.gigaspaces.internal.query.explainplan.model.*;
+import com.gigaspaces.utils.Pair;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -79,6 +83,9 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
         final Map<String, List<IndexChoiceNode>> indexesInfo = singleExplainPlan.getIndexesInfo();
         indexInspection.setUsedTiers(singleExplainPlan.getTiersInfo().values().stream().flatMap(List::stream).collect(Collectors.toList()));
         indexInspection.setPartition(partitionId);
+        indexInspection.setAggregators(singleExplainPlan.getAggregatorsInfo().entrySet().stream()
+                .map((entry) -> new Pair<String, String>(entry.getKey(), String.join(", ", entry.getValue())))
+                .collect(Collectors.toList()));
 
         if (indexesInfo.size() == 1) {
             Map.Entry<String, List<IndexChoiceNode>> entry = indexesInfo.entrySet().iterator().next();

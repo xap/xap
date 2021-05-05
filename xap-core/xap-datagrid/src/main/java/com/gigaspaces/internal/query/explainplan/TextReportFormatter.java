@@ -61,7 +61,7 @@ public class TextReportFormatter {
     }
 
     public TextReportFormatter unindent() {
-        indentation = indentation.substring(indentation.length() - 1);
+        indentation = indentation.substring(0, indentation.length() - 1);
         return this;
     }
 

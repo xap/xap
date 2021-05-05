@@ -24,16 +24,14 @@ import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.metadata.index.CompoundIndex;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.j_spaces.core.client.Modifiers;
-import com.j_spaces.jdbc.builder.range.*;
+import com.j_spaces.jdbc.builder.range.Range;
+import com.j_spaces.jdbc.builder.range.RelationRange;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yael nahon
@@ -48,17 +46,20 @@ public class SingleExplainPlan implements Externalizable {
     private Map<String, List<IndexChoiceNode>> indexesInfo;
     private Map<String, ScanningInfo> scanningInfo; // Pair = (int scanned, int matched)
     private Map<String, List<String>> tiersInfo;
+    private Map<String, List<String>> aggregatorsInfo;
 
     public SingleExplainPlan() {
         this.scanningInfo = new HashMap<>();
         this.indexesInfo = new HashMap<>();
         this.tiersInfo = new HashMap<>();
+        this.aggregatorsInfo = new HashMap<>();
     }
 
     public SingleExplainPlan(ICustomQuery customQuery) {
         this.scanningInfo = new HashMap<>();
         this.indexesInfo = new HashMap<>();
         this.tiersInfo = new HashMap<>();
+        this.aggregatorsInfo = new HashMap<>();
         this.root = ExplainPlanUtil.buildQueryTree(customQuery);
     }
 
@@ -76,6 +77,18 @@ public class SingleExplainPlan implements Externalizable {
 
     public void setScanningInfo(Map<String, ScanningInfo> scanningInfo) {
         this.scanningInfo = scanningInfo;
+    }
+
+    public Map<String, List<String>> getAggregatorsInfo() {
+        return this.aggregatorsInfo;
+    }
+
+    public void addAggregatorsInfo(String aggregatorName, String value) {
+        if(!this.aggregatorsInfo.containsKey(aggregatorName)) {
+            List<String> values = new ArrayList<>();
+            this.aggregatorsInfo.put(aggregatorName, values);
+        }
+        this.aggregatorsInfo.get(aggregatorName).add(value);
     }
 
     public void addTiersInfo(String type, List<String> tiers) {
@@ -161,13 +174,22 @@ public class SingleExplainPlan implements Externalizable {
 
         SingleExplainPlan that = (SingleExplainPlan) o;
 
-        if (partitionId != null ? !partitionId.equals(that.partitionId) : that.partitionId != null)
+        if (!Objects.equals(partitionId, that.partitionId)) {
             return false;
-        if (root != null ? !root.equals(that.root) : that.root != null) return false;
-        if (indexesInfo != null ? !indexesInfo.equals(that.indexesInfo) : that.indexesInfo != null)
+        }
+        if (!Objects.equals(root, that.root)) {
             return false;
-        return scanningInfo != null ? scanningInfo.equals(that.scanningInfo) : that.scanningInfo == null;
-
+        }
+        if (!Objects.equals(indexesInfo, that.indexesInfo)) {
+            return false;
+        }
+        if (!Objects.equals(tiersInfo, that.tiersInfo)) {
+            return false;
+        }
+        if (!Objects.equals(aggregatorsInfo, that.aggregatorsInfo)) {
+            return false;
+        }
+        return Objects.equals(scanningInfo, that.scanningInfo);
     }
 
     @Override
@@ -176,6 +198,8 @@ public class SingleExplainPlan implements Externalizable {
         result = 31 * result + (root != null ? root.hashCode() : 0);
         result = 31 * result + (indexesInfo != null ? indexesInfo.hashCode() : 0);
         result = 31 * result + (scanningInfo != null ? scanningInfo.hashCode() : 0);
+        result = 31 * result + (tiersInfo != null ? tiersInfo.hashCode() : 0);
+        result = 31 * result + (aggregatorsInfo != null ? aggregatorsInfo.hashCode() : 0);
         return result;
     }
 
@@ -186,21 +210,9 @@ public class SingleExplainPlan implements Externalizable {
         writeIndexes(objectOutput);
         writeScannigInfo(objectOutput);
         if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)){
-            writeTiersInfo(objectOutput);
+            IOUtils.writeMapStringListString(objectOutput, tiersInfo);
         }
-    }
-
-    private void writeTiersInfo(ObjectOutput objectOutput) throws IOException {
-        int length = tiersInfo.size();
-        objectOutput.writeInt(length);
-        for (Map.Entry<String, List<String>> entry : tiersInfo.entrySet()) {
-            IOUtils.writeString(objectOutput, entry.getKey());
-            int tiersLength = entry.getValue().size();
-            objectOutput.writeInt(tiersLength);
-            for (String tier : entry.getValue()) {
-                IOUtils.writeString(objectOutput, tier);
-            }
-        }
+        IOUtils.writeMapStringListString(objectOutput, aggregatorsInfo);
     }
 
     private void writeScannigInfo(ObjectOutput objectOutput) throws IOException {
@@ -235,23 +247,9 @@ public class SingleExplainPlan implements Externalizable {
         this.indexesInfo = readIndexes(objectInput);
         this.scanningInfo = readScanningInfo(objectInput);
         if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)){
-            this.tiersInfo = readTiersInfo(objectInput);
+            this.tiersInfo = IOUtils.readMapStringListString(objectInput);
         }
-    }
-
-    private Map<String, List<String>> readTiersInfo(ObjectInput objectInput) throws IOException, ClassNotFoundException {
-        int length = objectInput.readInt();
-        Map<String, List<String>> map = new HashMap<>();
-        for (int i = 0; i <length; i++) {
-            String type = IOUtils.readString(objectInput);
-            int tiersLength = objectInput.readInt();
-            List<String> tiers = new ArrayList<>(tiersLength);
-            for (int j = 0; j < tiersLength; j++) {
-                tiers.add(IOUtils.readString(objectInput));
-            }
-            map.put(type, tiers);
-        }
-        return map;
+        this.aggregatorsInfo = IOUtils.readMapStringListString(objectInput);
     }
 
     private Map<String, ScanningInfo> readScanningInfo(ObjectInput objectInput) throws IOException, ClassNotFoundException {

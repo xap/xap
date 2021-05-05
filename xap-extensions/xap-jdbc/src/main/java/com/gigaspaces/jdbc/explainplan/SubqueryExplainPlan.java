@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc.explainplan;
 
 import com.gigaspaces.internal.query.explainplan.TextReportFormatter;
 import com.gigaspaces.internal.query.explainplan.model.JdbcExplainPlan;
+import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
@@ -14,17 +15,20 @@ public class SubqueryExplainPlan extends JdbcExplainPlan {
     private final JdbcExplainPlan plan;
     private final String tempViewName;
     private final Expression exprTree;
+    private final List<OrderColumn> orderColumns;
 
-    public SubqueryExplainPlan(List<QueryColumn> visibleColumns, String name, JdbcExplainPlan explainPlanInfo, Expression exprTree) {
+    public SubqueryExplainPlan(List<QueryColumn> visibleColumns, String name, JdbcExplainPlan explainPlanInfo,
+                               Expression exprTree, List<OrderColumn> orderColumns) {
         this.tempViewName = name;
         this.visibleColumns = visibleColumns.stream().map(QueryColumn::getName).collect(Collectors.toList());
         this.plan = explainPlanInfo;
         this.exprTree = exprTree;
+        this.orderColumns = orderColumns;
     }
 
     @Override
     public void format(TextReportFormatter formatter, boolean verbose) {
-        formatter.line("Subquery scan on " + tempViewName);
+        formatter.line("Subquery scan on " + tempViewName); ////
         formatter.indent(() -> {
             formatter.line(String.format("Select: %s", String.join(", ", visibleColumns)));
 //            formatter.line("Filter: <placeholder>"); //TODO EP
@@ -32,6 +36,9 @@ public class SubqueryExplainPlan extends JdbcExplainPlan {
                 ExpressionDeParser expressionDeParser = new ExpressionTreeDeParser();
                 exprTree.accept(expressionDeParser);
                 formatter.line("Filter: " + expressionDeParser.getBuffer().toString());
+            }
+            if (orderColumns != null && !orderColumns.isEmpty()) {
+                formatter.line("OrderBy: " + orderColumns.stream().map(OrderColumn::toString).collect(Collectors.joining(", ")));
             }
             formatter.withFirstLine("->", () -> {
                 formatter.line(String.format("TempView: %s", tempViewName));

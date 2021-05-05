@@ -85,6 +85,6 @@ public class OrderByPath implements Externalizable {
 
     @Override
     public String toString() {
-        return path + " " + orderBy + " " + (nullsLast ? "nulls last" : "nulls first");
+        return path + " " + orderBy + " " + (nullsLast ? "NULLS LAST" : "NULLS FIRST");
     }
 }

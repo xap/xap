@@ -8,11 +8,13 @@ import com.j_spaces.jdbc.builder.range.Range;
 import net.sf.jsqlparser.expression.Expression;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class TableContainer {
 
     private Expression exprTree;
+    private final List<OrderColumn> orderColumns = new ArrayList<>();
 
     public abstract QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
 
@@ -56,5 +58,14 @@ public abstract class TableContainer {
 
     public Expression getExprTree() {
         return exprTree;
+    }
+
+
+    public void addOrderColumns(OrderColumn orderColumn) {
+        this.orderColumns.add(orderColumn);
+    }
+
+    public List<OrderColumn> getOrderColumns() {
+        return orderColumns;
     }
 }

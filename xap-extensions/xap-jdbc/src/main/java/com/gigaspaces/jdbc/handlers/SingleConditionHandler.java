@@ -13,7 +13,7 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
     private Column column;
 
     private Object value;
-    private List<TableContainer> tables;
+    private final List<TableContainer> tables;
 
     SingleConditionHandler(List<TableContainer> tables, Object[] preparedValues) {
         this.tables = tables;
@@ -31,7 +31,7 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
             this.value = (int)longValue.getValue();
         } else {
             try {
-                this.value = getTable().getColumnValue(getColumn().getColumnName(), longValue.getValue());
+                this.value = getTable().getColumnValue(column.getColumnName(), longValue.getValue());
             } catch (SQLException e) {
                 this.value = longValue.getValue();
             }
@@ -60,7 +60,7 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
     }
 
     TableContainer getTable() {
-        return QueryColumnHandler.getTableForColumn(column, tables);
+        return column != null ? QueryColumnHandler.getTableForColumn(column, tables) : null;
     }
 
     Object getValue() {

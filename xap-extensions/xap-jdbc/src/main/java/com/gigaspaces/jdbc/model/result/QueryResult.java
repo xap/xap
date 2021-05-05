@@ -2,12 +2,14 @@ package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.jdbc.ResultEntry;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -18,10 +20,11 @@ public class QueryResult {
     protected TableContainer tableContainer;
     private Cursor<TableRow> cursor;
 
-    public QueryResult(IQueryResultSet<IEntryPacket> res, List<QueryColumn> queryColumns, TableContainer tableContainer) {
+    public QueryResult(IQueryResultSet<IEntryPacket> res, List<QueryColumn> queryColumns,
+                       TableContainer tableContainer, List<OrderColumn> orderColumns) {
         this.queryColumns = filterNonVisibleColumns(queryColumns);
         this.tableContainer = tableContainer;
-        this.rows = res.stream().map(x -> new TableRow(x, queryColumns)).collect(Collectors.toList());
+        this.rows = res.stream().map(x -> new TableRow(x, queryColumns, orderColumns)).collect(Collectors.toList());
     }
 
     public QueryResult(List<QueryColumn> queryColumns) {
@@ -30,10 +33,10 @@ public class QueryResult {
         this.rows = new ArrayList<>();
     }
 
-    public QueryResult(List<QueryColumn> visibleColumns, QueryResult tableResult) {
+    public QueryResult(List<QueryColumn> visibleColumns, QueryResult tableResult, List<OrderColumn> orderColumns) {
         this.tableContainer = null;
         this.queryColumns = visibleColumns;
-        this.rows = tableResult.rows.stream().map(row -> new TableRow(row, visibleColumns)).collect(Collectors.toList());
+        this.rows = tableResult.rows.stream().map(row -> new TableRow(row, visibleColumns, orderColumns)).collect(Collectors.toList());
     }
 
     private List<QueryColumn> filterNonVisibleColumns(List<QueryColumn> queryColumns){
@@ -143,5 +146,9 @@ public class QueryResult {
 
     public void filter(Predicate<TableRow> predicate) {
         rows = rows.stream().filter(predicate).collect(Collectors.toList());
+    }
+
+    public void sort(){
+        Collections.sort(rows);
     }
 }

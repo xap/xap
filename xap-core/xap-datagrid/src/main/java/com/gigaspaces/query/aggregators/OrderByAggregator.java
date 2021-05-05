@@ -24,13 +24,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Aggregator for order by operation. Supports several paths,asc/desc and limited results
@@ -76,6 +70,15 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
 
         return this;
     }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    public List<OrderByPath> getOrderByPaths() {
+        return Collections.unmodifiableList(orderByPaths);
+    }
+
 
     @Override
     public String getDefaultAlias() {

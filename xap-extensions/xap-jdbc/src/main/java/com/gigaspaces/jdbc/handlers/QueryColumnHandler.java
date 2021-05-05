@@ -15,12 +15,11 @@ import net.sf.jsqlparser.statement.select.SelectItemVisitorAdapter;
 import java.util.List;
 
 public class QueryColumnHandler extends SelectItemVisitorAdapter {
-    private final List<TableContainer> tables;
-    private final List<QueryColumn> queryColumns;
+    //TODO: consider not to pass queryExecutor but its relevant fields, when we need to serialize this object.
+    private final QueryExecutor queryExecutor;
 
     public QueryColumnHandler(QueryExecutor queryExecutor) {
-        this.tables = queryExecutor.getTables();
-        this.queryColumns = queryExecutor.getQueryColumns();
+        this.queryExecutor = queryExecutor;
     }
 
     public static TableContainer getTableForColumn(Column column, List<TableContainer> tables) {
@@ -51,13 +50,14 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
 
     @Override
     public void visit(AllColumns columns) {
-        tables.forEach(this::fillQueryColumns);
+        this.queryExecutor.setAllColumnsSelected(true);
+        this.queryExecutor.getTables().forEach(this::fillQueryColumns);
     }
 
     @Override
     public void visit(AllTableColumns tableNameContainer) {
-        // Sort the columns by name and insert them in that order
-        for (TableContainer table : tables) {
+        this.queryExecutor.setAllColumnsSelected(true);
+        for (TableContainer table : this.queryExecutor.getTables()) {
             final Alias alias = tableNameContainer.getTable().getAlias();
             final String aliasName = alias == null ? null : alias.getName();
             final String tableNameOrAlias = table.getTableNameOrAlias();
@@ -71,6 +71,7 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
     }
 
     private void fillQueryColumns(TableContainer table) {
+        final List<QueryColumn> queryColumns = this.queryExecutor.getQueryColumns();
         table.getAllColumnNames().forEach(columnName -> {
             QueryColumn qc = table.addQueryColumn(columnName, null, true);
             queryColumns.add(qc);
@@ -79,6 +80,8 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
 
     @Override
     public void visit(SelectExpressionItem selectExpressionItem) {
+        final List<QueryColumn> queryColumns = this.queryExecutor.getQueryColumns();
+        final List<TableContainer> tables = this.queryExecutor.getTables();
         selectExpressionItem.getExpression().accept(new ExpressionVisitorAdapter() {
             @Override
             public void visit(Column column) {
@@ -93,5 +96,4 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
     private String getStringOrNull(Alias alias) {
         return alias == null ? null : alias.getName();
     }
-
 }

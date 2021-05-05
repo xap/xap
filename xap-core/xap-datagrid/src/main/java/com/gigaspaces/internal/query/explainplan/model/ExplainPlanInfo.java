@@ -3,12 +3,14 @@ package com.gigaspaces.internal.query.explainplan.model;
 import com.gigaspaces.internal.query.explainplan.ExplainPlanV3;
 import com.gigaspaces.internal.query.explainplan.TextReportFormatter;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterExecutionType;
+import com.gigaspaces.utils.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.gigaspaces.internal.query.explainplan.ExplainPlanUtil.notEmpty;
 import static com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterExecutionType.SINGLE;
+import static java.util.stream.Collectors.*;
 
 /**
  * Base class representing the format of ExplainPlan
@@ -17,14 +19,13 @@ import static com.gigaspaces.internal.remoting.routing.partitioned.PartitionedCl
  * @since 16.0
  */
 public class ExplainPlanInfo extends JdbcExplainPlan {
+    private static final String SELECTED_INDEX_STRING = "Selected index:";
     private final String tableName;
     private final String tableAlias;
     private final PartitionedClusterExecutionType executionType;
     private final Map<String, String> visibleColumnsAndAliasMap;
     private List<PartitionIndexInspectionDetail> indexInspectionsPerPartition = new ArrayList<>();
     private String filter;
-
-    private static final String SELECTED_INDEX_STRING = "Selected index:";
 
 
     public ExplainPlanInfo(ExplainPlanV3 explainPlan) {
@@ -66,84 +67,52 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
         }
 
         if (!verbose) {
-            // Key is the partition id as string
-            Map<String, PartitionFinalSelectedIndexes> selectedIndexesPerPartition = getFinalSelectedIndexesMap();
-
-            // Key is the grouped partitions for example: "1,2,3", value is the formatted selected indexes
-            Map<String, List<String>> finalResults = new LinkedHashMap<>();
-            // Key is the grouped partitions for example: "1,2,3", value is their used tiers (must be common)
-            Map<String, List<String>> partitionsAndUsedTiers = new HashMap<>();
-
-            // Every iteration we pull group of similar selected indexes and then we make actions on it
-            // and remove them from selectedIndexesPerPartition so that the next iteration will be cleaner
-            while (!selectedIndexesPerPartition.isEmpty()) {
-                Map<String, PartitionFinalSelectedIndexes> sameSelectedResults = new HashMap<>();
-                Iterator<Map.Entry<String, PartitionFinalSelectedIndexes>> iterator = selectedIndexesPerPartition.entrySet().iterator();
-                Map.Entry<String, PartitionFinalSelectedIndexes> first = iterator.next();
-                sameSelectedResults.put(first.getKey(), first.getValue());
-                iterator.remove();
-                while (iterator.hasNext()) {
-                    Map.Entry<String, PartitionFinalSelectedIndexes> curr = iterator.next();
-                    if (first.getValue().equals(curr.getValue())) {
-                        sameSelectedResults.put(curr.getKey(), curr.getValue());
-                        iterator.remove();
-                    }
-                }
-
-                String partitions = String.join(", ", sameSelectedResults.keySet());
-                Map<String, List<Integer>> indexNameAndSizes = new HashMap<>();
-                for (PartitionFinalSelectedIndexes partitionSelectedIndexes : sameSelectedResults.values()) {
-                    List<IndexInfoDetail> choiceList = partitionSelectedIndexes.getSelectedIndexes();
-                    for (IndexInfoDetail selectedIndex : choiceList) {
-                        indexNameAndSizes.computeIfAbsent(selectedIndex.getName(), k -> new ArrayList<>());
-                        indexNameAndSizes.get(selectedIndex.getName()).add(selectedIndex.getSize());
-                    }
-                }
-
-                final PartitionFinalSelectedIndexes randomPartitionSelectedIndexes = sameSelectedResults.values().stream().findFirst().orElseGet(PartitionFinalSelectedIndexes::new);
-                List<IndexInfoDetail> randomSelectedIndex = randomPartitionSelectedIndexes.getSelectedIndexes();
-                List<String> selectedToStringWithMinMaxSize = new ArrayList<>();
-                for (IndexInfoDetail selectedIndex : randomSelectedIndex) {
-                    List<Integer> sizes = indexNameAndSizes.get(selectedIndex.getName());
-                    Integer min = sizes.stream().min(Integer::compareTo).orElse(0);
-                    Integer max = sizes.stream().max(Integer::compareTo).orElse(0);
-                    selectedToStringWithMinMaxSize.add(selectedIndex.toStringNotVerbose(min, max));
-                }
-
-                finalResults.put(partitions, selectedToStringWithMinMaxSize);
-                partitionsAndUsedTiers.put(partitions, randomPartitionSelectedIndexes.getUsedTiers());
-            } //todo mishel consider to run the block above with stream and group by instead of using two maps in the end
-
-            finalResults.forEach((partitions, selectedIndexesFormatted) -> {
-                List<String> usedTiers = partitionsAndUsedTiers.get(partitions);
-                boolean usedTieredStorage = usedTiers != null && usedTiers.size() != 0;
-                boolean unionIndexChoice = selectedIndexesFormatted.size() > 1;
-                if (selectedIndexesFormatted.isEmpty() && !usedTieredStorage) {
+            Map<PartitionFinalSelectedIndexes, List<PartitionAndSizes>> groupedSelectedIndexes = getFinalSelectedIndexesMap().entrySet().stream().collect(
+                    groupingBy(Map.Entry::getValue
+                            , LinkedHashMap::new
+                            , mapping((entry) -> new PartitionAndSizes(entry.getKey(), entry.getValue().getSelectedIndexes().stream().map(IndexInfoDetail::getSize).collect(toList()))
+                                    , toList())));
+            groupedSelectedIndexes.forEach((selectedIndexes, partitionAndSizes) -> {
+                List<String> usedTiers = selectedIndexes.getUsedTiers();
+                boolean usedTieredStorage = usedTiers != null && !usedTiers.isEmpty();
+                List<Pair<String, String>> usedAggregators = selectedIndexes.getAggregators();
+                boolean useAggregators = usedAggregators != null && !usedAggregators.isEmpty();
+                boolean unionIndexChoice = selectedIndexes.getSelectedIndexes().size() > 1;
+                if (selectedIndexes.getSelectedIndexes().isEmpty() && !usedTieredStorage && !useAggregators) {
                     return; //skip this iteration
                 }
-
+                String partitions = partitionAndSizes.stream().map(PartitionAndSizes::getPartitionId).collect(joining(", "));
                 if (partitions.contains(",")) {
                     formatter.line(String.format("Partitions: [%s]", partitions));
                 } else {
                     formatter.line(String.format("Partition: [%s]", partitions));
                 }
                 formatter.indent();
-
                 if (usedTieredStorage) {
                     formatter.line(getTiersFormatted(usedTiers));
                 }
 
+                if (useAggregators) {
+                    formatAggregators(usedAggregators, formatter);
+                }
+
+                List<String> selectedIndexesFormatted = new ArrayList<>();
+                for (int i = 0; i < selectedIndexes.getSelectedIndexes().size(); i++) {
+                    IndexInfoDetail index = selectedIndexes.getSelectedIndexes().get(i);
+                    final int indexLocation = i;
+                    int min = partitionAndSizes.stream().map(sizes -> sizes.getIndexSizes().get(indexLocation)).min(Integer::compareTo).orElse(0);
+                    int max = partitionAndSizes.stream().map(sizes -> sizes.getIndexSizes().get(indexLocation)).max(Integer::compareTo).orElse(0);
+                    selectedIndexesFormatted.add(index.toStringNotVerbose(min, max));
+                }
                 if (!selectedIndexesFormatted.isEmpty()) {
                     formatter.line(SELECTED_INDEX_STRING);
                     if (unionIndexChoice) {
                         formatter.indent();
                         formatter.line("Union:");
                     }
-
                     formatter.indent();
                     selectedIndexesFormatted.forEach(formatter::line);
                     formatter.unindent();
-
                     if (unionIndexChoice) {
                         formatter.unindent();
                     }
@@ -153,7 +122,8 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
         } else {
             for (PartitionIndexInspectionDetail inspectionDetail : indexInspectionsPerPartition) {
                 if ((inspectionDetail.getIndexes() == null || inspectionDetail.getIndexes().isEmpty()) &&
-                        (inspectionDetail.getUsedTiers() == null || inspectionDetail.getUsedTiers().isEmpty())) {
+                        (inspectionDetail.getUsedTiers() == null || inspectionDetail.getUsedTiers().isEmpty()) &&
+                        (inspectionDetail.getAggregators() == null || inspectionDetail.getAggregators().isEmpty())) {
                     continue;
                 }
 
@@ -161,6 +131,10 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
                 formatter.indent();
                 if (inspectionDetail.getUsedTiers() != null && inspectionDetail.getUsedTiers().size() != 0) {
                     formatter.line(getTiersFormatted(inspectionDetail.getUsedTiers()));
+                }
+
+                if (inspectionDetail.getAggregators() != null && inspectionDetail.getAggregators().size() != 0) {
+                    formatAggregators(inspectionDetail.getAggregators(), formatter);
                 }
 
                 if (inspectionDetail.getIndexes() == null || inspectionDetail.getIndexes().isEmpty()) {
@@ -219,13 +193,21 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
                 }
             }
 
-            selectedIndexesPerPartition.put(inspectionDetail.getPartition(), new PartitionFinalSelectedIndexes(selectedIndexes, inspectionDetail.getUsedTiers()));
+            selectedIndexesPerPartition.put(inspectionDetail.getPartition(),
+                    new PartitionFinalSelectedIndexes(selectedIndexes, inspectionDetail.getUsedTiers(),
+                            inspectionDetail.getAggregators()));
         }
         return selectedIndexesPerPartition;
     }
 
     private String getTiersFormatted(List<String> usedTiers) {
         return String.format("Tier%s: %s", (usedTiers.size() > 1 ? "s" : ""), String.join(", ", usedTiers));
+    }
+
+    private void formatAggregators(List<Pair<String, String>> aggregators, TextReportFormatter formatter) {
+        for (Pair<String, String> aggregatorPair : aggregators) {
+            formatter.line(aggregatorPair.getFirst() + ": " + aggregatorPair.getSecond());
+        }
     }
 
     private boolean isIndexUsed() {

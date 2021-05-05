@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
+import com.gigaspaces.jdbc.handlers.OrderByHandler;
 import com.gigaspaces.jdbc.handlers.QueryColumnHandler;
 import com.gigaspaces.jdbc.handlers.WhereHandler;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
@@ -11,10 +12,10 @@ import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.gigaspaces.jdbc.model.table.TempTableContainer;
 import com.j_spaces.core.IJSpace;
+import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.schema.Column;
-import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.*;
 
@@ -29,6 +30,8 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     private final IJSpace space;
     private final QueryExecutionConfig config;
     private final Object[] preparedValues;
+    private boolean isAllColumnsSelected = false;
+
 
     public QueryExecutor(IJSpace space, QueryExecutionConfig config, Object[] preparedValues) {
         this.space = space;
@@ -48,6 +51,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         }
         prepareQueryColumns(plainSelect);
         prepareWhereClause(plainSelect);
+        prepareOrderByClause(plainSelect);
     }
 
     private void handleJoin(Join join){
@@ -101,6 +105,12 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         }
     }
 
+    private void prepareOrderByClause(PlainSelect plainSelect) {
+        if (plainSelect.getOrderByElements() != null) {
+            OrderByHandler orderByVisitor = new OrderByHandler(this);
+            plainSelect.getOrderByElements().forEach(orderByElement -> orderByElement.accept(orderByVisitor));
+        }
+    }
 
     @Override
     public void visit(Table table) {
@@ -168,5 +178,17 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
 
     public List<QueryColumn> getQueryColumns() {
         return queryColumns;
+    }
+
+    public Object[] getPreparedValues() {
+        return preparedValues;
+    }
+
+    public boolean isAllColumnsSelected() {
+        return isAllColumnsSelected;
+    }
+
+    public void setAllColumnsSelected(boolean isAllColumnsSelected) {
+        this.isAllColumnsSelected = isAllColumnsSelected;
     }
 }

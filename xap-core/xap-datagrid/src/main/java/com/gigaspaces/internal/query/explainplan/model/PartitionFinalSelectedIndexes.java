@@ -1,7 +1,10 @@
 package com.gigaspaces.internal.query.explainplan.model;
 
+import com.gigaspaces.utils.Pair;
+
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents the final selected indexes of a single partition along with its used tiers
@@ -12,15 +15,19 @@ import java.util.List;
 public class PartitionFinalSelectedIndexes {
     private final List<IndexInfoDetail> selectedIndexes;
     private final List<String> usedTiers;
+    private final List<Pair<String, String>> aggregators;
 
     public PartitionFinalSelectedIndexes() {
         selectedIndexes = Collections.emptyList();
         usedTiers = Collections.emptyList();
+        aggregators = Collections.emptyList();
     }
 
-    public PartitionFinalSelectedIndexes(List<IndexInfoDetail> selectedIndexes, List<String> usedTiers) {
+    public PartitionFinalSelectedIndexes(List<IndexInfoDetail> selectedIndexes, List<String> usedTiers,
+                                         List<Pair<String, String>> aggregators) {
         this.selectedIndexes = selectedIndexes;
         this.usedTiers = usedTiers;
+        this.aggregators = aggregators;
     }
 
     public List<IndexInfoDetail> getSelectedIndexes() {
@@ -29,6 +36,10 @@ public class PartitionFinalSelectedIndexes {
 
     public List<String> getUsedTiers() {
         return usedTiers;
+    }
+
+    public List<Pair<String, String>> getAggregators() {
+        return aggregators;
     }
 
     @Override
@@ -44,8 +55,11 @@ public class PartitionFinalSelectedIndexes {
             final List<IndexInfoDetail> secondSelectedIndexes = second.getSelectedIndexes();
             final List<String> firstUsedTiers = first.getUsedTiers();
             final List<String> secondUsedTiers = second.getUsedTiers();
+            final List<Pair<String, String>>  firstAggregators = first.getAggregators();
+            final List<Pair<String, String>>  secondAggregators = second.getAggregators();
             if (firstSelectedIndexes == null || secondSelectedIndexes == null || firstSelectedIndexes.size() != secondSelectedIndexes.size()
-                    || firstUsedTiers == null || !firstUsedTiers.equals(secondUsedTiers)) {
+                    || !Objects.equals(firstUsedTiers, secondUsedTiers)
+                    || !Objects.equals(firstAggregators, secondAggregators)) {
                 return false;
             }
 
@@ -68,5 +82,20 @@ public class PartitionFinalSelectedIndexes {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        for (IndexInfoDetail selectedIndex : selectedIndexes) {
+            hash = 31 * hash + (selectedIndex.getValue() != null ? selectedIndex.getValue().hashCode() : 0);
+            hash = 31 * hash + (selectedIndex.getName() != null ? selectedIndex.getName().hashCode() : 0);
+            hash = 31 * hash + (selectedIndex.getType() != null ? selectedIndex.getType().hashCode() : 0);
+            hash = 31 * hash + (selectedIndex.getOperator() != null ? selectedIndex.getOperator().hashCode() : 0);
+        }
+
+        hash = 31 * hash + (usedTiers != null ? usedTiers.hashCode() : 0);
+        hash = 31 * hash + (aggregators != null ? aggregators.hashCode() : 0);
+        return hash;
     }
 }

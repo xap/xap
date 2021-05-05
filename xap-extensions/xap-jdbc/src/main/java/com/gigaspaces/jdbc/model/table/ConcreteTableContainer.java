@@ -11,6 +11,9 @@ import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
+import com.gigaspaces.query.aggregators.AggregationSet;
+import com.gigaspaces.query.aggregators.OrderBy;
+import com.gigaspaces.query.aggregators.OrderByAggregator;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
@@ -50,7 +53,6 @@ public class ConcreteTableContainer extends TableContainer {
         }
 
         allColumnNamesSorted = Arrays.asList(typeDesc.getPropertiesNames());
-        allColumnNamesSorted.sort(String::compareTo);
     }
 
     @Override
@@ -80,17 +82,32 @@ public class ConcreteTableContainer extends TableContainer {
                 modifiers = Modifiers.add(modifiers, Modifiers.EXPLAIN_PLAN);
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
-
+            // When we use join, we sort the results on the client side instead of on the server.
+            if(!config.isJoinUsed()) {
+                setOrderByAggregation();
+            }
             queryTemplatePacket.prepareForSpace(typeDesc);
+
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
             if (explainPlanImpl != null) {
                 queryResult = new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
             } else {
-                queryResult = new QueryResult(res, visibleColumns, this);
+                queryResult = new QueryResult(res, visibleColumns, this, getOrderColumns());
             }
             return queryResult;
         } catch (Exception e) {
             throw new SQLException("Failed to get results from space", e);
+        }
+    }
+
+    private void setOrderByAggregation() {
+        //orderBy in server
+        if(!getOrderColumns().isEmpty()){
+            OrderByAggregator orderByAggregator = new OrderByAggregator();
+            for (OrderColumn column : getOrderColumns()) {
+                orderByAggregator.orderBy(column.getName(), column.isAsc() ? OrderBy.ASC : OrderBy.DESC, column.isNullsLast());
+            }
+            queryTemplatePacket.setAggregationSet(new AggregationSet().orderBy(orderByAggregator));
         }
     }
 
@@ -196,4 +213,5 @@ public class ConcreteTableContainer extends TableContainer {
             return true;
         return joinInfo.checkJoinCondition();
     }
+
 }
