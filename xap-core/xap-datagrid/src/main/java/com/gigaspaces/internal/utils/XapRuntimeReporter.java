@@ -118,6 +118,7 @@ public class XapRuntimeReporter {
                 ", architecture=" + System.getProperty("os.arch") +
                 ", processors=" + Runtime.getRuntime().availableProcessors() + "]");
         append("Process Id: " + SystemInfo.singleton().os().processId());
+        append("Username: " + SystemInfo.singleton().os().getUsername());
     }
 
     protected void appendNetworkInfo() {

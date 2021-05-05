@@ -204,10 +204,15 @@ public class SystemInfo {
 
     public static class XapOperatingSystem {
         private final long processId = JavaUtils.getPid();
+        private final String username = JavaUtils.getUsername();
         private final boolean isWindows = JavaUtils.isWindows();
 
         public long processId() {
             return processId;
+        }
+
+        public String getUsername() {
+            return username;
         }
 
         public boolean isWindows() {
