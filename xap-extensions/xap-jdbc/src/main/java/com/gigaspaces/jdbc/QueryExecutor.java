@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
+import com.gigaspaces.jdbc.handlers.OrderByHandler;
 import com.gigaspaces.jdbc.handlers.QueryColumnHandler;
 import com.gigaspaces.jdbc.handlers.WhereHandler;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
@@ -11,10 +12,10 @@ import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.gigaspaces.jdbc.model.table.TempTableContainer;
 import com.j_spaces.core.IJSpace;
+import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.schema.Column;
-import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.*;
 
@@ -48,6 +49,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         }
         prepareQueryColumns(plainSelect);
         prepareWhereClause(plainSelect);
+        prepareOrderByClause(plainSelect);
     }
 
     private void handleJoin(Join join){
@@ -97,6 +99,15 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
 
             for (Map.Entry<TableContainer, Expression> tableContainerExpressionEntry : expressionVisitor.getExpTree().entrySet()) {
                 tableContainerExpressionEntry.getKey().setExpTree(tableContainerExpressionEntry.getValue());
+            }
+        }
+    }
+
+    private void prepareOrderByClause(PlainSelect plainSelect) {
+        if (plainSelect.getOrderByElements() != null) {
+            for(OrderByElement orderByElement : plainSelect.getOrderByElements()) {
+                OrderByHandler expressionVisitor = new OrderByHandler(this.getTables(), preparedValues);
+                orderByElement.accept(expressionVisitor);
             }
         }
     }

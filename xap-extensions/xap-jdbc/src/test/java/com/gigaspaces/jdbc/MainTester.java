@@ -6,6 +6,7 @@ import org.openspaces.core.space.AbstractSpaceConfigurer;
 import org.openspaces.core.space.EmbeddedSpaceConfigurer;
 import org.openspaces.core.space.SpaceProxyConfigurer;
 
+import java.rmi.RemoteException;
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -36,12 +37,15 @@ public class MainTester {
 //            DumpUtils.dump(rs);
 
             Statement statement = connection.createStatement();
-            execute(statement, String.format("EXPLAIN SELECT * FROM %s WHERE name='A'", MyPojo.class.getName()));
-            execute(statement, String.format("EXPLAIN SELECT A.id, B.name FROM %s A INNER JOIN %s B ON A.name=B.name", MyPojo.class.getName(), MyPojo.class.getName()));
-            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id, name FROM %s)", MyPojo.class.getName()));
-            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id,name FROM (SELECT * FROM %s))", MyPojo.class.getName()));
-            execute(statement, String.format("EXPLAIN SELECT A.id, B.name, C.name FROM %s A INNER JOIN %s B ON A.name=B.name INNER JOIN %s C ON B.name=C.name", MyPojo.class.getName(), MyPojo.class.getName(), MyPojo.class.getName()));
-            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT E.id, B.age, E.name FROM %s as E INNER JOIN %s as B ON E.name = B.name)", MyPojo.class.getName(), MyPojo.class.getName()));
+            execute(statement, String.format("SELECT * FROM %s ORDER BY name",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT * FROM %s WHERE age > 19 ORDER BY name",MyPojo.class.getName()));
+
+//            execute(statement, String.format("EXPLAIN SELECT * FROM %s WHERE name='A'", MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT A.id, B.name FROM %s A INNER JOIN %s B ON A.name=B.name", MyPojo.class.getName(), MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id, name FROM %s)", MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id,name FROM (SELECT * FROM %s))", MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT A.id, B.name, C.name FROM %s A INNER JOIN %s B ON A.name=B.name INNER JOIN %s C ON B.name=C.name", MyPojo.class.getName(), MyPojo.class.getName(), MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT E.id, B.age, E.name FROM %s as E INNER JOIN %s as B ON E.name = B.name)", MyPojo.class.getName(), MyPojo.class.getName()));
 
 //            execute(statement, String.format("EXPLAIN SELECT * FROM %s WHERE name='A'", MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT id, name FROM (SELECT A.id, B.name FROM %s A INNER JOIN %s B ON A.name=B.name)", MyPojo.class.getName(), MyPojo.class.getName()));
@@ -53,8 +57,8 @@ public class MainTester {
              *         "(last_name = 'Jefferson' AND first_name = 'Daniel') OR " +
              *         "((last_name = 'Avihu') or (email = 'mishel.ericsson@outlook.com') or (age=27))";
              */
-            execute(statement, String.format("SELECT first_name FROM (SELECT id, age, email, first_name, last_name FROM %s) where (last_name = 'Bb' AND first_name = 'Adam') OR ((last_name = 'Cc') or (email = 'Adler@msn.com') or (age>=40))", MyPojo.class.getName()));
-            execute(statement, String.format("EXPLAIN SELECT first_name FROM (SELECT id, age, email, first_name, last_name FROM %s where (last_name = 'Bb' AND first_name = 'Adam') OR ((last_name = 'Cc') or (email = 'Adler@msn.com') or (age>=40))) where (last_name = 'Bb' AND first_name = 'Adam') OR ((last_name = 'Cc') or (email = 'Adler@msn.com') or (age>=40))", MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT first_name FROM (SELECT id, age, email, first_name, last_name FROM %s) where (last_name = 'Bb' AND first_name = 'Adam') OR ((last_name = 'Cc') or (email = 'Adler@msn.com') or (age>=40))", MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT first_name FROM (SELECT id, age, email, first_name, last_name FROM %s where (last_name = 'Bb' AND first_name = 'Adam') OR ((last_name = 'Cc') or (email = 'Adler@msn.com') or (age>=40))) where (last_name = 'Bb' AND first_name = 'Adam') OR ((last_name = 'Cc') or (email = 'Adler@msn.com') or (age>=40))", MyPojo.class.getName()));
 //            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id, age, name FROM %s) where (name='Adler' or name = 'Eve') OR (age > 30 )", MyPojo.class.getName()));
 //            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id,name FROM (SELECT * FROM %s)) where name='Adler'", MyPojo.class.getName()));
 //            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT A.id, B.name, C.name FROM %s A INNER JOIN %s B ON A.name=B.name INNER JOIN %s C ON B.name=C.name) where name='Adler'", MyPojo.class.getName(), MyPojo.class.getName(), MyPojo.class.getName()));
@@ -82,6 +86,22 @@ public class MainTester {
 //                ResultSet res = statement.executeQuery(sqlQuery);
 //                DumpUtils.dump(res);
 
+            teardown(space, true);
+        }
+    }
+
+    private static void teardown(GigaSpace gigaSpace, boolean isEmbedded) {
+        if (isEmbedded) {
+            try {
+                for(Thread t : Thread.getAllStackTraces().keySet()){
+                    if ("RMI Reaper".equals(t.getName())) { // Interrupt RMI Reaper thread.
+                        t.interrupt();
+                    }
+                }
+                gigaSpace.getSpace().getDirectProxy().shutdown();
+            } catch (RemoteException e) {
+                System.err.println("failed to shutdown Space" + e);
+            }
         }
     }
 
@@ -108,9 +128,10 @@ public class MainTester {
             java.util.Date date3 = simpleDateFormat.parse("12/09/2001 15:20:00.100");
             java.util.Date date4 = simpleDateFormat.parse("13/09/2001 20:20:00.300");
             gigaSpace.write(new MyPojo("Adler Aa", 20, "Israel", date1, new Time(date1.getTime()), new Timestamp(date1.getTime())));
-            gigaSpace.write(new MyPojo("Adam Bb", 30, "Israel", date2, new Time(date2.getTime()), new Timestamp(date2.getTime())));
             gigaSpace.write(new MyPojo("Eve Cc", 35, "UK", date3, new Time(date3.getTime()), new Timestamp(date3.getTime())));
             gigaSpace.write(new MyPojo("NoCountry Dd", 40, null, date4, new Time(date4.getTime()), new Timestamp(date4.getTime())));
+            gigaSpace.write(new MyPojo("Adam Bb", 30, "Israel", date2, new Time(date2.getTime()), new Timestamp(date2.getTime())));
+//            gigaSpace.write(new MyPojo().setAge(30));
         }
         return gigaSpace;
     }

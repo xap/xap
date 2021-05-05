@@ -1,7 +1,7 @@
 package com.gigaspaces.jdbc;
 
-import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
+import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.j_spaces.core.IJSpace;
@@ -24,7 +24,8 @@ import java.util.Set;
 
 public class QueryHandler {
 
-    private final Feature[] allowedFeatures = new Feature[] {Feature.select, Feature.explain, Feature.exprLike, Feature.jdbcParameter, Feature.join, Feature.joinInner, Feature.joinLeft};
+    private final Feature[] allowedFeatures = new Feature[] {Feature.select, Feature.explain, Feature.exprLike,
+            Feature.jdbcParameter, Feature.join, Feature.joinInner, Feature.joinLeft, Feature.orderBy};
 
     public ResponsePacket handle(String query, IJSpace space, Object[] preparedValues) throws SQLException {
 

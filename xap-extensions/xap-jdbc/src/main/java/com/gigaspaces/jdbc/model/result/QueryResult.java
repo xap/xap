@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.jdbc.ResultEntry;
@@ -143,5 +144,9 @@ public class QueryResult {
 
     public void filter(Predicate<TableRow> predicate) {
         rows = rows.stream().filter(predicate).collect(Collectors.toList());
+    }
+
+    public void sort(List<OrderColumn> orderColumns){
+
     }
 }

@@ -57,4 +57,6 @@ public abstract class TableContainer {
     public Expression getExprTree() {
         return exprTree;
     }
+
+    public abstract void addOrderColumns(OrderColumn orderColumn);
 }

@@ -140,4 +140,9 @@ public class TempTableContainer extends TableContainer {
     public boolean checkJoinCondition() {
         return false;
     }
+
+    @Override
+    public void addOrderColumns(OrderColumn orderColumn) {
+        return;
+    }
 }
