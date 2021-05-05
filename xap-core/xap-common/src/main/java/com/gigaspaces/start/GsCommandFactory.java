@@ -28,9 +28,15 @@ public class GsCommandFactory {
             System.out.println(s);
             System.exit(0);
         } catch (Throwable e) {
-            System.out.println("Error: " + e);
+            System.out.println("Error: " + toString(e));
             System.exit(1);
         }
+    }
+
+    private static String toString(Throwable e) {
+        if (e instanceof ExceptionInInitializerError)
+            return toString(e.getCause());
+        return e.toString();
     }
 
     protected JavaCommandBuilder generate(String id) {
