@@ -1,6 +1,8 @@
 package com.gigaspaces.jdbc.model.table;
 
+import com.gigaspaces.internal.utils.ObjectConverter;
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
+import com.gigaspaces.jdbc.exceptions.ExecutionException;
 import com.gigaspaces.jdbc.explainplan.SubqueryExplainPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
@@ -12,6 +14,7 @@ import com.j_spaces.jdbc.builder.range.EqualValueRange;
 import com.j_spaces.jdbc.builder.range.Range;
 import com.j_spaces.jdbc.builder.range.SegmentRange;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -65,7 +68,7 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public String getTableNameOrAlias() {
-        throw new UnsupportedOperationException("Not supported yet!");
+        return alias;
     }
 
     @Override
@@ -122,8 +125,13 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public Object getColumnValue(String columnName, Object value) {
-        if (value instanceof Long) return Integer.valueOf(value.toString());
-        return value;
+        QueryColumn column = tableColumns.stream().filter(queryColumn -> queryColumn.getName().equalsIgnoreCase(columnName)).findFirst()
+                .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
+        try {
+            return ObjectConverter.convert(value, column.getPropertyType());
+        } catch (SQLException e) {
+            throw new ExecutionException("Couldn't convert the requested column with name [" + columnName + "]" + " to an object type of " + column.getPropertyType().getName(), e);
+        }
     }
 
     @Override
