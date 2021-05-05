@@ -1,14 +1,35 @@
 package com.gigaspaces.jdbc.explainplan;
 
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.relational.*;
 import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
 
 public class ExpressionTreeDeParser extends ExpressionDeParser {
+    private Boolean wrap = true;
+
     private void wrap(Runnable r) {
         buffer.append("(");
-        r.run();;
+        r.run();
         buffer.append(")");
     }
+
+    private void wrapOnce(Runnable r) {
+        if (wrap) {
+            wrap = false;
+            wrap(r);
+        } else {
+            r.run();
+        }
+    }
+
+
+
+    @Override
+    public void visit(AndExpression andExpression) {
+        wrapOnce(() -> super.visit(andExpression));
+        wrap = true;
+    }
+
     @Override
     public void visit(EqualsTo equalsTo) {
         wrap(() -> super.visit(equalsTo));

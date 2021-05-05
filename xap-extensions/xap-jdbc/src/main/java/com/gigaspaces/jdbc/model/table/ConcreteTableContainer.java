@@ -116,9 +116,14 @@ public class ConcreteTableContainer extends TableContainer {
         if (!columnName.equalsIgnoreCase(QueryColumn.UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(columnName) == -1) {
             throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]");
         }
-        QueryColumn qc = new QueryColumn(columnName, alias, visible, this);
-        this.visibleColumns.add(qc);
-        return qc;
+
+        try {
+            QueryColumn qc = new QueryColumn(columnName, SQLUtil.getPropertyType(typeDesc, columnName), alias, visible, this);
+            this.visibleColumns.add(qc);
+            return qc;
+        } catch (SQLException e) {
+            throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]", e);
+        }
     }
 
     public List<QueryColumn> getVisibleColumns() {

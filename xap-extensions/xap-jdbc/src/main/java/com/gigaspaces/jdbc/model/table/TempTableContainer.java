@@ -1,5 +1,6 @@
 package com.gigaspaces.jdbc.model.table;
 
+import com.gigaspaces.internal.utils.ObjectConverter;
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.explainplan.SubqueryExplainPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
@@ -12,18 +13,21 @@ import com.j_spaces.jdbc.builder.range.EqualValueRange;
 import com.j_spaces.jdbc.builder.range.Range;
 import com.j_spaces.jdbc.builder.range.SegmentRange;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class TempTableContainer extends TableContainer {
-    private final QueryResult tableResult;
     private final String alias;
-    private TableContainer joinedTable;
+    private final QueryResult tableResult;
+    private TempTableQTP queryTemplatePacket;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
     private final List<QueryColumn> tableColumns = new ArrayList<>();
-    private TempTableQTP queryTemplatePacket;
+    private final List<String> allColumnNamesSorted;
+    private TableContainer joinedTable;
+
 
     public TempTableContainer(QueryResult tableResult, String alias) {
         this.tableResult = tableResult;
@@ -33,6 +37,8 @@ public class TempTableContainer extends TableContainer {
         } else {
             tableColumns.addAll(tableResult.getQueryColumns());
         }
+
+        allColumnNamesSorted = tableColumns.stream().map(QueryColumn::getName).collect(Collectors.toList());
     }
 
     @Override
@@ -56,7 +62,10 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public QueryColumn addQueryColumn(String columnName, String alias, boolean visible) {
-        QueryColumn queryColumn = tableColumns.stream().filter(qc -> qc.getName().equalsIgnoreCase(columnName)).findFirst().orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
+        QueryColumn queryColumn = tableColumns.stream()
+                .filter(qc -> qc.getName().equalsIgnoreCase(columnName))
+                .findFirst()
+                .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
         if (visible) visibleColumns.add(queryColumn);
         return queryColumn;
     }
@@ -68,12 +77,12 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public List<String> getAllColumnNames() {
-        return tableColumns.stream().map(QueryColumn::getName).collect(Collectors.toList());
+        return allColumnNamesSorted;
     }
 
     @Override
     public String getTableNameOrAlias() {
-        throw new UnsupportedOperationException("Not supported yet!");
+        return alias;
     }
 
     @Override
@@ -129,9 +138,13 @@ public class TempTableContainer extends TableContainer {
     }
 
     @Override
-    public Object getColumnValue(String columnName, Object value) {
-        if (value instanceof Long) return Integer.valueOf(value.toString());
-        return value;
+    public Object getColumnValue(String columnName, Object value) throws SQLException {
+        QueryColumn column = tableColumns.stream()
+                .filter(queryColumn -> queryColumn.getName().equalsIgnoreCase(columnName))
+                .findFirst()
+                .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
+
+        return ObjectConverter.convert(value, column.getPropertyType());
     }
 
     @Override

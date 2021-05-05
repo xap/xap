@@ -6,7 +6,7 @@ public class OrderColumn extends QueryColumn {
     private boolean isNullsLast = false;
 
     public OrderColumn(String name, boolean isVisible, TableContainer tableContainer) {
-        super(name, null, isVisible, tableContainer);
+        super(name, null, null, isVisible, tableContainer);
     }
 
     public boolean isAsc() {

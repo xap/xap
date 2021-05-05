@@ -7,13 +7,15 @@ public class QueryColumn {
     private final boolean isUUID;
     public static final String UUID_COLUMN = "UID";
     protected final TableContainer tableContainer;
+    private final Class<?> propertyType;
 
-    public QueryColumn(String name, String alias, boolean isVisible, TableContainer tableContainer) {
+    public QueryColumn(String name, Class<?> propertyType, String alias, boolean isVisible, TableContainer tableContainer) {
         this.name = name;
         this.alias = alias;
         this.isVisible = isVisible;
         this.isUUID = name.equalsIgnoreCase(UUID_COLUMN);
         this.tableContainer = tableContainer;
+        this.propertyType = propertyType;
     }
 
     public String getName() {
@@ -40,6 +42,10 @@ public class QueryColumn {
         if(tableContainer.getQueryResult().getCurrent() == null)
             return null;
         return tableContainer.getQueryResult().getCurrent().getPropertyValue(this);
+    }
+
+    public Class<?> getPropertyType() {
+        return propertyType;
     }
 
     @Override
