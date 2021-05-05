@@ -217,4 +217,7 @@ public class ExplainPlanUtil {
         return str != null && !str.isEmpty();
     }
 
+    public static Object getValueDesc( Object value ){
+         return ( value == null ) ? "" : " " + value;
+    }
 }
