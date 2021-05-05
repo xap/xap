@@ -14,6 +14,7 @@ public class JavaUtils {
     private static final int JAVA_VERSION_MAJOR = parseJavaMajorVersion(VERSION);
     private static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("win");
     private static final boolean isOsx = System.getProperty("os.name").toLowerCase().startsWith("mac os x");
+    private static final String username = System.getProperty("user.name");
     private static final LazySingleton<JVMDiagnosticWrapper> jvmDiagnosticWrapper = new LazySingleton<>(JavaUtils::initJVMDiagnosticWrapper);
     private static final LazySingleton<Long> pid = new LazySingleton<>(JavaUtils::findProcessId);
 
@@ -97,6 +98,10 @@ public class JavaUtils {
 
     public static long getPid() {
         return pid.getOrCreate();
+    }
+
+    public static String getUsername() {
+        return username;
     }
 
     private static long findProcessId() {
