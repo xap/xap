@@ -651,7 +651,7 @@ public class JSpaceUtilities {
 
         final int ampLength = replaceAmpresand2.length();
         StringTokenizer strTokinizer = new StringTokenizer(
-                str, String.valueOf(replaceAmpresand1), true);
+                str, replaceAmpresand1, true);
         while (strTokinizer.hasMoreTokens()) {
             String token = strTokinizer.nextToken();
 
@@ -968,7 +968,7 @@ public class JSpaceUtilities {
         int listSize = info.m_NumOFEntries.size();
         for (int i = 0; i < listSize; i++) {
             Integer intObj = info.m_NumOFEntries.get(i);
-            count += intObj.intValue();
+            count += intObj;
         }
 
         return count;
@@ -1541,7 +1541,6 @@ public class JSpaceUtilities {
             short arrayElement = array[ i ];
             if( checkedValuesList.contains( arrayElement ) ){
                 foundIndexes.add( i );
-                break;
             }
         }
 
