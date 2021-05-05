@@ -238,6 +238,9 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
         isNullExpression.getLeftExpression().accept(handler);
         TableContainer table = handler.getTable();
         Range range = isNullExpression.isNot() ? new NotNullRange(handler.getColumn().getColumnName()) : new IsNullRange(handler.getColumn().getColumnName());
+        if(table.getJoinInfo() != null && table.getJoinInfo().insertRangeToJoinInfo(range)){
+            return;
+        }
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
         expTree.put(table, isNullExpression);
     }
