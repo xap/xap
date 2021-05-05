@@ -40,14 +40,23 @@ public class JavaUtils {
      * For example: 1.8.144, 1.7, etc.
      */
     private static int parseJavaMajorVersion(String version) {
+        final String EA_SUFFIX = "-ea";
         // Remove "1." if exists (versions before 9):
         if (version.startsWith("1."))
             version = version.substring(2);
+        // Supports early access versions (ends with '-ea'):
+        if (version.endsWith(EA_SUFFIX))
+            version = version.substring(0, version.length() - EA_SUFFIX.length());
         // Find and remove everything after major, if any:
         int pos = version.indexOf('.');
         if (pos != -1)
             version = version.substring(0, pos);
-        return Integer.parseInt(version);
+        try {
+            return Integer.parseInt(version);
+        } catch (NumberFormatException e) {
+            // throw a user-friendly exception
+            throw new IllegalArgumentException("Failed to parse java version: " + version);
+        }
     }
 
     public static String getVersion() {
