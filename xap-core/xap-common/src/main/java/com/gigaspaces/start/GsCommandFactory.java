@@ -157,6 +157,12 @@ public class GsCommandFactory {
             if (JavaUtils.greaterOrEquals(9)) {
                 command.option("--add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED");
                 command.option("--add-modules=ALL-SYSTEM");
+                if (JavaUtils.greaterOrEquals(17)) {
+                    command.option("--add-opens=java.base/java.lang=ALL-UNNAMED");
+                    command.option("--add-exports=java.base/sun.net.util=ALL-UNNAMED");
+                    command.option("--add-exports=java.base/sun.security.provider=ALL-UNNAMED");
+                    command.option("--add-exports=java.management/com.sun.jmx.mbeanserver=ALL-UNNAMED");
+                }
             }
 
             command.systemProperty(CommonSystemProperties.GS_HOME, BootIOUtils.quoteIfContainsSpace(locations().home().toString()));
