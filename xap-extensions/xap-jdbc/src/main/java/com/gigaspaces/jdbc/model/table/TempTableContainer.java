@@ -22,6 +22,7 @@ public class TempTableContainer extends TableContainer {
     private TableContainer joinedTable;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
     private final List<QueryColumn> tableColumns = new ArrayList<>();
+    private final List<OrderColumn> orderColumns = new ArrayList<>();
     private TempTableQTP queryTemplatePacket;
 
     public TempTableContainer(QueryResult tableResult, String alias) {
@@ -43,7 +44,12 @@ public class TempTableContainer extends TableContainer {
         }
         if (queryTemplatePacket != null)
             tableResult.filter(x -> queryTemplatePacket.eval(x));
-        return new QueryResult(visibleColumns, tableResult);
+
+        QueryResult queryResult = new QueryResult(visibleColumns, tableResult);
+        if(!orderColumns.isEmpty()) {
+            queryResult.sort(orderColumns);
+        }
+        return queryResult;
     }
 
     @Override
@@ -143,6 +149,7 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public void addOrderColumns(OrderColumn orderColumn) {
-        return;
+        //TODO: see addQueryColumn
+        this.orderColumns.add(orderColumn);
     }
 }

@@ -86,13 +86,14 @@ public class ConcreteTableContainer extends TableContainer {
             //TODO: in the server
 //            queryTemplatePacket.setAggregationSet(new AggregationSet().orderBy(new OrderByAggregator()));
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
-            if(orderColumns.size() > 0) { //TODO:move to QueryResult
-                Collections.sort((List<IEntryPacket>) res, new EntriesOrderByComparator(res, orderColumns));
-            }
             if (explainPlanImpl != null) {
                 queryResult = new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
             } else {
                 queryResult = new QueryResult(res, visibleColumns, this);
+            }
+
+            if(!orderColumns.isEmpty()) {
+                queryResult.sort(orderColumns);
             }
             return queryResult;
         } catch (Exception e) {
@@ -209,50 +210,7 @@ public class ConcreteTableContainer extends TableContainer {
 
     @Override
     public void addOrderColumns(OrderColumn orderColumn) {
+        //TODO: see addQueryColumn
         this.orderColumns.add(orderColumn);
-    }
-
-    /**
-     * This private class implements the Comparator and is used to sort. the entries when ORDER BY
-     * is used in the query
-     */
-    protected static class EntriesOrderByComparator implements Comparator<IEntryPacket> {
-
-        private List<OrderColumn> _orderColumns;
-        private IQueryResultSet<IEntryPacket> _queryResult;
-
-        public EntriesOrderByComparator(IQueryResultSet<IEntryPacket> queryResult, List<OrderColumn> orderColumns) {
-            _orderColumns = orderColumns;
-            _queryResult = queryResult;
-        }
-
-        public int compare(IEntryPacket o1, IEntryPacket o2) {
-            int rc = 0;
-
-
-            for (int i = 0; i < _orderColumns.size(); i++) {
-                OrderColumn orderCol = _orderColumns.get(i);
-//                Comparable c1 = (Comparable) _queryResult.getFieldValue(orderCol, o1);
-//                Comparable c2 = (Comparable) _queryResult.getFieldValue(orderCol, o2);
-                Comparable c1 = (Comparable) o1.getPropertyValue(orderCol.getName());
-                Comparable c2 = (Comparable) o2.getPropertyValue(orderCol.getName());
-
-                if (c1 == c2)
-                    continue;
-
-                if (c1 == null)
-                    return -1;
-
-                if (c2 == null)
-                    return 1;
-
-                rc = c1.compareTo(c2);
-                if (rc != 0)
-                    return orderCol.isDesc() ? -rc : rc;
-
-            }
-
-            return rc;
-        }
     }
 }

@@ -9,6 +9,8 @@ import com.j_spaces.jdbc.ResultEntry;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -147,6 +149,47 @@ public class QueryResult {
     }
 
     public void sort(List<OrderColumn> orderColumns){
+        Collections.sort(rows, new EntriesOrderByComparator(orderColumns));
+    }
 
+    /**
+     * This private class implements the Comparator and is used to sort. the entries when ORDER BY
+     * is used in the query
+     */
+    protected static class EntriesOrderByComparator implements Comparator<TableRow> {
+
+        private List<OrderColumn> _orderColumns;
+
+        public EntriesOrderByComparator(List<OrderColumn> orderColumns) {
+            _orderColumns = orderColumns;
+        }
+
+        public int compare(TableRow o1, TableRow o2) {
+            int rc = 0;
+
+
+            for (int i = 0; i < _orderColumns.size(); i++) {
+                OrderColumn orderCol = _orderColumns.get(i);
+
+                Comparable c1 = (Comparable) o1.getPropertyValue(orderCol.getName());
+                Comparable c2 = (Comparable) o2.getPropertyValue(orderCol.getName());
+
+                if (c1 == c2) //TOdO { and }
+                    continue;
+
+                if (c1 == null)
+                    return -1;
+
+                if (c2 == null)
+                    return 1;
+
+                rc = c1.compareTo(c2);
+                if (rc != 0)
+                    return orderCol.isAsc() ? rc : -rc;
+
+            }
+
+            return rc;
+        }
     }
 }

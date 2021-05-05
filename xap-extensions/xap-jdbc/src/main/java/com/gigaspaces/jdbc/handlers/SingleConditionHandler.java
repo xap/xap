@@ -14,6 +14,7 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
 
     private Object value;
     private List<TableContainer> tables;
+    //TODO: add visible columns?
 
     SingleConditionHandler(List<TableContainer> tables, Object[] preparedValues) {
         this.tables = tables;
@@ -27,20 +28,24 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
 
     @Override
     public void visit(LongValue longValue) {
-        if (column.getColumnName().equalsIgnoreCase("rowNum")) {
-            this.value = (int)longValue.getValue();
-        } else {
-            try {
-                this.value = getTable().getColumnValue(getColumn().getColumnName(), longValue.getValue());
-            } catch (SQLException e) {
-                this.value = longValue.getValue();
+        if(column != null){
+            if (column.getColumnName().equalsIgnoreCase("rowNum")) {
+                this.value = (int)longValue.getValue();
+            } else {
+                try {
+                    this.value = getTable().getColumnValue(column.getColumnName(), longValue.getValue());
+                } catch (SQLException e) {
+                    this.value = longValue.getValue();
+                }
             }
+        } else {
+            this.value = longValue.getValue();
         }
     }
 
     @Override
     public void visit(StringValue stringValue) {
-        try {
+        try { //TODO: add if column != null too??
             this.value = getTable().getColumnValue(getColumn().getColumnName(), stringValue.getValue());
             if (this.value.getClass().equals(java.util.Date.class)) {
                 throw new UnsupportedOperationException("java.util.Date is not supported");
@@ -60,7 +65,7 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
     }
 
     TableContainer getTable() {
-        return QueryColumnHandler.getTableForColumn(column, tables);
+        return column != null ? QueryColumnHandler.getTableForColumn(column, tables) : null;
     }
 
     Object getValue() {

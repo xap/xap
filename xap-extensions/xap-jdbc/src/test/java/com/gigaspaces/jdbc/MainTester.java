@@ -37,7 +37,9 @@ public class MainTester {
 //            DumpUtils.dump(rs);
 
             Statement statement = connection.createStatement();
-            execute(statement, String.format("SELECT * FROM %s ORDER BY name",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT * FROM %s ORDER BY name",MyPojo.class.getName()));
+            execute(statement, String.format("SELECT name FROM %s ORDER BY 1",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT * FROM %s ORDER BY 1",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT * FROM %s WHERE age > 19 ORDER BY name",MyPojo.class.getName()));
 
 //            execute(statement, String.format("EXPLAIN SELECT * FROM %s WHERE name='A'", MyPojo.class.getName()));

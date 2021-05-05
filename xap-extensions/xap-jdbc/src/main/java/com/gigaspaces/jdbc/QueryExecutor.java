@@ -106,12 +106,11 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     private void prepareOrderByClause(PlainSelect plainSelect) {
         if (plainSelect.getOrderByElements() != null) {
             for(OrderByElement orderByElement : plainSelect.getOrderByElements()) {
-                OrderByHandler expressionVisitor = new OrderByHandler(this.getTables(), preparedValues);
+                OrderByHandler expressionVisitor = new OrderByHandler(this.getTables(), preparedValues, this.getQueryColumns());
                 orderByElement.accept(expressionVisitor);
             }
         }
     }
-
 
     @Override
     public void visit(Table table) {

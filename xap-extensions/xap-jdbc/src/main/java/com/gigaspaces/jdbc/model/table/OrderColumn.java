@@ -2,17 +2,17 @@ package com.gigaspaces.jdbc.model.table;
 
 public class OrderColumn extends QueryColumn {
 
-    private boolean isDesc = false;
+    private boolean isAsc = true;
 
     public OrderColumn(String name, String alias, boolean isVisible, TableContainer tableContainer) {
         super(name, alias, isVisible, tableContainer);
     }
 
-    public boolean isDesc() {
-        return isDesc;
+    public boolean isAsc() {
+        return isAsc;
     }
 
-    public void setDesc(boolean isDesc) {
-        this.isDesc = isDesc;
+    public void setAsc(boolean isAsc) {
+        this.isAsc = isAsc;
     }
 }
