@@ -13,7 +13,7 @@
         <spring.version>5.2.12.RELEASE</spring.version>
         <spring.security.version>5.4.2</spring.security.version>
         <junit.version>4.12</junit.version>
-        <jetty.version>9.4.35.v20201120</jetty.version>
+        <jetty.version>9.4.40.v20210413</jetty.version>
         <jetty.mortbay.jasper.version>8.5.54</jetty.mortbay.jasper.version>
         <gs.build-name>16.0.0-m1-ci-0</gs.build-name>
         <gs.git-tag>Unspecified</gs.git-tag>
