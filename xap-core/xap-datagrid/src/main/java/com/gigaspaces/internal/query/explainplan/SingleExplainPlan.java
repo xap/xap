@@ -321,9 +321,6 @@ public class SingleExplainPlan implements Externalizable {
         if(customQuery instanceof RegexRange || customQuery instanceof NotRegexRange){
             throw new UnsupportedOperationException("Sql explain plan does not support regular expression type queries");
         }
-/*        if(customQuery instanceof IsNullRange || customQuery instanceof NotNullRange){
-            throw new UnsupportedOperationException("Sql explain plan does not support is null / is not null type queries");
-        }*/
         if(customQuery instanceof Range && ((Range) customQuery).getFunctionCallDescription() != null){
             throw new UnsupportedOperationException("Sql explain plan does not support sql function type queries");
         }
