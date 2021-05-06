@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
@@ -59,6 +60,10 @@ public class SqliteUtils {
         } else if (propertyType.equals(Timestamp.class)) {  //is converted to special long which includes millis and nanos
             return "BIGINT";
         } else if (propertyType.equals(Date.class)) {
+            return "BIGINT";
+        } else if (propertyType.equals(java.sql.Date.class)) {
+            return "BIGINT";
+        } else if (propertyType.equals(java.sql.Time.class)) {
             return "BIGINT";
         }
         throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
@@ -110,6 +115,10 @@ public class SqliteUtils {
             return Timestamp.from(instant);
         } else if (propertyType.equals(Date.class)) {
             return new Date(resultSet.getLong(propertyIndex));
+        } else if (propertyType.equals(java.sql.Date.class)) {
+            return new java.sql.Date(resultSet.getLong(propertyIndex));
+        } else if (propertyType.equals(Time.class)) {
+            return new Time(resultSet.getLong(propertyIndex));
         }
         throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
     }
@@ -124,8 +133,12 @@ public class SqliteUtils {
         } else if (propertyValue.getClass().equals(Timestamp.class)){
             Instant instant = ((Timestamp) propertyValue).toInstant();
             return toGSTime((instant));
-        } else if (propertyValue.getClass().equals(Date.class)){
-              return ((Date) propertyValue).getTime();
+        } else if (propertyValue.getClass().equals(Date.class)) {
+            return ((Date) propertyValue).getTime();
+        } else if (propertyValue.getClass().equals(java.sql.Date.class)) {
+            return ((java.sql.Date) propertyValue).getTime();
+        } else if (propertyValue.getClass().equals(Time.class)){
+                return ((Time) propertyValue).getTime();
         } else {
             return propertyValue.toString();
         }
@@ -309,6 +322,10 @@ public class SqliteUtils {
             return Instant.ofEpochMilli((long) value);
         } else if (Date.class.equals(value.getClass())){
             return Instant.ofEpochMilli(((Date) value).getTime());
+        } else if (java.sql.Date.class.equals(value.getClass())){
+            return Instant.ofEpochMilli(((java.sql.Date) value).getTime());
+        } else if (Time.class.equals(value.getClass())){
+            return Instant.ofEpochMilli(((Time) value).getTime());
         }
         throw new IllegalStateException("Time type of " + value.getClass().toString() + " is unsupported");
     }
@@ -339,7 +356,7 @@ public class SqliteUtils {
         throw new IllegalStateException("Supports only equal and segment Range");
     }
 
-    private static Range convertRangeFromDateToInstant(Range queryValueRange) {
+    private static Range convertRangeFromJavaUtilDateToInstant(Range queryValueRange) {
         if (queryValueRange.isEqualValueRange()) {
             Date value = (Date) ((EqualValueRange) queryValueRange).getValue();
             return new EqualValueRange(queryValueRange.getPath(), value.toInstant());
@@ -347,6 +364,32 @@ public class SqliteUtils {
             SegmentRange segmentRange = (SegmentRange) queryValueRange;
             Comparable<Instant> minInstant = segmentRange.getMin() != null ? ((Date) segmentRange.getMin()).toInstant() : null;
             Comparable<Instant> maxInstant = segmentRange.getMax() != null ? ((Date) segmentRange.getMax()).toInstant() : null;
+            return new SegmentRange(queryValueRange.getPath(), minInstant, ((SegmentRange) queryValueRange).isIncludeMin(), maxInstant, ((SegmentRange) queryValueRange).isIncludeMax());
+        }
+        throw new IllegalStateException("Supports only equal and segment Range");
+    }
+
+    private static Range convertRangeFromSQLDateToInstant(Range queryValueRange) {
+        if (queryValueRange.isEqualValueRange()) {
+            java.sql.Date value = (java.sql.Date) ((EqualValueRange) queryValueRange).getValue();
+            return new EqualValueRange(queryValueRange.getPath(), value.toInstant());
+        } else if (queryValueRange.isSegmentRange()) {
+            SegmentRange segmentRange = (SegmentRange) queryValueRange;
+            Comparable<Instant> minInstant = segmentRange.getMin() != null ? Instant.ofEpochMilli(((java.sql.Date) segmentRange.getMin()).getTime()) : null;
+            Comparable<Instant> maxInstant = segmentRange.getMax() != null ? Instant.ofEpochMilli(((java.sql.Date) segmentRange.getMax()).getTime()) : null;
+            return new SegmentRange(queryValueRange.getPath(), minInstant, ((SegmentRange) queryValueRange).isIncludeMin(), maxInstant, ((SegmentRange) queryValueRange).isIncludeMax());
+        }
+        throw new IllegalStateException("Supports only equal and segment Range");
+    }
+
+    private static Range convertRangeFromTimeToInstant(Range queryValueRange) {
+        if (queryValueRange.isEqualValueRange()) {
+            Time value = (Time) ((EqualValueRange) queryValueRange).getValue();
+            return new EqualValueRange(queryValueRange.getPath(), value.toInstant());
+        } else if (queryValueRange.isSegmentRange()) {
+            SegmentRange segmentRange = (SegmentRange) queryValueRange;
+            Comparable<Instant> minInstant = segmentRange.getMin() != null ? Instant.ofEpochMilli(((Time) segmentRange.getMin()).getTime()) : null;
+            Comparable<Instant> maxInstant = segmentRange.getMax() != null ? Instant.ofEpochMilli(((Time) segmentRange.getMax()).getTime()) : null;
             return new SegmentRange(queryValueRange.getPath(), minInstant, ((SegmentRange) queryValueRange).isIncludeMin(), maxInstant, ((SegmentRange) queryValueRange).isIncludeMax());
         }
         throw new IllegalStateException("Supports only equal and segment Range");
@@ -360,7 +403,11 @@ public class SqliteUtils {
                 } else if (Long.class.getName().equals(timeType) || long.class.getName().equals(timeType)) {
                     queryValueRange = convertRangeFromLongToInstant(queryValueRange);
                 } else if (Date.class.getName().equals(timeType)) {
-                    queryValueRange = convertRangeFromDateToInstant(queryValueRange);
+                    queryValueRange = convertRangeFromJavaUtilDateToInstant(queryValueRange);
+                } else if (java.sql.Date.class.getName().equals(timeType)) {
+                    queryValueRange = convertRangeFromSQLDateToInstant(queryValueRange);
+                } else if (Time.class.getName().equals(timeType)) {
+                    queryValueRange = convertRangeFromTimeToInstant(queryValueRange);
                 }
             } else {
                 return TemplateMatchTier.MATCH_COLD;

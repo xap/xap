@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
@@ -53,6 +54,8 @@ public class TieredStorageUtils {
         types.add(Instant.class.getName());
         types.add(Timestamp.class.getName());
         types.add(Date.class.getName());
+        types.add(java.sql.Date.class.getName());
+        types.add(Time.class.getName());
         return types;
     }
 
@@ -173,6 +176,7 @@ public class TieredStorageUtils {
     }
 
     public static boolean isSupportedTimeColumn(Class<?> type){
-        return type.equals(Instant.class) || type.equals(Timestamp.class) || type.equals(long.class) || type.equals(Long.class) || type.equals(Date.class);
+        return type.equals(Instant.class) || type.equals(Timestamp.class) || type.equals(long.class) || type.equals(Long.class)
+                || type.equals(Date.class) || type.equals(java.sql.Date.class) || type.equals(Time.class);
     }
 }
