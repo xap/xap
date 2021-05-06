@@ -45,7 +45,7 @@ public class ClientHandler extends AbstractSelectorThread {
     final private AtomicInteger _interestsCounter = new AtomicInteger();
 
     public ClientHandler() throws IOException {
-        super(null);
+        super();
     }
 
     @Override

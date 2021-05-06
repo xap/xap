@@ -50,6 +50,12 @@ public class GSThread extends Thread {
         super(group, target, appendPrefixIfNeeded(name), stackSize);
     }
 
+    public static GSThread daemon(Runnable target, String name) {
+        GSThread thread = new GSThread(target, name);
+        thread.setDaemon(true);
+        return thread;
+    }
+
     private static String appendPrefixIfNeeded(String name) {
         return name.startsWith(PREFIX) ? name : PREFIX + name;
     }

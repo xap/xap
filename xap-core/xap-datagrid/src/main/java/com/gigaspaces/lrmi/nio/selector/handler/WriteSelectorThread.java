@@ -16,6 +16,7 @@
 
 package com.gigaspaces.lrmi.nio.selector.handler;
 
+import com.gigaspaces.internal.utils.concurrent.GSThread;
 import com.gigaspaces.lrmi.nio.ChannelEntry;
 import com.gigaspaces.lrmi.nio.Pivot;
 
@@ -28,7 +29,6 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 /**
  * selector thread that deals with server side writes that could not complete in one go.
  *
@@ -38,12 +38,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 @com.gigaspaces.api.InternalApi
 public class WriteSelectorThread extends AbstractSelectorThread {
 
+    private final Pivot _pivot;
+    private final Queue<ChannelEntry> _keysToCreate = new ConcurrentLinkedQueue<ChannelEntry>();
+    private final AtomicInteger _keysToCreateCounter = new AtomicInteger();
 
-    final private Queue<ChannelEntry> _keysToCreate = new ConcurrentLinkedQueue<ChannelEntry>();
-    final private AtomicInteger _keysToCreateCounter = new AtomicInteger();
-
-    public WriteSelectorThread(Pivot pivot) throws IOException {
-        super(pivot);
+    public WriteSelectorThread(Pivot pivot, String name) throws IOException {
+        super();
+        this._pivot = pivot;
+        GSThread.daemon(this, name).start();
     }
 
     @Override

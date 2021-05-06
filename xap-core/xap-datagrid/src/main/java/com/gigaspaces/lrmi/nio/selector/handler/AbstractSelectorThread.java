@@ -17,7 +17,6 @@
 package com.gigaspaces.lrmi.nio.selector.handler;
 
 import com.gigaspaces.logger.Constants;
-import com.gigaspaces.lrmi.nio.Pivot;
 import com.gigaspaces.time.SystemTime;
 import com.j_spaces.kernel.ManagedRunnable;
 import org.slf4j.Logger;
@@ -40,14 +39,12 @@ public abstract class AbstractSelectorThread extends ManagedRunnable implements 
     protected static final Logger _logger = LoggerFactory.getLogger(Constants.LOGGER_LRMI);
 
     final private Selector _selector;
-    final protected Pivot _pivot;
     private long lastCleanup = 0;
 
     protected volatile Thread ownerThread;
 
-    protected AbstractSelectorThread(Pivot pivot) throws IOException {
+    protected AbstractSelectorThread() throws IOException {
         _selector = Selector.open();
-        _pivot = pivot;
     }
 
     public void run() {
