@@ -208,7 +208,7 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
         if (Modifiers.contains(_operationModifiers, Modifiers.EXPLAIN_PLAN)) {
             QueryTemplatePacket templatePacket = (QueryTemplatePacket) packet;
             SingleExplainPlan plan = new SingleExplainPlan();
-            if (hasMatchCodes(templatePacket)) {
+            if ( hasValue(templatePacket) || hasMatchCodes(templatePacket)) {
                 plan.setRoot(ExplainPlanUtil.BuildMatchCodes(templatePacket));
                 if (templatePacket.getCustomQuery() != null) {
                     plan.getRoot().getChildren().add(ExplainPlanUtil.buildQueryTree(templatePacket.getCustomQuery()));
@@ -220,14 +220,19 @@ public class TemplateHolder extends AbstractSpaceItem implements ITemplateHolder
         }
     }
 
-    private boolean hasMatchCodes(QueryTemplatePacket packet) {
+    private boolean hasValue(QueryTemplatePacket packet) {
         Object[] fieldValues = packet.getFieldValues();
         for (Object fieldValue : fieldValues) {
             if(fieldValue != null)
                 return  true;
         }
 
-        //added by Evgeny on 4.05 in order to display Filter's info in explain plan for IS NULL and NOT NULL operations
+        return false;
+    }
+
+    //GS-14491, added by Evgeny on 4.05 in order to display Filter's info in explain plan for IS NULL and NOT NULL operations
+    private boolean hasMatchCodes(QueryTemplatePacket packet) {
+
         short[] extendedMatchCodes = packet.getExtendedMatchCodes();
         for (short extendedMatchCode : extendedMatchCodes) {
             if(extendedMatchCode == TemplateMatchCodes.IS_NULL || extendedMatchCode == TemplateMatchCodes.NOT_NULL) {

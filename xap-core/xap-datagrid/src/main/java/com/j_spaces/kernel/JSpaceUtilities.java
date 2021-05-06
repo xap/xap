@@ -1534,6 +1534,13 @@ public class JSpaceUtilities {
         return ALL_SPACE_SCHEMAS;
     }
 
+    /**
+     * This method returns indexes of (<tt>checkedValues</tt>) in (<tt>array</tt>),
+     * if such values not found in (<tt>array</tt>) then empty array returned
+     * @param array where to find elements
+     * @param checkedValues which elements to find
+     * @return indexes of found array elements
+     */
     public static Integer[] getArrayValuesIndexes(short[] array, Short... checkedValues ){
         List<Short> checkedValuesList = Arrays.asList(checkedValues);
         List<Integer> foundIndexes = new ArrayList<>();
@@ -1547,7 +1554,15 @@ public class JSpaceUtilities {
         return foundIndexes.toArray( new Integer[0] );
     }
 
+    /**
+     * Returns true if all elements of array are null,otherwise false returned
+     * @param array array to check
+     * @return true returned if all array's elements are null
+     */
     public static boolean areAllArrayElementsNull( Object[] array ){
+        if( array.length == 0 ){
+            return false;
+        }
         boolean hasAllElementsAsNulls = true;
         for ( Object obj : array ) {
             if (obj != null) {

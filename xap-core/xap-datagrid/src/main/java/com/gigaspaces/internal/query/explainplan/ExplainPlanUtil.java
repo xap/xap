@@ -104,9 +104,10 @@ public class ExplainPlanUtil {
         String[] propertiesNames = packet.getTypeDescriptor().getPropertiesNames();
         boolean[] valuesInclusion = packet.getRangeValuesInclusion();
 
-        //added by Evgeny on 4.05 in order to display Filter's info in explain plan for IS NULL and NOT NULL operations
-        Integer[] elementIndexes = JSpaceUtilities.getArrayValuesIndexes(extendedMatchCodes, TemplateMatchCodes.IS_NULL, TemplateMatchCodes.NOT_NULL);
-        if( elementIndexes.length > 0 && JSpaceUtilities.areAllArrayElementsNull( fieldValues ) ){
+        //GS-14491, added by Evgeny on 4.05 in order to display Filter's info in explain plan for IS NULL and NOT NULL operations
+        if( JSpaceUtilities.areAllArrayElementsNull( fieldValues ) && extendedMatchCodes.length > 0 ){
+            Integer[] elementIndexes =
+                    JSpaceUtilities.getArrayValuesIndexes(extendedMatchCodes, TemplateMatchCodes.IS_NULL, TemplateMatchCodes.NOT_NULL);
             for( int i : elementIndexes ) {
                 and.getChildren().add(getMatchNode(propertiesNames[i], fieldValues[i], getQueryOperator(extendedMatchCodes[i]), null, false));
             }
