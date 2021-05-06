@@ -81,6 +81,7 @@ public class CommonSystemProperties {
     public static final String MANAGER_REST_SSL_ENABLED = "com.gs.manager.rest.ssl.enabled";
     public static final String MANAGER_REST_URL = "com.gs.manager.rest.url";
     public static final String ZOOKEEPER_CONFIG_FILE = "com.gs.zookeeper.config-file";
+    public static final String ZOOKEEPER_CLIENT_PORT = "com.gs.zookeeper.client.port";
 
     public static final String SERVICE_GRID_KILL_TIMEOUT = "com.gs.service-grid.process-kill-timeout";
 
