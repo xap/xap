@@ -19,8 +19,9 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Timestamp;
-import java.time.Instant;
+import java.time.*;
 import java.util.*;
 
 import static com.gigaspaces.internal.server.space.tiered_storage.SqliteUtils.getPropertyValue;
@@ -52,6 +53,12 @@ public class TieredStorageUtils {
         types.add(Byte[].class.getName());
         types.add(Instant.class.getName());
         types.add(Timestamp.class.getName());
+        types.add(Date.class.getName());
+        types.add(java.sql.Date.class.getName());
+        types.add(Time.class.getName());
+        types.add(LocalDate.class.getName());
+        types.add(LocalTime.class.getName());
+        types.add(LocalDateTime.class.getName());
         return types;
     }
 
@@ -76,6 +83,7 @@ public class TieredStorageUtils {
         EntryTieredMetaData entryTieredMetaData = new EntryTieredMetaData();
         IServerTypeDesc typeDesc = space.getTypeManager().getServerTypeDesc(typeName);
         IEntryHolder hotEntryHolder;
+
         if (typeDesc.getTypeDesc().isAutoGenerateId()) {
             hotEntryHolder = space.getCacheManager().getEntryByUidFromPureCache(((String) id));
         } else {
@@ -172,6 +180,7 @@ public class TieredStorageUtils {
     }
 
     public static boolean isSupportedTimeColumn(Class<?> type){
-        return type.equals(Instant.class) || type.equals(Timestamp.class) || type.equals(long.class) || type.equals(Long.class);
+        return type.equals(Instant.class) || type.equals(Timestamp.class) || type.equals(long.class) || type.equals(Long.class)
+                || type.equals(Date.class) || type.equals(LocalDateTime.class);
     }
 }
