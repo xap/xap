@@ -93,8 +93,7 @@ public class RangeNode implements QueryOperationNode{
 
     @Override
     public String getPrettifiedString() {
-        String operatorString = operator.getOperatorString();
-        return '(' + (functionName != null ? functionName : fieldName) + " " + operatorString +
+        return '(' + (functionName != null ? functionName : fieldName) + " " + operator.getOperatorString() +
                 ExplainPlanUtil.getValueDesc( value ) +  ')';
     }
 
