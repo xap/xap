@@ -4,9 +4,13 @@ import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.admin.ManagerClusterInfo;
 import com.gigaspaces.admin.ManagerClusterType;
 import com.gigaspaces.admin.ManagerInstanceInfo;
+import com.gigaspaces.grid.zookeeper.ZookeeperConfig;
 import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.logger.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import sun.net.util.IPAddressUtil;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -14,10 +18,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.InetAddress;
 import java.util.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import sun.net.util.IPAddressUtil;
 
 public class XapManagerClusterInfo implements ManagerClusterInfo, Externalizable {
     private static final long serialVersionUID = 1L;
@@ -207,7 +207,7 @@ public class XapManagerClusterInfo implements ManagerClusterInfo, Externalizable
     @Override
     public String getZookeeperConnectionString() {
         if (zookeeperConnectionString == null) {
-            zookeeperConnectionString = initZookeeperConnectionString(getManagers(), "2181");
+            zookeeperConnectionString = initZookeeperConnectionString(getManagers(), ZookeeperConfig.getDefaultClientPort());
         }
         return zookeeperConnectionString;
     }
