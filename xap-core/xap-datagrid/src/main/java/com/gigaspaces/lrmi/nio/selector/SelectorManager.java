@@ -16,6 +16,8 @@
 
 package com.gigaspaces.lrmi.nio.selector;
 
+import com.gigaspaces.config.lrmi.nio.NIOConfiguration;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.nio.Pivot;
 import com.gigaspaces.lrmi.nio.selector.handler.AcceptSelectorThread;
@@ -106,7 +108,9 @@ public class SelectorManager extends ManagedRunnable {
                 }
             }
         }
-        throw new IOException("Failed to bind to port [" + port + "] on host [" + host + "]");
+        throw new IOException("Failed to bind to port [" + port + "] on host [" + host + "] - " +
+                "a different port or ports range can be configured using the '" + GsEnv.keyOrDefault(NIOConfiguration.BIND_PORT_ENV_VAR) +
+                "' environment variable or the '" + NIOConfiguration.BIND_PORT_SYS_PROP + "' system property.");
     }
 
     private static boolean tryBind(ServerSocket serverSocket, String host, int port, int backlog) {

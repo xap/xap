@@ -16,12 +16,12 @@
 
 package com.gigaspaces.lrmi;
 
-import com.gigaspaces.config.ConfigurationException;
 import com.gigaspaces.config.lrmi.ITransportConfig;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.classloading.IClassProvider;
 import com.gigaspaces.management.transport.ITransportConnection;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
 
@@ -46,8 +46,7 @@ public interface ProtocolAdapter<C extends ClientPeer> {
      * @throws RemoteException if init. failed.
      * @props properties under protocol-specific conventions.
      */
-    void init(ITransportConfig config, Side side)
-            throws RemoteException, ConfigurationException;
+    void init(ITransportConfig config, Side side) throws IOException;
 
     /**
      * Returns the unique name of this protocol adapter.

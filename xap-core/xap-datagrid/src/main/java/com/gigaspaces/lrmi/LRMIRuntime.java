@@ -255,6 +255,11 @@ public class LRMIRuntime {
         return getRuntime().getProtocolRegistry().getMonitoringDetails(config);
     }
 
+    public void initServerSide() throws ConfigurationException {
+        synchronized (_objectRegistry) {
+            init(ServiceConfigLoader.getTransportConfiguration(), Side.SERVER);
+        }
+    }
     /**
      * Exports the specified remote object on the specified protocol. The returned ServerPeer may be
      * used to retrieve both the remote object id and the connection URL.
@@ -270,8 +275,7 @@ public class LRMIRuntime {
         String protocol = config.getProtocolName();
 
         synchronized (_objectRegistry) {
-            if (config != null)
-                init(config, Side.SERVER);
+            init(config, Side.SERVER);
 
             // if protocol is not registered in protocol registry, register it
             ProtocolAdapter<?> protocolAdapter = _protocolRegistry.get(protocol);

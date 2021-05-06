@@ -3232,8 +3232,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 zookeeperClient = createZooKeeperClient();
                 zookeeperTopologyHandler.addListener(zookeeperClient, _spaceConfig, getPartitionIdOneBased());
             }
-            if (isLookupServiceEnabled)
+            if (isLookupServiceEnabled) {
+                LRMIRuntime.getRuntime().initServerSide();
                 registerLookupService();
+            }
             _directPersistencyRecoveryHelper = initDirectPersistencyRecoveryHelper(_clusterPolicy);
             _leaderSelector = initLeaderSelectorHandler(isLookupServiceEnabled);
             initReplicationStateBasedOnActiveElection();

@@ -79,7 +79,7 @@ public class PAdapter implements ProtocolAdapter<CPeer> {
     }
 
     synchronized public void init(ITransportConfig config, ProtocolAdapter.Side initSide)
-            throws RemoteException, ConfigurationException {
+            throws IOException {
         if (!_shutdown) {
             NIOConfiguration nioConfig = (NIOConfiguration) config;
             if (initSide == ProtocolAdapter.Side.CLIENT) {
@@ -129,7 +129,7 @@ public class PAdapter implements ProtocolAdapter<CPeer> {
         }
     }
 
-    private void serverSideInit(NIOConfiguration config) throws RemoteException {
+    private void serverSideInit(NIOConfiguration config) throws IOException {
         if (_serverSideInitialized)
             return;
 
@@ -141,13 +141,7 @@ public class PAdapter implements ProtocolAdapter<CPeer> {
         if (_logger.isDebugEnabled())
             _logger.debug(config.toString());
 
-        try {
-            // creates Pivot on specified according to nioConfig
-            m_Pivot = new Pivot(_nioConfig, this);
-        } catch (java.io.IOException ex) {
-            throw new RemoteException("Failed initialization of LRMI over NIO Protocol Adapter.", ex);
-        }
-
+        m_Pivot = new Pivot(_nioConfig, this);
         _serverSideInitialized = true;
     }
 
