@@ -17,6 +17,7 @@ import java.util.List;
 public class QueryColumnHandler extends SelectItemVisitorAdapter {
     private final List<TableContainer> tables;
     private final List<QueryColumn> queryColumns;
+    private boolean isAllColumnsSelected = false;
 
     public QueryColumnHandler(QueryExecutor queryExecutor) {
         this.tables = queryExecutor.getTables();
@@ -51,12 +52,13 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
 
     @Override
     public void visit(AllColumns columns) {
+        setAllColumnsSelected(true);
         tables.forEach(this::fillQueryColumns);
     }
 
     @Override
     public void visit(AllTableColumns tableNameContainer) {
-        // Sort the columns by name and insert them in that order
+        setAllColumnsSelected(true);
         for (TableContainer table : tables) {
             final Alias alias = tableNameContainer.getTable().getAlias();
             final String aliasName = alias == null ? null : alias.getName();
@@ -94,4 +96,11 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
         return alias == null ? null : alias.getName();
     }
 
+    public boolean isAllColumnsSelected() {
+        return isAllColumnsSelected;
+    }
+
+    public void setAllColumnsSelected(boolean isAllColumnsSelected) {
+        this.isAllColumnsSelected = isAllColumnsSelected;
+    }
 }

@@ -174,21 +174,20 @@ public class QueryResult {
                 Comparable c1 = (Comparable) o1.getPropertyValue(orderCol.getName());
                 Comparable c2 = (Comparable) o2.getPropertyValue(orderCol.getName());
 
-                if (c1 == c2) //TOdO { and }
+                if (c1 == c2){
                     continue;
-
-                if (c1 == null)
+                }
+                if (c1 == null) {
                     return -1;
-
-                if (c2 == null)
+                }
+                if (c2 == null) {
                     return 1;
-
+                }
                 rc = c1.compareTo(c2);
-                if (rc != 0)
+                if (rc != 0) {
                     return orderCol.isAsc() ? rc : -rc;
-
+                }
             }
-
             return rc;
         }
     }

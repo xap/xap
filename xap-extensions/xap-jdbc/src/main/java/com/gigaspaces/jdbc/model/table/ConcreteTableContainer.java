@@ -51,8 +51,30 @@ public class ConcreteTableContainer extends TableContainer {
         }
 
         allColumnNamesSorted = Arrays.asList(typeDesc.getPropertiesNames());
-        allColumnNamesSorted.sort(String::compareTo);
+        //TODO: same with TempTable!??!
+//        allColumnNamesSorted.sort(String::compareTo);
+//        allColumnNamesSorted.sort(new ColumnNameCoparator(typeDesc.getIdPropertyName()));
     }
+//
+//    //sort the column so that the id property column is the first one.
+//    private class ColumnNameCoparator implements Comparator<String> {
+//        final String idColumnName;
+//
+//        public  ColumnNameCoparator(String idColumnName) {
+//            this.idColumnName = idColumnName;
+//        }
+//
+//        @Override
+//        public int compare(String o1, String o2) {
+//            if(o1 == null || o1.equals(idColumnName)) {
+//                return -1;
+//            }
+//            if(o2 == null || o2.equals(idColumnName)) {
+//                return 1;
+//            }
+//            return o1.compareTo(o2);
+//        }
+//    }
 
     @Override
     public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {

@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc.handlers;
 
 
+import com.gigaspaces.jdbc.QueryExecutor;
 import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
@@ -12,15 +13,11 @@ import net.sf.jsqlparser.statement.select.OrderByVisitor;
 import java.util.List;
 
 public class OrderByHandler extends UnsupportedExpressionVisitor implements OrderByVisitor {
-    private final List<TableContainer> tables;
-    private final List<QueryColumn> visibleColumns;
-    private final Object[] preparedValues; //TODO: needed?
+    private final QueryExecutor queryExecutor;
     private Column column;
 
-    public OrderByHandler(List<TableContainer> tables, Object[] preparedValues, List<QueryColumn> visibleColumns) {
-        this.tables = tables;
-        this.preparedValues = preparedValues;
-        this.visibleColumns = visibleColumns;
+    public OrderByHandler(QueryExecutor queryExecutor) {
+        this.queryExecutor = queryExecutor;
     }
 
     @Override
@@ -30,7 +27,7 @@ public class OrderByHandler extends UnsupportedExpressionVisitor implements Orde
         String columnName = getColumn().getColumnName();
         //TODO: what with isVisible?
         OrderColumn orderColumn = new OrderColumn(columnName, null, true, table);
-        orderColumn.setAsc(!orderByElement.isAsc());
+        orderColumn.setAsc(orderByElement.isAsc());
         table.addOrderColumns(orderColumn);
     }
 
@@ -41,7 +38,9 @@ public class OrderByHandler extends UnsupportedExpressionVisitor implements Orde
 
     @Override
     public void visit(LongValue longValue) {
+        final List<QueryColumn> visibleColumns = this.queryExecutor.getQueryColumns();
         int colIndex = (int) longValue.getValue();
+        //validate range
         if(colIndex > visibleColumns.size() || colIndex < 1) {
             String msg = "Use OrderBy with column's number [" + colIndex + "], ";
             if (visibleColumns.size() == 1) {
@@ -51,10 +50,15 @@ public class OrderByHandler extends UnsupportedExpressionVisitor implements Orde
             }
             throw new IllegalArgumentException(msg);
         }
+        //block unsupported operation
+        if(this.queryExecutor.isAllColumnsSelected()) {
+            throw new UnsupportedOperationException("OrderBy column's index with 'SELECT *' not supported");
+        }
         this.column = new Column().withColumnName(visibleColumns.get(colIndex - 1).getName());
     }
 
     private TableContainer getTable() {
+        final List<TableContainer> tables = this.queryExecutor.getTables();
         return QueryColumnHandler.getTableForColumn(column, tables);
     }
 
