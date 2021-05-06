@@ -17,20 +17,8 @@
 package com.gigaspaces.internal.utils;
 
 import com.gigaspaces.internal.io.BootIOUtils;
-import com.j_spaces.kernel.JSpaceUtilities;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -457,12 +445,22 @@ public abstract class StringUtils {
      * @return set
      */
     public static Set<String> getParametersSet(String locatorsStr) {
-        if (JSpaceUtilities.isEmpty(locatorsStr, true)) {
+        if (isEmpty(locatorsStr, true)) {
             return new HashSet<String>(1);
         }
 
         String[] locatorsArray = tokenizeToStringArray(locatorsStr, ",");
         return convertArrayToSet(locatorsArray);
+    }
+
+    private static boolean isEmpty(String s, boolean isWithTrim) {
+        if (s == null || s.length() == 0)
+            return true;
+
+        if (isWithTrim)
+            s = s.trim();
+
+        return s.length() == 0;
     }
 
     public static void appendProperties(StringBuilder sb, Properties properties) {
