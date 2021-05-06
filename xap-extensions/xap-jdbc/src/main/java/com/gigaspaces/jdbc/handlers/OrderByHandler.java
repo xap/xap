@@ -11,6 +11,7 @@ import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.OrderByVisitor;
 
 import java.util.List;
+import java.util.Optional;
 
 public class OrderByHandler extends UnsupportedExpressionVisitor implements OrderByVisitor {
     private final QueryExecutor queryExecutor;
@@ -25,10 +26,16 @@ public class OrderByHandler extends UnsupportedExpressionVisitor implements Orde
         orderByElement.getExpression().accept(this);
         TableContainer table = getTable();
         String columnName = getColumn().getColumnName();
-        //TODO: what with isVisible?
-        OrderColumn orderColumn = new OrderColumn(columnName, null, true, table);
+        OrderColumn orderColumn = new OrderColumn(columnName, null, isVisibleColumn(columnName), table);
         orderColumn.setAsc(orderByElement.isAsc());
         table.addOrderColumns(orderColumn);
+    }
+
+    private boolean isVisibleColumn(String columnName) {
+        Optional<QueryColumn> fistOptional = this.queryExecutor.getQueryColumns().stream()
+                .filter(e -> e.getName().equals(columnName))
+                .findFirst();
+        return fistOptional.isPresent();
     }
 
     @Override
