@@ -36,6 +36,7 @@ import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.space.tiered_storage.CachePredicate;
 import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageManager;
 import com.gigaspaces.internal.server.space.tiered_storage.TimePredicate;
+import com.gigaspaces.internal.server.space.tiered_storage.error.TieredStorageMetadataException;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
@@ -559,7 +560,7 @@ public class LeaseManager {
             CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
             if ((cacheRule == null || !cacheRule.isTransient()) && (lease != Lease.FOREVER)){
                 if (!fromReplication) {
-                    throw new IllegalStateException("Lease is not supported for type " + typeName);
+                    throw new TieredStorageMetadataException("Lease is not supported for type " + typeName);
                 }
             }
             if (cacheRule != null && cacheRule.isTimeRule()){
@@ -578,7 +579,7 @@ public class LeaseManager {
             CachePredicate cacheRule = tieredStorageManager.getCacheRule(typeName);
             if ((cacheRule == null || !cacheRule.isTransient()) && (lease != Lease.FOREVER && lease != UPDATE_NO_LEASE)){
                 if (!fromReplication) {
-                    throw new IllegalStateException("Lease is not supported for type " + typeName);
+                    throw new TieredStorageMetadataException("Lease is not supported for type " + typeName);
                 }
             }
             if (cacheRule != null && cacheRule.isTimeRule()){
