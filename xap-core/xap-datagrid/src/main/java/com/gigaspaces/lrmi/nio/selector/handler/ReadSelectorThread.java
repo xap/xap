@@ -16,6 +16,7 @@
 
 package com.gigaspaces.lrmi.nio.selector.handler;
 
+import com.gigaspaces.internal.utils.concurrent.GSThread;
 import com.gigaspaces.lrmi.nio.ChannelEntry;
 import com.gigaspaces.lrmi.nio.ChannelEntry.State;
 import com.gigaspaces.lrmi.nio.Pivot;
@@ -38,8 +39,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @com.gigaspaces.api.InternalApi
 public class ReadSelectorThread extends AbstractSelectorThread {
-    public ReadSelectorThread(Pivot pivot) throws IOException {
-        super(pivot);
+    private final Pivot _pivot;
+
+    public ReadSelectorThread(Pivot pivot, String name) throws IOException {
+        super();
+        this._pivot = pivot;
+        GSThread.daemon(this, name).start();
     }
 
     final private Queue<SelectionKey> _keysToEnable = new ConcurrentLinkedQueue<SelectionKey>();
@@ -141,5 +146,4 @@ public class ReadSelectorThread extends AbstractSelectorThread {
         // of select() to process your registered request
         getSelector().wakeup();
     }
-
 }
