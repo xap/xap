@@ -52,6 +52,7 @@ public class TieredStorageUtils {
         types.add(Byte[].class.getName());
         types.add(Instant.class.getName());
         types.add(Timestamp.class.getName());
+        types.add(Date.class.getName());
         return types;
     }
 
@@ -172,6 +173,6 @@ public class TieredStorageUtils {
     }
 
     public static boolean isSupportedTimeColumn(Class<?> type){
-        return type.equals(Instant.class) || type.equals(Timestamp.class) || type.equals(long.class) || type.equals(Long.class);
+        return type.equals(Instant.class) || type.equals(Timestamp.class) || type.equals(long.class) || type.equals(Long.class) || type.equals(Date.class);
     }
 }
