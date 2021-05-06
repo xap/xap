@@ -11,6 +11,7 @@ import com.j_spaces.jdbc.builder.range.SegmentRange;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
 public class TimePredicate implements CachePredicate, InternalCachePredicate {
