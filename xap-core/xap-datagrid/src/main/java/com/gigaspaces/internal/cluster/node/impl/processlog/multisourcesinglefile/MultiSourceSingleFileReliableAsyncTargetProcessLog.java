@@ -194,7 +194,7 @@ public class MultiSourceSingleFileReliableAsyncTargetProcessLog extends Abstract
             // Handle first ever received handshake (target first connection,
             // can be
             // a restart of target as well)
-            if (_firstHandshakeForTarget) {
+            if (_firstHandshakeForTarget || handshakeRequest.isResetTarget()) {
                 _firstHandshakeForTarget = false;
                 _lastProcessedKey = typedHandshakeRequest.getLastConfirmedKey();
                 _firstUnprocessedKey = _lastProcessedKey + 1;

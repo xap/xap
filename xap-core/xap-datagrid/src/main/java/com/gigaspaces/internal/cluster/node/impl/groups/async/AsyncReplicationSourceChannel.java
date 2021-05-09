@@ -97,7 +97,39 @@ public class AsyncReplicationSourceChannel
                 groupHistory,
                 channelType,
                 customBacklogMetadata,
-                tag);
+                tag, false);
+    }
+
+    public AsyncReplicationSourceChannel(
+            DynamicSourceGroupConfigHolder groupConfig, String groupName,
+            String memberName, IReplicationRouter replicationRouter,
+            IReplicationMonitoredConnection connection,
+            IReplicationGroupBacklog groupBacklog,
+            IReplicationOutFilter outFilter, int batchSize, long intervalMilis,
+            int intervalOperations, IAsyncHandlerProvider asyncHandlerProvider,
+            IReplicationChannelDataFilter dataFilter,
+            IReplicationSourceGroupStateListener stateListener,
+            IReplicationGroupHistory groupHistory, ReplicationMode channelType,
+            Object customBacklogMetadata,
+            String tag, boolean resetTarget) {
+        this(groupConfig,
+                groupName,
+                memberName,
+                replicationRouter,
+                connection,
+                groupBacklog,
+                outFilter,
+                batchSize,
+                intervalMilis,
+                intervalOperations,
+                asyncHandlerProvider,
+                true,
+                dataFilter,
+                stateListener,
+                groupHistory,
+                channelType,
+                customBacklogMetadata,
+                tag, resetTarget);
     }
 
     public AsyncReplicationSourceChannel(
@@ -111,7 +143,7 @@ public class AsyncReplicationSourceChannel
             IReplicationSourceGroupStateListener stateListener,
             IReplicationGroupHistory groupHistory, ReplicationMode channelType,
             Object customBacklogMetadata,
-            String tag) {
+            String tag, boolean resetTarget) {
         super(groupConfig,
                 groupName,
                 memberName,
@@ -125,7 +157,7 @@ public class AsyncReplicationSourceChannel
                 groupHistory,
                 channelType,
                 customBacklogMetadata,
-                tag);
+                tag, resetTarget);
         _batchSize = batchSize;
         _intervalMilis = intervalMilis;
         _intervalOperations = intervalOperations;

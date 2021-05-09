@@ -153,7 +153,7 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
         synchronized (_channelCreationLock) {
             SourceGroupConfig config = _groupConfigHolder.getConfig();
             for (String memberLookupName : config.getMembersLookupNames()) {
-                createChannel(memberLookupName, false, config, false, null);
+                createChannel(memberLookupName, false, config, false, null, false);
                 if (_specificLogger.isTraceEnabled())
                     _specificLogger.trace(getLogPrefix() + "created channel to "
                             + memberLookupName);
@@ -211,13 +211,13 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
 
     protected void onMemberAdded(MemberAddedEvent memberAddedEvent,
                                  SourceGroupConfig newConfig) {
-        createChannel(memberAddedEvent.getMemberName(), true, newConfig, false/*connect synchronously*/, null);
+        createChannel(memberAddedEvent.getMemberName(), true, newConfig, false/*connect synchronously*/, null, memberAddedEvent.isResetTarget());
     }
 
     @Override
     public void createTemporaryChannel(String memberName, Object customBacklogMetadata) {
         synchronized (_channelCreationLock) {
-            createChannel(memberName, false, getConfigHolder().getConfig(), true, customBacklogMetadata);
+            createChannel(memberName, false, getConfigHolder().getConfig(), true, customBacklogMetadata, false);
         }
     }
 
@@ -236,7 +236,7 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
 
     protected void createChannel(String memberLookupName,
                                  boolean dynamicMember, SourceGroupConfig config,
-                                 boolean connectSynchronously, Object customBacklogMetadata) {
+                                 boolean connectSynchronously, Object customBacklogMetadata, boolean resetTarget) {
         IReplicationMonitoredConnection connection = connectSynchronously ? _replicationRouter.getMemberConnection(memberLookupName) : _replicationRouter.getMemberConnectionAsync(memberLookupName);
         AbstractReplicationSourceChannel channel = createChannel(memberLookupName,
                 _replicationRouter,
@@ -245,7 +245,7 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
                 this,
                 dynamicMember,
                 config,
-                customBacklogMetadata);
+                customBacklogMetadata, resetTarget);
         _channels.put(memberLookupName, channel);
     }
 
@@ -272,7 +272,7 @@ public abstract class AbstractReplicationSourceGroup<T extends SourceGroupConfig
             IReplicationMonitoredConnection connection,
             IReplicationChannelDataFilter dataFilter,
             IReplicationGroupHistory groupHistory, boolean dynamicMember,
-            SourceGroupConfig groupConfig, Object customBacklogMetadata);
+            SourceGroupConfig groupConfig, Object customBacklogMetadata, boolean resetTarget);
 
     public String getGroupName() {
         return _groupConfigHolder.getConfig().getName();
