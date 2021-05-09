@@ -27,24 +27,20 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
 
     @Override
     public void visit(LongValue longValue) {
-        if(column != null){ //TODO: add if column != null if the column not first.
-            if (column.getColumnName().equalsIgnoreCase("rowNum")) {
-                this.value = (int)longValue.getValue();
-            } else {
-                try {
-                    this.value = getTable().getColumnValue(column.getColumnName(), longValue.getValue());
-                } catch (SQLException e) {
-                    this.value = longValue.getValue();
-                }
-            }
+        if (column.getColumnName().equalsIgnoreCase("rowNum")) {
+            this.value = (int)longValue.getValue();
         } else {
-            this.value = longValue.getValue(); //TODO: not good!, skip the cast!
+            try {
+                this.value = getTable().getColumnValue(column.getColumnName(), longValue.getValue());
+            } catch (SQLException e) {
+                this.value = longValue.getValue();
+            }
         }
     }
 
     @Override
     public void visit(StringValue stringValue) {
-        try { //TODO: add if column != null too??
+        try {
             this.value = getTable().getColumnValue(getColumn().getColumnName(), stringValue.getValue());
             if (this.value.getClass().equals(java.util.Date.class)) {
                 throw new UnsupportedOperationException("java.util.Date is not supported");
