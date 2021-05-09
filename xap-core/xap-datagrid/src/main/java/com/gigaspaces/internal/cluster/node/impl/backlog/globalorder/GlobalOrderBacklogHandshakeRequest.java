@@ -44,7 +44,7 @@ public class GlobalOrderBacklogHandshakeRequest
             ClassNotFoundException {
         _firstHandshake = in.readBoolean();
         _lastConfirmedKey = in.readLong();
-        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)){
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_8_1)){
             this.resetTarget = in.readBoolean();
         }
     }
@@ -52,7 +52,7 @@ public class GlobalOrderBacklogHandshakeRequest
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeBoolean(_firstHandshake);
         out.writeLong(_lastConfirmedKey);
-        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)){
+        if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v15_8_1)){
             out.writeBoolean(resetTarget);
         }
     }
