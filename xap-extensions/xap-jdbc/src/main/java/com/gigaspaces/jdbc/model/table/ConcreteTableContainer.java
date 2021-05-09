@@ -11,6 +11,9 @@ import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
+import com.gigaspaces.query.aggregators.AggregationSet;
+import com.gigaspaces.query.aggregators.OrderBy;
+import com.gigaspaces.query.aggregators.OrderByAggregator;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
@@ -51,30 +54,7 @@ public class ConcreteTableContainer extends TableContainer {
         }
 
         allColumnNamesSorted = Arrays.asList(typeDesc.getPropertiesNames());
-        //TODO: same with TempTable!??!
-//        allColumnNamesSorted.sort(String::compareTo);
-//        allColumnNamesSorted.sort(new ColumnNameCoparator(typeDesc.getIdPropertyName()));
     }
-//
-//    //sort the column so that the id property column is the first one.
-//    private class ColumnNameCoparator implements Comparator<String> {
-//        final String idColumnName;
-//
-//        public  ColumnNameCoparator(String idColumnName) {
-//            this.idColumnName = idColumnName;
-//        }
-//
-//        @Override
-//        public int compare(String o1, String o2) {
-//            if(o1 == null || o1.equals(idColumnName)) {
-//                return -1;
-//            }
-//            if(o2 == null || o2.equals(idColumnName)) {
-//                return 1;
-//            }
-//            return o1.compareTo(o2);
-//        }
-//    }
 
     @Override
     public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
@@ -103,20 +83,24 @@ public class ConcreteTableContainer extends TableContainer {
                 modifiers = Modifiers.add(modifiers, Modifiers.EXPLAIN_PLAN);
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
-
             queryTemplatePacket.prepareForSpace(typeDesc);
             //TODO: in the server
-//            queryTemplatePacket.setAggregationSet(new AggregationSet().orderBy(new OrderByAggregator()));
+            OrderByAggregator orderByAggregator = new OrderByAggregator();
+            for (OrderColumn column : orderColumns) {
+                orderByAggregator.orderBy(column.getName(), column.isAsc() ? OrderBy.ASC : OrderBy.DESC, column.isNullsLast());
+            }
+            queryTemplatePacket.setAggregationSet(new AggregationSet().orderBy(orderByAggregator));
+
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
             if (explainPlanImpl != null) {
                 queryResult = new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
             } else {
                 queryResult = new QueryResult(res, visibleColumns, this);
             }
-
-            if(!orderColumns.isEmpty()) {
-                queryResult.sort(orderColumns);
-            }
+            //TODO: order in client
+//            if(!orderColumns.isEmpty()) {
+//                queryResult.sort(orderColumns);
+//            }
             return queryResult;
         } catch (Exception e) {
             throw new SQLException("Failed to get results from space", e);

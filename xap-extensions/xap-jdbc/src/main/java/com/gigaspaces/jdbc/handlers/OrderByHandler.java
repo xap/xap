@@ -26,8 +26,9 @@ public class OrderByHandler extends UnsupportedExpressionVisitor implements Orde
         orderByElement.getExpression().accept(this);
         TableContainer table = getTable();
         String columnName = getColumn().getColumnName();
-        OrderColumn orderColumn = new OrderColumn(columnName, null, isVisibleColumn(columnName), table);
-        orderColumn.setAsc(orderByElement.isAsc());
+        OrderColumn orderColumn = new OrderColumn(columnName, null, isVisibleColumn(columnName), table)
+                .withAsc(orderByElement.isAsc())
+                .withNullsLast(orderByElement.getNullOrdering() == OrderByElement.NullOrdering.NULLS_LAST);
         table.addOrderColumns(orderColumn);
     }
 

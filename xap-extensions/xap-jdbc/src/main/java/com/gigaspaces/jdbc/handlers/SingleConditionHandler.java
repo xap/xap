@@ -13,8 +13,7 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
     private Column column;
 
     private Object value;
-    private List<TableContainer> tables;
-    //TODO: add visible columns?
+    private final List<TableContainer> tables;
 
     SingleConditionHandler(List<TableContainer> tables, Object[] preparedValues) {
         this.tables = tables;
@@ -28,7 +27,7 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
 
     @Override
     public void visit(LongValue longValue) {
-        if(column != null){
+        if(column != null){ //TODO: add if column != null if the column not first.
             if (column.getColumnName().equalsIgnoreCase("rowNum")) {
                 this.value = (int)longValue.getValue();
             } else {
@@ -39,7 +38,7 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
                 }
             }
         } else {
-            this.value = longValue.getValue();
+            this.value = longValue.getValue(); //TODO: not good!, skip the cast!
         }
     }
 

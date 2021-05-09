@@ -178,10 +178,10 @@ public class QueryResult {
                     continue;
                 }
                 if (c1 == null) {
-                    return -1;
+                    return orderCol.isNullsLast() ? 1 : -1;
                 }
                 if (c2 == null) {
-                    return 1;
+                    return orderCol.isNullsLast() ? -1 : 1;
                 }
                 rc = c1.compareTo(c2);
                 if (rc != 0) {
