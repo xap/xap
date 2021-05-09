@@ -353,10 +353,10 @@ public class NIOConfiguration implements ITransportConfig, Cloneable, Externaliz
         String bindHost = SystemInfo.singleton().network().getHostId();
         String bindPort = GsEnv.property(BIND_PORT_SYS_PROP, BIND_PORT_ENV_VAR).get(DEFAULT_BIND_PORT);
 
-        int minThreads = Integer.parseInt(System.getProperty("com.gs.transport_protocol.lrmi.min-threads", "1"));
-        int maxThreads = Integer.parseInt(System.getProperty("com.gs.transport_protocol.lrmi.max-threads", "128"));
-        int maxConnPool = Integer.parseInt(System.getProperty("com.gs.transport_protocol.lrmi.max-conn-pool", "1024"));
-        int readSelectorThreads = Integer.parseInt(System.getProperty(SystemProperties.LRMI_READ_SELECTOR_THREADS, String.valueOf(SystemProperties.LRMI_READ_SELECTOR_THREADS_DEFAULT)));
+        int minThreads = GsEnv.propertyInt("com.gs.transport_protocol.lrmi.min-threads", "LRMI_THREAD_POOL_MIN").get(DEFAULT_MIN_THREADS);
+        int maxThreads = GsEnv.propertyInt("com.gs.transport_protocol.lrmi.max-threads", "LRMI_THREAD_POOL_MAX").get(DEFAULT_MAX_THREADS);
+        int maxConnPool = GsEnv.propertyInt("com.gs.transport_protocol.lrmi.max-conn-pool", "LRMI_CONNECTION_POOL_MAX").get(DEFAULT_MAX_CONN_POOL);
+        int readSelectorThreads = GsEnv.propertyInt(SystemProperties.LRMI_READ_SELECTOR_THREADS, "LRMI_SELECTOR_THREADS").get(SystemProperties.LRMI_READ_SELECTOR_THREADS_DEFAULT);
 
         //LRMI Watchdog parameters
         String watchdogRequestTimeout = System.getProperty(SystemProperties.WATCHDOG_REQUEST_TIMEOUT, SystemProperties.WATCHDOG_REQUEST_TIMEOUT_DEFAULT);
