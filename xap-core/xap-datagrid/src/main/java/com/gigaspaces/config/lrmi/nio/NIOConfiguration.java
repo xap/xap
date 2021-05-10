@@ -44,6 +44,7 @@ public class NIOConfiguration implements ITransportConfig, Cloneable, Externaliz
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(NIOConfiguration.class.getName());
 
+    public static final String PROTOCOL_NAME = "NIO";
     public static final String BIND_PORT_SYS_PROP = "com.gs.transport_protocol.lrmi.bind-port";
     public static final String BIND_PORT_ENV_VAR = "LRMI_PORT";
     private static final int DEFAULT_MIN_THREADS = 1;
@@ -604,7 +605,7 @@ public class NIOConfiguration implements ITransportConfig, Cloneable, Externaliz
      * @see com.gigaspaces.transport.ITransportConfig#getProtocolName()
      */
     final public String getProtocolName() {
-        return "NIO";
+        return PROTOCOL_NAME;
     }
 
     public boolean isBlockingConnection() {

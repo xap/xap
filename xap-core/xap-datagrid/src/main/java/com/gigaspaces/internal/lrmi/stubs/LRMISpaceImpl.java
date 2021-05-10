@@ -41,6 +41,12 @@ import com.gigaspaces.internal.remoting.RemoteOperationResult;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
 import com.gigaspaces.admin.demote.DemoteFailedException;
 import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
+import com.gigaspaces.internal.space.transport.xnio.XNioChannel;
+import com.gigaspaces.internal.space.transport.xnio.XNioSettings;
+import com.gigaspaces.internal.space.transport.xnio.client.XNioConnectionPool;
+import com.gigaspaces.internal.space.transport.xnio.client.XNioConnectionPoolDynamic;
+import com.gigaspaces.internal.space.transport.xnio.client.XNioConnectionPoolFixed;
+import com.gigaspaces.internal.space.transport.xnio.client.XNioConnectionPoolThreadLocal;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.lrmi.LRMIMonitoringDetails;
 import com.gigaspaces.lrmi.RemoteStub;
@@ -75,7 +81,13 @@ import net.jini.core.transaction.server.TransactionManager;
 import net.jini.id.Uuid;
 
 import org.jini.rio.boot.SpaceInstanceRemoteClassLoaderInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +104,11 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
         implements IRemoteSpace, IInternalRemoteJSpaceAdmin, Service {
     static final long serialVersionUID = 2L;
 
+    private static final Logger logger = LoggerFactory.getLogger(LRMISpaceImpl.class);
+
     private transient Uuid _spaceUuid; //cache at client side to avoid remote calls
+    private boolean xnioEnabled;
+    private XNioConnectionPool connectionPool;
 
     // NOTE, here just for externalizable
     public LRMISpaceImpl() {
@@ -103,6 +119,27 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
      */
     public LRMISpaceImpl(IRemoteSpace directRefObj, IRemoteSpace dynamicProxy) {
         super(directRefObj, dynamicProxy);
+        initialize();
+    }
+
+    private void initialize() {
+        this.xnioEnabled = !isDirect() && XNioSettings.ENABLED;
+        if (xnioEnabled) {
+            InetSocketAddress lrmiAddress = getRemoteNetworkAddress();
+            InetSocketAddress xnioAddress = XNioSettings.getXNioBindAddress(lrmiAddress.getHostName(), lrmiAddress.getPort());
+            logger.info("Created (nio enabled at {})", xnioAddress);
+            this.connectionPool = initConnectionPool(XNioSettings.CLIENT_CONNECTION_POOL_TYPE, xnioAddress);
+        }
+    }
+
+    private XNioConnectionPool initConnectionPool(String type, InetSocketAddress address) {
+        // TODO: investigate performance diff between implementations.
+        switch (type) {
+            case "thread-local": return new XNioConnectionPoolThreadLocal(address);
+            case "fixed": return new XNioConnectionPoolFixed(address);
+            case "dynamic": return new XNioConnectionPoolDynamic(address);
+            default: throw new IllegalArgumentException("Unsupported connection pool type: " + type);
+        }
     }
 
     @Override
@@ -605,7 +642,23 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     @Override
     public <T extends RemoteOperationResult> T executeOperation(RemoteOperationRequest<T> request)
             throws RemoteException {
-        return getProxy().executeOperation(request);
+        if (!xnioEnabled)
+            return getProxy().executeOperation(request);
+
+        XNioChannel connection = null;
+        try {
+            connection = connectionPool.acquire();
+            ByteBuffer requestBuffer = connection.serialize(request);
+            connection.writeBlocking(requestBuffer);
+            ByteBuffer reponseBuffer = connection.readBlocking();
+            T response = (T) connection.deserialize(reponseBuffer);
+            return response;
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RemoteException("Failed to execute request", e);
+        } finally {
+            if (connection != null)
+                connectionPool.release(connection);
+        }
     }
 
     @Override
@@ -662,5 +715,11 @@ public class LRMISpaceImpl extends RemoteStub<IRemoteSpace>
     @Override
     public void updateClusterInfo() throws RemoteException {
         ((IInternalRemoteJSpaceAdmin) getProxy()).updateClusterInfo();
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        initialize();
     }
 }

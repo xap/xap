@@ -91,6 +91,8 @@ import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageUtils;
 import com.gigaspaces.internal.server.storage.EntryTieredMetaData;
 import com.gigaspaces.internal.service.ServiceRegistrationException;
 import com.gigaspaces.internal.space.responses.SpaceResponseInfo;
+import com.gigaspaces.internal.space.transport.xnio.server.XNioServer;
+import com.gigaspaces.internal.space.transport.xnio.XNioSettings;
 import com.gigaspaces.internal.transaction.DefaultTransactionUniqueId;
 import com.gigaspaces.internal.transaction.XATransactionUniqueId;
 import com.gigaspaces.internal.transport.*;
@@ -242,6 +244,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
 
     private final String _puName;
     private final boolean _scalable;
+    private final Closeable xnioServer;
     private SpaceClusterInfo _clusterInfo;
     private SpaceConfig _spaceConfig;
     private SpaceEngine _engine;
@@ -348,6 +351,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             initSpaceStartupStateManager();
 
         _broadcastTableHandler = new BroadcastTableHandler(this);
+        xnioServer = XNioSettings.ENABLED ? XNioServer.create(this) : null;
     }
 
     private ZKCollocatedClientConfig createZKCollocatedClientConfig() {
