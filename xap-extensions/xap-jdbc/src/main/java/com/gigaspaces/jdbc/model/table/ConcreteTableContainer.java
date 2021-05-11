@@ -86,11 +86,13 @@ public class ConcreteTableContainer extends TableContainer {
             queryTemplatePacket.prepareForSpace(typeDesc);
 
             //orderBy in server
-            OrderByAggregator orderByAggregator = new OrderByAggregator();
-            for (OrderColumn column : orderColumns) {
-                orderByAggregator.orderBy(column.getName(), column.isAsc() ? OrderBy.ASC : OrderBy.DESC, column.isNullsLast());
+            if(!orderColumns.isEmpty()){
+                OrderByAggregator orderByAggregator = new OrderByAggregator();
+                for (OrderColumn column : orderColumns) {
+                    orderByAggregator.orderBy(column.getName(), column.isAsc() ? OrderBy.ASC : OrderBy.DESC, column.isNullsLast());
+                }
+                queryTemplatePacket.setAggregationSet(new AggregationSet().orderBy(orderByAggregator));
             }
-            queryTemplatePacket.setAggregationSet(new AggregationSet().orderBy(orderByAggregator));
 
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
             if (explainPlanImpl != null) {
