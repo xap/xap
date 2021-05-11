@@ -21,7 +21,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.time.Instant;
+import java.time.*;
 import java.util.*;
 
 import static com.gigaspaces.internal.server.space.tiered_storage.SqliteUtils.getPropertyValue;
@@ -56,6 +56,7 @@ public class TieredStorageUtils {
         types.add(Date.class.getName());
         types.add(java.sql.Date.class.getName());
         types.add(Time.class.getName());
+        types.add(LocalDate.class.getName());
         return types;
     }
 
@@ -80,18 +81,36 @@ public class TieredStorageUtils {
         EntryTieredMetaData entryTieredMetaData = new EntryTieredMetaData();
         IServerTypeDesc typeDesc = space.getTypeManager().getServerTypeDesc(typeName);
         IEntryHolder hotEntryHolder;
+        System.out.println("For Id: " + id);
+
         if (typeDesc.getTypeDesc().isAutoGenerateId()) {
             hotEntryHolder = space.getCacheManager().getEntryByUidFromPureCache(((String) id));
+            try {
+                System.out.println("hot value: " + hotEntryHolder.getEntryData().getPropertyValue("orderTime"));
+            } catch(Exception e){
+            }
         } else {
             hotEntryHolder = space.getCacheManager().getEntryByIdFromPureCache(id, typeDesc);
+            try {
+                System.out.println("hot value: " + hotEntryHolder.getEntryData().getPropertyValue("orderTime"));
+            } catch(Exception e){
+            }
         }
         IEntryHolder coldEntryHolder = null;
 
         try {
             if (typeDesc.getTypeDesc().isAutoGenerateId()) {
                 coldEntryHolder = space.getTieredStorageManager().getInternalStorage().getEntryByUID(context, typeDesc.getTypeName(), (String) id);
+                try {
+                    System.out.println("cold value: " + coldEntryHolder.getEntryData().getPropertyValue("orderTime"));
+                } catch(Exception e){
+                }
             }else {
                 coldEntryHolder = space.getTieredStorageManager().getInternalStorage().getEntryById(context, typeDesc.getTypeName(), id);
+                try {
+                    System.out.println("cold value: " + coldEntryHolder.getEntryData().getPropertyValue("orderTime"));
+                } catch(Exception e){
+                }
             }
         } catch (SAException e) { //entry doesn't exist in cold tier
         }
@@ -177,6 +196,25 @@ public class TieredStorageUtils {
 
     public static boolean isSupportedTimeColumn(Class<?> type){
         return type.equals(Instant.class) || type.equals(Timestamp.class) || type.equals(long.class) || type.equals(Long.class)
-                || type.equals(Date.class) || type.equals(java.sql.Date.class) || type.equals(Time.class);
+                || type.equals(Date.class) || type.equals(java.sql.Date.class) || type.equals(Time.class) || type.equals(LocalDate.class);
+    }
+
+    public static void main(String[] args) {
+       /* System.out.println(ZoneId.systemDefault());
+        System.out.println(ZoneId.getAvailableZoneIds());
+        LocalDate date =LocalDate.of(2020, 07, 29);
+        System.out.println(date);
+        System.out.println(date.toEpochDay());
+        System.out.println();*/
+        //  System.currentTimeMillis()
+        LocalDateTime dateTime = LocalDateTime.of(2017, Month.JUNE, 15, 13, 39);
+        Instant instant = dateTime.atZone(ZoneId.systemDefault()).toInstant();
+        Instant instant2 = dateTime.atZone(ZoneId.of("America/Chicago")).toInstant();
+        Instant instant3 = dateTime.atZone(ZoneId.of("Europe/Paris")).toInstant();
+
+        LocalDateTime after = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+        System.out.println(instant + "  " + instant2 + "   " + instant3);
+
     }
 }

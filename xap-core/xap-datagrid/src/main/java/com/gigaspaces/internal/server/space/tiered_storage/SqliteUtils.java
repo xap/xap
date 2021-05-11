@@ -23,13 +23,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.time.Instant;
+import java.time.*;
 import java.util.Date;
 import java.util.List;
 
 public class SqliteUtils {
     private static final long NANOS_PER_SEC = 1_000_000_000;
     private static final long OFFSET = 0;
+    private static final String UTC_ZONE_ID = "UTC";
 
     public static String getPropertyType(PropertyInfo property) {
         Class<?> propertyType = property.getType();
@@ -64,6 +65,8 @@ public class SqliteUtils {
         } else if (propertyType.equals(java.sql.Date.class)) {
             return "BIGINT";
         } else if (propertyType.equals(java.sql.Time.class)) {
+            return "BIGINT";
+        } else if(propertyType.equals(LocalDate.class)){
             return "BIGINT";
         }
         throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
@@ -119,6 +122,8 @@ public class SqliteUtils {
             return new java.sql.Date(resultSet.getLong(propertyIndex));
         } else if (propertyType.equals(Time.class)) {
             return new Time(resultSet.getLong(propertyIndex));
+        } else if (propertyType.equals(LocalDate.class)){
+            return  LocalDate.ofEpochDay(resultSet.getLong(propertyIndex));
         }
         throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
     }
@@ -139,6 +144,11 @@ public class SqliteUtils {
             return ((java.sql.Date) propertyValue).getTime();
         } else if (propertyValue.getClass().equals(Time.class)){
                 return ((Time) propertyValue).getTime();
+        } else if (propertyValue.getClass().equals(LocalDate.class)){
+            System.out.println(toGSTime(((LocalDate) propertyValue).atStartOfDay(ZoneId.of(UTC_ZONE_ID)).toInstant()));
+            System.out.println(((LocalDate) propertyValue).toEpochDay());
+           // return toGSTime(((LocalDate) propertyValue).atStartOfDay(ZoneId.of(UTC_ZONE_ID)).toInstant());
+            return ((LocalDate) propertyValue).toEpochDay();
         } else {
             return propertyValue.toString();
         }
@@ -326,6 +336,8 @@ public class SqliteUtils {
             return Instant.ofEpochMilli(((java.sql.Date) value).getTime());
         } else if (Time.class.equals(value.getClass())){
             return Instant.ofEpochMilli(((Time) value).getTime());
+        } else if (LocalDate.class.equals(value.getClass())){
+            return(((LocalDate)value).atStartOfDay(ZoneId.of(UTC_ZONE_ID)).toInstant());
         }
         throw new IllegalStateException("Time type of " + value.getClass().toString() + " is unsupported");
     }
@@ -395,6 +407,19 @@ public class SqliteUtils {
         throw new IllegalStateException("Supports only equal and segment Range");
     }
 
+    private static Range convertRangeFromLocalDateToInstant(Range queryValueRange) {
+        if (queryValueRange.isEqualValueRange()) {
+            LocalDate value = (LocalDate) ((EqualValueRange) queryValueRange).getValue();
+            return new EqualValueRange(queryValueRange.getPath(), (value.toEpochDay()));
+        } else if (queryValueRange.isSegmentRange()) {
+            SegmentRange segmentRange = (SegmentRange) queryValueRange;
+            Comparable<Instant> minInstant = segmentRange.getMin() != null ? ((LocalDate) segmentRange.getMin()).atStartOfDay(ZoneId.of(UTC_ZONE_ID)).toInstant() : null;
+            Comparable<Instant> maxInstant = segmentRange.getMax() != null ?((LocalDate) segmentRange.getMax()).atStartOfDay(ZoneId.of(UTC_ZONE_ID)).toInstant() : null;
+            return new SegmentRange(queryValueRange.getPath(), minInstant, ((SegmentRange) queryValueRange).isIncludeMin(), maxInstant, ((SegmentRange) queryValueRange).isIncludeMax());
+        }
+        throw new IllegalStateException("Supports only equal and segment Range");
+    }
+
     public static TemplateMatchTier evalRange(Range criteria, Range queryValueRange, String timeType) {
         if (timeType != null){
             if (queryValueRange.isSegmentRange() || queryValueRange.isEqualValueRange()) {
@@ -408,6 +433,8 @@ public class SqliteUtils {
                     queryValueRange = convertRangeFromSQLDateToInstant(queryValueRange);
                 } else if (Time.class.getName().equals(timeType)) {
                     queryValueRange = convertRangeFromTimeToInstant(queryValueRange);
+                } else if (LocalDate.class.getName().equals(timeType)) {
+                    queryValueRange = convertRangeFromLocalDateToInstant(queryValueRange);
                 }
             } else {
                 return TemplateMatchTier.MATCH_COLD;
