@@ -9,7 +9,6 @@ import com.j_spaces.jdbc.ResultEntry;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -20,6 +19,7 @@ public class QueryResult {
     private List<TableRow> rows;
     protected TableContainer tableContainer;
     private Cursor<TableRow> cursor;
+    private List<OrderColumn> orderColumns; //TODO: make final?
 
     public QueryResult(IQueryResultSet<IEntryPacket> res, List<QueryColumn> queryColumns, TableContainer tableContainer) {
         this.queryColumns = filterNonVisibleColumns(queryColumns);
@@ -33,10 +33,11 @@ public class QueryResult {
         this.rows = new ArrayList<>();
     }
 
-    public QueryResult(List<QueryColumn> visibleColumns, QueryResult tableResult) {
+    public QueryResult(List<QueryColumn> visibleColumns, QueryResult tableResult, List<OrderColumn> orderColumns) {
+        this.orderColumns = orderColumns;
         this.tableContainer = null;
         this.queryColumns = visibleColumns;
-        this.rows = tableResult.rows.stream().map(row -> new TableRow(row, visibleColumns)).collect(Collectors.toList());
+        this.rows = tableResult.rows.stream().map(row -> new TableRow(row, visibleColumns, orderColumns)).collect(Collectors.toList());
     }
 
     private List<QueryColumn> filterNonVisibleColumns(List<QueryColumn> queryColumns){
@@ -148,8 +149,10 @@ public class QueryResult {
         rows = rows.stream().filter(predicate).collect(Collectors.toList());
     }
 
-    public void sort(List<OrderColumn> orderColumns){
-        Collections.sort(rows, new EntriesOrderByComparator(orderColumns));
+    public void sort(){
+        if(!orderColumns.isEmpty()){
+            rows.sort(new EntriesOrderByComparator(orderColumns));
+        }
     }
 
     /**
@@ -158,7 +161,7 @@ public class QueryResult {
      */
     protected static class EntriesOrderByComparator implements Comparator<TableRow> {
 
-        private List<OrderColumn> _orderColumns;
+        private final List<OrderColumn> _orderColumns;
 
         public EntriesOrderByComparator(List<OrderColumn> orderColumns) {
             _orderColumns = orderColumns;
@@ -168,13 +171,11 @@ public class QueryResult {
             int rc = 0;
 
 
-            for (int i = 0; i < _orderColumns.size(); i++) {
-                OrderColumn orderCol = _orderColumns.get(i);
+            for (OrderColumn orderCol : _orderColumns) {
+                Comparable c1 = (Comparable) o1.getPropertyValue(orderCol);
+                Comparable c2 = (Comparable) o2.getPropertyValue(orderCol);
 
-                Comparable c1 = (Comparable) o1.getPropertyValue(orderCol.getName());
-                Comparable c2 = (Comparable) o2.getPropertyValue(orderCol.getName());
-
-                if (c1 == c2){
+                if (c1 == c2) {
                     continue;
                 }
                 if (c1 == null) {

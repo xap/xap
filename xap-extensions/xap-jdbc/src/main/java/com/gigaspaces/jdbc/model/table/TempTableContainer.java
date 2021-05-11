@@ -45,10 +45,8 @@ public class TempTableContainer extends TableContainer {
         if (queryTemplatePacket != null)
             tableResult.filter(x -> queryTemplatePacket.eval(x));
 
-        QueryResult queryResult = new QueryResult(visibleColumns, tableResult);
-        if(!orderColumns.isEmpty()) {
-            queryResult.sort(orderColumns);
-        }
+        QueryResult queryResult = new QueryResult(visibleColumns, tableResult, orderColumns);
+        queryResult.sort();
         return queryResult;
     }
 

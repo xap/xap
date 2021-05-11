@@ -84,7 +84,8 @@ public class ConcreteTableContainer extends TableContainer {
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
             queryTemplatePacket.prepareForSpace(typeDesc);
-            //TODO: in the server
+
+            //orderBy in server
             OrderByAggregator orderByAggregator = new OrderByAggregator();
             for (OrderColumn column : orderColumns) {
                 orderByAggregator.orderBy(column.getName(), column.isAsc() ? OrderBy.ASC : OrderBy.DESC, column.isNullsLast());
@@ -97,10 +98,6 @@ public class ConcreteTableContainer extends TableContainer {
             } else {
                 queryResult = new QueryResult(res, visibleColumns, this);
             }
-            //TODO: order in client
-//            if(!orderColumns.isEmpty()) {
-//                queryResult.sort(orderColumns);
-//            }
             return queryResult;
         } catch (Exception e) {
             throw new SQLException("Failed to get results from space", e);
