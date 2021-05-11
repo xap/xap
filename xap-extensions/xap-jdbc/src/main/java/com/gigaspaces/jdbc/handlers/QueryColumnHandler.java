@@ -15,6 +15,7 @@ import net.sf.jsqlparser.statement.select.SelectItemVisitorAdapter;
 import java.util.List;
 
 public class QueryColumnHandler extends SelectItemVisitorAdapter {
+    //TODO: queryExecutor as field?
     private final List<TableContainer> tables;
     private final List<QueryColumn> queryColumns;
     private boolean isAllColumnsSelected = false;
