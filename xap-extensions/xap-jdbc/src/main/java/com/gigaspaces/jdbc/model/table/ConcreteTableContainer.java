@@ -83,16 +83,8 @@ public class ConcreteTableContainer extends TableContainer {
                 modifiers = Modifiers.add(modifiers, Modifiers.EXPLAIN_PLAN);
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
+            setOrderByAggregation();
             queryTemplatePacket.prepareForSpace(typeDesc);
-
-            //orderBy in server
-            if(!orderColumns.isEmpty()){
-                OrderByAggregator orderByAggregator = new OrderByAggregator();
-                for (OrderColumn column : orderColumns) {
-                    orderByAggregator.orderBy(column.getName(), column.isAsc() ? OrderBy.ASC : OrderBy.DESC, column.isNullsLast());
-                }
-                queryTemplatePacket.setAggregationSet(new AggregationSet().orderBy(orderByAggregator));
-            }
 
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
             if (explainPlanImpl != null) {
@@ -103,6 +95,17 @@ public class ConcreteTableContainer extends TableContainer {
             return queryResult;
         } catch (Exception e) {
             throw new SQLException("Failed to get results from space", e);
+        }
+    }
+
+    private void setOrderByAggregation() {
+        //orderBy in server
+        if(!orderColumns.isEmpty()){
+            OrderByAggregator orderByAggregator = new OrderByAggregator();
+            for (OrderColumn column : orderColumns) {
+                orderByAggregator.orderBy(column.getName(), column.isAsc() ? OrderBy.ASC : OrderBy.DESC, column.isNullsLast());
+            }
+            queryTemplatePacket.setAggregationSet(new AggregationSet().orderBy(orderByAggregator));
         }
     }
 

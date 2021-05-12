@@ -19,18 +19,20 @@ public class QueryResult {
     private List<TableRow> rows;
     protected TableContainer tableContainer;
     private Cursor<TableRow> cursor;
-    private List<OrderColumn> orderColumns; //TODO: make final?
+    private final List<OrderColumn> orderColumns;
 
     public QueryResult(IQueryResultSet<IEntryPacket> res, List<QueryColumn> queryColumns, TableContainer tableContainer) {
         this.queryColumns = filterNonVisibleColumns(queryColumns);
         this.tableContainer = tableContainer;
         this.rows = res.stream().map(x -> new TableRow(x, queryColumns)).collect(Collectors.toList());
+        this.orderColumns = null;
     }
 
     public QueryResult(List<QueryColumn> queryColumns) {
         this.tableContainer = null; // TODO should be handled in subquery
         this.queryColumns = filterNonVisibleColumns(queryColumns);
         this.rows = new ArrayList<>();
+        this.orderColumns = null;
     }
 
     public QueryResult(List<QueryColumn> visibleColumns, QueryResult tableResult, List<OrderColumn> orderColumns) {
@@ -169,7 +171,6 @@ public class QueryResult {
 
         public int compare(TableRow o1, TableRow o2) {
             int rc = 0;
-
 
             for (OrderColumn orderCol : _orderColumns) {
                 Comparable c1 = (Comparable) o1.getPropertyValue(orderCol);

@@ -5,10 +5,6 @@ public class OrderColumn extends QueryColumn {
     private boolean isAsc = true;
     private boolean isNullsLast = false;
 
-    public OrderColumn(String name, String alias, boolean isVisible, TableContainer tableContainer) {
-        super(name, alias, isVisible, tableContainer);
-    }
-
     public OrderColumn(String name, boolean isVisible, TableContainer tableContainer) {
         super(name, null, isVisible, tableContainer);
     }
