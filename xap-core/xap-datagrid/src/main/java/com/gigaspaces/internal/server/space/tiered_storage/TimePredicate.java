@@ -84,11 +84,6 @@ public class TimePredicate implements CachePredicate, InternalCachePredicate {
          return new SegmentRange(timeColumn, timeRule, true, null, false);
     }
 
-    /*public SegmentRange getTimeRuleAsRange(){
-        Instant timeRule = Instant.now().minus(period);
-        return new SegmentRange(timeColumn, timeRule, true, null, false);
-    }*/
-
     @Override
     public String toString() {
         return "TimePredicate{" +

@@ -398,7 +398,7 @@ public class SqliteUtils {
         throw new IllegalStateException("Supports only equal and segment Range");
     }
 
-    private static Range convertRangeFromSQLDateToInstant(Range queryValueRange) {
+    private static Range convertRangeFromJavaSQLDateToInstant(Range queryValueRange) {
         if (queryValueRange.isEqualValueRange()) {
             java.sql.Date value = (java.sql.Date) ((EqualValueRange) queryValueRange).getValue();
             return new EqualValueRange(queryValueRange.getPath(), value.toInstant());
@@ -411,7 +411,7 @@ public class SqliteUtils {
         throw new IllegalStateException("Supports only equal and segment Range");
     }
 
-    private static Range convertRangeFromTimeToInstant(Range queryValueRange) {
+    private static Range convertRangeFromJavaSQLTimeToInstant(Range queryValueRange) {
         if (queryValueRange.isEqualValueRange()) {
             Time value = (Time) ((EqualValueRange) queryValueRange).getValue();
             return new EqualValueRange(queryValueRange.getPath(), value.toInstant());
@@ -484,9 +484,9 @@ public class SqliteUtils {
                 } else if (Date.class.getName().equals(timeType)) {
                     queryValueRange = convertRangeFromJavaUtilDateToInstant(queryValueRange);
                 } else if (java.sql.Date.class.getName().equals(timeType)) {
-                    queryValueRange = convertRangeFromSQLDateToInstant(queryValueRange);
+                    queryValueRange = convertRangeFromJavaSQLDateToInstant(queryValueRange);
                 } else if (Time.class.getName().equals(timeType)) {
-                    queryValueRange = convertRangeFromTimeToInstant(queryValueRange);
+                    queryValueRange = convertRangeFromJavaSQLTimeToInstant(queryValueRange);
                 } else if (LocalDate.class.getName().equals(timeType)) {
                     queryValueRange = convertRangeFromLocalDateToInstant(queryValueRange);
                 } else if (LocalTime.class.getName().equals(timeType)) {

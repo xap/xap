@@ -83,36 +83,19 @@ public class TieredStorageUtils {
         EntryTieredMetaData entryTieredMetaData = new EntryTieredMetaData();
         IServerTypeDesc typeDesc = space.getTypeManager().getServerTypeDesc(typeName);
         IEntryHolder hotEntryHolder;
-        System.out.println("For Id: " + id);
 
         if (typeDesc.getTypeDesc().isAutoGenerateId()) {
             hotEntryHolder = space.getCacheManager().getEntryByUidFromPureCache(((String) id));
-            try {
-                System.out.println("hot value: " + hotEntryHolder.getEntryData().getPropertyValue("orderTime"));
-            } catch(Exception e){
-            }
         } else {
             hotEntryHolder = space.getCacheManager().getEntryByIdFromPureCache(id, typeDesc);
-            try {
-                System.out.println("hot value: " + hotEntryHolder.getEntryData().getPropertyValue("orderTime"));
-            } catch(Exception e){
-            }
         }
         IEntryHolder coldEntryHolder = null;
 
         try {
             if (typeDesc.getTypeDesc().isAutoGenerateId()) {
                 coldEntryHolder = space.getTieredStorageManager().getInternalStorage().getEntryByUID(context, typeDesc.getTypeName(), (String) id);
-                try {
-                    System.out.println("cold value: " + coldEntryHolder.getEntryData().getPropertyValue("orderTime"));
-                } catch(Exception e){
-                }
             }else {
                 coldEntryHolder = space.getTieredStorageManager().getInternalStorage().getEntryById(context, typeDesc.getTypeName(), id);
-                try {
-                    System.out.println("cold value: " + coldEntryHolder.getEntryData().getPropertyValue("orderTime"));
-                } catch(Exception e){
-                }
             }
         } catch (SAException e) { //entry doesn't exist in cold tier
         }
