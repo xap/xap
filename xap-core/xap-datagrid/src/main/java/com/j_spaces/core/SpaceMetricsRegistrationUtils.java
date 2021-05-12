@@ -61,7 +61,7 @@ public class SpaceMetricsRegistrationUtils {
             spaceEngine.getDataTypeMetricRegistrar(typeName).register("data-types", new Gauge<Integer>() {
                 @Override
                 public Integer getValue() {
-                    return spaceImpl.isPrimary() ? cacheManager.getNumberOfEntries(typeName, true) : null;
+                    return cacheManager.getNumberOfEntries(typeName, true) ;
                 }
             });
         }
