@@ -23,7 +23,7 @@ public class ZookeeperConfig {
 
     private static final GsEnv.GsEnvProperty<String> clientPortProperty = GsEnv.property(CommonSystemProperties.ZOOKEEPER_CLIENT_PORT);
     private static final LazySingleton<ZookeeperConfig> instance = new LazySingleton<>(() -> new ZookeeperConfig(findZookeeperConfigFile()));
-    private final Properties properties = new Properties();
+    private final Properties properties;
 
     public static ZookeeperConfig getDefaultConfig() {
         return instance.getOrCreate();
@@ -39,26 +39,39 @@ public class ZookeeperConfig {
             throw new IllegalArgumentException("File not found: " + path);
         }
 
+        properties = loadProperties(configFile);
+    }
+
+    public static String getDefaultClientPort() {
+        String clientProperty = clientPortProperty.get();
+        if (clientProperty != null) {
+            return clientProperty;
+        }
+
+        File file = new File(findZookeeperConfigFile());
+        if (!file.exists()) {
+            return DEFAULT_CLIENT_PORT;
+        }
+        return loadProperties(file).getProperty(ZK_CLIENT_PORT_PROPERTY, DEFAULT_CLIENT_PORT);
+    }
+
+    private static Properties loadProperties(File file) {
+        Properties properties = new Properties();
         try {
-            FileInputStream in = new FileInputStream(configFile);
-            try {
+            try (FileInputStream in = new FileInputStream(file)) {
                 properties.load(in);
                 String clientPort = GsEnv.property(CommonSystemProperties.ZOOKEEPER_CLIENT_PORT).get();
                 if (clientPort != null) {
                     properties.setProperty(ZK_CLIENT_PORT_PROPERTY, clientPort);
                 }
-            } finally {
-                in.close();
             }
         } catch (IOException e) {
-            throw new IllegalArgumentException("Failed to read properties from " + path);
+            throw new IllegalArgumentException("Failed to read properties from " + file.getAbsolutePath());
         }
 
         StringUtils.resolvePlaceholders(properties);
-    }
 
-    public static String getDefaultClientPort() {
-        return clientPortProperty.get(DEFAULT_CLIENT_PORT);
+        return properties;
     }
 
     public String getClientPort() {
