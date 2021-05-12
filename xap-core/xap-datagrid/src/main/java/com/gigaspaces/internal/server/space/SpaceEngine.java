@@ -499,6 +499,12 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 return active;
             }
         });
+        dynamicTags.put("space_primary", new DynamicMetricTag() {
+            @Override
+            public Object getValue() {
+                return _spaceImpl.isPrimary() ? "Primary" : "Backup";
+            }
+        });
         return (InternalMetricRegistrator) _metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, tags, dynamicTags);
     }
 
@@ -7471,6 +7477,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         return _dataTypesMetricRegistrators.computeIfAbsent(key, k -> {
             Map<String, String> extraTags = new HashMap<>(2);
             extraTags.put("data_type_name", typeName);
+            extraTags.put("data_type_short_name", typeName.substring(typeName.lastIndexOf('.') + 1));
             if (indexName != null)
                 extraTags.put("index", indexName);
             return extendSpaceMetricRegistrator("data", extraTags, Collections.emptyMap());
