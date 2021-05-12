@@ -37,7 +37,7 @@ public class QueryHandler {
             throw new SQLException("Failed to parse query", e);
         } catch (SQLExceptionWrapper e) {
             throw e.getException();
-        } catch (GenericJdbcException | UnsupportedOperationException e) {
+        } catch (GenericJdbcException | UnsupportedOperationException | IllegalArgumentException e) {
             throw new SQLException(e.getMessage(), e);
         }
     }

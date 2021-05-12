@@ -30,7 +30,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     private final IJSpace space;
     private final QueryExecutionConfig config;
     private final Object[] preparedValues;
-    private boolean isAllColumnsSelected = false; //TODO: use visit design pattern instead?
+    private boolean isAllColumnsSelected = false;
 
 
     public QueryExecutor(IJSpace space, QueryExecutionConfig config, Object[] preparedValues) {
@@ -89,7 +89,6 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     private void prepareQueryColumns(PlainSelect plainSelect) {
         QueryColumnHandler visitor = new QueryColumnHandler(this);
         plainSelect.getSelectItems().forEach(selectItem -> selectItem.accept(visitor));
-        setAllColumnsSelected(visitor.isAllColumnsSelected());
     }
 
     private void prepareWhereClause(PlainSelect plainSelect) {

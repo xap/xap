@@ -9,6 +9,10 @@ public class OrderColumn extends QueryColumn {
         super(name, alias, isVisible, tableContainer);
     }
 
+    public OrderColumn(String name, boolean isVisible, TableContainer tableContainer) {
+        super(name, null, isVisible, tableContainer);
+    }
+
     public boolean isAsc() {
         return isAsc;
     }

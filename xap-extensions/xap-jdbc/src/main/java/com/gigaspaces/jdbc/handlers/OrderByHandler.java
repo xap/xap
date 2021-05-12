@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class OrderByHandler extends UnsupportedExpressionVisitor implements OrderByVisitor {
+    //TODO: consider not to pass queryExecutor but its relevant fields, when we need to serialize this object.
     private final QueryExecutor queryExecutor;
     private Column column;
 
@@ -26,7 +27,7 @@ public class OrderByHandler extends UnsupportedExpressionVisitor implements Orde
         orderByElement.getExpression().accept(this);
         TableContainer table = getTable();
         String columnName = getColumn().getColumnName();
-        OrderColumn orderColumn = new OrderColumn(columnName, null, isVisibleColumn(columnName), table)
+        OrderColumn orderColumn = new OrderColumn(columnName, isVisibleColumn(columnName), table)
                 .withAsc(orderByElement.isAsc())
                 .withNullsLast(orderByElement.getNullOrdering() == OrderByElement.NullOrdering.NULLS_LAST);
         table.addOrderColumns(orderColumn);
@@ -46,15 +47,15 @@ public class OrderByHandler extends UnsupportedExpressionVisitor implements Orde
 
     @Override
     public void visit(LongValue longValue) {
-        final List<QueryColumn> visibleColumns = this.queryExecutor.getQueryColumns();
+        final List<QueryColumn> queryColumns = this.queryExecutor.getQueryColumns();
         int colIndex = (int) longValue.getValue();
         //validate range
-        if(colIndex > visibleColumns.size() || colIndex < 1) {
-            String msg = "Use OrderBy with column's number [" + colIndex + "], ";
-            if (visibleColumns.size() == 1) {
-                msg += "but the query contain only 1 selected column";
+        if(colIndex > queryColumns.size() || colIndex < 1) { //TODO: fix msg later
+            String msg = "Used OrderBy with column's number [" + colIndex + "], ";
+            if (queryColumns.size() == 1) {
+                msg += "but the query contains only 1 selected column";
             } else {
-                msg += "but the column's numbers are within the range (1," + visibleColumns.size() +")";
+                msg += "but the column's numbers are within the range (1," + queryColumns.size() +")";
             }
             throw new IllegalArgumentException(msg);
         }
@@ -62,7 +63,7 @@ public class OrderByHandler extends UnsupportedExpressionVisitor implements Orde
         if(this.queryExecutor.isAllColumnsSelected()) {
             throw new UnsupportedOperationException("OrderBy column's index with 'SELECT *' not supported");
         }
-        this.column = new Column().withColumnName(visibleColumns.get(colIndex - 1).getName());
+        this.column = new Column().withColumnName(queryColumns.get(colIndex - 1).getName());
     }
 
     private TableContainer getTable() {
