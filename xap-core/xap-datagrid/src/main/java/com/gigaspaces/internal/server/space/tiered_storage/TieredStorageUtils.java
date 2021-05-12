@@ -57,6 +57,8 @@ public class TieredStorageUtils {
         types.add(java.sql.Date.class.getName());
         types.add(Time.class.getName());
         types.add(LocalDate.class.getName());
+        types.add(LocalTime.class.getName());
+        types.add(LocalDateTime.class.getName());
         return types;
     }
 
@@ -196,25 +198,7 @@ public class TieredStorageUtils {
 
     public static boolean isSupportedTimeColumn(Class<?> type){
         return type.equals(Instant.class) || type.equals(Timestamp.class) || type.equals(long.class) || type.equals(Long.class)
-                || type.equals(Date.class) || type.equals(java.sql.Date.class) || type.equals(Time.class) || type.equals(LocalDate.class);
-    }
-
-    public static void main(String[] args) {
-       /* System.out.println(ZoneId.systemDefault());
-        System.out.println(ZoneId.getAvailableZoneIds());
-        LocalDate date =LocalDate.of(2020, 07, 29);
-        System.out.println(date);
-        System.out.println(date.toEpochDay());
-        System.out.println();*/
-        //  System.currentTimeMillis()
-        LocalDateTime dateTime = LocalDateTime.of(2017, Month.JUNE, 15, 13, 39);
-        Instant instant = dateTime.atZone(ZoneId.systemDefault()).toInstant();
-        Instant instant2 = dateTime.atZone(ZoneId.of("America/Chicago")).toInstant();
-        Instant instant3 = dateTime.atZone(ZoneId.of("Europe/Paris")).toInstant();
-
-        LocalDateTime after = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
-
-        System.out.println(instant + "  " + instant2 + "   " + instant3);
-
+                || type.equals(Date.class) || type.equals(java.sql.Date.class) || type.equals(Time.class) || type.equals(LocalDate.class)
+                || type.equals(LocalTime.class) || type.equals(LocalDateTime.class);
     }
 }
