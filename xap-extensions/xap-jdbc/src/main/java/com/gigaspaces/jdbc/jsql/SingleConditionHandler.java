@@ -1,4 +1,4 @@
-package com.gigaspaces.jdbc.handlers;
+package com.gigaspaces.jdbc.jsql;
 
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import net.sf.jsqlparser.expression.*;

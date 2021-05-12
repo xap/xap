@@ -99,6 +99,11 @@ public class ConcreteTableContainer extends TableContainer {
         if (!columnName.equalsIgnoreCase(QueryColumn.UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(columnName) == -1) {
             throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]");
         }
+        for (QueryColumn visibleColumn : visibleColumns) {
+            if(visibleColumn.getName().equals(columnName)){
+                return visibleColumn;
+            }
+        }
         QueryColumn qc = new QueryColumn(columnName, alias, visible, this);
         this.visibleColumns.add(qc);
         return qc;
