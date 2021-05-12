@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
+import com.gigaspaces.jdbc.jsql.JsqlPhysicalPlanHandler;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.j_spaces.core.IJSpace;
@@ -13,6 +14,7 @@ import net.sf.jsqlparser.statement.ExplainStatement;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.StatementVisitorAdapter;
 import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.util.validation.ValidationContext;
 import net.sf.jsqlparser.util.validation.ValidationException;
 import net.sf.jsqlparser.util.validation.feature.FeaturesAllowed;
@@ -51,7 +53,9 @@ public class QueryHandler {
                 QueryExecutor qE = new QueryExecutor(space, config, preparedValues);
                 QueryResult res;
                 try {
-                    res = qE.execute(explainStatement.getStatement().getSelectBody());
+                    PhysicalPlanHandler<SelectBody> physicalPlanHandler = new JsqlPhysicalPlanHandler(qE);
+                    qE = physicalPlanHandler.prepareForExecution(explainStatement.getStatement().getSelectBody());
+                    res = qE.execute();
                     packet.setResultEntry(res.convertEntriesToResultArrays(config));
                 } catch (SQLException e) {
                     throw new SQLExceptionWrapper(e);
@@ -63,7 +67,9 @@ public class QueryHandler {
                 QueryExecutor qE = new QueryExecutor(space, preparedValues);
                 QueryResult res;
                 try {
-                    res = qE.execute(select.getSelectBody());
+                    PhysicalPlanHandler<SelectBody> physicalPlanHandler = new JsqlPhysicalPlanHandler(qE);
+                    qE = physicalPlanHandler.prepareForExecution(select.getSelectBody());
+                    res = qE.execute();
                     packet.setResultEntry(res.convertEntriesToResultArrays(null));
                 } catch (SQLException e) {
                     throw new SQLExceptionWrapper(e);
