@@ -21,7 +21,6 @@ public class ZookeeperConfig {
     private static final String DEFAULT_CLIENT_PORT = "2181";
     private static final String ZK_CLIENT_PORT_PROPERTY = "clientPort";
 
-    private static final GsEnv.GsEnvProperty<String> clientPortProperty = GsEnv.property(CommonSystemProperties.ZOOKEEPER_CLIENT_PORT);
     private static final LazySingleton<ZookeeperConfig> instance = new LazySingleton<>(() -> new ZookeeperConfig(findZookeeperConfigFile()));
     private final Properties properties;
 
@@ -43,7 +42,7 @@ public class ZookeeperConfig {
     }
 
     public static String getDefaultClientPort() {
-        String clientProperty = clientPortProperty.get();
+        String clientProperty = GsEnv.property(CommonSystemProperties.ZOOKEEPER_CLIENT_PORT).get();
         if (clientProperty != null) {
             return clientProperty;
         }
