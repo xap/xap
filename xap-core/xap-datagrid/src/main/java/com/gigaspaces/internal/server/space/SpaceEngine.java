@@ -6462,14 +6462,16 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         return XtnConfilctCheckIndicators.NO_CONFLICT;  // dirty read, allow xtn conflicts
     }
 
-    public void aggregate(ITemplatePacket queryPacket, List<SpaceEntriesAggregator> aggregators, int readModifiers,
+    public AnswerHolder aggregate(ITemplatePacket queryPacket, List<SpaceEntriesAggregator> aggregators, int readModifiers,
                           SpaceContext sc)
             throws Exception {
         if (Modifiers.contains(readModifiers, Modifiers.EXPLAIN_PLAN)) {
-            throw new UnsupportedOperationException("Sql explain plan is not supported for aggregation");
+//            throw new UnsupportedOperationException("Sql explain plan is not supported for aggregation");
+            SingleExplainPlan.validate(0, _cacheManager.isBlobStoreCachePolicy(), readModifiers,
+                    queryPacket.getCustomQuery(), getClassTypeInfo(queryPacket.getTypeName()).getIndexes());
         }
         BatchQueryOperationContext batchContext = new AggregateOperationContext(queryPacket, Integer.MAX_VALUE, 1);
-        AnswerHolder ah = readMultiple(queryPacket,
+        AnswerHolder answerHolder = readMultiple(queryPacket,
                 null /*txn*/,
                 0 /*timeout*/,
                 false, /*ifExists*/
@@ -6481,10 +6483,10 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 aggregators,
                 null);
 
-        if (ah != null && ah.getException() != null) {
-            throw ah.getException();
+        if (answerHolder != null && answerHolder.getException() != null) {
+            throw answerHolder.getException();
         }
-
+        return answerHolder;
     }
 
     public int countIncomingConnections() throws RemoteException {

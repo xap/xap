@@ -4,8 +4,12 @@ import com.gigaspaces.internal.query.explainplan.model.ExplainPlanInfo;
 import com.gigaspaces.internal.query.explainplan.model.IndexChoiceDetail;
 import com.gigaspaces.internal.query.explainplan.model.IndexInfoDetail;
 import com.gigaspaces.internal.query.explainplan.model.PartitionIndexInspectionDetail;
+import com.gigaspaces.utils.Pair;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -82,6 +86,18 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
         final Map<String, List<IndexChoiceNode>> indexesInfo = singleExplainPlan.getIndexesInfo();
         indexInspection.setUsedTiers(singleExplainPlan.getTiersInfo().values().stream().flatMap(List::stream).collect(Collectors.toList()));
         indexInspection.setPartition(partitionId);
+
+        final Map<String, List<String>> aggregatorsInfo = singleExplainPlan.getAggregatorsInfo();
+        if(!aggregatorsInfo.isEmpty()){
+            List<Pair<String, String>> aggregators = new ArrayList<>();
+            for(Map.Entry<String, List<String>> entry : aggregatorsInfo.entrySet()) {
+                Pair<String, String> pair = new Pair<>();
+                pair.setFirst(entry.getKey());
+                pair.setSecond(String.join(", ", entry.getValue()));
+                aggregators.add(pair);
+            }
+            indexInspection.setAggregators(aggregators);
+        }
 
         if (indexesInfo.size() == 1) {
             Map.Entry<String, List<IndexChoiceNode>> entry = indexesInfo.entrySet().iterator().next();

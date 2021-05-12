@@ -18,6 +18,7 @@ package com.gigaspaces.internal.client.spaceproxy.operations;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.query.RawEntryConverter;
+import com.gigaspaces.internal.query.explainplan.ExplainPlanImpl;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterExecutionType;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterRemoteOperationRouter;
@@ -28,9 +29,9 @@ import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.query.aggregators.AggregationInternalUtils;
 import com.gigaspaces.query.aggregators.AggregationResult;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
+import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.exception.internal.InterruptedSpaceException;
-
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 
@@ -56,6 +57,7 @@ public class AggregateEntriesSpaceOperationRequest extends SpaceOperationRequest
     private int readModifiers;
 
     private transient Exception _exception;
+    private transient ExplainPlanImpl explainPlan;
 
     /**
      * Required for Externalizable
@@ -67,6 +69,7 @@ public class AggregateEntriesSpaceOperationRequest extends SpaceOperationRequest
         this.queryPacket = queryPacket;
         this.aggregators = aggregators;
         this.readModifiers = modifiers;
+        this.explainPlan = ExplainPlanImpl.fromQueryPacket(queryPacket);
         // Scanner currently does not use transactions.
         //this.txn = txn;
     }
@@ -109,11 +112,18 @@ public class AggregateEntriesSpaceOperationRequest extends SpaceOperationRequest
     public boolean processPartitionResult(AggregateEntriesSpaceOperationResult remoteOperationResult,
                                           List<AggregateEntriesSpaceOperationResult> previousResults,
                                           int numOfPartitions) {
-        if (remoteOperationResult.hasException())
+        if (remoteOperationResult.hasException()) {
             _exception = remoteOperationResult.getExecutionException();
-        else
+        }
+        else {
             aggregate(remoteOperationResult);
+        }
+        processExplainPlan(remoteOperationResult);
         return _exception == null;
+    }
+
+    public void afterOperationExecution(int partitionId) {
+        processExplainPlan(getRemoteOperationResult());
     }
 
     private void aggregate(AggregateEntriesSpaceOperationResult result) {
@@ -238,5 +248,15 @@ public class AggregateEntriesSpaceOperationRequest extends SpaceOperationRequest
             flags |= FLAG_MODIFIERS;
 
         return flags;
+    }
+
+    private void processExplainPlan(SpaceOperationResult result) {
+        if(result != null && result.getExplainPlan() != null){
+            explainPlan.aggregate(result.getExplainPlan());
+        }
+    }
+
+    public ExplainPlan getExplainPlan() {
+        return explainPlan;
     }
 }

@@ -20,8 +20,14 @@ import com.gigaspaces.internal.client.spaceproxy.operations.AggregateEntriesSpac
 import com.gigaspaces.internal.client.spaceproxy.operations.AggregateEntriesSpaceOperationResult;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.query.aggregators.AggregationInternalUtils;
+import com.gigaspaces.query.aggregators.OrderByAggregator;
+import com.gigaspaces.query.aggregators.OrderByPath;
+import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
 import com.gigaspaces.security.authorities.SpaceAuthority;
 import com.gigaspaces.utils.CodeChangeUtilities;
+import com.j_spaces.core.AnswerHolder;
+
+import java.util.List;
 
 /**
  * @author Niv Ingberg
@@ -40,12 +46,24 @@ public class AggregateEntriesSpaceOperation extends AbstractSpaceOperation<Aggre
 
             space.beginPacketOperation(true, request.getSpaceContext(), requiredPrivilege, request.getQueryPacket());
 
-            space.getEngine().aggregate(request.getQueryPacket(), request.getAggregators(), request.getReadModifiers(), request.getSpaceContext());
+            AnswerHolder answerHolder = space.getEngine().aggregate(request.getQueryPacket(), request.getAggregators(), request.getReadModifiers(), request.getSpaceContext());
 
             Object[] intermediateResults = new Object[request.getAggregators().size()];
             for (int i = 0; i < intermediateResults.length; i++)
                 intermediateResults[i] = request.getAggregators().get(i).getIntermediateResult();
             result.setIntermediateResults(intermediateResults);
+            if (answerHolder != null && answerHolder.getExplainPlan() != null) {
+                for(SpaceEntriesAggregator aggregator : request.getAggregators()) {
+                    if (aggregator instanceof OrderByAggregator) {
+                        OrderByAggregator orderByAggregator = (OrderByAggregator) aggregator;
+                        List<OrderByPath> orderByPaths = orderByAggregator.getOrderByPaths();
+                        for (OrderByPath orderByPath : orderByPaths) {
+                            answerHolder.getExplainPlan().addAggregatorsInfo("OrderBy", orderByPath.toString());
+                        }
+                    }
+                }
+                result.setExplainPlan(answerHolder.getExplainPlan());
+            }
         }
         finally {
             CodeChangeUtilities.removeOneTimeClassLoaderIfNeeded(request.getAggregators());

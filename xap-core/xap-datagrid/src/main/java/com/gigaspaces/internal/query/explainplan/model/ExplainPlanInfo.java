@@ -3,6 +3,7 @@ package com.gigaspaces.internal.query.explainplan.model;
 import com.gigaspaces.internal.query.explainplan.ExplainPlanV3;
 import com.gigaspaces.internal.query.explainplan.TextReportFormatter;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterExecutionType;
+import com.gigaspaces.utils.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -153,7 +154,8 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
         } else {
             for (PartitionIndexInspectionDetail inspectionDetail : indexInspectionsPerPartition) {
                 if ((inspectionDetail.getIndexes() == null || inspectionDetail.getIndexes().isEmpty()) &&
-                        (inspectionDetail.getUsedTiers() == null || inspectionDetail.getUsedTiers().isEmpty())) {
+                        (inspectionDetail.getUsedTiers() == null || inspectionDetail.getUsedTiers().isEmpty()) &&
+                        (inspectionDetail.getAggregators() == null || inspectionDetail.getAggregators().isEmpty())) {
                     continue;
                 }
 
@@ -161,6 +163,10 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
                 formatter.indent();
                 if (inspectionDetail.getUsedTiers() != null && inspectionDetail.getUsedTiers().size() != 0) {
                     formatter.line(getTiersFormatted(inspectionDetail.getUsedTiers()));
+                }
+
+                if (inspectionDetail.getAggregators() != null && inspectionDetail.getAggregators().size() != 0) {
+                    formatAggregators(inspectionDetail.getAggregators(), formatter);
                 }
 
                 if (inspectionDetail.getIndexes() == null || inspectionDetail.getIndexes().isEmpty()) {
@@ -226,6 +232,18 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
 
     private String getTiersFormatted(List<String> usedTiers) {
         return String.format("Tier%s: %s", (usedTiers.size() > 1 ? "s" : ""), String.join(", ", usedTiers));
+    }
+
+    private void formatAggregators(List<Pair<String, String>> aggregators, TextReportFormatter formatter) {
+        formatter.line(String.format("Aggregation%s: ", (aggregators.size() > 1 ? "s" : "")));
+        formatter.indent();
+        for(Pair<String, String> aggregatorPair : aggregators) {
+            formatter.line(aggregatorPair.getFirst() + ": ");
+            formatter.indent();
+            formatter.line(aggregatorPair.getSecond());
+            formatter.unindent();
+        }
+        formatter.unindent();
     }
 
     private boolean isIndexUsed() {
