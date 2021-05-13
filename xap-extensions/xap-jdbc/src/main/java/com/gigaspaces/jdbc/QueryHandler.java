@@ -1,5 +1,7 @@
 package com.gigaspaces.jdbc;
 
+import com.gigaspaces.jdbc.calcite.GSOptimizer;
+import com.gigaspaces.jdbc.calcite.GSRelNode;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
 import com.gigaspaces.jdbc.jsql.JsqlPhysicalPlanHandler;
@@ -19,7 +21,13 @@ import net.sf.jsqlparser.util.validation.ValidationContext;
 import net.sf.jsqlparser.util.validation.ValidationException;
 import net.sf.jsqlparser.util.validation.feature.FeaturesAllowed;
 import net.sf.jsqlparser.util.validation.validator.StatementValidator;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.externalize.RelWriterImpl;
+import org.apache.calcite.sql.SqlExplainLevel;
+import org.apache.calcite.sql.SqlNode;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
@@ -29,6 +37,7 @@ public class QueryHandler {
     private final Feature[] allowedFeatures = new Feature[] {Feature.select, Feature.explain, Feature.exprLike, Feature.jdbcParameter, Feature.join, Feature.joinInner, Feature.joinLeft};
 
     public ResponsePacket handle(String query, IJSpace space, Object[] preparedValues) throws SQLException {
+        GSRelNode calcitePlan = optimizeWithCalcite(query, space);
 
         try {
             Statement statement = CCJSqlParserUtil.parse(query);
@@ -92,5 +101,19 @@ public class QueryHandler {
         }
     }
 
+    private static GSRelNode optimizeWithCalcite(String query, IJSpace space) {
+        GSOptimizer optimizer = new GSOptimizer(space);
+        SqlNode ast = optimizer.parse(query);
+        SqlNode validatedAst = optimizer.validate(ast);
+        RelNode logicalPlan = optimizer.createLogicalPlan(validatedAst);
+        GSRelNode physicalPlan = optimizer.createPhysicalPlan(logicalPlan);
 
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        RelWriterImpl writer = new RelWriterImpl(pw, SqlExplainLevel.EXPPLAN_ATTRIBUTES, false);
+        physicalPlan.explain(writer);
+        System.out.println(sw);
+
+        return physicalPlan;
+    }
 }
