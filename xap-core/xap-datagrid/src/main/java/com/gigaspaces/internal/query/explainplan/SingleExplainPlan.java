@@ -209,35 +209,9 @@ public class SingleExplainPlan implements Externalizable {
         writeIndexes(objectOutput);
         writeScannigInfo(objectOutput);
         if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)){
-            writeTiersInfo(objectOutput);
+            IOUtils.writeMapStringListString(objectOutput, tiersInfo);
         }
-        writeAggregatorsInfo(objectOutput);
-    }
-
-    private void writeAggregatorsInfo(ObjectOutput objectOutput) throws IOException {
-        int length = aggregatorsInfo.size();
-        objectOutput.writeInt(length);
-        for (Map.Entry<String, List<String>> entry : aggregatorsInfo.entrySet()) {
-            IOUtils.writeString(objectOutput, entry.getKey());
-            int valuesLen = entry.getValue().size();
-            objectOutput.writeInt(valuesLen);
-            for (String value : entry.getValue()) {
-                IOUtils.writeString(objectOutput, value);
-            }
-        }
-    }
-
-    private void writeTiersInfo(ObjectOutput objectOutput) throws IOException {
-        int length = tiersInfo.size();
-        objectOutput.writeInt(length);
-        for (Map.Entry<String, List<String>> entry : tiersInfo.entrySet()) {
-            IOUtils.writeString(objectOutput, entry.getKey());
-            int tiersLength = entry.getValue().size();
-            objectOutput.writeInt(tiersLength);
-            for (String tier : entry.getValue()) {
-                IOUtils.writeString(objectOutput, tier);
-            }
-        }
+        IOUtils.writeMapStringListString(objectOutput, aggregatorsInfo);
     }
 
     private void writeScannigInfo(ObjectOutput objectOutput) throws IOException {
@@ -272,39 +246,9 @@ public class SingleExplainPlan implements Externalizable {
         this.indexesInfo = readIndexes(objectInput);
         this.scanningInfo = readScanningInfo(objectInput);
         if(LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0)){
-            this.tiersInfo = readTiersInfo(objectInput);
+            this.tiersInfo = IOUtils.readMapStringListString(objectInput);
         }
-        this.aggregatorsInfo = readAggregatorsInfo(objectInput);
-    }
-
-    private Map<String, List<String>> readAggregatorsInfo(ObjectInput objectInput) throws IOException, ClassNotFoundException {
-        int length = objectInput.readInt();
-        Map<String, List<String>> map = new HashMap<>();
-        for (int i = 0; i <length; i++) {
-            String aggregatorName = IOUtils.readString(objectInput);
-            int valuesLen = objectInput.readInt();
-            List<String> values = new ArrayList<>(valuesLen);
-            for (int j = 0; j < valuesLen; j++) {
-                values.add(IOUtils.readString(objectInput));
-            }
-            map.put(aggregatorName, values);
-        }
-        return map;
-    }
-
-    private Map<String, List<String>> readTiersInfo(ObjectInput objectInput) throws IOException, ClassNotFoundException {
-        int length = objectInput.readInt();
-        Map<String, List<String>> map = new HashMap<>();
-        for (int i = 0; i <length; i++) {
-            String type = IOUtils.readString(objectInput);
-            int tiersLength = objectInput.readInt();
-            List<String> tiers = new ArrayList<>(tiersLength);
-            for (int j = 0; j < tiersLength; j++) {
-                tiers.add(IOUtils.readString(objectInput));
-            }
-            map.put(type, tiers);
-        }
-        return map;
+        this.aggregatorsInfo = IOUtils.readMapStringListString(objectInput);
     }
 
     private Map<String, ScanningInfo> readScanningInfo(ObjectInput objectInput) throws IOException, ClassNotFoundException {

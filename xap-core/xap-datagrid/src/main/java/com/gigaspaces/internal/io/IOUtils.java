@@ -20,19 +20,7 @@ import com.gigaspaces.executor.SpaceTask;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.IntegerObjectMap;
 import com.gigaspaces.internal.collections.ObjectIntegerMap;
-import com.gigaspaces.internal.serialization.BooleanClassSerializer;
-import com.gigaspaces.internal.serialization.ByteArrayClassSerializer;
-import com.gigaspaces.internal.serialization.ByteClassSerializer;
-import com.gigaspaces.internal.serialization.CharacterClassSerializer;
-import com.gigaspaces.internal.serialization.DoubleClassSerializer;
-import com.gigaspaces.internal.serialization.FloatClassSerializer;
-import com.gigaspaces.internal.serialization.IClassSerializer;
-import com.gigaspaces.internal.serialization.IntegerClassSerializer;
-import com.gigaspaces.internal.serialization.LongClassSerializer;
-import com.gigaspaces.internal.serialization.NullClassSerializer;
-import com.gigaspaces.internal.serialization.ObjectClassSerializer;
-import com.gigaspaces.internal.serialization.ShortClassSerializer;
-import com.gigaspaces.internal.serialization.StringClassSerializer;
+import com.gigaspaces.internal.serialization.*;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
@@ -45,16 +33,7 @@ import org.jini.rio.boot.CodeChangeClassLoadersManager;
 import org.jini.rio.boot.ServiceClassLoader;
 import org.jini.rio.boot.SupportCodeChangeAnnotationContainer;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.StreamCorruptedException;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
@@ -622,6 +601,28 @@ public class IOUtils {
     public static Map<String, String> readMapStringString(ObjectInput in)
             throws IOException, ClassNotFoundException {
         return BootIOUtils.readMapStringString(in);
+    }
+
+    public static void writeMapStringListString(ObjectOutput out, Map<String, List<String>> map)
+            throws IOException {
+        int mapSize = map.size();
+        out.writeInt(mapSize);
+        for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+            IOUtils.writeString(out, entry.getKey());
+            IOUtils.writeListString(out, entry.getValue());
+        }
+    }
+
+    public static Map<String, List<String>> readMapStringListString(ObjectInput in)
+            throws IOException, ClassNotFoundException {
+        int length = in.readInt();
+        Map<String, List<String>> map = new HashMap<>();
+        for (int i = 0; i < length; i++) {
+            String key = IOUtils.readString(in);
+            List<String> value = IOUtils.readListString(in);
+            map.put(key, value);
+        }
+        return map;
     }
 
     public static <T> void writeMapStringT(ObjectOutput out,
