@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.gigaspaces</groupId>
 		<artifactId>xap-scala-parent</artifactId>
-		<version>15.8.1-SNAPSHOT</version>
+		<version>15.8.1-rc1-thu-62</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
