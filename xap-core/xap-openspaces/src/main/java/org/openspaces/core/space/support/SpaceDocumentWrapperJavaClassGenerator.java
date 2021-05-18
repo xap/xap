@@ -1,5 +1,6 @@
 package org.openspaces.core.space.support;
 
+import com.gigaspaces.internal.dump.InternalDumpResult;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.j_spaces.core.admin.IRemoteJSpaceAdmin;
@@ -51,10 +52,14 @@ public class SpaceDocumentWrapperJavaClassGenerator {
     //generated class name suffix - e.g. Foo_Wrapper.java
     public String classnameSuffix = "_Wrapper";
     public String packageName = "com.gs.model";
+
+    public void setTargetDir(String targetDir) {
+        this.targetDir = targetDir;
+    }
+
     public String targetDir = System.getProperty("java.io.tmpdir");
 
     public static void main(String[] args) throws Exception {
-
         final String spaceName = args[0];
         final String lookupGroups = GsEnv.property("com.gs.jini_lus.groups", "GS_LOOKUP_GROUPS").get();
         final String lookupLocators = GsEnv.property("com.gs.jini_lus.locators", "GS_LOOKUP_LOCATORS").get();
@@ -88,8 +93,13 @@ public class SpaceDocumentWrapperJavaClassGenerator {
      * @param className (e.g. java.lang.Object)
      * @throws Exception writing to file
      */
-    private void generate(GigaSpace gigaSpace, String className) throws Exception {
-        SpaceRuntimeInfo info = ((IRemoteJSpaceAdmin) gigaSpace.getSpace().getAdmin()).getRuntimeInfo(className);
+    public void generate(GigaSpace gigaSpace, String className) throws Exception {
+
+        SpaceRuntimeInfo info;
+        if (className == null)
+         info = ((IRemoteJSpaceAdmin) gigaSpace.getSpace().getAdmin()).getRuntimeInfo();
+        else
+         info = ((IRemoteJSpaceAdmin) gigaSpace.getSpace().getAdmin()).getRuntimeInfo(className);
 
         for (String typeName : info.m_ClassNames) {
             if (typeName.equals("java.lang.Object")) continue; //skip
