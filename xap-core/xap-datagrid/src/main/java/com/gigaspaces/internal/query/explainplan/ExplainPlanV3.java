@@ -1,9 +1,6 @@
 package com.gigaspaces.internal.query.explainplan;
 
-import com.gigaspaces.internal.query.explainplan.model.ExplainPlanInfo;
-import com.gigaspaces.internal.query.explainplan.model.IndexChoiceDetail;
-import com.gigaspaces.internal.query.explainplan.model.IndexInfoDetail;
-import com.gigaspaces.internal.query.explainplan.model.PartitionIndexInspectionDetail;
+import com.gigaspaces.internal.query.explainplan.model.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -136,12 +133,17 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
 
             for (int i = options.size() - 1; i >= 0; i--) {
                 final IndexInfo option = options.get(i);
-                final IndexInfoDetail infoFormat = new IndexInfoDetail(getOptionDesc(option), option);
+                final IndexInfoDetail infoFormat = option instanceof BetweenIndexInfo ?
+                            new BetweenIndexInfoDetail(getOptionDesc(option), (BetweenIndexInfo)option) :
+                            new IndexInfoDetail(getOptionDesc(option), option);
                 indexInfoDetails.add(infoFormat);
             }
             return indexInfoDetails;
         }
-        final IndexInfoDetail infoFormat = new IndexInfoDetail(getOptionDesc(indexInfo), indexInfo);
-        return Collections.singletonList(infoFormat);
+        else if( indexInfo instanceof BetweenIndexInfo ){
+            return Collections.singletonList( new BetweenIndexInfoDetail(getOptionDesc(indexInfo), ( BetweenIndexInfo ) indexInfo) );
+        }
+
+        return Collections.singletonList( new IndexInfoDetail(getOptionDesc(indexInfo), indexInfo) );
     }
 }

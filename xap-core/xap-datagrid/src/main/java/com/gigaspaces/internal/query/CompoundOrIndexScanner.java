@@ -73,7 +73,7 @@ public class CompoundOrIndexScanner extends AbstractCompoundIndexScanner
         if (template.isFifoTemplate() && !supportsFifoOrder())
             return IQueryIndexScanner.RESULT_IGNORE_INDEX;
 
-        MultiStoredList<IEntryCacheInfo> unionList = new MultiStoredList<IEntryCacheInfo>();
+        MultiStoredList<IEntryCacheInfo> unionList = new MultiStoredList<>();
         if (template.isFifoGroupPoll())
             context.setFifoGroupQueryContainsOrCondition(true);
 

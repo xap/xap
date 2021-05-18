@@ -99,7 +99,7 @@ public abstract class AbstractQueryIndex implements IQueryIndexScanner {
         // check the cases when ordered index can not be used:
         // ordered index is not defined
         else if (requiresOrderedIndex() && index.getExtendedIndexForScanning() == null){
-            resultIndicator =  IQueryIndexScanner.RESULT_IGNORE_INDEX;
+            resultIndicator =  IQueryIndexScanner.RESULT_IGNORE_INDEX;//HERE !!!
         }
 
         // Get index value in query. If null, skip to next index unless its an isNull:
@@ -109,8 +109,8 @@ public abstract class AbstractQueryIndex implements IQueryIndexScanner {
         else if (template.isFifoGroupPoll() && !index.isFifoGroupsMainIndex() && (context.isFifoGroupQueryContainsOrCondition() || requiresOrderedIndex())){
             resultIndicator =  IQueryIndexScanner.RESULT_IGNORE_INDEX; ////query of "OR" by non f-g index results can be non-fifo within the f-g
         }
-        if (resultIndicator != null){
-            if(context.getExplainPlanContext() != null){
+        if (resultIndicator != null  ){
+            if(context.getExplainPlanContext() != null ){
                 IndexChoiceNode choiceNode = context.getExplainPlanContext().getFatherNode();
                 //check in order to prevent throwing NPE
                 if( choiceNode != null ) {

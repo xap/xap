@@ -88,24 +88,40 @@ public class IndexInfoDetail {
             return getString(false);
         }
 
-        return String.format("- (%s %s%s), size=[min=%s, max=%s]"
-                , getName(), getOperator().getOperatorString()
-                , getValueDesc(value), min, max); //TODO mishel - move to another method in my code instead of here.
+        return String.format("- " + getValueFormatting() + ", size=[min=%s, max=%s]"
+                , getNameDescription(), getOperationDescription()
+                , getValueDescription(value), min, max); //TODO mishel - move to another method in my code instead of here.
     }
 //
-    private String getString(boolean verbose) {
+    protected String getString(boolean verbose) {
         if (verbose) {
-            return String.format("[#%s] (%s %s%s), size=%s, type=%s"
-                    , getId(), getName(), getOperator().getOperatorString()
-                    , getValueDesc(value), getSizeDesc(), getType());
+            return String.format("[#%s] " + getValueFormatting() + ", size=%s, type=%s"
+                    , getId(), getNameDescription(), getOperationDescription()
+                    , getValueDescription(value), getSizeDesc(), getType());
         } else {
-            return String.format("- (%s %s%s), size=%s"
-                    , getName(), getOperator().getOperatorString()
-                    , getValueDesc(value), getSizeDesc());
+            return String.format("- " + getValueFormatting() + ", size=%s"
+                    , getNameDescription(), getOperationDescription()
+                    , getValueDescription(value), getSizeDesc());
         }
     }
 
-    private String getSizeDesc() {
+    protected String getValueFormatting(){
+        return "(%s %s%s)";
+    }
+
+    protected String getNameDescription(){
+        return getName();
+    }
+
+    protected String getOperationDescription(){
+        return getOperator().getOperatorString();
+    }
+
+    protected Object getValueDescription( Object value ){
+        return getValueDesc( value );
+    }
+
+    protected String getSizeDesc() {
         return size == null || size == -1 ? "unknown" : String.valueOf(size);
     }
 }

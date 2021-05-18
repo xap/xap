@@ -42,12 +42,13 @@ public class ExtendedIndexIterator<V>
     private final short _originalStartCondition;
     private final Object _originalEnd;
     private final short _originalEndCondition;
-
+    private final int _size;
 
 
     public ExtendedIndexIterator(NavigableMap mapToScan, TypeDataIndex idx,
                                  Object originalStart,short originalStartCondition,Object originalEnd, short originalEndCondition){
         _iter = mapToScan.values().iterator();
+        _size = mapToScan.size();
         _idx = idx;
         _originalStart = originalStart;
         _originalStartCondition=originalStartCondition;
@@ -182,4 +183,27 @@ public class ExtendedIndexIterator<V>
 
     }
 
+    public Object getOriginalStart() {
+        return _originalStart;
+    }
+    public short getOriginalStartCondition() {
+        return _originalStartCondition;
+    }
+
+    public Object getOriginalEnd() {
+        return _originalEnd;
+    }
+
+    public short getOriginalEndCondition() {
+        return _originalEndCondition;
+    }
+
+    public int getSize(){
+        return _size;
+    }
+
+    @Override
+    public boolean hasSize() {
+        return true;/* _size > 0*/
+    }
 }

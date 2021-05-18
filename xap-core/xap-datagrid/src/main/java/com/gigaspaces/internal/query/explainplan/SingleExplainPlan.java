@@ -267,7 +267,7 @@ public class SingleExplainPlan implements Externalizable {
 
     private Map<String, List<IndexChoiceNode>> readIndexes(ObjectInput objectInput) throws IOException, ClassNotFoundException {
         Map<String, List<IndexChoiceNode>> map = null;
-        int length = (int) objectInput.readInt();
+        int length = objectInput.readInt();
         if (length >= 0) {
             map = new HashMap<>(length);
             for (int i = 0; i < length; i++) {
@@ -317,9 +317,6 @@ public class SingleExplainPlan implements Externalizable {
 
         if(customQuery instanceof RelationRange){
             throw new UnsupportedOperationException("Sql explain plan does not support geo-spatial type queries");
-        }
-        if(customQuery instanceof RegexRange || customQuery instanceof NotRegexRange){
-            throw new UnsupportedOperationException("Sql explain plan does not support regular expression type queries");
         }
         if(customQuery instanceof Range && ((Range) customQuery).getFunctionCallDescription() != null){
             throw new UnsupportedOperationException("Sql explain plan does not support sql function type queries");

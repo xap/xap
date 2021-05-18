@@ -47,7 +47,6 @@ import com.gigaspaces.internal.server.space.recovery.direct_persistency.IStorage
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.StorageConsistencyModes;
 import com.gigaspaces.internal.server.space.tiered_storage.CachePredicate;
 import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageManager;
-import com.gigaspaces.internal.server.space.tiered_storage.TimePredicate;
 import com.gigaspaces.internal.server.storage.*;
 import com.gigaspaces.internal.sync.hybrid.SyncHybridStorageAdapter;
 import com.gigaspaces.internal.transport.ITemplatePacket;
@@ -381,7 +380,7 @@ public class CacheManager extends AbstractCacheManager
 
         _entries = (_typeDataFactory.useEconomyHashMap() || (isBlobStoreCachePolicy() && _USE_UIDS_ECONOMY_HASH_MAP_FOR_BLOBSTORE_))
                 ? new EconomyConcurrentHashMap<String, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents, new HashEntryHandlerSpaceEntry(IEntryCacheInfo.UID_HASH_INDICATOR))
-                : new ConcurrentHashMap<String, IEntryCacheInfo>(16, 0.75f, numOfCHMSegents);
+                : new ConcurrentHashMap<>(16, 0.75f, numOfCHMSegents);
 
         _cacheContextFactory = new CacheContextFactory(this, engine.getFullSpaceName());
         _templatesManager = new TemplatesManager(this, numNotifyFifoThreads, numNonNotifyFifoThreads);
@@ -427,7 +426,7 @@ public class CacheManager extends AbstractCacheManager
     }
 
     private Map<String, QueryExtensionIndexManagerWrapper> initQueryExtensionManagers(Properties customProperties) {
-        final Map<String, QueryExtensionIndexManagerWrapper> queryExtensions = new HashMap<String, QueryExtensionIndexManagerWrapper>();
+        final Map<String, QueryExtensionIndexManagerWrapper> queryExtensions = new HashMap<>();
         final QueryExtensionRuntimeInfo info = new QueryExtensionRuntimeInfoImpl(
                 getEngine().getSpaceImpl().getNodeName(),
                 getEngine().getSpaceImpl().getDeployPath());
@@ -982,7 +981,7 @@ public class CacheManager extends AbstractCacheManager
             entriesIterSA = _storageAdapter.initialLoad(context, th);
             if (entriesIterSA != null) {
                 IServerTypeDesc serverTypeDesc = null;
-                Set<String> typesIn = _persistentBlobStore ? new HashSet<String>() : null;
+                Set<String> typesIn = _persistentBlobStore ? new HashSet<>() : null;
                 while (true) {
                     IEntryHolder eh = entriesIterSA.next();
                     if (eh == null) {
@@ -1689,7 +1688,7 @@ public class CacheManager extends AbstractCacheManager
                 if (Modifiers.contains(template.getOperationModifiers(), Modifiers.RETURN_DETAILED_CHANGE_RESULT)) {
                     if (result != null) {//set returned result list on a need-to basis
                         if (results == null) {
-                            results = new ArrayList<Object>(template.getMutators().size());
+                            results = new ArrayList<>(template.getMutators().size());
                             if (i > 0) {
                                 for (int j = 0; j < i; j++)
                                     results.add(null);
@@ -1950,7 +1949,7 @@ public class CacheManager extends AbstractCacheManager
     public List<TemplateInfo> getTemplatesInfo(String className) {
         IServerTypeDesc serverTypeDesc = _typeManager.getServerTypeDesc(className);
         TypeData typeData = _typeDataMap.get(serverTypeDesc);
-        List<TemplateInfo> templatesList = new ArrayList<TemplateInfo>(0);
+        List<TemplateInfo> templatesList = new ArrayList<>(0);
 
         // load templates info from type data
         if (typeData != null)
@@ -2579,7 +2578,7 @@ public class CacheManager extends AbstractCacheManager
         ArrayList<IEntryHolder> pLocked = null;
         IStoredList<IEntryCacheInfo> lockedEntries = pXtn.getLockedEntries();
         if (lockedEntries != null && !lockedEntries.isEmpty()) {
-            pLocked = new ArrayList<IEntryHolder>();
+            pLocked = new ArrayList<>();
             for (IStoredListIterator<IEntryCacheInfo> slh = lockedEntries.establishListScan(false); slh != null; slh = pXtn.getLockedEntries().next(slh)) {
                 IEntryCacheInfo pEntry = slh.getSubject();
                 if (pEntry == null)
@@ -2980,7 +2979,7 @@ public class CacheManager extends AbstractCacheManager
             return 0;
         iter.setNotRefreshCache();
         CountInfo countInfo = new CountInfo();
-        HashSet<String> processedResults = new HashSet<String>();
+        HashSet<String> processedResults = new HashSet<>();
         while (true) {
             IEntryHolder eh = null;
             Object res = iter.nextObject();
@@ -3542,7 +3541,7 @@ public class CacheManager extends AbstractCacheManager
             result.setOffHeapCacheUsedBytes(_blobStoreStorageHandler.getOffHeapCache().getUsedBytes());
         BlobStoreStorageStatistics snapshot = _blobStoreStorageHandler.getStorageStatistics();
         if (snapshot != null) {
-            result.setStorageStatistics(new ArrayList<BlobStoreStorageStatistics>(1));
+            result.setStorageStatistics(new ArrayList<>(1));
             result.getStorageStatistics().add(snapshot);
         }
         return result;
@@ -4697,7 +4696,7 @@ public class CacheManager extends AbstractCacheManager
                             uidsIter = (ScanUidsIterator) resultScan;
                             uidsSize = uidsIter.size();
                         }
-                        if (resultScan.hasSize()) {
+                        if (resultScan.hasSize()) { ///added already by MOran
                             if (resultOIS == null || resultScan.size() < resultOIS.size()) {
                                 resultOIS = resultScan;
                                 nameOfChosenCustomIndex = index.getIndexName();
@@ -4857,6 +4856,7 @@ public class CacheManager extends AbstractCacheManager
                             final boolean isInclusive = rangeValue == null ? false : template.getRangeInclusion(pos);
                             //range limit passed- query with "up to" range
                             //NOTE! - currently we support only range "up-to" inclusive
+                            //also pass size as an actual size like Moran already did
                             IScanListIterator<IEntryCacheInfo> originalOIS = resultOIS;
                             resultOIS = index.getExtendedIndexForScanning().establishScan(templateValue,
                                     extendedMatchCode, rangeValue, isInclusive);
@@ -4869,7 +4869,28 @@ public class CacheManager extends AbstractCacheManager
                                     context.getExplainPlanContext().getSingleExplainPlan().addScanIndexChoiceNode(entryType.getClassName(), context.getExplainPlanContext().getMatch());
                                 }
                                 int indexSize = -1; //unknown size
-                                IndexInfo indexInfo = new IndexInfo(entryType.getProperty(pos).getName(), indexSize, index.getIndexType(), templateValue, ExplainPlanUtil.getQueryOperator(extendedMatchCode));
+                                // check if ExtendedIndexIterator resultOIS has size, than use it instead of -1
+                                //take originalEndCondition value from TemplateMatchCodes
+                                //check also on unindexed column or equals
+                                IndexInfo indexInfo;
+                                if( resultOIS instanceof ExtendedIndexIterator &&
+                                        ((ExtendedIndexIterator) resultOIS).getOriginalStart() != null &&
+                                        ((ExtendedIndexIterator) resultOIS).getOriginalEnd() != null) {
+                                    // calculate it before indexSize = ((ExtendedIndexIterator) resultOIS).getSize();
+
+                                    boolean includeMin =
+                                            ((ExtendedIndexIterator) resultOIS).getOriginalStartCondition() == TemplateMatchCodes.GE;
+                                    boolean includeMax =
+                                            ((ExtendedIndexIterator) resultOIS).getOriginalEndCondition() == TemplateMatchCodes.LE;
+
+                                    indexInfo = new BetweenIndexInfo(entryType.getProperty(pos).getName(), indexSize, index.getIndexType(),
+                                            ( Comparable )((ExtendedIndexIterator) resultOIS).getOriginalStart(), includeMin,
+                                            ( Comparable )((ExtendedIndexIterator) resultOIS).getOriginalEnd(), includeMax,
+                                            ExplainPlanUtil.getQueryOperator(extendedMatchCode), true );
+                                }
+                                else {
+                                    indexInfo = new IndexInfo(entryType.getProperty(pos).getName(), indexSize, index.getIndexType(), templateValue, ExplainPlanUtil.getQueryOperator(extendedMatchCode));
+                                }
                                 context.getExplainPlanContext().getMatch().addOption(indexInfo);
                                 if (resultSL == null && uidsSize == Integer.MAX_VALUE) {
                                     context.getExplainPlanContext().getMatch().setChosen(indexInfo);
@@ -4952,7 +4973,7 @@ public class CacheManager extends AbstractCacheManager
     private static MultiIntersectedStoredList<IEntryCacheInfo> addToIntersectedList(Context context, MultiIntersectedStoredList<IEntryCacheInfo> intersectedList, IObjectsList list, boolean fifoScan, boolean shortest, TypeData typeData) {
         if (list != null && list != typeData.getEntries()) {
             if (intersectedList == null) {
-                intersectedList = new MultiIntersectedStoredList<IEntryCacheInfo>(context, list, fifoScan, typeData.getEntries(), !context.isBlobStoreUsePureIndexesAccess() /*false positive only*/);
+                intersectedList = new MultiIntersectedStoredList<>(context, list, fifoScan, typeData.getEntries(), !context.isBlobStoreUsePureIndexesAccess() /*false positive only*/);
                 context.setChosenIntersectedList(intersectedList);
             } else
                 intersectedList.add(list, shortest);
@@ -5063,7 +5084,7 @@ public class CacheManager extends AbstractCacheManager
 
                 Object entryValue = index.getIndexValue(entryData);
                 if (index.isMultiValuePerEntryIndex() && entryValue != null) {
-                    IStoredList<TemplateCacheInfo> multiValueTemplates = new ConcurrentSegmentedStoredList<TemplateCacheInfo>(true  /* supportsFifoPerSegment*/,1, true /*padded*/);
+                    IStoredList<TemplateCacheInfo> multiValueTemplates = new ConcurrentSegmentedStoredList<>(true  /* supportsFifoPerSegment*/,1, true /*padded*/);
                     nullTemplatesVector = (matchTarget == MatchTarget.READ_TAKE) ? index._RTNullTemplates : index._NNullTemplates;
                     // Collect templates for collection items
                     for (Object value : (Collection<?>) entryValue) {
@@ -5979,10 +6000,10 @@ public class CacheManager extends AbstractCacheManager
     private SpaceRuntimeInfo getRuntimeInfo(IServerTypeDesc serverTypeDesc, Map<String, Integer> entriesInfo, Map<String, Integer> ramEntriesInfo) {
 
         final IServerTypeDesc[] subTypes = serverTypeDesc.getAssignableTypes();
-        ArrayList<String> classes = new ArrayList<String>(subTypes.length);
-        ArrayList<Integer> entries = new ArrayList<Integer>(subTypes.length);
-        ArrayList<Integer> ramOnlyEntries = new ArrayList<Integer>(subTypes.length);
-        ArrayList<Integer> templates = new ArrayList<Integer>(subTypes.length);
+        ArrayList<String> classes = new ArrayList<>(subTypes.length);
+        ArrayList<Integer> entries = new ArrayList<>(subTypes.length);
+        ArrayList<Integer> ramOnlyEntries = new ArrayList<>(subTypes.length);
+        ArrayList<Integer> templates = new ArrayList<>(subTypes.length);
 
         for (IServerTypeDesc subType : subTypes) {
             if (subType.isInactive())
@@ -6039,7 +6060,7 @@ public class CacheManager extends AbstractCacheManager
                 _engine.createUIDFromCounter(), LeaseManager.toAbsoluteTime(0) /* expiration time*/, false /*isFifo*/);
 
         final IServerTypeDesc[] subTypes = serverTypeDesc.getAssignableTypes();
-        final Map<String, Integer> entriesInfo = new HashMap<String, Integer>(subTypes.length);
+        final Map<String, Integer> entriesInfo = new HashMap<>(subTypes.length);
         for (IServerTypeDesc subType : subTypes) {
             if (subType.isActive())
                 entriesInfo.put(subType.getTypeName(), 0);

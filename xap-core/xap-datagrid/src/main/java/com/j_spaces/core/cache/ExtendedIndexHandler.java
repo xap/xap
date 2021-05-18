@@ -26,12 +26,11 @@ import com.j_spaces.kernel.IStoredList;
 import com.j_spaces.kernel.StoredListFactory;
 import com.j_spaces.kernel.list.IScanListIterator;
 import com.j_spaces.kernel.list.MultiStoredList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handles data manipulation of space extended index
@@ -53,7 +52,7 @@ public class ExtendedIndexHandler<K>
 
     public ExtendedIndexHandler(TypeDataIndex index) {
         _index = index;
-        _orderedStore = new FastConcurrentSkipListMap<Object, IStoredList<IEntryCacheInfo>>();
+        _orderedStore = new FastConcurrentSkipListMap<>();
         _uniqueOrderedStore = _index.isUniqueIndex() ? (FastConcurrentSkipListMap<Object, IEntryCacheInfo>) ((FastConcurrentSkipListMap) _orderedStore) : null;
         if (index.getCacheManager().getEngine().getLeaseManager().isSupportsRecentExtendedUpdates())
             _recentExtendedIndexUpdates = new RecentExtendedIndexUpdates(index.getCacheManager());
@@ -296,7 +295,7 @@ public class ExtendedIndexHandler<K>
                 establishScanUnOrdered(startPos, relation, endPos, endPosInclusive);
 
         if (_recentExtendedIndexUpdates != null && !_recentExtendedIndexUpdates.isEmpty()) {
-            MultiStoredList<IEntryCacheInfo> msl = new MultiStoredList<IEntryCacheInfo>();
+            MultiStoredList<IEntryCacheInfo> msl = new MultiStoredList<>();
             msl.add(res);
             msl.add(_recentExtendedIndexUpdates.iterator(startTime,(ExtendedIndexIterator)res));
             return msl;
@@ -336,7 +335,7 @@ public class ExtendedIndexHandler<K>
             mapToScan = start != null ? baseMap.tailMap(start, startinclusive) : baseMap;
         else
             mapToScan = start != null ? baseMap.subMap(start, startinclusive, end, endInclusive) : baseMap.headMap(end, endInclusive);
-        return new ExtendedIndexIterator<IEntryCacheInfo>(mapToScan, _index,originalStart,originalStartCondition, originalEnd,originalEndCondition);
+        return new ExtendedIndexIterator<>(mapToScan, _index,originalStart,originalStartCondition, originalEnd,originalEndCondition);
     }
 
     private ExtendedIndexIterator<IEntryCacheInfo> establishScanOrdered(K startPos, short relation, K endPos, boolean endPosInclusive) {
@@ -346,7 +345,9 @@ public class ExtendedIndexHandler<K>
         Object originalStart = startPos;
         Object originalEnd = endPos;
         short originalStartCondition = reversedScan ? 0 : relation;
-        short originalEndCondition = !reversedScan ? 0 : relation;
+        short originalEndCondition =  ( endPos == null ) ?
+                ( !reversedScan ? 0 : relation ) :
+                ( endPosInclusive ? TemplateMatchCodes.LE : TemplateMatchCodes.LT );
 
         NavigableMap baseMap = reversedScan ? _orderedStore.descendingMap() : _orderedStore;
         NavigableMap mapToScan;
@@ -354,6 +355,6 @@ public class ExtendedIndexHandler<K>
             mapToScan = startPos != null ? baseMap.tailMap(startPos, startinclusive) : baseMap;
         else
             mapToScan = startPos != null ? baseMap.subMap(startPos, startinclusive, endPos, endPosInclusive) : baseMap.headMap(endPos, endPosInclusive);
-        return new ExtendedIndexIterator<IEntryCacheInfo>(mapToScan, _index,originalStart,originalStartCondition, originalEnd,originalEndCondition);
+        return new ExtendedIndexIterator<>(mapToScan, _index,originalStart,originalStartCondition, originalEnd,originalEndCondition);
     }
 }
