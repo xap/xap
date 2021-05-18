@@ -57,7 +57,7 @@ public class PartitionFinalSelectedIndexes {
             final List<Pair<String, String>>  firstAggregators = first.getAggregators();
             final List<Pair<String, String>>  secondAggregators = second.getAggregators();
             if (firstSelectedIndexes == null || secondSelectedIndexes == null || firstSelectedIndexes.size() != secondSelectedIndexes.size()
-                    || firstUsedTiers == null || !firstUsedTiers.equals(secondUsedTiers)
+                    || firstUsedTiers == null || !firstUsedTiers.equals(secondUsedTiers) //TODO: use Objects.equal?
                     || firstAggregators == null || !firstAggregators.equals(secondAggregators)) {
                 return false;
             }

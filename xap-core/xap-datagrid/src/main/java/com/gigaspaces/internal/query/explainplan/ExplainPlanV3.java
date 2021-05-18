@@ -86,18 +86,9 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
         final Map<String, List<IndexChoiceNode>> indexesInfo = singleExplainPlan.getIndexesInfo();
         indexInspection.setUsedTiers(singleExplainPlan.getTiersInfo().values().stream().flatMap(List::stream).collect(Collectors.toList()));
         indexInspection.setPartition(partitionId);
-
-        final Map<String, List<String>> aggregatorsInfo = singleExplainPlan.getAggregatorsInfo();
-        if(!aggregatorsInfo.isEmpty()){ //TODO: maybe create an Object for each Aggregator.
-            List<Pair<String, String>> aggregators = new ArrayList<>();
-            for(Map.Entry<String, List<String>> entry : aggregatorsInfo.entrySet()) {
-                Pair<String, String> pair = new Pair<>();
-                pair.setFirst(entry.getKey());
-                pair.setSecond(String.join(", ", entry.getValue()));
-                aggregators.add(pair);//TODO: pass the map?
-            }
-            indexInspection.setAggregators(aggregators);
-        }
+        indexInspection.setAggregators(singleExplainPlan.getAggregatorsInfo().entrySet().stream()
+                .map((entry) -> new Pair<String, String>(entry.getKey(), String.join(", ", entry.getValue())))
+                .collect(Collectors.toList()));
 
         if (indexesInfo.size() == 1) {
             Map.Entry<String, List<IndexChoiceNode>> entry = indexesInfo.entrySet().iterator().next();
