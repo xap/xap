@@ -75,6 +75,8 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
             // Key is the grouped partitions for example: "1,2,3", value is their used tiers (must be common)
             Map<String, List<String>> partitionsAndUsedTiers = new HashMap<>();
 
+            Map<String,  List<Pair<String, String>>> partitionsAndUsedAggregators = new HashMap<>();
+
             // Every iteration we pull group of similar selected indexes and then we make actions on it
             // and remove them from selectedIndexesPerPartition so that the next iteration will be cleaner
             while (!selectedIndexesPerPartition.isEmpty()) {
@@ -113,44 +115,74 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
 
                 finalResults.put(partitions, selectedToStringWithMinMaxSize);
                 partitionsAndUsedTiers.put(partitions, randomPartitionSelectedIndexes.getUsedTiers());
+                partitionsAndUsedAggregators.put(partitions, randomPartitionSelectedIndexes.getAggregators());
             } //todo mishel consider to run the block above with stream and group by instead of using two maps in the end
 
-            finalResults.forEach((partitions, selectedIndexesFormatted) -> {
-                List<String> usedTiers = partitionsAndUsedTiers.get(partitions);
+            //TODO remove it when refactor with mishel
+            if(finalResults.values().stream().findFirst().isPresent() && finalResults.values().stream().findFirst().get().isEmpty()) {
+                List<String> usedTiers = null;
+                List<Pair<String, String>> usedAggregators = null;
+                if (partitionsAndUsedTiers.values().stream().findFirst().isPresent()) {
+                    usedTiers = partitionsAndUsedTiers.values().stream().findFirst().get();
+                }
+                if (partitionsAndUsedAggregators.values().stream().findFirst().isPresent()) {
+                    usedAggregators = partitionsAndUsedAggregators.values().stream().findFirst().get();
+                }
                 boolean usedTieredStorage = usedTiers != null && usedTiers.size() != 0;
-                boolean unionIndexChoice = selectedIndexesFormatted.size() > 1;
-                if (selectedIndexesFormatted.isEmpty() && !usedTieredStorage) {
-                    return; //skip this iteration
-                }
-
-                if (partitions.contains(",")) {
-                    formatter.line(String.format("Partitions: [%s]", partitions));
-                } else {
-                    formatter.line(String.format("Partition: [%s]", partitions));
-                }
-                formatter.indent();
-
+                boolean useAggregation = usedAggregators != null && !usedAggregators.isEmpty();
                 if (usedTieredStorage) {
                     formatter.line(getTiersFormatted(usedTiers));
                 }
 
-                if (!selectedIndexesFormatted.isEmpty()) {
-                    formatter.line(SELECTED_INDEX_STRING);
-                    if (unionIndexChoice) {
-                        formatter.indent();
-                        formatter.line("Union:");
-                    }
-
-                    formatter.indent();
-                    selectedIndexesFormatted.forEach(formatter::line);
-                    formatter.unindent();
-
-                    if (unionIndexChoice) {
-                        formatter.unindent();
-                    }
+                if (useAggregation) {
+                    formatAggregators(usedAggregators, formatter);
                 }
-                formatter.unindent();
-            });
+
+            } else {
+
+                finalResults.forEach((partitions, selectedIndexesFormatted) -> {
+                    List<String> usedTiers = partitionsAndUsedTiers.get(partitions);
+                    List<Pair<String, String>> usedAggregators = partitionsAndUsedAggregators.get(partitions);
+                    boolean usedTieredStorage = usedTiers != null && usedTiers.size() != 0;
+                    boolean useAggregation = usedAggregators != null && !usedAggregators.isEmpty();
+                    boolean unionIndexChoice = selectedIndexesFormatted.size() > 1;
+                    if (selectedIndexesFormatted.isEmpty() && !usedTieredStorage) {
+                        return; //skip this iteration
+                    }
+
+                    if (partitions.contains(",")) {
+                        formatter.line(String.format("Partitions: [%s]", partitions));
+                    } else {
+                        formatter.line(String.format("Partition: [%s]", partitions));
+                    }
+                    formatter.indent();
+
+                    if (usedTieredStorage) {
+                        formatter.line(getTiersFormatted(usedTiers));
+                    }
+
+                    if (useAggregation) {
+                        formatAggregators(usedAggregators, formatter);
+                    }
+
+                    if (!selectedIndexesFormatted.isEmpty()) {
+                        formatter.line(SELECTED_INDEX_STRING);
+                        if (unionIndexChoice) {
+                            formatter.indent();
+                            formatter.line("Union:");
+                        }
+
+                        formatter.indent();
+                        selectedIndexesFormatted.forEach(formatter::line);
+                        formatter.unindent();
+
+                        if (unionIndexChoice) {
+                            formatter.unindent();
+                        }
+                    }
+                    formatter.unindent();
+                });
+            }
         } else {
             for (PartitionIndexInspectionDetail inspectionDetail : indexInspectionsPerPartition) {
                 if ((inspectionDetail.getIndexes() == null || inspectionDetail.getIndexes().isEmpty()) &&
@@ -225,7 +257,9 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
                 }
             }
 
-            selectedIndexesPerPartition.put(inspectionDetail.getPartition(), new PartitionFinalSelectedIndexes(selectedIndexes, inspectionDetail.getUsedTiers()));
+            selectedIndexesPerPartition.put(inspectionDetail.getPartition(),
+                    new PartitionFinalSelectedIndexes(selectedIndexes, inspectionDetail.getUsedTiers(),
+                            inspectionDetail.getAggregators()));
         }
         return selectedIndexesPerPartition;
     }
@@ -235,15 +269,9 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
     }
 
     private void formatAggregators(List<Pair<String, String>> aggregators, TextReportFormatter formatter) {
-        formatter.line(String.format("Aggregation%s: ", (aggregators.size() > 1 ? "s" : "")));
-        formatter.indent();
         for(Pair<String, String> aggregatorPair : aggregators) {
-            formatter.line(aggregatorPair.getFirst() + ": ");
-            formatter.indent();
-            formatter.line(aggregatorPair.getSecond());
-            formatter.unindent();
+            formatter.line(aggregatorPair.getFirst() + ": " + aggregatorPair.getSecond());
         }
-        formatter.unindent();
     }
 
     private boolean isIndexUsed() {

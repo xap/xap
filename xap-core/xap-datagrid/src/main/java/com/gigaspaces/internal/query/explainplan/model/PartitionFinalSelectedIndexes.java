@@ -1,5 +1,7 @@
 package com.gigaspaces.internal.query.explainplan.model;
 
+import com.gigaspaces.utils.Pair;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -12,15 +14,19 @@ import java.util.List;
 public class PartitionFinalSelectedIndexes {
     private final List<IndexInfoDetail> selectedIndexes;
     private final List<String> usedTiers;
+    private final List<Pair<String, String>> aggregators;
 
     public PartitionFinalSelectedIndexes() {
         selectedIndexes = Collections.emptyList();
         usedTiers = Collections.emptyList();
+        aggregators = Collections.emptyList();
     }
 
-    public PartitionFinalSelectedIndexes(List<IndexInfoDetail> selectedIndexes, List<String> usedTiers) {
+    public PartitionFinalSelectedIndexes(List<IndexInfoDetail> selectedIndexes, List<String> usedTiers,
+                                         List<Pair<String, String>> aggregators) {
         this.selectedIndexes = selectedIndexes;
         this.usedTiers = usedTiers;
+        this.aggregators = aggregators;
     }
 
     public List<IndexInfoDetail> getSelectedIndexes() {
@@ -31,8 +37,12 @@ public class PartitionFinalSelectedIndexes {
         return usedTiers;
     }
 
+    public List<Pair<String, String>> getAggregators() {
+        return aggregators;
+    }
+
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(Object obj) { //TODO: add aggregators.
         if (obj == null) {
             return false;
         }

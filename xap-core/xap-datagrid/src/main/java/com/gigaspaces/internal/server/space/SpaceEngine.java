@@ -6466,7 +6466,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                           SpaceContext sc)
             throws Exception {
         if (Modifiers.contains(readModifiers, Modifiers.EXPLAIN_PLAN)) {
-//            throw new UnsupportedOperationException("Sql explain plan is not supported for aggregation");
             SingleExplainPlan.validate(0, _cacheManager.isBlobStoreCachePolicy(), readModifiers,
                     queryPacket.getCustomQuery(), getClassTypeInfo(queryPacket.getTypeName()).getIndexes());
         }

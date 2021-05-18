@@ -88,13 +88,13 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
         indexInspection.setPartition(partitionId);
 
         final Map<String, List<String>> aggregatorsInfo = singleExplainPlan.getAggregatorsInfo();
-        if(!aggregatorsInfo.isEmpty()){
+        if(!aggregatorsInfo.isEmpty()){ //TODO: maybe create an Object for each Aggregator.
             List<Pair<String, String>> aggregators = new ArrayList<>();
             for(Map.Entry<String, List<String>> entry : aggregatorsInfo.entrySet()) {
                 Pair<String, String> pair = new Pair<>();
                 pair.setFirst(entry.getKey());
                 pair.setSecond(String.join(", ", entry.getValue()));
-                aggregators.add(pair);
+                aggregators.add(pair);//TODO: pass the map?
             }
             indexInspection.setAggregators(aggregators);
         }
