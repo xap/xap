@@ -39,6 +39,7 @@ public class SingleTypeRDBMSIterator implements ISAdapterIterator<IEntryHolder> 
     @Override
     public void close() throws SAException {
         try {
+            resultSet.getStatement().close();
             resultSet.close();
         } catch (SQLException e) {
             throw new SAException("failed to close result set for type " + typeName, e);
