@@ -42,7 +42,7 @@ public class PartitionFinalSelectedIndexes {
     }
 
     @Override
-    public boolean equals(Object obj) { //TODO: add aggregators.
+    public boolean equals(Object obj) {
         if (obj == null) {
             return false;
         }
@@ -54,8 +54,11 @@ public class PartitionFinalSelectedIndexes {
             final List<IndexInfoDetail> secondSelectedIndexes = second.getSelectedIndexes();
             final List<String> firstUsedTiers = first.getUsedTiers();
             final List<String> secondUsedTiers = second.getUsedTiers();
+            final List<Pair<String, String>>  firstAggregators = first.getAggregators();
+            final List<Pair<String, String>>  secondAggregators = second.getAggregators();
             if (firstSelectedIndexes == null || secondSelectedIndexes == null || firstSelectedIndexes.size() != secondSelectedIndexes.size()
-                    || firstUsedTiers == null || !firstUsedTiers.equals(secondUsedTiers)) {
+                    || firstUsedTiers == null || !firstUsedTiers.equals(secondUsedTiers)
+                    || firstAggregators == null || !firstAggregators.equals(secondAggregators)) {
                 return false;
             }
 
@@ -78,5 +81,20 @@ public class PartitionFinalSelectedIndexes {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        for (IndexInfoDetail selectedIndex : selectedIndexes) {
+            hash = 31 * hash + (selectedIndex.getValue() != null ? selectedIndex.getValue().hashCode() : 0);
+            hash = 31 * hash + (selectedIndex.getName() != null ? selectedIndex.getName().hashCode() : 0);
+            hash = 31 * hash + (selectedIndex.getType() != null ? selectedIndex.getType().hashCode() : 0);
+            hash = 31 * hash + (selectedIndex.getOperator() != null ? selectedIndex.getOperator().hashCode() : 0);
+        }
+
+        hash = 31 * hash + (usedTiers != null ? usedTiers.hashCode() : 0);
+        hash = 31 * hash + (aggregators != null ? aggregators.hashCode() : 0);
+        return hash;
     }
 }

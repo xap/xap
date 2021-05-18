@@ -12,10 +12,10 @@ import com.gigaspaces.metadata.index.SpaceIndexType;
  */
 public class IndexInfoDetail {
     private Integer id;
+    private Integer size;
     private String name;
     private Object value;
     private QueryOperator operator;
-    private Integer size;
     private SpaceIndexType type;
 
 
