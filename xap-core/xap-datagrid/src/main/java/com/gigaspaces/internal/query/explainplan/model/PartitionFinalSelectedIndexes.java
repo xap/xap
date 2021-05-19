@@ -4,6 +4,7 @@ import com.gigaspaces.utils.Pair;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents the final selected indexes of a single partition along with its used tiers
@@ -57,8 +58,8 @@ public class PartitionFinalSelectedIndexes {
             final List<Pair<String, String>>  firstAggregators = first.getAggregators();
             final List<Pair<String, String>>  secondAggregators = second.getAggregators();
             if (firstSelectedIndexes == null || secondSelectedIndexes == null || firstSelectedIndexes.size() != secondSelectedIndexes.size()
-                    || firstUsedTiers == null || !firstUsedTiers.equals(secondUsedTiers) //TODO: use Objects.equal?
-                    || firstAggregators == null || !firstAggregators.equals(secondAggregators)) {
+                    || !Objects.equals(firstUsedTiers, secondUsedTiers)
+                    || !Objects.equals(firstAggregators, secondAggregators)) {
                 return false;
             }
 

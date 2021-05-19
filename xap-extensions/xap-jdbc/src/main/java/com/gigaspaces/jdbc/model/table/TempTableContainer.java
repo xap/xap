@@ -13,6 +13,7 @@ import com.j_spaces.jdbc.builder.range.Range;
 import com.j_spaces.jdbc.builder.range.SegmentRange;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,9 @@ public class TempTableContainer extends TableContainer {
     public QueryResult executeRead(QueryExecutionConfig config) {
         if (config.isExplainPlan()) {
             ExplainPlanResult explainResult = ((ExplainPlanResult) tableResult);
-            SubqueryExplainPlan subquery = new SubqueryExplainPlan(visibleColumns, (alias == null ? config.getTempTableNameGenerator().generate() : alias), explainResult.getExplainPlanInfo(), getExprTree());
+            SubqueryExplainPlan subquery = new SubqueryExplainPlan(visibleColumns,
+                    (alias == null ? config.getTempTableNameGenerator().generate() : alias),
+                    explainResult.getExplainPlanInfo(), getExprTree(), Collections.unmodifiableList(this.orderColumns));
             return new ExplainPlanResult(visibleColumns, subquery, this);
         }
         if (queryTemplatePacket != null)

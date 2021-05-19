@@ -30,4 +30,9 @@ public class OrderColumn extends QueryColumn {
         this.isNullsLast = isNullsLast;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return getName() + " " + (isAsc ? "ASC" : "DESC") + " " + (isNullsLast ? "NULLS LAST" : "NULLS FIRST");
+    }
 }
