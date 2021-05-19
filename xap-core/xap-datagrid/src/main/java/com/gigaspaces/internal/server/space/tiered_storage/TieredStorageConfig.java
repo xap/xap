@@ -68,4 +68,14 @@ public class TieredStorageConfig extends SpaceCustomComponent implements Externa
         this.tables = tables;
         return this;
     }
+
+
+    public Map<String, String> toMap (){
+        HashMap<String, String> objectObjectHashMap = new HashMap<>();
+        for (Map.Entry<String, TieredStorageTableConfig> stringTieredStorageTableConfigEntry : tables.entrySet()) {
+            objectObjectHashMap.put(stringTieredStorageTableConfigEntry.getKey(), stringTieredStorageTableConfigEntry.getValue().toString());
+        }
+        return  objectObjectHashMap;
+    }
+
 }

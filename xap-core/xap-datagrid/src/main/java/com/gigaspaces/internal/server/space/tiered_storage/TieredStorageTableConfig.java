@@ -108,4 +108,6 @@ public class TieredStorageTableConfig implements Externalizable {
                 ", isTransient=" + isTransient +
                 '}';
     }
+
+
 }
