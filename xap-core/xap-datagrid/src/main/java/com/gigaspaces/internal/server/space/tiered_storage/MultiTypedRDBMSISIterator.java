@@ -9,7 +9,7 @@ import com.j_spaces.core.sadapter.SAException;
 
 public class MultiTypedRDBMSISIterator implements ISAdapterIterator<IEntryHolder> {
 
-    private final InternalRDBMS internalRDBMS;
+    private final InternalRDBMSManager internalRDBMS;
     private final Context context;
     private final IServerTypeDesc[] types;
     private final ITemplateHolder templateHolder;
@@ -17,7 +17,7 @@ public class MultiTypedRDBMSISIterator implements ISAdapterIterator<IEntryHolder
     private int currentTypeIndex;
     private boolean finished;
 
-    public MultiTypedRDBMSISIterator(InternalRDBMS internalRDBMS, Context context, IServerTypeDesc[] types, ITemplateHolder templateHolder) {
+    public MultiTypedRDBMSISIterator(InternalRDBMSManager internalRDBMS, Context context, IServerTypeDesc[] types, ITemplateHolder templateHolder) {
         this.internalRDBMS = internalRDBMS;
         this.context = context;
         this.types = types;
