@@ -16,6 +16,8 @@ public interface InternalRDBMS {
 
     long getDiskSize() throws SAException, IOException;
 
+    long getFreeSpaceSize() throws SAException, IOException;
+
     void createTable(ITypeDesc typeDesc) throws SAException;
 
     /**

@@ -19,7 +19,7 @@ public interface TieredStorageManager {
 
     void setCacheRule(String typeName, CachePredicate newRule); // dynamically change rule
 
-    InternalRDBMS getInternalStorage();
+    InternalRDBMSManager getInternalStorage();
 
     TieredState getEntryTieredState(IEntryData entryData);
 

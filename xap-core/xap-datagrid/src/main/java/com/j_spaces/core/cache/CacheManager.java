@@ -1826,7 +1826,7 @@ public class CacheManager extends AbstractCacheManager
         else {
 
             if(isTieredStorage()){
-                entry = _engine.getTieredStorageManager().getInternalStorage().getEntryByUID(context, entryHolder.getServerTypeDesc().getTypeName(), entryHolder.getUID());
+                entry = _engine.getTieredStorageManager().getInternalStorage().getEntryByUID(context, entryHolder.getServerTypeDesc().getTypeName(), entryHolder.getUID(), null);
             } else {
                 entry = _storageAdapter.getEntry(context, entryHolder.getUID(), entryHolder.getClassName(), entryHolder);
             }
@@ -1924,7 +1924,7 @@ public class CacheManager extends AbstractCacheManager
         else{
 
             if(isTieredStorage()){
-                entry = _engine.getTieredStorageManager().getInternalStorage().getEntryByUID(context, inputClassName, uid);
+                entry = _engine.getTieredStorageManager().getInternalStorage().getEntryByUID(context, inputClassName, uid, getTemplate(uid) );
             } else {
                 entry = _storageAdapter.getEntry(context, uid, inputClassName, template);
             }
@@ -4253,7 +4253,7 @@ public class CacheManager extends AbstractCacheManager
             }
             if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_COLD || context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
                 try {
-                    IEntryHolder entry = _engine.getTieredStorageManager().getInternalStorage().getEntryById(context, currServerTypeDesc.getTypeName(), templateValue);
+                    IEntryHolder entry = _engine.getTieredStorageManager().getInternalStorage().getEntryById(context, currServerTypeDesc.getTypeName(), templateValue, template);
                     if (entry != null) {
                         return EntryCacheInfoFactory.createEntryCacheInfo(entry);
                     }
@@ -6033,7 +6033,17 @@ public class CacheManager extends AbstractCacheManager
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return new SpaceRuntimeInfo(classes, entries, templates,ramOnlyEntries, diskSize);
+        long freeSpace = 0;
+
+        try {
+            if (getEngine().isTieredStorage()) {
+                freeSpace = getEngine().getTieredStorageManager().getInternalStorage().getFreeSpaceSize();
+            }
+        } catch (SAException | IOException e) {
+            e.printStackTrace();
+        }
+
+        return new SpaceRuntimeInfo(classes, entries, templates,ramOnlyEntries, diskSize, freeSpace);
     }
 
     private void countPersistentEntries(Map<String, Integer> classCountMap, ITemplateHolder template, IServerTypeDesc[] subTypes) {
@@ -6072,6 +6082,7 @@ public class CacheManager extends AbstractCacheManager
         ISAdapterIterator<IEntryHolder> entriesIter = null;
         try {
             context = getCacheContext();
+            context.setDisableTieredStorageMetric(true);
             entriesIter = makeEntriesIter(context, template, serverTypeDesc, 0, SystemTime.timeMillis(),memoryOnly || !isTieredStorage());
 
             String curClass = null;

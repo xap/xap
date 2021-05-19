@@ -158,6 +158,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.Xid;
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -393,7 +394,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             validateTieredStorage(storageConfig);
             String className = System.getProperty(TIERED_STORAGE_INTERNAL_RDBMS_CLASS_PROP, TIERED_STORAGE_INTERNAL_RDBMS_CLASS_DEFAULT);
             InternalRDBMS rdbms = ClassLoaderHelper.newInstance(className);
-            this.tieredStorageManager = new TieredStorageManagerImpl(storageConfig, rdbms, space.getSpaceProxy().getDirectProxy(), _fullSpaceName);
+            InternalRDBMSManager internalRDBMSManager = new InternalRDBMSManager(rdbms);
+            this.tieredStorageManager = new TieredStorageManagerImpl(storageConfig, internalRDBMSManager, space.getSpaceProxy().getDirectProxy(), _fullSpaceName);
         }
     }
 
@@ -512,6 +514,66 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 return countTransactions(TransactionInfo.Types.ALL, TransactionConstants.ACTIVE);
             }
         });
+        trieredStorageMetrics();
+    }
+
+
+
+
+    private void trieredStorageMetrics (){
+        if (!this.isTieredStorage()) {
+            return;
+        }
+        final String prefix = "metrics.";
+        final Map<String, String> tags = new HashMap<>();
+        for (Map.Entry<Object, Object> property : _spaceImpl.getCustomProperties().entrySet()) {
+            String name = (String) property.getKey();
+            if (name.startsWith(prefix))
+                tags.put(name.substring(prefix.length()), (String) property.getValue());
+        }
+        tags.put("space_name", _spaceImpl.getName());
+        tags.put("space_instance_id", _spaceImpl.getInstanceId());
+        Map<String, DynamicMetricTag> dynamicTags = new HashMap<>();
+
+        dynamicTags.put("space_active", new DynamicMetricTag() {
+            @Override
+            public Object getValue() {
+                boolean active;
+                try {
+                    active = _spaceImpl.isActive();
+                } catch (RemoteException e) {
+                    active = false;
+                }
+                return active;
+            }
+        });
+
+        InternalMetricRegistrator registratorForPrimary = (InternalMetricRegistrator) _metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, tags, dynamicTags);
+        InternalMetricRegistrator registratorForAll = (InternalMetricRegistrator) _metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, tags);
+
+        registratorForPrimary.register( ("tiered-storage-read-tp"), tieredStorageManager.getInternalStorage().getReadDisk());
+        registratorForPrimary.register("tiered-storage-write-tp", tieredStorageManager.getInternalStorage().getWriteDisk());
+
+        long diskSize = 0;
+        try {
+            diskSize = this.getTieredStorageManager().getInternalStorage().getDiskSize();
+        } catch (SAException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        registratorForAll.register("disk-size", createDiskSizeInBytesGauge(diskSize));
+
+    }
+
+    public Gauge<Long> createDiskSizeInBytesGauge(Long diskSize) {
+        return new Gauge<Long>() {
+            @Override
+            public Long getValue() {
+                return diskSize;
+            }
+        };
     }
 
     private IDuplicateOperationFilter createDuplicateOperationIDFilter() {
