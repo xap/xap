@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.gigaspaces</groupId>
         <artifactId>xap</artifactId>
-        <version>15.8.1-SNAPSHOT</version>
+        <version>15.8.1</version>
         <relativePath>../../</relativePath>
     </parent>
     <artifactId>xap-trove</artifactId>
