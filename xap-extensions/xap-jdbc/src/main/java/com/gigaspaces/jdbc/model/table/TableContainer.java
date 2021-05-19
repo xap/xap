@@ -59,4 +59,6 @@ public abstract class TableContainer {
     }
 
     public abstract void addOrderColumns(OrderColumn orderColumn);
+
+    public abstract List<OrderColumn> getOrderColumns();
 }

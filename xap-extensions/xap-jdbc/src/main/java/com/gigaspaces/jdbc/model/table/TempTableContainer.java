@@ -153,4 +153,9 @@ public class TempTableContainer extends TableContainer {
         //TODO: see addQueryColumn
         this.orderColumns.add(orderColumn);
     }
+
+    @Override
+    public List<OrderColumn> getOrderColumns() {
+        return orderColumns;
+    }
 }

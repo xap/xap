@@ -32,12 +32,18 @@ public class TableRow {
         }
     }
 
-    public TableRow(List<QueryColumn> queryColumns) {
+    public TableRow(List<QueryColumn> queryColumns,  List<OrderColumn> orderColumns) {
         this.columns = queryColumns.toArray(new QueryColumn[0]);
         values = new Object[columns.length];
         for (int i = 0; i < queryColumns.size(); i++) {
             Object value = queryColumns.get(i).getCurrentValue();
             values[i] = value;
+        }
+        //TODO: think of better way
+        this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
+        orderValues = new Object[this.orderColumns.length];
+        for (int i = 0; i < orderColumns.size(); i++) {
+            orderValues[i] = orderColumns.get(i).getCurrentValue();
         }
     }
 
@@ -61,7 +67,7 @@ public class TableRow {
         return values[index];
     }
 
-    public Object getPropertyValue(QueryColumn column) {
+    public Object getPropertyValue(QueryColumn column) { //TODO: hash map?
         for (int i = 0; i < columns.length; i++) {
             if (columns[i].equals(column)) {
                 return values[i];

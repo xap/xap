@@ -6,11 +6,13 @@ import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.JoinTablesIterator;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.result.TableRow;
+import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.core.IJSpace;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 import java.util.stream.Collectors;
@@ -26,12 +28,15 @@ public class JoinQueryExecutor {
         this.space = space;
         this.queryColumns = queryColumns;
         this.config = config;
+        this.config.setJoinUsed(true);
     }
 
     public QueryResult execute() {
+        final List<OrderColumn> orderColumns = new ArrayList<>();
         for (TableContainer table : tables) {
             try {
                 table.executeRead(config);
+                orderColumns.addAll(table.getOrderColumns());
             } catch (SQLException e) {
                 e.printStackTrace();
                 throw new IllegalArgumentException(e);
@@ -41,11 +46,12 @@ public class JoinQueryExecutor {
         if(config.isExplainPlan()) {
             return explain(joinTablesIterator);
         }
-        QueryResult res = new QueryResult(this.queryColumns);
+        QueryResult res = new QueryResult(this.queryColumns, orderColumns);
         while (joinTablesIterator.hasNext()) {
             if(tables.stream().allMatch(TableContainer::checkJoinCondition))
-                res.add(new TableRow(this.queryColumns));
+                res.add(new TableRow(this.queryColumns, orderColumns));
         }
+        res.sort(); //TODO: complete
         return res;
     }
 

@@ -9,6 +9,7 @@ import com.j_spaces.jdbc.ResultEntry;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -25,14 +26,21 @@ public class QueryResult {
         this.queryColumns = filterNonVisibleColumns(queryColumns);
         this.tableContainer = tableContainer;
         this.rows = res.stream().map(x -> new TableRow(x, queryColumns)).collect(Collectors.toList());
-        this.orderColumns = null;
+        this.orderColumns = Collections.emptyList();
     }
 
     public QueryResult(List<QueryColumn> queryColumns) {
         this.tableContainer = null; // TODO should be handled in subquery
         this.queryColumns = filterNonVisibleColumns(queryColumns);
         this.rows = new ArrayList<>();
-        this.orderColumns = null;
+        this.orderColumns = Collections.emptyList();
+    }
+
+    public QueryResult(List<QueryColumn> queryColumns, List<OrderColumn> orderColumns) {
+        this.tableContainer = null; // TODO should be handled in subquery
+        this.queryColumns = filterNonVisibleColumns(queryColumns);
+        this.rows = new ArrayList<>();
+        this.orderColumns = orderColumns;
     }
 
     public QueryResult(List<QueryColumn> visibleColumns, QueryResult tableResult, List<OrderColumn> orderColumns) {

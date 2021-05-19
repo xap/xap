@@ -83,14 +83,16 @@ public class ConcreteTableContainer extends TableContainer {
                 modifiers = Modifiers.add(modifiers, Modifiers.EXPLAIN_PLAN);
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
-            setOrderByAggregation();
+            if(!config.isJoinUsed()) {
+                setOrderByAggregation();
+            }
             queryTemplatePacket.prepareForSpace(typeDesc);
 
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
             if (explainPlanImpl != null) {
                 queryResult = new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
             } else {
-                queryResult = new QueryResult(res, visibleColumns, this);
+                queryResult = new QueryResult(res, visibleColumns, this);//TODO: pass order column?
             }
             return queryResult;
         } catch (Exception e) {
@@ -212,13 +214,14 @@ public class ConcreteTableContainer extends TableContainer {
         return joinInfo.checkJoinCondition();
     }
 
-    public List<OrderColumn> getOrderColumns() {
-        return orderColumns;
-    }
-
     @Override
     public void addOrderColumns(OrderColumn orderColumn) {
         //TODO: see addQueryColumn
         this.orderColumns.add(orderColumn);
+    }
+
+    @Override
+    public List<OrderColumn> getOrderColumns() {
+        return orderColumns;
     }
 }
