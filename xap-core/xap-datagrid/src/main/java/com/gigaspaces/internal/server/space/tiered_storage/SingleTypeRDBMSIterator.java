@@ -6,28 +6,26 @@ import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 
-import java.sql.ResultSet;
+import java.io.IOException;
 import java.sql.SQLException;
 
 public class SingleTypeRDBMSIterator implements ISAdapterIterator<IEntryHolder> {
 
-    private final ResultSet resultSet;
+    private final RDBMSResult result;
     private final String typeName;
     private final SpaceTypeManager typeManager;
-    private final ITypeDesc typeDesc;
 
-    public SingleTypeRDBMSIterator(ResultSet resultSet, ITypeDesc typeDesc, SpaceTypeManager typeManager) {
-        this.resultSet = resultSet;
+    public SingleTypeRDBMSIterator(RDBMSResult result, ITypeDesc typeDesc, SpaceTypeManager typeManager) {
+        this.result = result;
         this.typeManager = typeManager;
-        this.typeDesc = typeDesc;
         this.typeName = typeDesc.getTypeName();
     }
 
     @Override
     public IEntryHolder next() throws SAException {
         try {
-            if (resultSet.next()) {
-                return TieredStorageUtils.getEntryHolderFromRow(typeManager.getServerTypeDesc(typeName), resultSet);
+            if (result.next()) {
+                return TieredStorageUtils.getEntryHolderFromRow(typeManager.getServerTypeDesc(typeName), result.getResultSet());
             } else {
                 return null;
             }
@@ -39,11 +37,8 @@ public class SingleTypeRDBMSIterator implements ISAdapterIterator<IEntryHolder> 
     @Override
     public void close() throws SAException {
         try {
-            if (resultSet.getStatement() != null){
-                resultSet.getStatement().close();
-            }
-            resultSet.close();
-        } catch (SQLException e) {
+            result.close();
+        } catch (IOException e) {
             throw new SAException("failed to close result set for type " + typeName, e);
         }
     }

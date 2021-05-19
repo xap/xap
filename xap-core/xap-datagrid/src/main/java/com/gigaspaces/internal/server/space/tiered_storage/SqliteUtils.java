@@ -16,166 +16,219 @@ import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.*;
 
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.time.*;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+
 
 public class SqliteUtils {
     private static final long NANOS_PER_SEC = 1_000_000_000;
     private static final long OFFSET = 0;
+    private static Map<String, String> sqlTypesMap = initSqlTypesMap();
+    private static Map<String, ExtractFunction> sqlExtractorsMap = initSqlExtractorsMap();
+    private static Map<String, InjectFunction> sqlInjectorsMap = initSqlInjectorsMap();
+    private static Map<String, RangeToStringFunction> rangeToStringFunctionMap = initRangeToStringFunctionMap();
 
-    public static String getPropertyType(PropertyInfo property) {
-        Class<?> propertyType = property.getType();
-        if (propertyType.equals(String.class)) {
-            return "VARCHAR";
-        } else if (propertyType.equals(boolean.class) || propertyType.equals(Boolean.class)) {
-            return "BIT";
-        } else if (propertyType.equals(byte.class) || propertyType.equals(Byte.class)) {
-            return "TINYINT";
-        } else if (propertyType.equals(short.class) || propertyType.equals(Short.class)) {
-            return "SMALLINT";
-        } else if (propertyType.equals(int.class) || propertyType.equals(Integer.class)) {
-            return "INTEGER";
-        } else if (propertyType.equals(long.class) || propertyType.equals(Long.class)) {
-            return "BIGINT";
-        } else if (propertyType.equals(BigInteger.class)) {
-            return "BIGINT";
-        } else if (propertyType.equals(BigDecimal.class)) {
-            return "DECIMAL";
-        } else if (propertyType.equals(float.class) || propertyType.equals(Float.class)) {
-            return "REAL";
-        } else if (propertyType.equals(double.class) || propertyType.equals(Double.class)) {
-            return "float";
-        } else if (propertyType.equals(byte[].class) || propertyType.equals(Byte[].class)) {
-            return "BINARY";
-        } else if (propertyType.equals(Instant.class)) { //is converted to special long which includes millis and nanos
-            return "BIGINT";
-        } else if (propertyType.equals(Timestamp.class)) {  //is converted to special long which includes millis and nanos
-            return "BIGINT";
-        } else if (propertyType.equals(Date.class)) {
-            return "BIGINT";
-        } else if (propertyType.equals(java.sql.Date.class)) {
-            return "BIGINT";
-        } else if (propertyType.equals(java.sql.Time.class)) {
-            return "BIGINT";
-        } else if(propertyType.equals(LocalDate.class)){
-            return "BIGINT";
-        } else if(propertyType.equals(LocalTime.class)){
-            return "BIGINT";
-        } else if(propertyType.equals(LocalDateTime.class)){
-            return "BIGINT";
-        }
-        throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
+    private static Map<String, RangeToStringFunction> initRangeToStringFunctionMap() {
+        Map<String, RangeToStringFunction> map = new HashMap<>();
+        //Is null range
+        map.put(IsNullRange.class.getName(), (range, queryBuilder, queryParams) -> queryBuilder.append(range.getPath()).append(" IS NULL"));
+
+        //Is not null range
+        map.put(NotNullRange.class.getName(), (range, queryBuilder, queryParams) -> queryBuilder.append(range.getPath()).append(" IS NOT NULL"));
+
+        //Equal range
+        map.put(EqualValueRange.class.getName(), (range, queryBuilder, queryParams) -> {
+            queryBuilder.append(range.getPath()).append(" = ?");
+            queryParams.addParameter(range.getPath(), ((EqualValueRange) range).getValue());
+        });
+
+        //Not equal range
+        map.put(NotEqualValueRange.class.getName(), (range, queryBuilder, queryParams) -> {
+            queryBuilder.append(range.getPath()).append(" != ?");
+            queryParams.addParameter(range.getPath(), ((NotEqualValueRange) range).getValue());
+        });
+
+        //In range
+        map.put(InRange.class.getName(), (range, queryBuilder, queryParams) -> {
+            InRange inRange = (InRange) range;
+            queryBuilder.append(range.getPath()).append(" IN(");
+            StringJoiner stringValues = new StringJoiner(", ");
+            for (Object val : inRange.getInValues()) {
+                stringValues.add("?");
+                queryParams.addParameter(range.getPath(), val);
+            }
+            queryBuilder.append(stringValues);
+            queryBuilder.append(")");
+        });
+
+        //Segment range
+        map.put(SegmentRange.class.getName(), (range, queryBuilder, queryParams) -> {
+            SegmentRange segmentRange = (SegmentRange) range;
+            String path = range.getPath();
+            Comparable min = segmentRange.getMin();
+            Comparable max = segmentRange.getMax();
+            String includeMinSign = segmentRange.isIncludeMin() ? "= " : " ";
+            String includeMaxSign = segmentRange.isIncludeMax() ? "= " : " ";
+            queryBuilder.append(range.getPath());
+            if (min != null && max == null) {
+                queryBuilder.append(" > ?");
+                queryParams.addParameter(path, min);
+            } else if (min == null && max != null) {
+                queryBuilder.append(" <").append(includeMaxSign).append("?");
+                queryParams.addParameter(path, max);
+            } else { // max != null && min != null
+                queryBuilder.append(" <").append(includeMaxSign).append("? AND ")
+                        .append(path).append(" >").append(includeMinSign).append("?");
+                queryParams.addParameter(path, max);
+                queryParams.addParameter(path, min);
+            }
+        });
+
+        return map;
     }
 
-    public static Object getPropertyValue(ResultSet resultSet, PropertyInfo property) throws SQLException {
-        Class<?> propertyType = property.getType();
-        int propertyIndex = property.getOriginalIndex() + 1;
-        if (propertyType.equals(String.class)) {
-            return resultSet.getString(propertyIndex);
-        } else if (propertyType.equals(boolean.class)) {
-            return resultSet.getBoolean(propertyIndex);
-        } else if (propertyType.equals(Boolean.class)) {
-            return resultSet.getObject(propertyIndex);
-        } else if (propertyType.equals(byte.class)) {
-            return resultSet.getByte(propertyIndex);
-        } else if (propertyType.equals(Byte.class)) {
-            return resultSet.getObject(propertyIndex);
-        } else if (propertyType.equals(short.class)) {
-            return resultSet.getShort(propertyIndex);
-        } else if (propertyType.equals(Short.class)) {
-            return resultSet.getObject(propertyIndex);
-        } else if (propertyType.equals(int.class)) {
-            return resultSet.getInt(propertyIndex);
-        } else if (propertyType.equals(Integer.class)) {
-            return resultSet.getObject(propertyIndex);
-        } else if (propertyType.equals(long.class)) {
-            return resultSet.getLong(propertyIndex);
-        } else if (propertyType.equals(Long.class)) {
-            return resultSet.getObject(propertyIndex);
-        } else if (propertyType.equals(BigInteger.class)) {
-            return resultSet.getLong(propertyIndex);
-        } else if (propertyType.equals(BigDecimal.class)) {
-            return resultSet.getBigDecimal(propertyIndex);
-        } else if (propertyType.equals(float.class)) {
-            return resultSet.getFloat(propertyIndex);
-        } else if (propertyType.equals(Float.class)) {
-            return resultSet.getObject(propertyIndex);
-        } else if (propertyType.equals(double.class)) {
-            return resultSet.getDouble(propertyIndex);
-        } else if (propertyType.equals(Double.class)) {
-            return resultSet.getObject(propertyIndex);
-        } else if (propertyType.equals(byte[].class) || propertyType.equals(Byte[].class)) {
-            return resultSet.getBytes(propertyIndex);
-        } else if (propertyType.equals(Instant.class)) {
-            return fromGsTime(resultSet.getLong(propertyIndex));
-        } else if (propertyType.equals(Timestamp.class)) {
-            Instant instant = fromGsTime(resultSet.getLong(propertyIndex));
-            return Timestamp.from(instant);
-        } else if (propertyType.equals(Date.class)) {
-            return new Date(resultSet.getLong(propertyIndex));
-        } else if (propertyType.equals(java.sql.Date.class)) {
-            return new java.sql.Date(resultSet.getLong(propertyIndex));
-        } else if (propertyType.equals(Time.class)) {
-            return new Time(resultSet.getLong(propertyIndex));
-        } else if (propertyType.equals(LocalDate.class)){
-            return  LocalDate.ofEpochDay(resultSet.getLong(propertyIndex));
-        } else if (propertyType.equals(LocalTime.class)){
-            return LocalTime.ofNanoOfDay(resultSet.getLong(propertyIndex));
-        } else if (propertyType.equals(LocalDateTime.class)){
-            Instant instant = fromGsTime(resultSet.getLong(propertyIndex));
-            return LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
-        }
-        throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
+    private static Map<String, String> initSqlTypesMap() {
+        Map<String, String> map = new HashMap<>();
+        map.put(String.class.getName(), "VARCHAR");
+        map.put(boolean.class.getName(), "BIT");
+        map.put(Boolean.class.getName(), "BIT");
+        map.put(byte.class.getName(), "TINYINT");
+        map.put(Byte.class.getName(), "TINYINT");
+        map.put(short.class.getName(), "SMALLINT");
+        map.put(Short.class.getName(), "SMALLINT");
+        map.put(int.class.getName(), "INTEGER");
+        map.put(Integer.class.getName(), "INTEGER");
+        map.put(long.class.getName(), "BIGINT");
+        map.put(Long.class.getName(), "BIGINT");
+        map.put(BigInteger.class.getName(), "BIGINT");
+        map.put(BigDecimal.class.getName(), "DECIMAL");
+        map.put(float.class.getName(), "REAL");
+        map.put(Float.class.getName(), "REAL");
+        map.put(double.class.getName(), "FLOAT");
+        map.put(Double.class.getName(), "FLOAT");
+        map.put(byte[].class.getName(), "BINARY");
+        map.put(Byte[].class.getName(), "BINARY");
+        map.put(Instant.class.getName(), "BIGINT");
+        map.put(Timestamp.class.getName(), "BIGINT");
+        map.put(java.util.Date.class.getName(), "BIGINT");
+        map.put(java.sql.Date.class.getName(), "BIGINT");
+        map.put(java.sql.Time.class.getName(), "BIGINT");
+        map.put(LocalDate.class.getName(), "BIGINT");
+        map.put(LocalTime.class.getName(), "BIGINT");
+        map.put(LocalDateTime.class.getName(), "BIGINT");
+        return map;
     }
 
-    public static Object getValueForSQLExpression(Object propertyValue) {
-        if (propertyValue == null) {
-            return "Null";
-        } else if (propertyValue.getClass().equals(String.class)) {
-            return "\"" + propertyValue + "\"";
-        } else if (propertyValue.getClass().equals(Instant.class)) {
-            return toGSTime((Instant)propertyValue);
-        } else if (propertyValue.getClass().equals(Timestamp.class)){
-            Instant instant = ((Timestamp) propertyValue).toInstant();
-            return toGSTime((instant));
-        } else if (propertyValue.getClass().equals(Date.class)) {
-            return ((Date) propertyValue).getTime();
-        } else if (propertyValue.getClass().equals(java.sql.Date.class)) {
-            return ((java.sql.Date) propertyValue).getTime();
-        } else if (propertyValue.getClass().equals(Time.class)){
-                return ((Time) propertyValue).getTime();
-        } else if (propertyValue.getClass().equals(LocalDate.class)){
-            return ((LocalDate) propertyValue).toEpochDay();
-        } else if (propertyValue.getClass().equals(LocalTime.class)){
-            return ((LocalTime) propertyValue).toNanoOfDay();
-        } else if (propertyValue.getClass().equals(LocalDateTime.class)){
-           Instant instant = ((LocalDateTime) propertyValue).atZone(ZoneId.of("UTC")).toInstant();
-           return toGSTime(instant);
+    private static Map<String, ExtractFunction> initSqlExtractorsMap() {
+        Map<String, ExtractFunction> map = new HashMap<>();
+        map.put(String.class.getName(), ResultSet::getString);
+        map.put(boolean.class.getName(), ResultSet::getBoolean);
+        map.put(byte.class.getName(), ResultSet::getByte);
+        map.put(short.class.getName(), ResultSet::getShort);
+        map.put(int.class.getName(), ResultSet::getInt);
+        map.put(long.class.getName(), ResultSet::getLong);
+        map.put(float.class.getName(), ResultSet::getFloat);
+        map.put(double.class.getName(), ResultSet::getDouble);
+        map.put(byte[].class.getName(), ResultSet::getBytes);
+        map.put(Instant.class.getName(), (res, i) -> fromGsTime(res.getLong(i)));
+        map.put(Timestamp.class.getName(), (res, i) -> Timestamp.from(fromGsTime(res.getLong(i))));
+        map.put(java.util.Date.class.getName(), (res, i) -> new java.util.Date(res.getLong(i)));
+        map.put(java.sql.Date.class.getName(), (res, i) -> new java.sql.Date(res.getLong(i)));
+        map.put(java.sql.Time.class.getName(), (res, i) -> new java.sql.Time(res.getLong(i)));
+        map.put(LocalDate.class.getName(), (res, i) -> LocalDate.ofEpochDay(res.getLong(i)));
+        map.put(LocalTime.class.getName(), (res, i) -> LocalTime.ofNanoOfDay(res.getLong(i)));
+        map.put(LocalDateTime.class.getName(), (res, i) -> LocalDateTime.ofInstant(fromGsTime(res.getLong(i)), ZoneId.of("UTC")));
+
+        map.put(Boolean.class.getName(), ResultSet::getObject);
+        map.put(Byte.class.getName(), ResultSet::getObject);
+        map.put(Short.class.getName(), ResultSet::getObject);
+        map.put(Integer.class.getName(), ResultSet::getObject);
+        map.put(Long.class.getName(), ResultSet::getObject);
+        map.put(BigInteger.class.getName(), ResultSet::getObject);
+        map.put(BigDecimal.class.getName(), ResultSet::getObject);
+        map.put(Float.class.getName(), ResultSet::getObject);
+        map.put(Double.class.getName(), ResultSet::getObject);
+        map.put(Byte[].class.getName(), ResultSet::getObject);
+        return map;
+    }
+
+    private static Map<String, InjectFunction> initSqlInjectorsMap() {
+        Map<String, InjectFunction> map = new HashMap<>();
+        map.put(String.class.getName(), (statement, i, val) -> statement.setString(i, (String) val));
+        map.put(boolean.class.getName(), (statement, i, val) -> statement.setBoolean(i, (boolean) val));
+        map.put(byte.class.getName(), (statement, i, val) -> statement.setByte(i, (byte) val));
+        map.put(short.class.getName(), (statement, i, val) -> statement.setShort(i, (short) val));
+        map.put(int.class.getName(), (statement, i, val) -> statement.setInt(i, (int) val));
+        map.put(long.class.getName(), (statement, i, val) -> statement.setLong(i, (long) val));
+        map.put(float.class.getName(), (statement, i, val) -> statement.setFloat(i, (float) val));
+        map.put(double.class.getName(), (statement, i, val) -> statement.setDouble(i, (double) val));
+        map.put(byte[].class.getName(), (statement, i, val) -> statement.setBytes(i, (byte[]) val));
+        map.put(Instant.class.getName(), (statement, i, val) -> statement.setLong(i, toGSTime(((Instant) val))));
+        map.put(Timestamp.class.getName(), (statement, i, val) -> statement.setLong(i, toGSTime(((Timestamp) val).toInstant())));
+        map.put(java.util.Date.class.getName(), (statement, i, val) -> statement.setLong(i, ((java.util.Date) val).getTime()));
+        map.put(java.sql.Date.class.getName(), (statement, i, val) -> statement.setLong(i, ((java.sql.Date) val).getTime()));
+        map.put(java.sql.Time.class.getName(), (statement, i, val) -> statement.setLong(i, ((Time) val).getTime()));
+        map.put(LocalDate.class.getName(), (statement, i, val) -> statement.setLong(i, ((LocalDate) val).toEpochDay()));
+        map.put(LocalTime.class.getName(), (statement, i, val) -> statement.setLong(i, ((LocalTime) val).toNanoOfDay()));
+        map.put(LocalDateTime.class.getName(), (statement, i, val) -> statement.setLong(i, toGSTime(((LocalDateTime) val).atZone(ZoneId.of("UTC")).toInstant())));
+
+        map.put(Boolean.class.getName(), PreparedStatement::setObject);
+        map.put(Byte.class.getName(), PreparedStatement::setObject);
+        map.put(Short.class.getName(), PreparedStatement::setObject);
+        map.put(Integer.class.getName(), PreparedStatement::setObject);
+        map.put(Long.class.getName(), PreparedStatement::setObject);
+        map.put(BigInteger.class.getName(), PreparedStatement::setObject);
+        map.put(BigDecimal.class.getName(), PreparedStatement::setObject);
+        map.put(Float.class.getName(), PreparedStatement::setObject);
+        map.put(Double.class.getName(), PreparedStatement::setObject);
+        map.put(Byte[].class.getName(), PreparedStatement::setObject);
+        return map;
+    }
+
+    public static String getPropertyType(String typeName) {
+        if (!sqlTypesMap.containsKey(typeName)) {
+            throw new IllegalArgumentException("cannot map non trivial type " + typeName);
         }
-        else {
-            return propertyValue.toString();
+        return sqlTypesMap.get(typeName);
+    }
+
+    public static Object getPropertyValue(ResultSet resultSet, Class<?> propertyType, int index) throws SQLException {
+        if (!sqlExtractorsMap.containsKey(propertyType.getName())) {
+            throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
+        }
+        final ExtractFunction extractFunction = sqlExtractorsMap.get(propertyType.getName());
+        return extractFunction.extract(resultSet, index);
+    }
+
+
+    public static void setPropertyValue(boolean isUpdate, PreparedStatement statement, Class<?> propertyType, int index, Object value) throws SQLException {
+        if (!sqlInjectorsMap.containsKey(propertyType.getName())) {
+            throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
+        }
+        if(value == null){
+            if(isUpdate){
+                statement.setObject(index, value);
+            } else {
+                statement.setString(index, "Null");
+            }
+        } else {
+            final InjectFunction injectFunction = sqlInjectorsMap.get(propertyType.getName());
+            injectFunction.inject(statement, index, value);
         }
     }
 
-   public static long toGSTime(Instant instant) { // long which consists 2 parts: 1. time in milliseconds 2. time in nanos
+
+    private static long toGSTime(Instant instant) { // long which consists 2 parts: 1. time in milliseconds 2. time in nanos
         return (instant.getEpochSecond() - OFFSET) * NANOS_PER_SEC + instant.getNano();  //
     }
-    public static Instant fromGsTime(long l) {
-        long secs =  l / NANOS_PER_SEC;
-        int nanos = (int)(l % NANOS_PER_SEC);
-        return Instant.ofEpochSecond(secs + OFFSET, nanos);
-    }
 
-    private static String gsTimeToString(Instant instant) {
-        return instant.toString() + " [" + instant.getEpochSecond() + "|" + instant.getNano() + "]";
+    private static Instant fromGsTime(long l) {
+        long secs = l / NANOS_PER_SEC;
+        int nanos = (int) (l % NANOS_PER_SEC);
+        return Instant.ofEpochSecond(secs + OFFSET, nanos);
     }
 
     public static String getMatchCodeString(short matchCode) {
@@ -210,73 +263,32 @@ public class SqliteUtils {
         }
     }
 
-    public static String getRangeString(Range range) {
-        StringBuilder stringBuilder = new StringBuilder(range.getPath());
-        if (range.isEqualValueRange()) {
-            stringBuilder.append(" = ").append(getValueForSQLExpression(((EqualValueRange) range).getValue()));
-        } else if (range instanceof NotEqualValueRange) {
-            stringBuilder.append(" != ").append(getValueForSQLExpression(((NotEqualValueRange) range).getValue()));
-        } else if (range.isSegmentRange()) {
-            SegmentRange segmentRange = (SegmentRange) range;
-            Comparable min = segmentRange.getMin();
-            Comparable max = segmentRange.getMax();
-            String includeMinSign = segmentRange.isIncludeMin() ? "= " : " ";
-            String includeMaxSign = segmentRange.isIncludeMax() ? "= " : " ";
-            if (min != null && max == null) {
-                stringBuilder.append(" >").append(includeMinSign).append(getValueForSQLExpression(min));
-            } else if (min == null && max != null) {
-                stringBuilder.append(" <").append(includeMaxSign).append(getValueForSQLExpression(max));
-            } else { // max != null && min != null
-                stringBuilder.append(" <").append(includeMaxSign).append(getValueForSQLExpression(max)).append(" AND ")
-                        .append(range.getPath()).append(" >").append(includeMinSign).append(getValueForSQLExpression(min));
-            }
-        } else if (range instanceof InRange) {
-            InRange inRange = (InRange) range;
-            stringBuilder.append(" IN(");
-            for (Object val : inRange.getInValues()) {
-                stringBuilder.append(getValueForSQLExpression(val)).append(",");
-            }
-            int lastIndexOf = stringBuilder.lastIndexOf(",");
-            if (lastIndexOf != -1) {
-                stringBuilder.deleteCharAt(lastIndexOf);
-            }
-            stringBuilder.append(")");
-        } else if (range instanceof IsNullRange) {
-            stringBuilder.append(" IS NULL");
-        } else if (range instanceof NotNullRange) {
-            stringBuilder.append(" IS NOT NULL");
-        } else {
-            throw new IllegalStateException("SQL query of type" + range.getClass().toString() + " is unsupported");
-        }
-        return stringBuilder.toString();
-    }
-
-    public static String getCustomQueryString(ICustomQuery customQuery) {
+    public static void appendCustomQueryString(ICustomQuery customQuery, StringBuilder queryBuilder, QueryParameters queryParams) {
         if (customQuery instanceof AbstractCompundCustomQuery) {
-            String operation;
-            if (customQuery.getClass().equals(CompoundAndCustomQuery.class)) {
-                operation = " AND ";
-            } else {
-                operation = " OR ";
-            }
+            String operation = customQuery.getClass().equals(CompoundAndCustomQuery.class) ? " AND " : " OR ";
             List<ICustomQuery> subQueries = ((AbstractCompundCustomQuery) customQuery).get_subQueries();
-            StringBuilder stringBuilder = new StringBuilder();
-            for (ICustomQuery query : subQueries) {
-                stringBuilder.append(getCustomQueryString(query)).append(operation);
+            for (int i = 0; i < subQueries.size(); i++) {
+                appendCustomQueryString(subQueries.get(i), queryBuilder, queryParams);
+                if(i != subQueries.size() -1){
+                    queryBuilder.append(operation);
+                }
             }
-            int lastIndexOf = stringBuilder.lastIndexOf(operation);
-            if (lastIndexOf != -1) {
-                stringBuilder.delete(lastIndexOf, stringBuilder.length());
-            }
-            return stringBuilder.toString();
         } else if (customQuery instanceof Range) {
-            return SqliteUtils.getRangeString((Range) customQuery);
+            SqliteUtils.appendRangeString((Range) customQuery, queryBuilder, queryParams);
         } else {
             throw new IllegalStateException("SQL query of type" + customQuery.getClass().toString() + " is unsupported");
         }
     }
 
-    public static TemplateMatchTier evaluateByMatchTier(ITemplateHolder template, TemplateMatchTier templateMatchTier) {
+    private static void appendRangeString(Range range, StringBuilder queryBuilder, QueryParameters queryParams) {
+        if(!rangeToStringFunctionMap.containsKey(range.getClass().getName())){
+            throw new IllegalStateException("SQL query of type" + range.getClass().getName() + " is unsupported");
+        }
+        rangeToStringFunctionMap.get(range.getClass().getName()).toString(range, queryBuilder, queryParams);
+
+    }
+
+    static TemplateMatchTier evaluateByMatchTier(ITemplateHolder template, TemplateMatchTier templateMatchTier) {
         if (templateMatchTier == TemplateMatchTier.MATCH_HOT_AND_COLD) {
             return template.isMemoryOnlySearch() ? TemplateMatchTier.MATCH_HOT :
                     (template.getBatchOperationContext() != null && template.getBatchOperationContext().getMaxEntries() < Integer.MAX_VALUE ?
@@ -285,7 +297,7 @@ public class SqliteUtils {
         return templateMatchTier;
     }
 
-    public static TemplateMatchTier getTemplateMatchTier(Range criteria, ITemplateHolder template, String timeType) {
+    static TemplateMatchTier getTemplateMatchTier(Range criteria, ITemplateHolder template, String timeType) {
         if (template.getCustomQuery() != null) {
             ICustomQuery customQuery = template.getCustomQuery();
             return evalCustomQuery(criteria, customQuery, timeType);
@@ -309,7 +321,7 @@ public class SqliteUtils {
         return TemplateMatchTier.MATCH_HOT_AND_COLD;
     }
 
-    public static TemplateMatchTier getTemplateMatchTier(Range criteria, ITemplatePacket packet, String timeType) {
+    static TemplateMatchTier getTemplateMatchTier(Range criteria, ITemplatePacket packet, String timeType) {
         if (packet.getCustomQuery() != null) {
             ICustomQuery customQuery = packet.getCustomQuery();
             return evalCustomQuery(criteria, customQuery, timeType);
@@ -334,16 +346,16 @@ public class SqliteUtils {
         return TemplateMatchTier.MATCH_HOT_AND_COLD;
     }
 
-    public static Instant convertTimeTypeToInstant(Object value) {
+    static Instant convertTimeTypeToInstant(Object value) {
         if (Instant.class.equals(value.getClass())) {
-            return (Instant)value;
+            return (Instant) value;
         } else if (Timestamp.class.equals(value.getClass())) {
             return ((Timestamp) value).toInstant();
         } else if (Long.class.equals(value.getClass())) {
             return Instant.ofEpochMilli((long) value);
-        } else if (Date.class.equals(value.getClass())){
-            return Instant.ofEpochMilli(((Date) value).getTime());
-        }   else if (LocalDateTime.class.equals(value.getClass())){
+        } else if (java.util.Date.class.equals(value.getClass())) {
+            return Instant.ofEpochMilli(((java.util.Date) value).getTime());
+        } else if (LocalDateTime.class.equals(value.getClass())) {
             return ((LocalDateTime) value).toInstant(ZoneOffset.UTC);
         }
         throw new IllegalStateException("Time type of " + value.getClass().toString() + " is unsupported");
@@ -377,12 +389,12 @@ public class SqliteUtils {
 
     private static Range convertRangeFromJavaUtilDateToInstant(Range queryValueRange) {
         if (queryValueRange.isEqualValueRange()) {
-            Date value = (Date) ((EqualValueRange) queryValueRange).getValue();
+            java.util.Date value = (java.util.Date) ((EqualValueRange) queryValueRange).getValue();
             return new EqualValueRange(queryValueRange.getPath(), value.toInstant());
         } else if (queryValueRange.isSegmentRange()) {
             SegmentRange segmentRange = (SegmentRange) queryValueRange;
-            Comparable<Instant> minInstant = segmentRange.getMin() != null ? ((Date) segmentRange.getMin()).toInstant() : null;
-            Comparable<Instant> maxInstant = segmentRange.getMax() != null ? ((Date) segmentRange.getMax()).toInstant() : null;
+            Comparable<Instant> minInstant = segmentRange.getMin() != null ? ((java.util.Date) segmentRange.getMin()).toInstant() : null;
+            Comparable<Instant> maxInstant = segmentRange.getMax() != null ? ((java.util.Date) segmentRange.getMax()).toInstant() : null;
             return new SegmentRange(queryValueRange.getPath(), minInstant, ((SegmentRange) queryValueRange).isIncludeMin(), maxInstant, ((SegmentRange) queryValueRange).isIncludeMax());
         }
         throw new IllegalStateException("Supports only equal and segment Range");
@@ -395,20 +407,20 @@ public class SqliteUtils {
         } else if (queryValueRange.isSegmentRange()) {
             SegmentRange segmentRange = (SegmentRange) queryValueRange;
             Comparable<Instant> minInstant = segmentRange.getMin() != null ? ((LocalDateTime) segmentRange.getMin()).toInstant(ZoneOffset.UTC) : null;
-            Comparable<Instant> maxInstant = segmentRange.getMax() != null ?((LocalDateTime) segmentRange.getMax()).toInstant(ZoneOffset.UTC) : null;
+            Comparable<Instant> maxInstant = segmentRange.getMax() != null ? ((LocalDateTime) segmentRange.getMax()).toInstant(ZoneOffset.UTC) : null;
             return new SegmentRange(queryValueRange.getPath(), minInstant, ((SegmentRange) queryValueRange).isIncludeMin(), maxInstant, ((SegmentRange) queryValueRange).isIncludeMax());
         }
         throw new IllegalStateException("Supports only equal and segment Range");
     }
 
-    public static TemplateMatchTier evalRange(Range criteria, Range queryValueRange, String timeType) {
-        if (timeType != null){
+    private static TemplateMatchTier evalRange(Range criteria, Range queryValueRange, String timeType) {
+        if (timeType != null) {
             if (queryValueRange.isSegmentRange() || queryValueRange.isEqualValueRange()) {
                 if (Timestamp.class.getName().equals(timeType)) {
                     queryValueRange = convertRangeFromTimestampToInstant(queryValueRange);
                 } else if (Long.class.getName().equals(timeType) || long.class.getName().equals(timeType)) {
                     queryValueRange = convertRangeFromLongToInstant(queryValueRange);
-                } else if (Date.class.getName().equals(timeType)) {
+                } else if (java.util.Date.class.getName().equals(timeType)) {
                     queryValueRange = convertRangeFromJavaUtilDateToInstant(queryValueRange);
                 } else if (LocalDateTime.class.getName().equals(timeType)) {
                     queryValueRange = convertRangeFromLocalDateTimeToInstant(queryValueRange);
@@ -470,7 +482,7 @@ public class SqliteUtils {
         return TemplateMatchTier.MATCH_COLD;
     }
 
-    public static TemplateMatchTier evalCustomQuery(Range criteria, ICustomQuery customQuery, String timeType) {
+    private static TemplateMatchTier evalCustomQuery(Range criteria, ICustomQuery customQuery, String timeType) {
         if (customQuery instanceof CompoundAndCustomQuery) {
             List<ICustomQuery> subQueries = ((AbstractCompundCustomQuery) customQuery).get_subQueries();
             TemplateMatchTier result = null;
@@ -478,8 +490,7 @@ public class SqliteUtils {
                 TemplateMatchTier templateMatchTier = evalCustomQuery(criteria, query, timeType);
                 if (result == null) {
                     result = templateMatchTier;
-                }
-                else {
+                } else {
                     result = andTemplateMatchTier(result, templateMatchTier);
                 }
             }
@@ -487,12 +498,11 @@ public class SqliteUtils {
         } else if (customQuery instanceof CompoundOrCustomQuery) {
             List<ICustomQuery> subQueries = ((AbstractCompundCustomQuery) customQuery).get_subQueries();
             TemplateMatchTier result = null;
-            for (ICustomQuery query : subQueries){
+            for (ICustomQuery query : subQueries) {
                 TemplateMatchTier templateMatchTier = evalCustomQuery(criteria, query, timeType);
                 if (result == null) {
                     result = templateMatchTier;
-                }
-                else {
+                } else {
                     result = orTemplateMatchTier(result, templateMatchTier);
                 }
             }
@@ -509,9 +519,6 @@ public class SqliteUtils {
     }
 
     static private TemplateMatchTier andTemplateMatchTier(TemplateMatchTier tier1, TemplateMatchTier tier2) {
-        if (tier1 == TemplateMatchTier.MATCH_COLD || tier2 == TemplateMatchTier.MATCH_COLD) {
-            return TemplateMatchTier.MATCH_COLD;
-        }
         if (tier1 == TemplateMatchTier.MATCH_HOT || tier2 == TemplateMatchTier.MATCH_HOT) {
             return TemplateMatchTier.MATCH_HOT;
         } else if (tier1 == TemplateMatchTier.MATCH_COLD || tier2 == TemplateMatchTier.MATCH_COLD) {
@@ -551,7 +558,7 @@ public class SqliteUtils {
             }
         } else {
             boolean allMatched = true;
-            boolean someMatched  = false;
+            boolean someMatched = false;
             for (Object queryInRangeInValue : queryValueRange.getInValues()) {
                 boolean match = criteria.getPredicate().execute(queryInRangeInValue);
                 allMatched &= match;
@@ -560,12 +567,11 @@ public class SqliteUtils {
             }
 
             return allMatched ? TemplateMatchTier.MATCH_HOT :
-                    (someMatched? TemplateMatchTier.MATCH_HOT_AND_COLD : TemplateMatchTier.MATCH_COLD);
+                    (someMatched ? TemplateMatchTier.MATCH_HOT_AND_COLD : TemplateMatchTier.MATCH_COLD);
         }
     }
 
-
-    public static Range getRangeFromMatchCode(TemplateEntryData entryData, Object value, int index, String path) {
+    private static Range getRangeFromMatchCode(TemplateEntryData entryData, Object value, int index, String path) {
         short matchCode = entryData.getExtendedMatchCodes()[index];
         switch (matchCode) {
             case TemplateMatchCodes.EQ:
@@ -601,4 +607,20 @@ public class SqliteUtils {
         }
         return false;
     }
+
+    @FunctionalInterface
+    interface ExtractFunction {
+        Object extract(ResultSet resultSet, int index) throws SQLException;
+    }
+
+    @FunctionalInterface
+    interface InjectFunction {
+        void inject(PreparedStatement statement, int index, Object value) throws SQLException;
+    }
+
+    @FunctionalInterface
+    interface RangeToStringFunction {
+        void toString(Range range, StringBuilder queryBuilder, QueryParameters queryParams) ;
+    }
+
 }
