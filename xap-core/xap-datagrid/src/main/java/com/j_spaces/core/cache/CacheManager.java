@@ -2981,7 +2981,7 @@ public class CacheManager extends AbstractCacheManager
         CountInfo countInfo = new CountInfo();
         HashSet<String> processedResults = new HashSet<>();
         while (true) {
-            IEntryHolder eh = null;
+            IEntryHolder eh;
             Object res = iter.nextObject();
             if (res == null) {
                 iter.close();
@@ -4696,7 +4696,7 @@ public class CacheManager extends AbstractCacheManager
                             uidsIter = (ScanUidsIterator) resultScan;
                             uidsSize = uidsIter.size();
                         }
-                        if (resultScan.hasSize()) { ///added already by MOran
+                        if (resultScan.hasSize()) {
                             if (resultOIS == null || resultScan.size() < resultOIS.size()) {
                                 resultOIS = resultScan;
                                 nameOfChosenCustomIndex = index.getIndexName();

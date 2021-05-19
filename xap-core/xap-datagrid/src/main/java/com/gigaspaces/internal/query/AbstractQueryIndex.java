@@ -99,7 +99,7 @@ public abstract class AbstractQueryIndex implements IQueryIndexScanner {
         // check the cases when ordered index can not be used:
         // ordered index is not defined
         else if (requiresOrderedIndex() && index.getExtendedIndexForScanning() == null){
-            resultIndicator =  IQueryIndexScanner.RESULT_IGNORE_INDEX;//HERE !!!
+            resultIndicator =  IQueryIndexScanner.RESULT_IGNORE_INDEX;
         }
 
         // Get index value in query. If null, skip to next index unless its an isNull:
