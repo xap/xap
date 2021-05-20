@@ -35,25 +35,50 @@ public interface IReflectionFactory {
 
     <T> String[] getConstructorParametersNames(Constructor<T> ctor);
 
-    <T> IMethod<T> getMethod(Method method);
+    default <T> IMethod<T> getMethod(Method method) {
+        return getMethod(null, method);
+    }
 
     <T> IMethod<T> getMethod(ClassLoader classLoader, Method method);
 
-    <T> IMethod<T>[] getMethods(Method[] methods);
+    default <T> IMethod<T>[] getMethods(Method[] methods) {
+        return getMethods(null, methods);
+    }
 
-    <T> IMethod<T>[] getMethods(ClassLoader classLoader, Method[] methods);
+    default <T> IMethod<T>[] getMethods(ClassLoader classLoader, Method[] methods) {
+        final int length = methods.length;
+        IMethod<T>[] result = new IMethod[length];
 
-    <T> IGetterMethod<T> getGetterMethod(Method method);
+        for (int i = 0; i < length; ++i)
+            result[i] = getMethod(classLoader, methods[i]);
+
+        return result;
+    }
+
+    default <T> IGetterMethod<T> getGetterMethod(Method method) {
+        return getGetterMethod(null, method);
+    }
 
     <T> IGetterMethod<T> getGetterMethod(ClassLoader classLoader, Method method);
 
-    <T> ISetterMethod<T> getSetterMethod(Method method);
+    default <T> ISetterMethod<T> getSetterMethod(Method method) {
+        return getSetterMethod(null, method);
+    }
 
     <T> ISetterMethod<T> getSetterMethod(ClassLoader classLoader, Method method);
 
     <T, F> IField<T, F> getField(Field field);
 
-    <T, F> IField<T, F>[] getFields(Class<T> clazz);
+    default <T, F> IField<T, F>[] getFields(Class<T> clazz) {
+        final Field[] fields = clazz.getFields();
+        final int length = fields.length;
+        final IField<T, F>[] result = new IField[length];
+
+        for (int i = 0; i < length; ++i)
+            result[i] = getField(fields[i]);
+
+        return result;
+    }
 
     <T> IProperties<T> getProperties(SpaceTypeInfo typeInfo);
 

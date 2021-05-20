@@ -17,15 +17,7 @@
 package com.gigaspaces.internal.reflection.standard;
 
 import com.gigaspaces.internal.metadata.SpaceTypeInfo;
-import com.gigaspaces.internal.reflection.AbstractReflectionFactory;
-import com.gigaspaces.internal.reflection.IConstructor;
-import com.gigaspaces.internal.reflection.IField;
-import com.gigaspaces.internal.reflection.IGetterMethod;
-import com.gigaspaces.internal.reflection.IMethod;
-import com.gigaspaces.internal.reflection.IParamsConstructor;
-import com.gigaspaces.internal.reflection.IProperties;
-import com.gigaspaces.internal.reflection.ISetterMethod;
-import com.gigaspaces.internal.reflection.ProxyInvocationHandler;
+import com.gigaspaces.internal.reflection.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -34,7 +26,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 @com.gigaspaces.api.InternalApi
-public class StandardReflectionFactory extends AbstractReflectionFactory {
+public class StandardReflectionFactory implements IReflectionFactory {
     public <T> IConstructor<T> getConstructor(Constructor<T> ctor) {
         return new StandardConstructor<T>(ctor);
     }

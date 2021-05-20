@@ -17,7 +17,6 @@
 package com.gigaspaces.internal.reflection.fast;
 
 import com.gigaspaces.internal.metadata.SpaceTypeInfo;
-import com.gigaspaces.internal.reflection.AbstractReflectionFactory;
 import com.gigaspaces.internal.reflection.IConstructor;
 import com.gigaspaces.internal.reflection.IField;
 import com.gigaspaces.internal.reflection.IGetterMethod;
@@ -50,7 +49,7 @@ import org.slf4j.LoggerFactory;
  * renamed.
  */
 @com.gigaspaces.api.InternalApi
-public class ASMReflectionFactory extends AbstractReflectionFactory {
+public class ASMReflectionFactory implements IReflectionFactory {
     private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_REFLECTION);
     private final IReflectionFactory _fallbackFactory;
 
