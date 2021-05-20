@@ -19,7 +19,7 @@ public class TableRow implements Comparable<TableRow>{
         this.orderValues = new Object[0];
     }
 
-    public TableRow(IEntryPacket x, List<QueryColumn> queryColumns,  List<OrderColumn> orderColumns) {
+    public TableRow(IEntryPacket x, List<QueryColumn> queryColumns, List<OrderColumn> orderColumns) {
         this.columns = queryColumns.toArray(new QueryColumn[0]);
         values = new Object[columns.length];
         for (int i = 0; i < queryColumns.size(); i++) {
@@ -83,7 +83,7 @@ public class TableRow implements Comparable<TableRow>{
         return values[index];
     }
 
-    public Object getPropertyValue(QueryColumn column) { //TODO: hash map?
+    public Object getPropertyValue(QueryColumn column) {
         for (int i = 0; i < columns.length; i++) {
             if (columns[i].equals(column)) {
                 return values[i];

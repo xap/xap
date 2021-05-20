@@ -54,7 +54,7 @@ public class AggregateEntriesSpaceOperation extends AbstractSpaceOperation<Aggre
             result.setIntermediateResults(intermediateResults);
             if (answerHolder != null && answerHolder.getExplainPlan() != null) {
                 for(SpaceEntriesAggregator aggregator : request.getAggregators()) {
-                    if (aggregator instanceof OrderByAggregator) {
+                    if (aggregator instanceof OrderByAggregator) { // for now support only orderBy
                         OrderByAggregator orderByAggregator = (OrderByAggregator) aggregator;
                         List<OrderByPath> orderByPaths = orderByAggregator.getOrderByPaths();
                         for (OrderByPath orderByPath : orderByPaths) {

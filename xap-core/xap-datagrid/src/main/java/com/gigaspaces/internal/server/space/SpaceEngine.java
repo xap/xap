@@ -104,6 +104,7 @@ import com.gigaspaces.lrmi.nio.IResponseContext;
 import com.gigaspaces.lrmi.nio.ResponseContext;
 import com.gigaspaces.management.space.SpaceQueryDetails;
 import com.gigaspaces.metrics.*;
+import com.gigaspaces.query.aggregators.OrderByAggregator;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
 import com.gigaspaces.security.authorities.SpaceAuthority.SpacePrivilege;
 import com.gigaspaces.server.blobstore.BlobStoreException;
@@ -6466,6 +6467,10 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                           SpaceContext sc)
             throws Exception {
         if (Modifiers.contains(readModifiers, Modifiers.EXPLAIN_PLAN)) {
+            // for now support only orderBy
+            if(!aggregators.stream().allMatch(spaceEntriesAggregator -> spaceEntriesAggregator instanceof OrderByAggregator)) {
+                throw new UnsupportedOperationException("Sql explain plan is supported for OrderBy aggregation only");
+            }
             SingleExplainPlan.validate(0, _cacheManager.isBlobStoreCachePolicy(), readModifiers,
                     queryPacket.getCustomQuery(), getClassTypeInfo(queryPacket.getTypeName()).getIndexes());
         }

@@ -4,12 +4,15 @@ import com.gigaspaces.internal.query.explainplan.TextReportFormatter;
 import com.gigaspaces.internal.query.explainplan.model.JdbcExplainPlan;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.Cursor;
+import com.gigaspaces.jdbc.model.table.OrderColumn;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class JoinExplainPlan extends JdbcExplainPlan {
     private final JoinInfo joinInfo;
     private List<String> selectColumns;
+    private List<OrderColumn> orderColumns;
     private final JdbcExplainPlan left;
     private final JdbcExplainPlan right;
 
@@ -23,6 +26,10 @@ public class JoinExplainPlan extends JdbcExplainPlan {
         this.selectColumns = selectColumns;
     }
 
+    public void setOrderColumns(List<OrderColumn> orderColumns) {
+        this.orderColumns = orderColumns;
+    }
+
     @Override
     public void format(TextReportFormatter formatter, boolean verbose) {
         JoinInfo.JoinAlgorithm joinAlgorithm = joinInfo.getRightColumn().getTableContainer().getQueryResult().getCursorType().equals(Cursor.Type.HASH) ? JoinInfo.JoinAlgorithm.Hash : JoinInfo.JoinAlgorithm.Nested;
@@ -31,6 +38,9 @@ public class JoinExplainPlan extends JdbcExplainPlan {
         formatter.indent(() -> {
             if (selectColumns != null)
                 formatter.line(String.format("Select: %s", String.join(", ", selectColumns)));
+            if (orderColumns != null && !orderColumns.isEmpty()) {
+                formatter.line("OrderBy: " + orderColumns.stream().map(OrderColumn::toString).collect(Collectors.joining(", ")));
+            }
             formatter.line(String.format("Join condition: (%s = %s)", joinInfo.getLeftColumn(), joinInfo.getRightColumn()));
             formatter.withPrefix("|", () -> {
                 formatter.withFirstLine("->", () ->

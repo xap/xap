@@ -44,7 +44,7 @@ public class JoinQueryExecutor {
         }
         JoinTablesIterator joinTablesIterator = new JoinTablesIterator(tables);
         if(config.isExplainPlan()) {
-            return explain(joinTablesIterator);
+            return explain(joinTablesIterator, orderColumns);
         }
         QueryResult res = new QueryResult(this.queryColumns);
         while (joinTablesIterator.hasNext()) {
@@ -57,7 +57,7 @@ public class JoinQueryExecutor {
         return res;
     }
 
-    private QueryResult explain(JoinTablesIterator joinTablesIterator) {
+    private QueryResult explain(JoinTablesIterator joinTablesIterator, List<OrderColumn> orderColumns) {
         Stack<TableContainer> stack = new Stack<>();
         TableContainer current = joinTablesIterator.getStartingPoint();
         stack.push(current);
@@ -75,6 +75,7 @@ public class JoinQueryExecutor {
             last = curr;
         }
         joinExplainPlan.setSelectColumns(queryColumns.stream().map(QueryColumn::toString).collect(Collectors.toList()));
+        joinExplainPlan.setOrderColumns(orderColumns);
         return new ExplainPlanResult(queryColumns, joinExplainPlan, null);
     }
 }

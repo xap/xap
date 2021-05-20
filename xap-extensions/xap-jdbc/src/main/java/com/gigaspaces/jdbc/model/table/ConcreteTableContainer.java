@@ -83,9 +83,8 @@ public class ConcreteTableContainer extends TableContainer {
                 modifiers = Modifiers.add(modifiers, Modifiers.EXPLAIN_PLAN);
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
-            // When we use join without an explain plan, we sort the results on the client side
-            // instead of on the server.
-            if(!config.isJoinUsed() || config.isExplainPlan()) {
+            // When we use join, we sort the results on the client side instead of on the server.
+            if(!config.isJoinUsed()) {
                 setOrderByAggregation();
             }
             queryTemplatePacket.prepareForSpace(typeDesc);
