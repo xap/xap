@@ -310,7 +310,7 @@ public class SpaceClusterInfo implements Externalizable {
 
     public Map<String, String> tieredStorageConfigString (){
         TieredStorageConfig tieredStorageConfig = (TieredStorageConfig) customComponents.get(Constants.TieredStorage.SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME);
-       return tieredStorageConfig.toMap();
+       return tieredStorageConfig.toMapConfigurationForDisplay();
     }
 
     @Override

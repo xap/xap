@@ -110,4 +110,21 @@ public class TieredStorageTableConfig implements Externalizable {
     }
 
 
+
+    public String toStringForDisplay() {
+      if (criteria != null){
+          return "criteria=" + criteria;
+      }
+      else if (period != null){
+          return "period=" + period;
+
+      }
+      else if (isTransient){
+          return "isTransient=true";
+      }
+
+      return null;
+    }
+
+
 }
