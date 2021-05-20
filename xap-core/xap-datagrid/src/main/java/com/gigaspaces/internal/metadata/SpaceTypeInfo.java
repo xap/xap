@@ -81,7 +81,6 @@ import org.slf4j.LoggerFactory;
 @com.gigaspaces.api.InternalApi
 public class SpaceTypeInfo implements Externalizable {
     private static final long serialVersionUID = 1L;
-    private static final byte OldVersionId = 2;
 
     private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA_POJO);
 
@@ -327,85 +326,71 @@ public class SpaceTypeInfo implements Externalizable {
         if (paramsConstructor == null)
             throw new SpaceMetadataValidationException(_type, "Type must have a exactly 1 constructor with parameters.");
 
-        try {
-            Object[] constructorArguments = new Object[_constructorDescriptor.getNumberOfParameters()];
+        Object[] constructorArguments = new Object[_constructorDescriptor.getNumberOfParameters()];
 
-            if (spacePropertyValues != null) {
-                for (int i = 0; i < spacePropertyValues.length; i++) {
-                    int spacePropertyToConstructorIndex = _constructorDescriptor.getSpacePropertyToConstructorIndex(i);
-                    // at the time of writing this code, this could only be
-                    // in the case of id auto generate true, the actual value in this case will be null
-                    if (spacePropertyToConstructorIndex < 0)
-                        continue;
+        if (spacePropertyValues != null) {
+            for (int i = 0; i < spacePropertyValues.length; i++) {
+                int spacePropertyToConstructorIndex = _constructorDescriptor.getSpacePropertyToConstructorIndex(i);
+                // at the time of writing this code, this could only be
+                // in the case of id auto generate true, the actual value in this case will be null
+                if (spacePropertyToConstructorIndex < 0)
+                    continue;
 
-                    Object value = getProperty(i).convertFromNullIfNeeded(spacePropertyValues[i]);
-                    constructorArguments[spacePropertyToConstructorIndex] = value;
-                }
+                Object value = getProperty(i).convertFromNullIfNeeded(spacePropertyValues[i]);
+                constructorArguments[spacePropertyToConstructorIndex] = value;
             }
-
-            if (_constructorDescriptor.getDynamicPropertiesConstructorIndex() >= 0)
-                constructorArguments[_constructorDescriptor.getDynamicPropertiesConstructorIndex()] = getDocumentProperties(dynamicProperties);
-            if (_idAutoGenerate && _constructorDescriptor.getIdPropertyConstructorIndex() >= 0)
-                constructorArguments[_constructorDescriptor.getIdPropertyConstructorIndex()] = uid;
-            if (_constructorDescriptor.getVersionConstructorIndex() >= 0)
-                constructorArguments[_constructorDescriptor.getVersionConstructorIndex()] = version;
-            if (_constructorDescriptor.getLeaseConstructorIndex() >= 0)
-                constructorArguments[_constructorDescriptor.getLeaseConstructorIndex()] = lease;
-            if (_constructorDescriptor.getPersistConstructorIndex() >= 0)
-                constructorArguments[_constructorDescriptor.getPersistConstructorIndex()] = persistent;
-
-            // Add default values for primitive types
-            for (int i = 0; i < _constructorDescriptor.getNumberOfParameters(); i++) {
-                if (_constructorDescriptor.isIndexExcluded(i))
-                    constructorArguments[i] = ObjectUtils.getDefaultValue(_constructorDescriptor.getConstructorParameterTypes()[i]);
-            }
-
-            Object result;
-            try {
-                result = _paramsConstructor.newInstance(constructorArguments);
-            } catch (NullPointerException e){
-                throw new SpaceMetadataException("Error creating a new instance with constructor for type [" + _type.getName() + "].", e);
-            }
-            if (_constructorDescriptor.getConstructorParameterNames().length < _spaceProperties.length) {
-                for (int i = 0; i < spacePropertyValues.length; i++) {
-                    int spacePropertyToConstructorIndex = _constructorDescriptor.getSpacePropertyToConstructorIndex(i);
-                    if (spacePropertyToConstructorIndex < 0) {
-                        _spaceProperties[i].setValue(result, spacePropertyValues[i]);
-                    }
-                }
-
-            }
-
-            // Handling of metadata properties which can bet set using a setter method as well.
-            if (_idAutoGenerate && _idProperty != null && _constructorDescriptor.getIdPropertyConstructorIndex() < 0)
-                _idProperty.setValue(result, uid);
-
-            if (_versionProperty != null && _constructorDescriptor.getVersionConstructorIndex() < 0)
-                _versionProperty.setValue(result, version);
-
-            if (_leaseExpirationProperty != null && _constructorDescriptor.getLeaseConstructorIndex() < 0)
-                _leaseExpirationProperty.setValue(result, lease);
-
-            if (_persistProperty != null && _constructorDescriptor.getPersistConstructorIndex() < 0)
-                _persistProperty.setValue(result, persistent);
-
-            if (_dynamicPropertiesProperty != null && _constructorDescriptor.getDynamicPropertiesConstructorIndex() < 0)
-                _dynamicPropertiesProperty.setValue(result, getDocumentProperties(dynamicProperties));
-
-            return result;
-        } catch (InvocationTargetException e) {
-            if (_logger.isErrorEnabled())
-                _logger.error("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
-            throw new SpaceMetadataException("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
-        } catch (InstantiationException e) {
-            if (_logger.isErrorEnabled())
-                _logger.error("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
-            throw new SpaceMetadataException("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
-        } catch (IllegalAccessException e) {
-            if (_logger.isErrorEnabled())
-                _logger.error("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
-            throw new SpaceMetadataException("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
         }
+
+        if (_constructorDescriptor.getDynamicPropertiesConstructorIndex() >= 0)
+            constructorArguments[_constructorDescriptor.getDynamicPropertiesConstructorIndex()] = getDocumentProperties(dynamicProperties);
+        if (_idAutoGenerate && _constructorDescriptor.getIdPropertyConstructorIndex() >= 0)
+            constructorArguments[_constructorDescriptor.getIdPropertyConstructorIndex()] = uid;
+        if (_constructorDescriptor.getVersionConstructorIndex() >= 0)
+            constructorArguments[_constructorDescriptor.getVersionConstructorIndex()] = version;
+        if (_constructorDescriptor.getLeaseConstructorIndex() >= 0)
+            constructorArguments[_constructorDescriptor.getLeaseConstructorIndex()] = lease;
+        if (_constructorDescriptor.getPersistConstructorIndex() >= 0)
+            constructorArguments[_constructorDescriptor.getPersistConstructorIndex()] = persistent;
+
+        // Add default values for primitive types
+        for (int i = 0; i < _constructorDescriptor.getNumberOfParameters(); i++) {
+            if (_constructorDescriptor.isIndexExcluded(i))
+                constructorArguments[i] = ObjectUtils.getDefaultValue(_constructorDescriptor.getConstructorParameterTypes()[i]);
+        }
+
+        Object result;
+        try {
+            result = _paramsConstructor.newInstance(constructorArguments);
+        } catch (NullPointerException e){
+            throw new SpaceMetadataException("Error creating a new instance with constructor for type [" + _type.getName() + "].", e);
+        }
+        if (_constructorDescriptor.getConstructorParameterNames().length < _spaceProperties.length) {
+            for (int i = 0; i < spacePropertyValues.length; i++) {
+                int spacePropertyToConstructorIndex = _constructorDescriptor.getSpacePropertyToConstructorIndex(i);
+                if (spacePropertyToConstructorIndex < 0) {
+                    _spaceProperties[i].setValue(result, spacePropertyValues[i]);
+                }
+            }
+
+        }
+
+        // Handling of metadata properties which can bet set using a setter method as well.
+        if (_idAutoGenerate && _idProperty != null && _constructorDescriptor.getIdPropertyConstructorIndex() < 0)
+            _idProperty.setValue(result, uid);
+
+        if (_versionProperty != null && _constructorDescriptor.getVersionConstructorIndex() < 0)
+            _versionProperty.setValue(result, version);
+
+        if (_leaseExpirationProperty != null && _constructorDescriptor.getLeaseConstructorIndex() < 0)
+            _leaseExpirationProperty.setValue(result, lease);
+
+        if (_persistProperty != null && _constructorDescriptor.getPersistConstructorIndex() < 0)
+            _persistProperty.setValue(result, persistent);
+
+        if (_dynamicPropertiesProperty != null && _constructorDescriptor.getDynamicPropertiesConstructorIndex() < 0)
+            _dynamicPropertiesProperty.setValue(result, getDocumentProperties(dynamicProperties));
+
+        return result;
     }
 
     private DocumentProperties getDocumentProperties(Map<String, Object> dynamicProperties) {
