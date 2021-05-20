@@ -33,15 +33,6 @@ public class StandardProperties<T> implements IProperties<T> {
     public static final String INTERNAL_NAME = ReflectionUtil.getInternalName(StandardProperties.class);
     public static final String CTOR_DESC = "([Lcom/gigaspaces/internal/metadata/SpacePropertyInfo;)V";
 
-    public static final String GET_VALUE_NAME = "getValue";
-    public static final String GET_VALUE_DESC = "(Ljava/lang/Object;I)Ljava/lang/Object;";
-
-    public static final String SET_VALUE_NAME = "setValue";
-    public static final String SET_VALUE_DESC = "(Ljava/lang/Object;Ljava/lang/Object;I)V";
-
-    public static final String FROM_NULL_VALUE_NAME = "convertFromNullIfNeeded";
-    public static final String FROM_NULL_VALUE_DESC = "(Ljava/lang/Object;I)Ljava/lang/Object;";
-
     private final SpacePropertyInfo[] _properties;
 
     public StandardProperties(SpacePropertyInfo[] properties) {
@@ -54,41 +45,57 @@ public class StandardProperties<T> implements IProperties<T> {
         }
     }
 
-    public Object[] getValues(T obj)
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    public Object[] getValues(T obj) {
         Object[] results = new Object[_properties.length];
         for (int i = 0; i < results.length; ++i)
             results[i] = getValue(obj, i);
         return results;
     }
 
-    public void setValues(T obj, Object[] values)
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    public void setValues(T obj, Object[] values) {
         for (int i = 0; i < _properties.length; ++i)
             if (_properties[i].getSetterMethod() != null)
                 setValue(obj, values[i], i);
     }
 
-    protected Object getValue(T obj, int i)
-            throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-        return _properties[i].getGetterMethod().invoke(obj);
-    }
+    public static final String GET_VALUE_NAME = "getValue";
+    public static final String GET_VALUE_DESC = "(Ljava/lang/Object;I)Ljava/lang/Object;";
 
-    protected void setValue(T obj, Object value, int i)
-            throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-        if (!_properties[i].isPrimitive())
-            _properties[i].getSetterMethod().invoke(obj, value);
-        else if (_properties[i].hasNullValue())
-            _properties[i].getSetterMethod().invoke(obj, convertFromNullIfNeeded(value, i));
-        else if (value != null)
-            _properties[i].getSetterMethod().invoke(obj, value);
-        else {
-            // property is primitive, has no null value and value is null:
-            // setter cannot be invoked.
-            // (The setter's underlying field will be initialized according to java's semantics).
+    // NOTE: this method is overridden in the byte-generated class.
+    protected Object getValue(T obj, int i) {
+        try {
+            return _properties[i].getGetterMethod().invoke(obj);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalStateException("Failed to get value of property " + _properties[i].getName() + " from " + obj, e);
         }
     }
 
+    public static final String SET_VALUE_NAME = "setValue";
+    public static final String SET_VALUE_DESC = "(Ljava/lang/Object;Ljava/lang/Object;I)V";
+
+    // NOTE: this method is overridden in the byte-generated class.
+    protected void setValue(T obj, Object value, int i) {
+        try {
+            if (!_properties[i].isPrimitive())
+                _properties[i].getSetterMethod().invoke(obj, value);
+            else if (_properties[i].hasNullValue())
+                _properties[i].getSetterMethod().invoke(obj, convertFromNullIfNeeded(value, i));
+            else if (value != null)
+                _properties[i].getSetterMethod().invoke(obj, value);
+            else {
+                // property is primitive, has no null value and value is null:
+                // setter cannot be invoked.
+                // (The setter's underlying field will be initialized according to java's semantics).
+            }
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalStateException("Failed to set value of property " + _properties[i].getName() + " from " + obj, e);
+        }
+    }
+
+    public static final String FROM_NULL_VALUE_NAME = "convertFromNullIfNeeded";
+    public static final String FROM_NULL_VALUE_DESC = "(Ljava/lang/Object;I)Ljava/lang/Object;";
+
+    // NOTE: this method is invoked from the byte-generated class as well.
     protected Object convertFromNullIfNeeded(Object value, int propertyIndex) {
         return _properties[propertyIndex].convertFromNullIfNeeded(value);
     }
