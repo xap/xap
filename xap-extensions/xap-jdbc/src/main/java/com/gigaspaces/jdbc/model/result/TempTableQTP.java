@@ -24,7 +24,6 @@ public class TempTableQTP extends QueryTemplatePacket {
 
     public TempTableQTP(SegmentRange range) {
         predicate = (tableRow) -> range.getPredicate().execute(tableRow.getPropertyValue(range.getPath()));
-
     }
 
     @Override

@@ -2,7 +2,6 @@ package com.gigaspaces.jdbc.model.table;
 
 import com.gigaspaces.internal.utils.ObjectConverter;
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
-import com.gigaspaces.jdbc.exceptions.ExecutionException;
 import com.gigaspaces.jdbc.explainplan.SubqueryExplainPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
@@ -98,7 +97,7 @@ public class TempTableContainer extends TableContainer {
             return new TempTableQTP((EqualValueRange) range);
         } else if (range instanceof SegmentRange) {
             return new TempTableQTP((SegmentRange) range);
-        } else {
+        } else { //todo ask Yohana why there were no support for NotEqualValueRange
             throw new UnsupportedOperationException("Range: " + range);
         }
     }
@@ -130,7 +129,7 @@ public class TempTableContainer extends TableContainer {
         try {
             return ObjectConverter.convert(value, column.getPropertyType());
         } catch (SQLException e) {
-            throw new ExecutionException("Couldn't convert the requested column with name [" + columnName + "]" + " to an object type of " + column.getPropertyType().getName(), e);
+            throw new UnsupportedOperationException("Couldn't convert the requested column with name [" + columnName + "]" + " to an object type of " + column.getPropertyType().getName(), e);
         }
     }
 
