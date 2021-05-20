@@ -151,41 +151,4 @@ public class QueryResult {
     public void sort(){
         Collections.sort(rows);
     }
-
-//    /**
-//     * This private class implements the Comparator and is used to sort. the entries when ORDER BY
-//     * is used in the query
-//     */
-//    protected static class EntriesOrderByComparator implements Comparator<TableRow> { //TODO: move it to TableRow?
-//
-//        private final List<OrderColumn> _orderColumns;
-//
-//        public EntriesOrderByComparator(List<OrderColumn> orderColumns) {
-//            _orderColumns = orderColumns;
-//        }
-//
-//        public int compare(TableRow o1, TableRow o2) {
-//            int rc = 0;
-//
-//            for (OrderColumn orderCol : _orderColumns) {
-//                Comparable c1 = (Comparable) o1.getPropertyValue(orderCol);
-//                Comparable c2 = (Comparable) o2.getPropertyValue(orderCol);
-//
-//                if (c1 == c2) {
-//                    continue;
-//                }
-//                if (c1 == null) {
-//                    return orderCol.isNullsLast() ? 1 : -1;
-//                }
-//                if (c2 == null) {
-//                    return orderCol.isNullsLast() ? -1 : 1;
-//                }
-//                rc = c1.compareTo(c2);
-//                if (rc != 0) {
-//                    return orderCol.isAsc() ? rc : -rc;
-//                }
-//            }
-//            return rc;
-//        }
-//    }
 }

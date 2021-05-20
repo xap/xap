@@ -32,7 +32,7 @@ public class OrderColumn extends QueryColumn {
     }
 
     @Override
-    public Object getCurrentValue(){
+    public Object getCurrentValue(){ //TODO: override is necessary?
         if(tableContainer.getQueryResult().getCurrent() == null)
             return null;
         return tableContainer.getQueryResult().getCurrent().getPropertyValue(this);
