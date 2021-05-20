@@ -56,7 +56,7 @@ public class TextReportFormatter {
     }
 
     public TextReportFormatter indent() {
-        indentation = indentation+'\t';
+        indentation = indentation+"  ";//2 spaces
         return this;
     }
 
