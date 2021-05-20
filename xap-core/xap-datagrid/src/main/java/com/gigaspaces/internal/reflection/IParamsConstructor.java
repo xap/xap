@@ -17,8 +17,6 @@
 package com.gigaspaces.internal.reflection;
 
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
-
 
 /**
  * Provides an abstraction over a constructor with parameters reflection.
@@ -29,7 +27,5 @@ import java.lang.reflect.InvocationTargetException;
  */
 public interface IParamsConstructor<T> extends Serializable {
 
-    final public static String INTERNAL_NAME = ReflectionUtil.getInternalName(IParamsConstructor.class);
-
-    T newInstance(Object... args) throws InvocationTargetException, InstantiationException, IllegalAccessException;
+    T newInstance(Object... args);
 }

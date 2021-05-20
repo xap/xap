@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.reflection.standard;
 
 import com.gigaspaces.internal.reflection.IParamsConstructor;
+import com.gigaspaces.metadata.SpaceMetadataException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -39,7 +40,11 @@ public class StandardParamsConstructor<T> implements IParamsConstructor<T> {
         this.ctor = ctor;
     }
 
-    public T newInstance(Object... params) throws InvocationTargetException, InstantiationException, IllegalAccessException {
-        return ctor.newInstance(params);
+    public T newInstance(Object... params) {
+        try {
+            return ctor.newInstance(params);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new SpaceMetadataException("Failed to create parameterized new instance of " + ctor.getDeclaringClass(), e);
+        }
     }
 }
