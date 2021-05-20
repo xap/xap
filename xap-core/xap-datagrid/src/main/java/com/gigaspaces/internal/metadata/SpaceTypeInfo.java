@@ -415,16 +415,7 @@ public class SpaceTypeInfo implements Externalizable {
     }
 
     public Object[] getSpacePropertiesValues(Object object, boolean useNullValues) {
-        Object[] values;
-        try {
-            values = getSpacePropertiesAccessor().getValues(object);
-        } catch (IllegalArgumentException e) {
-            throw new SpaceMetadataException("Failed to get values from object of type '" + object.getClass().getName() + "'.", e);
-        } catch (IllegalAccessException e) {
-            throw new SpaceMetadataException("Failed to get values from object of type '" + object.getClass().getName() + "'.", e);
-        } catch (InvocationTargetException e) {
-            throw new SpaceMetadataException("Failed to get values from object of type '" + object.getClass().getName() + "'.", e);
-        }
+        Object[] values = getSpacePropertiesAccessor().getValues(object);
 
         if (useNullValues) {
             for (int i = 0; i < values.length; i++)
@@ -435,15 +426,7 @@ public class SpaceTypeInfo implements Externalizable {
     }
 
     public void setSpacePropertiesValues(Object object, Object[] values) {
-        try {
-            getSpacePropertiesAccessor().setValues(object, values);
-        } catch (IllegalArgumentException e) {
-            throw new SpaceMetadataException("Failed to set values in object of type '" + object.getClass().getName() + "'.", e);
-        } catch (IllegalAccessException e) {
-            throw new SpaceMetadataException("Failed to set values in object of type '" + object.getClass().getName() + "'.", e);
-        } catch (InvocationTargetException e) {
-            throw new SpaceMetadataException("Failed to set values in object of type '" + object.getClass().getName() + "'.", e);
-        }
+        getSpacePropertiesAccessor().setValues(object, values);
     }
 
     ////////////////////////////////////////

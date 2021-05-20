@@ -26,18 +26,15 @@ import java.lang.reflect.InvocationTargetException;
  * @since 7.0
  */
 public interface IProperties<T> {
-    Object[] getValues(T obj)
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException;
+    Object[] getValues(T obj);
 
-    void setValues(T obj, Object[] values)
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException;
+    void setValues(T obj, Object[] values);
 
     class Helper {
         public static final String INTERNAL_NAME = ReflectionUtil.getInternalName(IProperties.class);
 
         private static final String[] EXCEPTIONS = new String[]{
                 ReflectionUtil.getInternalName(IllegalAccessException.class),
-                ReflectionUtil.getInternalName(IllegalArgumentException.class),
                 ReflectionUtil.getInternalName(InvocationTargetException.class)};
 
         public static String getterName() {

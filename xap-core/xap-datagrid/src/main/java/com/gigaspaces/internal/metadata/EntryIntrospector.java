@@ -233,19 +233,11 @@ public class EntryIntrospector<T extends Entry> extends AbstractTypeIntrospector
     }
 
     public Object[] getValues(T target) {
-        try {
-            return _properties.getValues(target);
-        } catch (Exception e) {
-            throw new ConversionException(e);
-        }
+        return _properties.getValues(target);
     }
 
     public void setValues(T target, Object[] values) {
-        try {
-            _properties.setValues(target, values);
-        } catch (Exception e) {
-            throw new ConversionException(e);
-        }
+        _properties.setValues(target, values);
     }
 
     public Object getValue(T target, int index) {
