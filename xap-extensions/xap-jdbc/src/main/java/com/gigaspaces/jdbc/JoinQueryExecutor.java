@@ -46,12 +46,14 @@ public class JoinQueryExecutor {
         if(config.isExplainPlan()) {
             return explain(joinTablesIterator);
         }
-        QueryResult res = new QueryResult(this.queryColumns, orderColumns);
+        QueryResult res = new QueryResult(this.queryColumns);
         while (joinTablesIterator.hasNext()) {
             if(tables.stream().allMatch(TableContainer::checkJoinCondition))
                 res.add(new TableRow(this.queryColumns, orderColumns));
         }
-        res.sort(); //TODO: complete
+        if(!orderColumns.isEmpty()) {
+            res.sort(); //sort the results at the client
+        }
         return res;
     }
 

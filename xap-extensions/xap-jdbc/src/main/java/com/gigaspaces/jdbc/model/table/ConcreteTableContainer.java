@@ -83,7 +83,9 @@ public class ConcreteTableContainer extends TableContainer {
                 modifiers = Modifiers.add(modifiers, Modifiers.EXPLAIN_PLAN);
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
-            if(!config.isJoinUsed()) {
+            // When we use join without an explain plan, we sort the results on the client side
+            // instead of on the server.
+            if(!config.isJoinUsed() || config.isExplainPlan()) {
                 setOrderByAggregation();
             }
             queryTemplatePacket.prepareForSpace(typeDesc);
@@ -92,7 +94,7 @@ public class ConcreteTableContainer extends TableContainer {
             if (explainPlanImpl != null) {
                 queryResult = new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
             } else {
-                queryResult = new QueryResult(res, visibleColumns, this);//TODO: pass order column?
+                queryResult = new QueryResult(res, visibleColumns, this, orderColumns);
             }
             return queryResult;
         } catch (Exception e) {

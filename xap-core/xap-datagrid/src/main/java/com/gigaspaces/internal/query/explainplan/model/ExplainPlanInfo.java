@@ -66,7 +66,7 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
             formatter.line("Execution type: " + "Single Partition");
         }
 
-        if (!verbose) { ////////
+        if (!verbose) {
             Map<PartitionFinalSelectedIndexes, List<PartitionAndSizes>> groupedSelectedIndexes = getFinalSelectedIndexesMap().entrySet().stream().collect(
                     groupingBy(Map.Entry::getValue
                             , LinkedHashMap::new

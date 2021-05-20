@@ -10,7 +10,6 @@ import com.j_spaces.jdbc.query.IQueryResultSet;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -20,31 +19,21 @@ public class QueryResult {
     private List<TableRow> rows;
     protected TableContainer tableContainer;
     private Cursor<TableRow> cursor;
-    private final List<OrderColumn> orderColumns;
 
-    public QueryResult(IQueryResultSet<IEntryPacket> res, List<QueryColumn> queryColumns, TableContainer tableContainer) {
+    public QueryResult(IQueryResultSet<IEntryPacket> res, List<QueryColumn> queryColumns,
+                       TableContainer tableContainer, List<OrderColumn> orderColumns) {
         this.queryColumns = filterNonVisibleColumns(queryColumns);
         this.tableContainer = tableContainer;
-        this.rows = res.stream().map(x -> new TableRow(x, queryColumns)).collect(Collectors.toList());
-        this.orderColumns = Collections.emptyList();
+        this.rows = res.stream().map(x -> new TableRow(x, queryColumns, orderColumns)).collect(Collectors.toList());
     }
 
     public QueryResult(List<QueryColumn> queryColumns) {
         this.tableContainer = null; // TODO should be handled in subquery
         this.queryColumns = filterNonVisibleColumns(queryColumns);
         this.rows = new ArrayList<>();
-        this.orderColumns = Collections.emptyList();
-    }
-
-    public QueryResult(List<QueryColumn> queryColumns, List<OrderColumn> orderColumns) {
-        this.tableContainer = null; // TODO should be handled in subquery
-        this.queryColumns = filterNonVisibleColumns(queryColumns);
-        this.rows = new ArrayList<>();
-        this.orderColumns = orderColumns;
     }
 
     public QueryResult(List<QueryColumn> visibleColumns, QueryResult tableResult, List<OrderColumn> orderColumns) {
-        this.orderColumns = orderColumns;
         this.tableContainer = null;
         this.queryColumns = visibleColumns;
         this.rows = tableResult.rows.stream().map(row -> new TableRow(row, visibleColumns, orderColumns)).collect(Collectors.toList());
@@ -160,45 +149,43 @@ public class QueryResult {
     }
 
     public void sort(){
-        if(!orderColumns.isEmpty()){
-            rows.sort(new EntriesOrderByComparator(orderColumns));
-        }
+        Collections.sort(rows);
     }
 
-    /**
-     * This private class implements the Comparator and is used to sort. the entries when ORDER BY
-     * is used in the query
-     */
-    protected static class EntriesOrderByComparator implements Comparator<TableRow> {
-
-        private final List<OrderColumn> _orderColumns;
-
-        public EntriesOrderByComparator(List<OrderColumn> orderColumns) {
-            _orderColumns = orderColumns;
-        }
-
-        public int compare(TableRow o1, TableRow o2) {
-            int rc = 0;
-
-            for (OrderColumn orderCol : _orderColumns) {
-                Comparable c1 = (Comparable) o1.getPropertyValue(orderCol);
-                Comparable c2 = (Comparable) o2.getPropertyValue(orderCol);
-
-                if (c1 == c2) {
-                    continue;
-                }
-                if (c1 == null) {
-                    return orderCol.isNullsLast() ? 1 : -1;
-                }
-                if (c2 == null) {
-                    return orderCol.isNullsLast() ? -1 : 1;
-                }
-                rc = c1.compareTo(c2);
-                if (rc != 0) {
-                    return orderCol.isAsc() ? rc : -rc;
-                }
-            }
-            return rc;
-        }
-    }
+//    /**
+//     * This private class implements the Comparator and is used to sort. the entries when ORDER BY
+//     * is used in the query
+//     */
+//    protected static class EntriesOrderByComparator implements Comparator<TableRow> { //TODO: move it to TableRow?
+//
+//        private final List<OrderColumn> _orderColumns;
+//
+//        public EntriesOrderByComparator(List<OrderColumn> orderColumns) {
+//            _orderColumns = orderColumns;
+//        }
+//
+//        public int compare(TableRow o1, TableRow o2) {
+//            int rc = 0;
+//
+//            for (OrderColumn orderCol : _orderColumns) {
+//                Comparable c1 = (Comparable) o1.getPropertyValue(orderCol);
+//                Comparable c2 = (Comparable) o2.getPropertyValue(orderCol);
+//
+//                if (c1 == c2) {
+//                    continue;
+//                }
+//                if (c1 == null) {
+//                    return orderCol.isNullsLast() ? 1 : -1;
+//                }
+//                if (c2 == null) {
+//                    return orderCol.isNullsLast() ? -1 : 1;
+//                }
+//                rc = c1.compareTo(c2);
+//                if (rc != 0) {
+//                    return orderCol.isAsc() ? rc : -rc;
+//                }
+//            }
+//            return rc;
+//        }
+//    }
 }

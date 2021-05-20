@@ -32,6 +32,13 @@ public class OrderColumn extends QueryColumn {
     }
 
     @Override
+    public Object getCurrentValue(){
+        if(tableContainer.getQueryResult().getCurrent() == null)
+            return null;
+        return tableContainer.getQueryResult().getCurrent().getPropertyValue(this);
+    }
+
+    @Override
     public String toString() {
         return getName() + " " + (isAsc ? "ASC" : "DESC") + " " + (isNullsLast ? "NULLS LAST" : "NULLS FIRST");
     }

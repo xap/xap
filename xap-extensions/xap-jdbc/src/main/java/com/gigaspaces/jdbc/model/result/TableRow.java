@@ -6,18 +6,20 @@ import com.gigaspaces.jdbc.model.table.QueryColumn;
 
 import java.util.List;
 
-public class TableRow {
-    private QueryColumn[] columns;
-    private Object[] values;
-    private OrderColumn[] orderColumns;
-    private Object[] orderValues;
+public class TableRow implements Comparable<TableRow>{
+    private final QueryColumn[] columns;
+    private final Object[] values;
+    private final OrderColumn[] orderColumns;
+    private final Object[] orderValues;
 
     public TableRow(QueryColumn[] columns, Object[] values) {
         this.columns = columns;
         this.values = values;
+        this.orderColumns = new OrderColumn[0];
+        this.orderValues = new Object[0];
     }
 
-    public TableRow(IEntryPacket x, List<QueryColumn> queryColumns) {
+    public TableRow(IEntryPacket x, List<QueryColumn> queryColumns,  List<OrderColumn> orderColumns) {
         this.columns = queryColumns.toArray(new QueryColumn[0]);
         values = new Object[columns.length];
         for (int i = 0; i < queryColumns.size(); i++) {
@@ -30,9 +32,23 @@ public class TableRow {
                 values[i] = x.getPropertyValue(queryColumn.getName());
             }
         }
+
+        //TODO: think of better way
+        this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
+        orderValues = new Object[this.orderColumns.length];
+        for (int i = 0; i < orderColumns.size(); i++) {
+            OrderColumn orderColumn = orderColumns.get(i);
+            if (orderColumn.isUUID()) {
+                orderValues[i] = x.getUID();
+            } else if (x.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(orderColumn.getName())) {
+                orderValues[i] = x.getID();
+            } else {
+                orderValues[i] = x.getPropertyValue(orderColumn.getName());
+            }
+        }
     }
 
-    public TableRow(List<QueryColumn> queryColumns,  List<OrderColumn> orderColumns) {
+    public TableRow(List<QueryColumn> queryColumns, List<OrderColumn> orderColumns) {
         this.columns = queryColumns.toArray(new QueryColumn[0]);
         values = new Object[columns.length];
         for (int i = 0; i < queryColumns.size(); i++) {
@@ -92,5 +108,29 @@ public class TableRow {
             }
         }
         return null;
+    }
+
+    @Override
+    public int compareTo(TableRow other) {
+        int results = 0;
+        for (OrderColumn orderCol : this.orderColumns) {
+            Comparable first = (Comparable) this.getPropertyValue(orderCol);
+            Comparable second = (Comparable) other.getPropertyValue(orderCol);
+
+            if (first == second) {
+                continue;
+            }
+            if (first == null) {
+                return orderCol.isNullsLast() ? 1 : -1;
+            }
+            if (second == null) {
+                return orderCol.isNullsLast() ? -1 : 1;
+            }
+            results = first.compareTo(second);
+            if (results != 0) {
+                return orderCol.isAsc() ? results : -results;
+            }
+        }
+        return results;
     }
 }

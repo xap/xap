@@ -6,7 +6,7 @@ public class QueryColumn {
     private final boolean isVisible;
     private final boolean isUUID;
     public static final String UUID_COLUMN = "UID";
-    private final TableContainer tableContainer;
+    protected final TableContainer tableContainer;
 
     public QueryColumn(String name, String alias, boolean isVisible, TableContainer tableContainer) {
         this.name = name;
