@@ -34,7 +34,6 @@ import net.jini.space.InternalSpaceException;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -101,7 +100,7 @@ public abstract class AbstractTypeIntrospector<T> implements ITypeIntrospector<T
                     packet.getTTL(),
                     packet.isTransient());
 
-        } catch (Exception e) {
+        } catch (IOException | ClassNotFoundException e) {
             throw new ConversionException(e);
         }
     }
@@ -112,7 +111,7 @@ public abstract class AbstractTypeIntrospector<T> implements ITypeIntrospector<T
             String uid,
             int version,
             long timeToLive,
-            boolean isTransient) throws InstantiationException, IllegalAccessException, InvocationTargetException {
+            boolean isTransient) {
         final T res = newInstance();
         if (values != null)
             setValues(res, values);
@@ -148,15 +147,11 @@ public abstract class AbstractTypeIntrospector<T> implements ITypeIntrospector<T
     }
 
     public T toObject(IGSEntry entry, ITypeDesc typeDesc) {
-        try {
-            T result = newInstance();
-            setValues(result, entry.getFieldsValues());
-            setEntryInfo(result, entry.getUID(), entry.getVersion(), entry.getTimeToLive());
-            setTransient(result, entry.isTransient());
-            return result;
-        } catch (Exception e) {
-            throw new ConversionException(e);
-        }
+        T result = newInstance();
+        setValues(result, entry.getFieldsValues());
+        setEntryInfo(result, entry.getUID(), entry.getVersion(), entry.getTimeToLive());
+        setTransient(result, entry.isTransient());
+        return result;
     }
 
     public Object[] getSerializedValues(T target) {
@@ -193,8 +188,7 @@ public abstract class AbstractTypeIntrospector<T> implements ITypeIntrospector<T
         return clonedValues;
     }
 
-
-    protected abstract T newInstance() throws InstantiationException, IllegalAccessException, InvocationTargetException;
+    protected abstract T newInstance();
 
     public Object getValue(T target, String name) {
         final int pos = _typeDesc.getFixedPropertyPosition(name);

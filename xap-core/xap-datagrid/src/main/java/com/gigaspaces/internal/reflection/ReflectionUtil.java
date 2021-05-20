@@ -80,6 +80,10 @@ public class ReflectionUtil {
         return _reflectionFactory.getProxy(loader, interfaces, handler, allowCache);
     }
 
+    public static <T> IConstructor<T> createCtor(Class<T> type) {
+        return createCtor(getDefaultConstructor(type));
+    }
+
     public static <T> IConstructor<T> createCtor(Constructor<T> ctor) {
         return _reflectionFactory.getConstructor(ctor);
     }
@@ -202,9 +206,9 @@ public class ReflectionUtil {
         try {
             return type.getDeclaredConstructor(noArg);
         } catch (NoSuchMethodException e) {
-            throw new IllegalArgumentException("Failed to get default constructor for class '" + type.getName() + "'.", e);
+            throw new IllegalArgumentException("Failed to get default constructor for class '" + type.getName() + "'", e);
         } catch (SecurityException e) {
-            throw new IllegalArgumentException("Failed to get default constructor for class '" + type.getName() + "'.", e);
+            throw new IllegalArgumentException("Failed to get default constructor for class '" + type.getName() + "'", e);
         }
     }
 

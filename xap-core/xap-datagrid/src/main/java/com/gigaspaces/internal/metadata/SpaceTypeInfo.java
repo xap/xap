@@ -313,21 +313,7 @@ public class SpaceTypeInfo implements Externalizable {
         if (constructor == null)
             throw new SpaceMetadataValidationException(_type, "Type must have a constructor with no parameters.");
 
-        try {
-            return constructor.newInstance();
-        } catch (InvocationTargetException e) {
-            if (_logger.isErrorEnabled())
-                _logger.error("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
-            throw new SpaceMetadataException("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
-        } catch (InstantiationException e) {
-            if (_logger.isErrorEnabled())
-                _logger.error("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
-            throw new SpaceMetadataException("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
-        } catch (IllegalAccessException e) {
-            if (_logger.isErrorEnabled())
-                _logger.error("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
-            throw new SpaceMetadataException("Failed to create instance of type [" + _type.getName() + "]: " + e.getMessage(), e);
-        }
+        return constructor.newInstance();
     }
 
     public Object createConstructorBasedInstance(

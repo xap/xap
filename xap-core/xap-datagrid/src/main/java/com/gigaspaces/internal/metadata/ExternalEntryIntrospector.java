@@ -19,6 +19,8 @@ package com.gigaspaces.internal.metadata;
 import com.gigaspaces.internal.client.StorageTypeDeserialization;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.converter.ConversionException;
+import com.gigaspaces.internal.reflection.IConstructor;
+import com.gigaspaces.internal.reflection.ReflectionUtil;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.core.IGSEntry;
@@ -41,11 +43,10 @@ import java.util.Map;
 public class ExternalEntryIntrospector<T extends ExternalEntry> extends AbstractTypeIntrospector<T> {
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
-    // If serialization changes, increment GigaspacesVersionID and modify read/writeExternal appropiately.
-    private static final byte OldVersionId = 2;
     public static final byte EXTERNALIZABLE_CODE = 4;
 
     private Class<T> _implClass;
+    private IConstructor<T> _constructor;
     private PropertyInfo[] _properties;
 
     /**
@@ -57,6 +58,7 @@ public class ExternalEntryIntrospector<T extends ExternalEntry> extends Abstract
     public ExternalEntryIntrospector(ITypeDesc typeDesc, Class<T> implClass) {
         super(typeDesc);
         this._implClass = implClass != null ? implClass : (Class<T>) ExternalEntry.class;
+        this._constructor = ReflectionUtil.createCtor(_implClass);
         this._properties = typeDesc.getProperties();
     }
 
@@ -121,9 +123,8 @@ public class ExternalEntryIntrospector<T extends ExternalEntry> extends Abstract
     }
 
     @Override
-    public T newInstance()
-            throws InstantiationException, IllegalAccessException {
-        return _implClass.newInstance();
+    public T newInstance() {
+        return _constructor.newInstance();
     }
 
     @Override
@@ -166,8 +167,6 @@ public class ExternalEntryIntrospector<T extends ExternalEntry> extends Abstract
     public void unsetDynamicProperty(T target, String name) {
         throw new UnsupportedOperationException("This operation is not supported for ExternalEntry types");
     }
-
-    ;
 
     public Object[] getValues(T target) {
         final Object[] values = target.getFieldsValues();
@@ -266,10 +265,10 @@ public class ExternalEntryIntrospector<T extends ExternalEntry> extends Abstract
         }
     }
 
-    @Override
     /**
      * NOTE: if you change this method, you need to make this class ISwapExternalizable
      */
+    @Override
     public void writeExternal(ObjectOutput out, PlatformLogicalVersion version)
             throws IOException {
         super.writeExternal(out, version);

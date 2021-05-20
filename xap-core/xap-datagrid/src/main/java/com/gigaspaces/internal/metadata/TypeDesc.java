@@ -347,16 +347,12 @@ public class TypeDesc implements ITypeDesc {
 
         if (ExternalEntry.class.isAssignableFrom(_objectClass))
             return null;
-        try {
-            if (MetaDataEntry.class.isAssignableFrom(_objectClass))
-                return new MetadataEntryIntrospector<MetaDataEntry>(this);
-            if (Entry.class.isAssignableFrom(_objectClass))
-                return new EntryIntrospector<Entry>(this);
-        } catch (NoSuchMethodException e) {
-            throw new SpaceMetadataException("Failed to create introspector for type '" + _objectClass.getName() + "'", e);
-        }
+        if (MetaDataEntry.class.isAssignableFrom(_objectClass))
+            return new MetadataEntryIntrospector<>(this);
+        if (Entry.class.isAssignableFrom(_objectClass))
+            return new EntryIntrospector<>(this);
 
-        return new PojoIntrospector<Object>(this);
+        return new PojoIntrospector<>(this);
     }
 
     private static int indexOfProperty(PropertyInfo[] properties, String propertyName) {

@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
@@ -46,14 +45,12 @@ import java.util.Map;
  * Entry introspector for all the Entry introspectors implementations.
  *
  * @author Niv Ingberg
- * @Since 7.0
+ * @since 7.0
  */
 @com.gigaspaces.api.InternalApi
 public class EntryIntrospector<T extends Entry> extends AbstractTypeIntrospector<T> {
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
-    // If serialization changes, increment GigaspacesVersionID and modify read/writeExternal appropiately.
-    private static final byte OldVersionId = 2;
 
     private static final SpaceVersionTable _versionTable = SpaceVersionTable.getInstance();
     public static final byte EXTERNALIZABLE_CODE = 2;
@@ -76,17 +73,15 @@ public class EntryIntrospector<T extends Entry> extends AbstractTypeIntrospector
     public EntryIntrospector() {
     }
 
-    public EntryIntrospector(ITypeDesc typeDesc)
-            throws NoSuchMethodException {
+    public EntryIntrospector(ITypeDesc typeDesc) {
         super(typeDesc);
         this._isVersioned = typeDesc.supportsOptimisticLocking();
         init((Class<T>) typeDesc.getObjectClass());
     }
 
-    protected void init(Class<T> clz)
-            throws NoSuchMethodException {
+    protected void init(Class<T> clz) {
         _class = clz;
-        _ctor = ReflectionUtil.createCtor(clz.getDeclaredConstructor());
+        _ctor = ReflectionUtil.createCtor(clz);
         List<IField> fieldsList = ReflectionUtil.getCanonicalSortedFields(clz);
         _fields = fieldsList.toArray(new IField[fieldsList.size()]);
 
@@ -137,8 +132,7 @@ public class EntryIntrospector<T extends Entry> extends AbstractTypeIntrospector
         return _class;
     }
 
-    public T newInstance()
-            throws InstantiationException, IllegalAccessException, InvocationTargetException {
+    public T newInstance() {
         return _ctor.newInstance();
     }
 
@@ -285,8 +279,6 @@ public class EntryIntrospector<T extends Entry> extends AbstractTypeIntrospector
         throw new UnsupportedOperationException("This operation is not supported for " + Entry.class + " types");
     }
 
-    ;
-
     public long getTimeToLive(T target) {
         EntryInfo entryInfo = getEntryInfo(target);
         return entryInfo != null ? entryInfo.m_TimeToLive : Lease.FOREVER;
@@ -371,17 +363,13 @@ public class EntryIntrospector<T extends Entry> extends AbstractTypeIntrospector
 
         final String className = IOUtils.readString(in);
         Class<T> cls = ClassLoaderHelper.loadClass(className);
-        try {
-            init(cls);
-        } catch (NoSuchMethodException e) {
-            throw new ClassNotFoundException(e.toString(), e);
-        }
+        init(cls);
     }
 
-    @Override
     /**
      * NOTE: if you change this method, you need to make this class ISwapExternalizable
      */
+    @Override
     public void writeExternal(ObjectOutput out, PlatformLogicalVersion version)
             throws IOException {
         super.writeExternal(out, version);
