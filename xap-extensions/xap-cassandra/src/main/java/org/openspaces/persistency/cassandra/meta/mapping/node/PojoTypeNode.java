@@ -215,22 +215,10 @@ public class PojoTypeNode extends AbstractCompoundTypeNode
             return null;
         }
 
-        Object newInstance;
-        try {
-            newInstance = context.getTypeNodeIntrospector()
-                    .getProcedureCache()
-                    .constructorFor(constructor)
-                    .newInstance();
-        } catch (InstantiationException e) {
-            throw new SpaceCassandraTypeIntrospectionException("Failed creating instance for property " +
-                    fullName + " of type " + type.getName(), e);
-        } catch (IllegalAccessException e) {
-            throw new SpaceCassandraTypeIntrospectionException("Failed creating instance for property " +
-                    fullName + " of type " + type.getName(), e);
-        } catch (InvocationTargetException e) {
-            throw new SpaceCassandraTypeIntrospectionException("Failed creating instance for property " +
-                    fullName + " of type " + type.getName(), e);
-        }
+        Object newInstance = context.getTypeNodeIntrospector()
+                .getProcedureCache()
+                .constructorFor(constructor)
+                .newInstance();
 
         for (Map.Entry<String, Object> entry : values.entrySet()) {
             Object value = entry.getValue();

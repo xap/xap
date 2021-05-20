@@ -215,9 +215,6 @@ public class DefaultSpaceDocumentMapper implements
         } catch (InvocationTargetException e) {
             throw new SpaceMongoException(
                     "can not invoke constructor or method: " + bson, e);
-        } catch (InstantiationException e) {
-            throw new SpaceMongoException(
-                    "Could not find default constructor for: " + bson, e);
         } catch (IllegalAccessException e) {
             throw new SpaceMongoException(
                     "can not access constructor or method: " + bson, e);
@@ -355,37 +352,23 @@ public class DefaultSpaceDocumentMapper implements
     @SuppressWarnings({"rawtypes", "unchecked"})
     private Map toMap(Class<?> type, BasicDBList value) {
 
-        try {
-            Map map;
+        Map map;
 
-            if (!type.isInterface()) {
-                map = (Map) repository.getConstructor(type).newInstance();
-            } else {
-                map = (Map) repository.getConstructor(
-                        getClassFor((String) value.get(0))).newInstance();
-            }
-            for (int i = 1; i < value.size(); i += 2) {
-                Object key = fromDBObject(value.get(i));
-                Object val = fromDBObject(value.get(i + 1));
-
-                map.put(key, val);
-            }
-
-            return map;
-
-        } catch (InvocationTargetException e) {
-            throw new SpaceMongoException(
-                    "Could not find default constructor for type: "
-                            + type.getName(), e);
-        } catch (InstantiationException e) {
-            throw new SpaceMongoException(
-                    "Could not find default constructor for type: "
-                            + type.getName(), e);
-        } catch (IllegalAccessException e) {
-            throw new SpaceMongoException(
-                    "Could not find default constructor for type: "
-                            + type.getName(), e);
+        if (!type.isInterface()) {
+            map = (Map) repository.getConstructor(type).newInstance();
+        } else {
+            map = (Map) repository.getConstructor(
+                    getClassFor((String) value.get(0))).newInstance();
         }
+        for (int i = 1; i < value.size(); i += 2) {
+            Object key = fromDBObject(value.get(i));
+            Object val = fromDBObject(value.get(i + 1));
+
+            map.put(key, val);
+        }
+
+        return map;
+
     }
 
     private Object toArray(Class<?> type, BasicDBList value) {
@@ -412,33 +395,19 @@ public class DefaultSpaceDocumentMapper implements
     @SuppressWarnings({"rawtypes", "unchecked"})
     private Collection toCollection(Class<?> type, BasicDBList value) {
 
-        try {
-            Collection collection;
-            if (!type.isInterface()) {
-                collection = (Collection) repository.getConstructor(type)
-                        .newInstance();
-            } else {
-                collection = (Collection) repository.getConstructor(
-                        getClassFor((String) value.get(0))).newInstance();
-            }
-
-            for (int i = 1; i < value.size(); i++)
-                collection.add(fromDBObject(value.get(i)));
-
-            return collection;
-        } catch (InvocationTargetException e) {
-            throw new SpaceMongoException(
-                    "Could not find default constructor for type: "
-                            + type.getName(), e);
-        } catch (InstantiationException e) {
-            throw new SpaceMongoException(
-                    "Could not find default constructor for type: "
-                            + type.getName(), e);
-        } catch (IllegalAccessException e) {
-            throw new SpaceMongoException(
-                    "Could not find default constructor for type: "
-                            + type.getName(), e);
+        Collection collection;
+        if (!type.isInterface()) {
+            collection = (Collection) repository.getConstructor(type)
+                    .newInstance();
+        } else {
+            collection = (Collection) repository.getConstructor(
+                    getClassFor((String) value.get(0))).newInstance();
         }
+
+        for (int i = 1; i < value.size(); i++)
+            collection.add(fromDBObject(value.get(i)));
+
+        return collection;
     }
 
     public Class<?> getClassFor(String type) {

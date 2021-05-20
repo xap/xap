@@ -24,7 +24,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author assafr
@@ -34,39 +33,33 @@ import java.lang.reflect.InvocationTargetException;
 public class ASMConstructorTest {
 
     @Test
-    public void testClass() throws InvocationTargetException, InstantiationException, IllegalAccessException {
-        IConstructor iCtor = testClass(PublicClass.class);
-        Assert.assertNotSame(StandardConstructor.class, iCtor.getClass());
+    public void testClass() {
+        testClass(PublicClass.class, false);
     }
 
     @Test
-    public void testPrivateClassPrivateCtor() throws InvocationTargetException, InstantiationException, IllegalAccessException {
-        IConstructor iCtor = testClass(PrivateClassPrivateCtor.class);
-        Assert.assertSame(StandardConstructor.class, iCtor.getClass());
+    public void testPrivateClassPrivateCtor() {
+        testClass(PrivateClassPrivateCtor.class, true);
     }
 
     @Test
-    public void testPublicConstructor() throws InvocationTargetException, InstantiationException, IllegalAccessException {
-        IConstructor iCtor = testClass(PrivateCtorClass.class);
-        Assert.assertSame(StandardConstructor.class, iCtor.getClass());
+    public void testPublicConstructor() {
+        testClass(PrivateCtorClass.class, true);
     }
 
     @Test
-    public void testPrivateConstructor() throws InvocationTargetException, InstantiationException, IllegalAccessException {
-        IConstructor iCtor = testClass(PrivateClassPublicCtor.class);
-        Assert.assertNotSame(StandardConstructor.class, iCtor.getClass());
+    public void testPrivateConstructor() {
+        testClass(PrivateClassPublicCtor.class, false);
     }
 
     @Test
-    public void testPackagedConstructor() throws InvocationTargetException, InstantiationException, IllegalAccessException {
-        IConstructor iCtor = testClass(PackagedClassPackagedCtor.class);
-        Assert.assertNotSame(StandardConstructor.class, iCtor.getClass());
+    public void testPackagedConstructor() {
+        testClass(PackagedClassPackagedCtor.class, false);
     }
 
     @Test
-    public void testProtectedConstructor() throws InvocationTargetException, InstantiationException, IllegalAccessException {
-        IConstructor iCtor = testClass(ProtectedClassProtectedCtor.class);
-        Assert.assertNotSame(StandardConstructor.class, iCtor.getClass());
+    public void testProtectedConstructor() {
+        testClass(ProtectedClassProtectedCtor.class, false);
     }
 
     /**
@@ -75,22 +68,20 @@ public class ASMConstructorTest {
     @Test
     public void testRepeatGet() throws Exception {
         Constructor<PublicClass> ctor = PublicClass.class.getConstructor();
-        IConstructor iCtor = ASMConstructorFactory.getConstructor(ctor);
+        IConstructor<PublicClass> iCtor = ASMConstructorFactory.getConstructor(ctor);
         Assert.assertNotSame(iCtor.getClass(), StandardMethod.class);
         Assert.assertEquals(iCtor.getClass(), ASMConstructorFactory.getConstructor(ctor).getClass());
         Assert.assertEquals(iCtor.getClass(), ASMConstructorFactory.getConstructor(ctor).getClass());
     }
 
-    private IConstructor testClass(Class clazz) {
-        try {
-            IConstructor iCtor = ReflectionUtil.createCtor(clazz.getDeclaredConstructor());
-            Object obj = iCtor.newInstance();
-            Assert.assertNotNull(obj);
-            return iCtor;
-        } catch (Exception e) {
-            Assert.fail(e.toString());
-            return null;
-        }
+    private <T> void testClass(Class<T> clazz, boolean expectedStandard) {
+        IConstructor<T> iCtor = ReflectionUtil.createCtor(clazz);
+        Object obj = iCtor.newInstance();
+        Assert.assertNotNull(obj);
+        if (expectedStandard)
+            Assert.assertSame(StandardConstructor.class, iCtor.getClass());
+        else
+            Assert.assertNotSame(StandardConstructor.class, iCtor.getClass());
     }
 
     public static class PublicClass {

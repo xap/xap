@@ -23,7 +23,7 @@ import com.j_spaces.core.client.MetaDataEntry;
  * MetadataEntry introspector for all the metadataEntry introspectors implementations.
  *
  * @author Niv Ingberg
- * @Since 7.0
+ * @since 7.0
  */
 @com.gigaspaces.api.InternalApi
 public class MetadataEntryIntrospector<T extends MetaDataEntry> extends EntryIntrospector<T> {
@@ -37,8 +37,7 @@ public class MetadataEntryIntrospector<T extends MetaDataEntry> extends EntryInt
     public MetadataEntryIntrospector() {
     }
 
-    public MetadataEntryIntrospector(ITypeDesc typeDesc)
-            throws NoSuchMethodException {
+    public MetadataEntryIntrospector(ITypeDesc typeDesc) {
         super(typeDesc);
     }
 

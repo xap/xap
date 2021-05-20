@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.reflection.standard;
 
 import com.gigaspaces.internal.reflection.IConstructor;
+import com.gigaspaces.metadata.SpaceMetadataException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -38,7 +39,11 @@ public class StandardConstructor<T> implements IConstructor<T> {
         this.ctor = ctor;
     }
 
-    public T newInstance() throws InvocationTargetException, InstantiationException, IllegalAccessException {
-        return ctor.newInstance();
+    public T newInstance() {
+        try {
+            return ctor.newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new SpaceMetadataException("Failed to create new instance of " + ctor.getDeclaringClass(), e);
+        }
     }
 }

@@ -18,6 +18,8 @@ package com.gigaspaces.internal.metadata;
 
 import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.entry.VirtualEntry;
+import com.gigaspaces.internal.reflection.IConstructor;
+import com.gigaspaces.internal.reflection.ReflectionUtil;
 import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.metadata.SpaceMetadataException;
@@ -27,8 +29,6 @@ import net.jini.core.lease.Lease;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -41,7 +41,7 @@ public class VirtualEntryIntrospector<T extends VirtualEntry> extends AbstractTy
     private static final long serialVersionUID = 1L;
 
     private final Class<T> _implClass;
-    private final Constructor<T> _constructor;
+    private final IConstructor<T> _constructor;
 
     /**
      * Required for Externalizable
@@ -53,13 +53,7 @@ public class VirtualEntryIntrospector<T extends VirtualEntry> extends AbstractTy
     public VirtualEntryIntrospector(ITypeDesc typeDesc, Class<T> documentWrapperClass) {
         super(typeDesc);
         this._implClass = documentWrapperClass;
-        try {
-            _constructor = _implClass.getConstructor();
-        } catch (SecurityException e) {
-            throw new SpaceMetadataException("Failed to get constructor of document type " + _implClass.getName(), e);
-        } catch (NoSuchMethodException e) {
-            throw new SpaceMetadataException("Failed to get constructor of document type " + _implClass.getName(), e);
-        }
+        this._constructor = ReflectionUtil.createCtor(_implClass);
     }
 
     public Class<T> getType() {
@@ -179,8 +173,7 @@ public class VirtualEntryIntrospector<T extends VirtualEntry> extends AbstractTy
     }
 
     @Override
-    public T newInstance()
-            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    public T newInstance() {
         T instance = _constructor.newInstance();
         instance.setTypeName(_typeDesc.getTypeName());
         return instance;
@@ -229,8 +222,6 @@ public class VirtualEntryIntrospector<T extends VirtualEntry> extends AbstractTy
     public void unsetDynamicProperty(T target, String name) {
         target.removeProperty(name);
     }
-
-    ;
 
     public Object[] getValues(T target) {
         Object[] result = new Object[_typeDesc.getNumOfFixedProperties()];

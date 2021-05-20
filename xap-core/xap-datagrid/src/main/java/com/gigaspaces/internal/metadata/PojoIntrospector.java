@@ -47,8 +47,6 @@ import java.util.Map.Entry;
 public class PojoIntrospector<T> extends AbstractTypeIntrospector<T> {
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
-    // If serialization changes, increment GigaspacesVersionID and modify read/writeExternal appropriately.
-    private static final byte OldVersionId = 3;
     public static final byte EXTERNALIZABLE_CODE = 1;
 
     private SpaceTypeInfo _typeInfo;
@@ -79,8 +77,7 @@ public class PojoIntrospector<T> extends AbstractTypeIntrospector<T> {
         return _pojoClass;
     }
 
-    public T newInstance()
-            throws InstantiationException, IllegalAccessException, InvocationTargetException {
+    public T newInstance() {
         return _constructor.newInstance();
     }
 
@@ -108,23 +105,12 @@ public class PojoIntrospector<T> extends AbstractTypeIntrospector<T> {
             String uid,
             int version,
             long timeToLive,
-            boolean isTransient) throws InstantiationException, IllegalAccessException,
-            InvocationTargetException {
+            boolean isTransient) {
         if (!_typeInfo.hasConstructorProperties()) {
-            return super.instantiateObject(values,
-                    dynamicProperties,
-                    uid,
-                    version,
-                    timeToLive,
-                    isTransient);
+            return super.instantiateObject(values, dynamicProperties, uid, version, timeToLive, isTransient);
         }
 
-        return instantiateObjectByConstructor(values,
-                dynamicProperties,
-                uid,
-                version,
-                timeToLive,
-                isTransient);
+        return instantiateObjectByConstructor(values, dynamicProperties, uid, version, timeToLive, isTransient);
     }
 
     @SuppressWarnings("unchecked")
@@ -134,7 +120,7 @@ public class PojoIntrospector<T> extends AbstractTypeIntrospector<T> {
             String uid,
             int version,
             long timeToLive,
-            boolean isTransient) throws InvocationTargetException, InstantiationException, IllegalAccessException {
+            boolean isTransient) {
         return (T) _typeInfo.createConstructorBasedInstance(values,
                 dynamicProperties,
                 uid,
@@ -146,10 +132,6 @@ public class PojoIntrospector<T> extends AbstractTypeIntrospector<T> {
     @Override
     protected Object[] processDocumentObjectInterop(Object[] values, EntryType entryType, boolean cloneOnChange) {
         return entryType.isVirtual() ? fromDocumentIfNeeded(values, cloneOnChange) : values;
-    }
-
-    public boolean hasPkField() {
-        return _idProperty != null;
     }
 
     public int getVersion(T target) {
@@ -341,8 +323,6 @@ public class PojoIntrospector<T> extends AbstractTypeIntrospector<T> {
         }
     }
 
-    ;
-
     private void init(SpaceTypeInfo typeInfo) {
         this._typeInfo = typeInfo;
         this._pojoClass = (Class<T>) typeInfo.getType();
@@ -480,10 +460,10 @@ public class PojoIntrospector<T> extends AbstractTypeIntrospector<T> {
         init(typeInfo);
     }
 
-    @Override
     /**
      * NOTE: if you change this method, you need to make this class ISwapExternalizable
      */
+    @Override
     public void writeExternal(ObjectOutput out, PlatformLogicalVersion version)
             throws IOException {
         super.writeExternal(out, version);

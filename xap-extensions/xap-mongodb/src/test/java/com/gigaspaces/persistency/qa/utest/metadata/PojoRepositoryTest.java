@@ -75,8 +75,7 @@ public class PojoRepositoryTest {
     }
 
     @Test
-    public void testConstructor() throws InvocationTargetException,
-            InstantiationException, IllegalAccessException {
+    public void testConstructor() {
 
         PojoA pojoA = (PojoA) repository.getConstructor(PojoA.class)
                 .newInstance();
@@ -89,8 +88,7 @@ public class PojoRepositoryTest {
     }
 
     @Test
-    public void testGetter() throws InvocationTargetException,
-            InstantiationException, IllegalAccessException {
+    public void testGetter() throws InvocationTargetException, IllegalAccessException {
 
         PojoB pojoB = (PojoB) repository.getConstructor(PojoB.class)
                 .newInstance();
@@ -112,8 +110,7 @@ public class PojoRepositoryTest {
     }
 
     @Test
-    public void testSetter() throws InvocationTargetException,
-            InstantiationException, IllegalAccessException {
+    public void testSetter() throws InvocationTargetException, IllegalAccessException {
         PojoB pojoB = (PojoB) repository.getConstructor(PojoB.class)
                 .newInstance();
 
