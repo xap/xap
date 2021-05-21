@@ -21,8 +21,11 @@ import com.gigaspaces.internal.classloader.ClassLoaderCache;
 import com.gigaspaces.internal.classloader.IClassLoaderCacheStateListener;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.ObjectIntegerMap;
+import com.gigaspaces.internal.utils.GsEnv;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.kernel.ClassLoaderHelper;
 
 import java.io.IOException;
@@ -33,6 +36,7 @@ import java.rmi.server.RMIClassLoader;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import com.j_spaces.kernel.SystemProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,17 +91,10 @@ public class MarshalOutputStream
      * <p>This constructor passes <code>out</code> to the superclass constructor that has an
      * <code>OutputStream</code> parameter.
      *
-     * <p><code>context</code> will be used as the return value of the created stream's {@link
-     * #getObjectStreamContext getObjectStreamContext} method.
-     *
      * @param out      the output stream to write marshalled data to
-     * @param context  the collection of context information objects to be returned by this stream's
-     *                 {@link #getObjectStreamContext getObjectStreamContext} method
      * @param optimize whether to activate the class description optimization during serialization.
      * @throws IOException          if the superclass's constructor throws an <code>IOException</code>
      * @throws SecurityException    if the superclass's constructor throws a <code>SecurityException</code>
-     * @throws NullPointerException if <code>out</code> or <code>context</code> is
-     *                              <code>null</code>
      **/
     public MarshalOutputStream(OutputStream out, boolean optimize) throws IOException {
         super(out);
@@ -129,22 +126,58 @@ public class MarshalOutputStream
         }
 
         // Look for object in cache:
-        int code = _context.getRepetitiveObjectsCache().get(obj);
-
+        int code = _context.getRepetitiveObjectCode(obj);
         // If object is cached, write only its code:
         if (code != CODE_NULL) {
             writeInt(code);
+        } else {
+            // Cache object with new code:
+            code = _context.cacheRepetitiveObject(obj);
+            // Write code and object:
+            writeInt(code);
+            writeObject(obj);
+        }
+    }
+
+    public void writeSmartExternalizable(SmartExternalizable obj)
+            throws IOException{
+        // If object is null, write null code:
+        if (obj == null) {
+            writeInt(CODE_NULL);
+            return;
+        }
+        // If optimization is disabled, write code and object:
+        if (!_optimize) {
+            writeInt(CODE_DISABLED);
+            writeObject(obj);
             return;
         }
 
-        // Create new code:
-        code = _context.getAndIncrementRepetitiveObjectCounter();
+        // Look for object's class in cache:
+        Class<? extends SmartExternalizable> objClass = obj.getClass();
+        int code = _context.getExternalizableObjectCode(objClass);
+        // If object is cached, write it using the cached code and externalizable:
+        if (code != CODE_NULL) {
+            writeInt(code);
+            obj.writeExternal(this);
+        } else {
+            code = _context.cacheExternalizable(objClass);
+            // Write code and object:
+            writeInt(code);
+            writeObject(obj);
+        }
+    }
 
-        // Put in cache:
-        _context.getRepetitiveObjectsCache().put(obj, code);
-        // Write code and object:
-        writeInt(code);
-        writeObject(obj);
+    private static final boolean SMART_EXTERNALIZABLE_BACKWARDS_PROTECTION = GsEnv.propertyBoolean(SystemProperties.SMART_EXTERNALIZABLE_BACKWARDS_PROTECTION).get(true);
+
+    public boolean targetSupportsSmartExternalizable() {
+        if (SMART_EXTERNALIZABLE_BACKWARDS_PROTECTION) {
+            // consider caching endpoint version on stream (pending verification stream is associated with a single channel).
+            PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
+            // Special case: this feature was introduced in 16.0.0 so checking the major is sufficient.
+            return version.major() >= 16;
+        }
+        return true;
     }
 
     /**
@@ -161,7 +194,7 @@ public class MarshalOutputStream
      *
      * <p>A subclass can override this method to write the annotation to a different location.
      *
-     * @param annotation the class annotation string value (possibly <code>null</code>) to write
+     * @param cl the class annotation string value (possibly <code>null</code>) to write
      * @throws IOException if I/O exception occurs writing the annotation
      **/
     @Override
@@ -231,7 +264,9 @@ public class MarshalOutputStream
 
         private final HashMap<Long, ClassLoaderContext> _classLoaderContextMap = new HashMap<Long, ClassLoaderContext>();
         private final ObjectIntegerMap<Object> _repetitiveObjectsCache = CollectionsFactory.getInstance().createObjectIntegerMap();
+        private final ObjectIntegerMap<Class<?>> _externalizableObjectsCache = CollectionsFactory.getInstance().createObjectIntegerMap();
         private int _repetitiveObjectCounter = CODE_NULL + 1;
+        private int _externalizableObjectCounter = CODE_NULL + 1;
 
         private final static ClassLoaderContext REMOVED_CONTEXT_MARKER = new ClassLoaderContext(-2L);
         private final static long NULL_CL_MARKER = -1;
@@ -292,12 +327,24 @@ public class MarshalOutputStream
             _classLoaderContextMap.put(classLoaderKey, REMOVED_CONTEXT_MARKER);
         }
 
-        public ObjectIntegerMap<Object> getRepetitiveObjectsCache() {
-            return _repetitiveObjectsCache;
+        public int getRepetitiveObjectCode(Object obj) {
+            return _repetitiveObjectsCache.get(obj);
         }
 
-        public int getAndIncrementRepetitiveObjectCounter() {
-            return _repetitiveObjectCounter++;
+        public int cacheRepetitiveObject(Object obj) {
+            int code = _repetitiveObjectCounter++;
+            _repetitiveObjectsCache.put(obj, code);
+            return code;
+        }
+
+        public int getExternalizableObjectCode(Class<?> clazz) {
+            return _externalizableObjectsCache.get(clazz);
+        }
+
+        public int cacheExternalizable(Class<?> clazz) {
+            int code = _externalizableObjectCounter++;
+            _externalizableObjectsCache.put(clazz, code);
+            return code;
         }
 
         public synchronized void close() {
@@ -319,6 +366,8 @@ public class MarshalOutputStream
             _classLoaderContextMap.clear();
             _repetitiveObjectsCache.clear();
             _repetitiveObjectCounter = CODE_NULL + 1;
+            _externalizableObjectsCache.clear();
+            _externalizableObjectCounter = CODE_NULL + 1;
         }
 
         /**
