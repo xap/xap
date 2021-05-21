@@ -82,6 +82,18 @@ public class PlatformLogicalVersion implements Externalizable, Comparable<Platfo
                 version.getPatchId(), version.getPatchNumber());
     }
 
+    public byte major() {
+        return _majorVersion;
+    }
+
+    public byte minor() {
+        return _minorVersion;
+    }
+
+    public byte servicePack() {
+        return _servicePackVersion;
+    }
+
     @Override
     public int compareTo(PlatformLogicalVersion other) {
         int code;

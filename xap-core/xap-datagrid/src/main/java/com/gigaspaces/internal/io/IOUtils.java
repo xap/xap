@@ -20,26 +20,17 @@ import com.gigaspaces.executor.SpaceTask;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.IntegerObjectMap;
 import com.gigaspaces.internal.collections.ObjectIntegerMap;
-import com.gigaspaces.internal.serialization.BooleanClassSerializer;
-import com.gigaspaces.internal.serialization.ByteArrayClassSerializer;
-import com.gigaspaces.internal.serialization.ByteClassSerializer;
-import com.gigaspaces.internal.serialization.CharacterClassSerializer;
-import com.gigaspaces.internal.serialization.DoubleClassSerializer;
-import com.gigaspaces.internal.serialization.FloatClassSerializer;
-import com.gigaspaces.internal.serialization.IClassSerializer;
-import com.gigaspaces.internal.serialization.IntegerClassSerializer;
-import com.gigaspaces.internal.serialization.LongClassSerializer;
-import com.gigaspaces.internal.serialization.NullClassSerializer;
-import com.gigaspaces.internal.serialization.ObjectClassSerializer;
-import com.gigaspaces.internal.serialization.ShortClassSerializer;
-import com.gigaspaces.internal.serialization.StringClassSerializer;
+import com.gigaspaces.internal.serialization.*;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.utils.CodeChangeUtilities;
 import com.j_spaces.core.SpaceContext;
 import com.j_spaces.kernel.ClassLoaderHelper;
+import com.j_spaces.kernel.SystemProperties;
 import net.jini.core.transaction.Transaction;
 import org.jini.rio.boot.CodeChangeClassLoadersManager;
 import org.jini.rio.boot.ServiceClassLoader;
@@ -81,6 +72,9 @@ public class IOUtils {
     private static int _swapExtenKey = 0;
 
     private static final IClassSerializer<?> _defaultSerializer = new ObjectClassSerializer();
+    private static final IClassSerializer<?> _nullSerializer = new NullClassSerializer<>();
+    private static final IClassSerializer<?> _smartExternalizableSerializer = new SmartExternalizableSerializer<>();
+    private static final boolean SMART_EXTERNALIZABLE_ENABLED = GsEnv.propertyBoolean(SystemProperties.SMART_EXTERNALIZABLE_ENABLED).get(true);
 
     static {
         _typeCache = new HashMap<Class<?>, IClassSerializer<?>>();
@@ -88,8 +82,10 @@ public class IOUtils {
 
         // Register default serializer (by code only):
         _codeCache.put(_defaultSerializer.getCode(), _defaultSerializer);
+        // Register smart externalizable (by code only):
+        _codeCache.put(_smartExternalizableSerializer.getCode(), _smartExternalizableSerializer);
         // Register special handler for null:
-        register(null, new NullClassSerializer<Object>());
+        register(null, _nullSerializer);
         // Register primitive types:
         register(Byte.class, new ByteClassSerializer());
         register(Short.class, new ShortClassSerializer());
@@ -733,13 +729,20 @@ public class IOUtils {
 
     public static void writeObject(ObjectOutput out, Object obj)
             throws IOException {
-        // Get object type:
-        Class<?> type = obj != null ? obj.getClass() : null;
-        // Get serializer by type:
-        IClassSerializer serializer = _typeCache.get(type);
-        // If type does not have serializer, or serializer is not supported in target version, use default serializer:
-        if (serializer == null)
-            serializer = _defaultSerializer;
+        IClassSerializer serializer;
+        if (SMART_EXTERNALIZABLE_ENABLED &&
+                obj instanceof SmartExternalizable &&
+                out instanceof MarshalOutputStream &&
+                ((MarshalOutputStream) out).targetSupportsSmartExternalizable()) {
+            serializer = _smartExternalizableSerializer;
+        } else if (obj == null) {
+            serializer = _nullSerializer;
+        } else {
+            serializer = _typeCache.get(obj.getClass());
+            // If type does not have serializer, use default serializer (i.e. serialize as object):
+            if (serializer == null)
+                serializer = _defaultSerializer;
+        }
         // Write type code:
         out.writeByte(serializer.getCode());
         // Serialize object using serializer:

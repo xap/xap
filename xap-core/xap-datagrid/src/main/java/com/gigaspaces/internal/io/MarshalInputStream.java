@@ -20,12 +20,15 @@ import com.gigaspaces.internal.classloader.ClassLoaderCache;
 import com.gigaspaces.internal.classloader.IClassLoaderCacheStateListener;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.IntegerObjectMap;
+import com.gigaspaces.internal.reflection.IConstructor;
+import com.gigaspaces.internal.reflection.ReflectionUtil;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.j_spaces.kernel.ClassLoaderHelper;
 import com.j_spaces.kernel.ISafeArray;
 import com.j_spaces.kernel.SafeArray;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectStreamClass;
@@ -115,6 +118,32 @@ public class MarshalInputStream
             value = ((String) value).intern();
         _context.getRepetitiveObjectsCache().put(code, value);
 
+        return value;
+    }
+
+    public Object readSmartExternalizable() throws IOException, ClassNotFoundException {
+        // Read object code:
+        int code = readInt();
+        // If null return:
+        if (code == CODE_NULL)
+            return null;
+        // If repetitive optimization was disabled:
+        if (code == CODE_DISABLED)
+            return readObject();
+
+        // Look for cached constructor by code:
+        IConstructor<?> ctor = _context.getExternalizableCtorCache().get(code);
+        if (ctor != null) {
+            // Instantiate object using cached factory which invokes default constructor:
+            Object value = ctor.newInstance();
+            // Deserialize object using standard Externalizable:
+            ((Externalizable)value).readExternal(this);
+            return value;
+        }
+
+        // If object constructor is not cached, read it from the stream and cache it for next time:
+        Object value = readObject();
+        _context.getExternalizableCtorCache().put(code, ReflectionUtil.createCtor(value.getClass()));
         return value;
     }
 
@@ -285,10 +314,15 @@ public class MarshalInputStream
         private final static ClassLoaderContext REMOVED_CONTEXT_MARKER = new ClassLoaderContext(-2L);
         private final static long NULL_CL_MARKER = -1;
         private final IntegerObjectMap<Object> _repetitiveObjectsCache = CollectionsFactory.getInstance().createIntegerObjectMap();
+        private final IntegerObjectMap<IConstructor<?>> _externalizableCtorCache = CollectionsFactory.getInstance().createIntegerObjectMap();
 
 
         public IntegerObjectMap<Object> getRepetitiveObjectsCache() {
             return _repetitiveObjectsCache;
+        }
+
+        public IntegerObjectMap<IConstructor<?>> getExternalizableCtorCache() {
+            return _externalizableCtorCache;
         }
 
         public synchronized void addObjectStreamClass(int index, ObjectStreamClass cl) {
@@ -391,6 +425,7 @@ public class MarshalInputStream
             classMap.clear();
             annotationMap.clear();
             _repetitiveObjectsCache.clear();
+            _externalizableCtorCache.clear();
         }
 
         /**

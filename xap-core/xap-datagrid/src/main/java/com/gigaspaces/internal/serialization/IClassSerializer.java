@@ -37,21 +37,22 @@ public interface IClassSerializer<T> {
         return null;
     }
 
-    public static final byte CODE_NULL = 0;
+    byte CODE_NULL = 0;
 
-    public static final byte CODE_OBJECT = -1;
-    public static final byte CODE_STRING = -2;
+    byte CODE_OBJECT = -1;
+    byte CODE_STRING = -2;
+    byte CODE_SMART_EXTERNALIZABLE = -3;
 
-    public static final byte CODE_BYTE = -11;
-    public static final byte CODE_SHORT = -12;
-    public static final byte CODE_INTEGER = -13;
-    public static final byte CODE_LONG = -14;
-    public static final byte CODE_FLOAT = -15;
-    public static final byte CODE_DOUBLE = -16;
-    public static final byte CODE_BOOLEAN = -17;
-    public static final byte CODE_CHARACTER = -18;
+    byte CODE_BYTE = -11;
+    byte CODE_SHORT = -12;
+    byte CODE_INTEGER = -13;
+    byte CODE_LONG = -14;
+    byte CODE_FLOAT = -15;
+    byte CODE_DOUBLE = -16;
+    byte CODE_BOOLEAN = -17;
+    byte CODE_CHARACTER = -18;
 
-    public static final byte CODE_BYTE_ARRAY = -21;
+    byte CODE_BYTE_ARRAY = -21;
     //public static final byte CODE_SHORT_ARRAY	= -22;
     //public static final byte CODE_INTEGER_ARRAY	= -23;
     //public static final byte CODE_LONG_ARRAY	= -24;
@@ -60,6 +61,6 @@ public interface IClassSerializer<T> {
     //public static final byte CODE_BOOLEAN_ARRAY	= -27;
     //public static final byte CODE_CHAR_ARRAY	= -28;
 
-    public static final byte CODE_HASHMAP = 10;
+    byte CODE_HASHMAP = 10;
 
 }
