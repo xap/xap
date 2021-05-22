@@ -19,8 +19,8 @@ package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.utils.math.MutableNumber;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -66,7 +66,7 @@ public class AverageAggregator extends AbstractPathAggregator<AverageAggregator.
         return result == null ? null : result.getAverage();
     }
 
-    public static class AverageTuple implements Externalizable {
+    public static class AverageTuple implements SmartExternalizable {
 
         private static final long serialVersionUID = 1L;
 

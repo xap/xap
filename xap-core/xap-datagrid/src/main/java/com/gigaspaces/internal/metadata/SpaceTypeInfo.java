@@ -48,13 +48,13 @@ import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.metadata.index.SpaceIndexFactory;
 import com.gigaspaces.metadata.index.SpaceIndexType;
 import com.gigaspaces.metadata.index.SpacePropertyIndex;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.server.ServerEntry;
 import com.j_spaces.kernel.ClassLoaderHelper;
 
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -79,7 +79,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @com.gigaspaces.api.InternalApi
-public class SpaceTypeInfo implements Externalizable {
+public class SpaceTypeInfo implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_METADATA_POJO);

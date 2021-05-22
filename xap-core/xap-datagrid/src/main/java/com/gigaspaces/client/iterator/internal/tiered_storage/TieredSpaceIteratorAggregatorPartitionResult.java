@@ -19,6 +19,7 @@ package com.gigaspaces.client.iterator.internal.tiered_storage;
 import com.gigaspaces.client.iterator.internal.ISpaceIteratorAggregatorPartitionResult;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ import java.util.Map;
  * @since 16.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class TieredSpaceIteratorAggregatorPartitionResult implements Externalizable, ISpaceIteratorAggregatorPartitionResult {
+public class TieredSpaceIteratorAggregatorPartitionResult implements SmartExternalizable, ISpaceIteratorAggregatorPartitionResult {
 
     private static final long serialVersionUID = 1L;
 

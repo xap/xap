@@ -1,16 +1,16 @@
 package org.openspaces.core.cluster.internal;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.openspaces.core.cluster.ClusterInfo;
 import org.openspaces.core.cluster.ClusterInfoBuilder;
 import com.gigaspaces.cluster.DynamicPartitionInfo;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-public class ClusterInfoImpl extends ClusterInfo implements Externalizable {
+public class ClusterInfoImpl extends ClusterInfo implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private int generation;

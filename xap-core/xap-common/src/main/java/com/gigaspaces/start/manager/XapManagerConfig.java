@@ -4,15 +4,15 @@ import com.gigaspaces.CommonSystemProperties;
 import com.gigaspaces.admin.ManagerInstanceInfo;
 import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.utils.GsEnv;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Map;
 import java.util.Properties;
 
-public class XapManagerConfig implements ManagerInstanceInfo, Externalizable {
+public class XapManagerConfig implements ManagerInstanceInfo, SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     // List of servers.

@@ -18,8 +18,8 @@ package com.j_spaces.jdbc.builder.range;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.query.sql.functions.SqlFunctionExecutionContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -33,7 +33,7 @@ import java.util.Objects;
  * @since 11.0
  */
 @com.gigaspaces.api.InternalApi
-public class FunctionCallDescription implements Externalizable, SqlFunctionExecutionContext {
+public class FunctionCallDescription implements SmartExternalizable, SqlFunctionExecutionContext {
 
     private static final long serialVersionUID = 1L;
     private String name;

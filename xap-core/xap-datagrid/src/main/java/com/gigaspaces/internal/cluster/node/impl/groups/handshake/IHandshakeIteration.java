@@ -16,9 +16,9 @@
 
 package com.gigaspaces.internal.cluster.node.impl.groups.handshake;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-public interface IHandshakeIteration extends Externalizable {
+public interface IHandshakeIteration extends SmartExternalizable {
 
     String toLogMessage(boolean detailed);
 

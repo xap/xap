@@ -24,6 +24,7 @@ import com.gigaspaces.internal.server.space.SpaceInstanceConfig;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.server.SpaceCustomComponent;
 import com.gigaspaces.sync.SpaceSynchronizationEndpoint;
 import com.j_spaces.core.Constants.SpaceProxy;
@@ -32,7 +33,6 @@ import com.j_spaces.core.cluster.ClusterPolicy;
 import com.j_spaces.core.filters.FiltersInfo;
 import com.j_spaces.sadapter.datasource.DataAdaptorIterator;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -164,7 +164,7 @@ import static com.j_spaces.core.Constants.StorageAdapter.PERSISTENT_ENABLED_DEFA
 @com.gigaspaces.api.InternalApi
 public class JSpaceAttributes
         extends Properties
-        implements Externalizable {
+        implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
     private static final int SERIAL_VERSION = 1;
 

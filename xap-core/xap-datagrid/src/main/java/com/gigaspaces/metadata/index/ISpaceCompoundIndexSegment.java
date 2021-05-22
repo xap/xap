@@ -17,9 +17,8 @@
 package com.gigaspaces.metadata.index;
 
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.server.ServerEntry;
-
-import java.io.Externalizable;
 
 /**
  * <p> Encapsulates information about an index segment of a compound index.
@@ -28,7 +27,7 @@ import java.io.Externalizable;
  * @since 9.5
  */
 
-public interface ISpaceCompoundIndexSegment extends Externalizable, ISwapExternalizable {
+public interface ISpaceCompoundIndexSegment extends SmartExternalizable, ISwapExternalizable {
     /**
      * @return the value that will be used for this segment using a given entry
      */

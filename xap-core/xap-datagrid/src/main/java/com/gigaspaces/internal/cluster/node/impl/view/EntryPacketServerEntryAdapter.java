@@ -16,7 +16,6 @@
 
 package com.gigaspaces.internal.cluster.node.impl.view;
 
-import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
 import com.gigaspaces.internal.metadata.ITypeDesc;
@@ -27,12 +26,12 @@ import com.gigaspaces.internal.server.storage.ICustomTypeDescLoader;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.metadata.SpaceMetadataException;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.LeaseManager;
 import com.j_spaces.core.UnknownTypeException;
 
 import net.jini.core.entry.UnusableEntryException;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -43,7 +42,7 @@ import java.util.Map;
  * @since 8.0.5
  */
 @com.gigaspaces.api.InternalApi
-public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDescLoader, Externalizable, ISwapExternalizable {
+public class EntryPacketServerEntryAdapter implements IEntryData, ICustomTypeDescLoader, SmartExternalizable, ISwapExternalizable {
     private static final long serialVersionUID = -4521887144678238254L;
 
     private volatile IEntryPacket _entryPacket;

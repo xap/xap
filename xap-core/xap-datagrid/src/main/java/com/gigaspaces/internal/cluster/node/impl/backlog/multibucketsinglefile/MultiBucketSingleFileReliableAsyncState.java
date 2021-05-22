@@ -19,8 +19,8 @@ package com.gigaspaces.internal.cluster.node.impl.backlog.multibucketsinglefile;
 import com.gigaspaces.internal.cluster.node.impl.backlog.reliableasync.IReliableAsyncState;
 import com.gigaspaces.internal.cluster.node.impl.backlog.reliableasync.IReliableAsyncTargetState;
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -92,7 +92,7 @@ public class MultiBucketSingleFileReliableAsyncState
         _asyncTargetsState = IOUtils.readObject(in);
     }
 
-    public static class AsyncTargetState implements Externalizable, IReliableAsyncTargetState {
+    public static class AsyncTargetState implements SmartExternalizable, IReliableAsyncTargetState {
         private static final long serialVersionUID = 1L;
 
         private String _targetMemberName;

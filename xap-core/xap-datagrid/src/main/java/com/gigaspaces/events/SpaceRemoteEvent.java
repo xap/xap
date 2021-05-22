@@ -20,9 +20,9 @@ package com.gigaspaces.events;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import net.jini.core.event.RemoteEvent;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -35,7 +35,7 @@ import java.rmi.MarshalledObject;
  * @since 8.0.4
  */
 
-public class SpaceRemoteEvent extends RemoteEvent implements Externalizable {
+public class SpaceRemoteEvent extends RemoteEvent implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
     protected static final String EMPTY_STRING = "";
 

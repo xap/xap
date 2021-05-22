@@ -22,6 +22,7 @@ import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPartic
 import com.gigaspaces.internal.transaction.DefaultTransactionUniqueId;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.transaction.ConsolidatedDistributedTransactionMetaData;
 import com.gigaspaces.transaction.TransactionParticipantMetaData;
 import com.gigaspaces.transaction.TransactionUniqueId;
@@ -40,7 +41,7 @@ import java.io.ObjectOutput;
  */
 @com.gigaspaces.api.InternalApi
 public class TransactionParticipantDataImpl
-        implements TransactionParticipantData, TransactionParticipantMetaData, ConsolidatedDistributedTransactionMetaData, Externalizable, IReplicationParticipantsMetadata {
+        implements TransactionParticipantData, TransactionParticipantMetaData, ConsolidatedDistributedTransactionMetaData, SmartExternalizable, IReplicationParticipantsMetadata {
 
     static final long serialVersionUID = 1L;
 

@@ -16,8 +16,8 @@
 
 package com.gigaspaces.internal.cluster.node.replica;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-public interface ISpaceCopyReplicaParameters extends Externalizable {
+public interface ISpaceCopyReplicaParameters extends SmartExternalizable {
 
 }

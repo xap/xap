@@ -20,9 +20,9 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.utils.Textualizable;
 import com.gigaspaces.internal.utils.Textualizer;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.start.SystemInfo;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -34,7 +34,7 @@ import java.io.ObjectOutput;
  * @since 9.5.0
  */
 @com.gigaspaces.api.InternalApi
-public class ConnectionEndpointDetails implements Externalizable, Textualizable {
+public class ConnectionEndpointDetails implements SmartExternalizable, Textualizable {
     private static final long serialVersionUID = 1L;
 
     public static final ConnectionEndpointDetails EMPTY = new ConnectionEndpointDetails(null, null, -1, null);

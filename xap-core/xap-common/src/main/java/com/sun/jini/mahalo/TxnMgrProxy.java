@@ -17,6 +17,7 @@
  */
 package com.sun.jini.mahalo;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.sun.jini.landlord.LandlordLease;
 import com.sun.jini.proxy.DefaultProxyPivot;
 import com.sun.jini.proxy.MarshalPivot;
@@ -59,7 +60,7 @@ import java.util.List;
  * @since 1.1
  */
 @com.gigaspaces.api.InternalApi
-public class TxnMgrProxy implements ExtendedTransactionManager, Administrable, Externalizable,
+public class TxnMgrProxy implements ExtendedTransactionManager, Administrable, SmartExternalizable,
         ReferentUuid, MarshalPivotProvider {
 
     private static final long serialVersionUID = 2L;

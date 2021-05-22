@@ -23,6 +23,7 @@ import com.gigaspaces.lrmi.ConnectionResource;
 import com.gigaspaces.lrmi.LRMIMethodMonitoringDetails;
 import com.gigaspaces.lrmi.LRMIProxyMonitoringDetails;
 import com.gigaspaces.lrmi.LRMIUtilities;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -41,7 +42,7 @@ import java.util.Map.Entry;
  * @since 9.1
  */
 @com.gigaspaces.api.InternalApi
-public class LRMIProxyMonitoringDetailsImpl implements LRMIProxyMonitoringDetails, Externalizable {
+public class LRMIProxyMonitoringDetailsImpl implements LRMIProxyMonitoringDetails, SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

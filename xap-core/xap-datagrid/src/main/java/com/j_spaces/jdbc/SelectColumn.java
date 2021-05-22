@@ -18,6 +18,7 @@ package com.j_spaces.jdbc;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.jdbc.query.QueryColumnData;
 import com.j_spaces.jdbc.query.QueryTableData;
 
@@ -30,7 +31,7 @@ import java.sql.SQLException;
  * @author Michael Mitrani, 2Train4, 2004
  */
 @com.gigaspaces.api.InternalApi
-public class SelectColumn implements Externalizable {
+public class SelectColumn implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private String name = null;

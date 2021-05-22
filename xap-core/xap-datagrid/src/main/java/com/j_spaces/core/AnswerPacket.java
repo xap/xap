@@ -18,6 +18,7 @@ package com.j_spaces.core;
 
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -32,7 +33,7 @@ import java.io.ObjectOutput;
  * @version 1.0
  */
 @com.gigaspaces.api.InternalApi
-public class AnswerPacket implements Externalizable {
+public class AnswerPacket implements SmartExternalizable {
     private static final long serialVersionUID = -5466254335883432404L;
     static final AnswerPacket DummyPacket = new AnswerPacket();
     static public final AnswerPacket NullPacket = new AnswerPacket();

@@ -16,6 +16,7 @@
 
 package org.openspaces.pu.container.servicegrid;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import net.jini.core.lookup.ServiceID;
 
 import org.openspaces.core.cluster.ClusterInfo;
@@ -35,7 +36,7 @@ import java.util.function.Predicate;
 /**
  * @author kimchy
  */
-public class PUDetails implements Externalizable {
+public class PUDetails implements SmartExternalizable {
 
     private static final long serialVersionUID = -6918314643571673741L;
 

@@ -19,11 +19,11 @@ package com.gigaspaces.internal.client.spaceproxy.executors;
 import com.gigaspaces.executor.SpaceTask;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.space.requests.SpaceRequestInfo;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.IJSpace;
 
 import net.jini.core.transaction.Transaction;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -33,7 +33,7 @@ import java.io.Serializable;
  * @author Niv Ingberg
  * @since 8.0
  */
-public abstract class SystemTask<T extends Serializable> implements SpaceTask<T>, Externalizable {
+public abstract class SystemTask<T extends Serializable> implements SpaceTask<T>, SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     public abstract SpaceRequestInfo getSpaceRequestInfo();

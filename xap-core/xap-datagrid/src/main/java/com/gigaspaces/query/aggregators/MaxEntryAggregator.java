@@ -19,8 +19,8 @@ package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.query.RawEntry;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -67,7 +67,7 @@ public class MaxEntryAggregator extends AbstractPathAggregator<MaxEntryAggregato
         return result == null ? null : toObject(result.getRawEntry());
     }
 
-    public static class MaxEntryScannerResult implements Externalizable {
+    public static class MaxEntryScannerResult implements SmartExternalizable {
 
         private static final long serialVersionUID = 1L;
 

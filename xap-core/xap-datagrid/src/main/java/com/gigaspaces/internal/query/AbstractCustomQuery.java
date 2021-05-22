@@ -18,6 +18,7 @@ package com.gigaspaces.internal.query;
 
 import com.gigaspaces.internal.metadata.TypeDesc;
 import com.gigaspaces.serialization.IllegalSerializationVersionException;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.server.ServerEntry;
 import com.j_spaces.core.cache.CacheManager;
 
@@ -34,7 +35,7 @@ import java.util.List;
  * @author Niv Ingberg
  * @since 7.1
  */
-public abstract class AbstractCustomQuery implements ICustomQuery, Externalizable {
+public abstract class AbstractCustomQuery implements ICustomQuery, SmartExternalizable {
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
     // If serialization changes, increment GigaspacesVersionID and modify read/writeExternal appropiately.

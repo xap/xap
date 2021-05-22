@@ -18,8 +18,8 @@ package com.gigaspaces.internal.client;
 
 import com.gigaspaces.client.ChangeResult;
 import com.gigaspaces.client.ChangedEntryDetails;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,7 +31,7 @@ import java.util.Collection;
  */
 @com.gigaspaces.api.InternalApi
 public class ChangeResultImpl<T>
-        implements ChangeResult<T>, Externalizable {
+        implements ChangeResult<T>, SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

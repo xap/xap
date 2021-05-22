@@ -20,8 +20,8 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.utils.Textualizable;
 import com.gigaspaces.internal.utils.Textualizer;
 import com.gigaspaces.management.transport.ConnectionEndpointDetails;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -33,7 +33,7 @@ import java.io.ObjectOutput;
  * @since 9.5.0
  */
 @com.gigaspaces.api.InternalApi
-public class LocalCacheDetails implements Externalizable, Textualizable {
+public class LocalCacheDetails implements SmartExternalizable, Textualizable {
     private static final long serialVersionUID = 1L;
 
     private String _id;

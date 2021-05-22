@@ -2,8 +2,8 @@ package com.gigaspaces.internal.cluster;
 
 import com.gigaspaces.api.InternalApi;
 import com.gigaspaces.cluster.DynamicPartitionInfo;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -15,7 +15,7 @@ import java.util.LinkedHashSet;
  * @since 15.5
  */
 @InternalApi
-public class DynamicPartitionInfoImpl implements DynamicPartitionInfo, Externalizable {
+public class DynamicPartitionInfoImpl implements DynamicPartitionInfo, SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private Collection<Integer> chunks;

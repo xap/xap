@@ -16,9 +16,9 @@
 
 package com.gigaspaces.internal.cluster.node.impl.processlog;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-public interface IProcessLogHandshakeResponse extends Externalizable {
+public interface IProcessLogHandshakeResponse extends SmartExternalizable {
 
     String toLogMessage();
 

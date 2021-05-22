@@ -17,8 +17,8 @@
 package com.gigaspaces.internal.cluster.node.impl.directPersistency.admin;
 
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +32,7 @@ import java.util.Map;
  * @since 10.2
  */
 @com.gigaspaces.api.InternalApi
-public class DirectPersistencySyncAdminInfo implements Externalizable {
+public class DirectPersistencySyncAdminInfo implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

@@ -5,6 +5,7 @@ import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.sync.DataSyncOperation;
 import com.gigaspaces.sync.DataSyncOperationType;
 
@@ -12,7 +13,7 @@ import java.io.*;
 import java.util.Arrays;
 
 @InternalApi
-public class ExternalizableDataSyncOperation implements Externalizable, DataSyncOperation {
+public class ExternalizableDataSyncOperation implements SmartExternalizable, DataSyncOperation {
     private static final long serialVersionUID = 6617861583815580942L;
     private boolean supportsDocument,supportsTypeDescriptor,supportsGetSpaceId;
     private SpaceDocument dataAsDocument;

@@ -18,13 +18,13 @@ package com.gigaspaces.internal.client.spaceproxy;
 
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.client.ProxySettings;
 import com.j_spaces.core.service.Service;
 
 import net.jini.id.ReferentUuid;
 import net.jini.id.Uuid;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -37,7 +37,7 @@ import java.io.ObjectOutput;
  * @Company: GigaSpaces Technologies
  * @since 5.2
  */
-public abstract class AbstractDirectSpaceProxy extends AbstractSpaceProxy implements IDirectSpaceProxy, Service, ReferentUuid, Externalizable {
+public abstract class AbstractDirectSpaceProxy extends AbstractSpaceProxy implements IDirectSpaceProxy, Service, ReferentUuid, SmartExternalizable {
     private static final long serialVersionUID = 1L;
     private static final int SERIAL_VERSION = 1;
 

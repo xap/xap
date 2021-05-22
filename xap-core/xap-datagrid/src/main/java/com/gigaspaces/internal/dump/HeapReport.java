@@ -1,11 +1,12 @@
 package com.gigaspaces.internal.dump;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-public class HeapReport implements Externalizable {
+public class HeapReport implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private String heapReport;

@@ -16,7 +16,8 @@
 
 package org.openspaces.memcached;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -27,7 +28,7 @@ import java.util.Arrays;
  *
  * Wraps a byte array with a precomputed hashCode.
  */
-public class Key implements Externalizable {
+public class Key implements SmartExternalizable {
 
     private static final long serialVersionUID = -1131139214094910487L;
 

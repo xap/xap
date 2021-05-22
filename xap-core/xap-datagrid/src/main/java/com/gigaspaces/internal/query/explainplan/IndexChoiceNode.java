@@ -17,6 +17,7 @@ package com.gigaspaces.internal.query.explainplan;
 
 import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -30,7 +31,7 @@ import java.util.List;
  * @since 12.0.1
  */
 @ExperimentalApi
-public class IndexChoiceNode implements Externalizable {
+public class IndexChoiceNode implements SmartExternalizable {
 
     private String name; // AND or OR
     private List<IndexInfo> options;

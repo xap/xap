@@ -17,7 +17,8 @@
 //Internal Doc
 package com.gigaspaces.security.session;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -30,7 +31,7 @@ import java.util.UUID;
  * @since 7.0.1
  */
 @com.gigaspaces.api.InternalApi
-public class SessionId implements Externalizable {
+public class SessionId implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
     private String identifier;

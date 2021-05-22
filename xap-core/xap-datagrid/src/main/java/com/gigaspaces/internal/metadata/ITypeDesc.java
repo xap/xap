@@ -21,8 +21,8 @@ import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExte
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.metadata.index.SpaceIndex;
 import com.gigaspaces.metadata.index.SpaceIndexType;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +31,7 @@ import java.util.Map;
  * @author Niv Ingberg
  * @since 7.0
  */
-public interface ITypeDesc extends SpaceTypeDescriptor, IDotnetTypeDescDetails, Cloneable, Externalizable, ISwapExternalizable {
+public interface ITypeDesc extends SpaceTypeDescriptor, IDotnetTypeDescDetails, Cloneable, SmartExternalizable, ISwapExternalizable {
     ITypeDesc clone();
 
     String getCodeBase();

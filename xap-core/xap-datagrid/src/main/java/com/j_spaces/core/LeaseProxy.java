@@ -19,6 +19,7 @@ package com.j_spaces.core;
 import com.gigaspaces.internal.lease.LeaseUtils;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
 import com.gigaspaces.internal.server.space.SpaceImpl;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.time.SystemTime;
 
 import net.jini.core.lease.Lease;
@@ -26,7 +27,6 @@ import net.jini.core.lease.LeaseDeniedException;
 import net.jini.core.lease.LeaseMap;
 import net.jini.core.lease.UnknownLeaseException;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -49,7 +49,7 @@ import java.rmi.RemoteException;
  * @version 1.0
  **/
 @com.gigaspaces.api.InternalApi
-public class LeaseProxy implements LeaseContext, Externalizable {
+public class LeaseProxy implements LeaseContext, SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     // net.jini.core.lease.Lease members:

@@ -19,6 +19,7 @@ package com.gigaspaces.internal.server.space.operations;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.utils.Textualizable;
 import com.gigaspaces.internal.utils.Textualizer;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -30,7 +31,7 @@ import java.io.ObjectOutput;
  * @since 9.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class WriteEntriesResult implements Externalizable, Textualizable {
+public class WriteEntriesResult implements SmartExternalizable, Textualizable {
     private static final long serialVersionUID = 1L;
 
     private WriteEntryResult[] _results;

@@ -7,15 +7,15 @@ import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.space.requests.SpaceRequestInfo;
 import com.gigaspaces.internal.space.responses.SpaceResponseInfo;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
 import java.util.Map;
 
-public class CopyChunksTask extends SystemDistributedTask<SpaceResponseInfo> implements Externalizable {
+public class CopyChunksTask extends SystemDistributedTask<SpaceResponseInfo> implements SmartExternalizable {
 
     private CopyChunksRequestInfo requestInfo;
 

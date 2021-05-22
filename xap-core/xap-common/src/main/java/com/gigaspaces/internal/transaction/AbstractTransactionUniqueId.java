@@ -16,11 +16,11 @@
 
 package com.gigaspaces.internal.transaction;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.transaction.TransactionUniqueId;
 
 import net.jini.id.Uuid;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -29,7 +29,7 @@ import java.io.ObjectOutput;
  * @author idan
  * @since 9.0.1
  */
-public abstract class AbstractTransactionUniqueId implements TransactionUniqueId, Externalizable {
+public abstract class AbstractTransactionUniqueId implements TransactionUniqueId, SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private Uuid _transactionManagerId;

@@ -26,6 +26,7 @@ import com.gigaspaces.security.encoding.EncodingException;
 import com.gigaspaces.security.encoding.KeyFactory;
 import com.gigaspaces.security.encoding.aes.AesContentEncoder;
 import com.gigaspaces.security.session.SessionDetails;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.filters.ISpaceFilter;
 
 import java.io.Externalizable;
@@ -42,7 +43,7 @@ import javax.crypto.SecretKey;
  * @since 7.0.1
  */
 
-public class SecurityContext implements Externalizable {
+public class SecurityContext implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

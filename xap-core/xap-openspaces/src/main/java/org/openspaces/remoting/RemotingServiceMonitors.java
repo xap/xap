@@ -17,9 +17,9 @@
 
 package org.openspaces.remoting;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.openspaces.pu.service.PlainServiceMonitors;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -39,7 +39,7 @@ public class RemotingServiceMonitors extends PlainServiceMonitors {
         public static final String FAILED = "failed";
     }
 
-    public static class RemoteServiceStats implements Externalizable {
+    public static class RemoteServiceStats implements SmartExternalizable {
 
         private static final long serialVersionUID = 2541853099219414723L;
 

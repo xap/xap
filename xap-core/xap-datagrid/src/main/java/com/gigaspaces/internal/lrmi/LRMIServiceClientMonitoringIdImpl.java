@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.lrmi;
 
 import com.gigaspaces.lrmi.LRMIServiceClientMonitoringId;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -33,7 +34,7 @@ import java.net.InetAddress;
  * @since 9.1
  */
 @com.gigaspaces.api.InternalApi
-public class LRMIServiceClientMonitoringIdImpl implements Externalizable, LRMIServiceClientMonitoringId {
+public class LRMIServiceClientMonitoringIdImpl implements SmartExternalizable, LRMIServiceClientMonitoringId {
 
     private static final long serialVersionUID = 1L;
 

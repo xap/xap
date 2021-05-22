@@ -17,7 +17,8 @@
 
 package com.gigaspaces.client;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,7 +32,7 @@ import java.util.Map;
  * @author Niv Ingberg
  * @since 9.0.1
  */
-public abstract class SpaceProxyOperationModifiers implements Externalizable {
+public abstract class SpaceProxyOperationModifiers implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private int _code;

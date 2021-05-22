@@ -16,13 +16,13 @@
 
 package com.gigaspaces.cluster.loadbalance;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.ISpaceState;
 import com.j_spaces.core.JSpaceState;
 import com.j_spaces.core.client.SpaceURL;
 import com.j_spaces.core.cluster.ClusterXML;
 import com.j_spaces.kernel.JSpaceUtilities;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -43,7 +43,7 @@ import java.util.Properties;
  *******************************************************************************/
 
 @com.gigaspaces.api.InternalApi
-public class LoadBalancingPolicy implements Serializable, Externalizable {
+public class LoadBalancingPolicy implements Serializable, SmartExternalizable {
     private static final long serialVersionUID = 2L;
 
     public static final int DEFAULT_BROADCAST_THREADPOOL_MIN_SIZE = 4;
@@ -196,7 +196,7 @@ public class LoadBalancingPolicy implements Serializable, Externalizable {
     }
 
 
-    public static class LoadBalancingPolicyDescription implements Serializable, Externalizable {
+    public static class LoadBalancingPolicyDescription implements Serializable, SmartExternalizable {
         private static final long serialVersionUID = 2L;
 
         public String m_PolicyType;

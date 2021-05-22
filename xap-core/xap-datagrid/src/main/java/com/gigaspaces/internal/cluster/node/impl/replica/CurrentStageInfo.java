@@ -17,8 +17,8 @@
 package com.gigaspaces.internal.cluster.node.impl.replica;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -27,7 +27,7 @@ import java.io.ObjectOutput;
  * @since 9.0.1
  */
 @com.gigaspaces.api.InternalApi
-public class CurrentStageInfo implements Externalizable {
+public class CurrentStageInfo implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

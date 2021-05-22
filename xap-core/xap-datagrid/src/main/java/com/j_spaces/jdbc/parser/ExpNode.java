@@ -19,6 +19,7 @@ package com.j_spaces.jdbc.parser;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.jdbc.Stack;
 import com.j_spaces.jdbc.builder.QueryTemplateBuilder;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
@@ -43,7 +44,7 @@ import java.util.function.Consumer;
  * @author Michael Mitrani, 2Train4
  */
 public abstract class ExpNode
-        implements Cloneable, Externalizable {
+        implements Cloneable, SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     protected ExpNode leftChild, rightChild;

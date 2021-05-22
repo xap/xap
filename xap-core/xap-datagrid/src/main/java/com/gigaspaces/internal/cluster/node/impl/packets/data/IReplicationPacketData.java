@@ -19,8 +19,8 @@ package com.gigaspaces.internal.cluster.node.impl.packets.data;
 import com.gigaspaces.internal.cluster.node.impl.ReplicationMultipleOperationType;
 import com.gigaspaces.internal.cluster.node.impl.packets.IReplicationOrderedPacket;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.util.Collection;
 
 
@@ -32,7 +32,7 @@ import java.util.Collection;
  * @since 8.0
  */
 public interface IReplicationPacketData<T extends IReplicationPacketEntryData>
-        extends Collection<T>, Externalizable, Cloneable, ISwapExternalizable {
+        extends Collection<T>, SmartExternalizable, Cloneable, ISwapExternalizable {
     IReplicationPacketData<T> clone();
 
     /**

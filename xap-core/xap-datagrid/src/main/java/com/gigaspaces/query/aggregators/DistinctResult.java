@@ -19,6 +19,7 @@ package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.query.RawEntry;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -32,7 +33,7 @@ import java.util.Map;
  * @since 10.1
  */
 
-public class DistinctResult implements Externalizable, Iterable<RawEntry> {
+public class DistinctResult implements SmartExternalizable, Iterable<RawEntry> {
 
     private static final long serialVersionUID = 1L;
 

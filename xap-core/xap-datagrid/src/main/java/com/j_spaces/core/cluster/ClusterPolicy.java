@@ -17,11 +17,11 @@
 package com.j_spaces.core.cluster;
 
 import com.gigaspaces.cluster.loadbalance.LoadBalancingPolicy;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.JSpaceAttributes;
 import com.j_spaces.kernel.JSpaceUtilities;
 import com.j_spaces.kernel.SystemProperties;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -33,7 +33,7 @@ import java.util.Properties;
  * Holds the cluster policy data. <b>This API will not be available in future versions</b>
  */
 @com.gigaspaces.api.InternalApi
-public class ClusterPolicy implements Externalizable {
+public class ClusterPolicy implements SmartExternalizable {
     private static final long serialVersionUID = 2L;
 
     public ClusterPolicy() {
@@ -133,7 +133,7 @@ public class ClusterPolicy implements Externalizable {
                 && !m_ReplicationPolicy.isMirrorServiceEnabled();
     }
 
-    public static final class CacheLoaderConfig implements Externalizable {
+    public static final class CacheLoaderConfig implements SmartExternalizable {
         private static final long serialVersionUID = 1L;
 
         public CacheLoaderConfig() {

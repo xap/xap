@@ -21,9 +21,9 @@ import com.gigaspaces.async.AsyncResult;
 import com.gigaspaces.async.AsyncResultFilter;
 import com.gigaspaces.async.AsyncResultFilterEvent;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.openspaces.core.executor.DistributedTask;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -39,7 +39,7 @@ import java.util.List;
  *
  * @author kimchy
  */
-public class PrivilegedDistributedTask<T extends Serializable, R> extends AbstractDelegatingDistributedTask<T, R> implements Externalizable {
+public class PrivilegedDistributedTask<T extends Serializable, R> extends AbstractDelegatingDistributedTask<T, R> implements SmartExternalizable {
 
     private static final long serialVersionUID = 8798827598285224843L;
 

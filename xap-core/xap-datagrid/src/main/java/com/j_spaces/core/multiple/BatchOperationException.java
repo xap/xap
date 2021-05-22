@@ -22,6 +22,7 @@ package com.j_spaces.core.multiple;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.multiple.query.QueryMultiplePartialFailureException;
 
 import java.io.Externalizable;
@@ -53,7 +54,7 @@ import java.util.Map;
  */
 
 public class BatchOperationException
-        extends QueryMultiplePartialFailureException implements Externalizable {
+        extends QueryMultiplePartialFailureException implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private static final IEntryPacket[] _emptyResultsArray = new IEntryPacket[0];

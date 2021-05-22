@@ -21,13 +21,13 @@
 package com.j_spaces.core;
 
 import com.gigaspaces.internal.lease.SpaceEntryLease;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.client.EntryInfo;
 
 import net.jini.core.lease.Lease;
 import net.jini.core.lease.LeaseMap;
 import net.jini.core.lease.UnknownLeaseException;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -41,7 +41,7 @@ import java.rmi.RemoteException;
  **/
 @com.gigaspaces.api.InternalApi
 public class LeaseInitializer {
-    public static class UIDLease implements LeaseContext<Object>, Externalizable {
+    public static class UIDLease implements LeaseContext<Object>, SmartExternalizable {
         private static final long serialVersionUID = 1L;
 
         private String _uid;

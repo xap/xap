@@ -16,8 +16,8 @@
 
 package com.gigaspaces.internal.cluster.node.impl.processlog.sync.oneway;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-public interface IProcessStatus extends Externalizable {
+public interface IProcessStatus extends SmartExternalizable {
 
 }

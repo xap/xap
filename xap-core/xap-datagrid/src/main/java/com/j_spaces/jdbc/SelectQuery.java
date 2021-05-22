@@ -30,6 +30,7 @@ import com.gigaspaces.query.aggregators.AggregationSet;
 import com.gigaspaces.security.AccessDeniedException;
 import com.gigaspaces.security.authorities.SpaceAuthority.SpacePrivilege;
 import com.gigaspaces.security.service.SecurityContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.SpaceContext;
 import com.j_spaces.core.SpaceContextHelper;
@@ -52,7 +53,6 @@ import net.jini.core.transaction.TransactionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -67,7 +67,7 @@ import java.util.*;
  * @author Michael Mitrani, 2Train4, 2004
  */
 @com.gigaspaces.api.InternalApi
-public class SelectQuery extends AbstractDMLQuery implements Externalizable {
+public class SelectQuery extends AbstractDMLQuery implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     /**

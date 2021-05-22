@@ -18,8 +18,8 @@
 package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,7 +31,7 @@ import java.util.Map;
  * @since 10.0
  */
 
-public class GroupByResult implements Externalizable, Iterable<GroupByValue> {
+public class GroupByResult implements SmartExternalizable, Iterable<GroupByValue> {
 
     private static final long serialVersionUID = 1L;
 

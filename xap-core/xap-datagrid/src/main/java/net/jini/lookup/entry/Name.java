@@ -17,9 +17,9 @@
  */
 package net.jini.lookup.entry;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import net.jini.entry.AbstractEntry;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -30,7 +30,7 @@ import java.io.ObjectOutput;
  * @author Sun Microsystems, Inc.
  */
 @com.gigaspaces.api.InternalApi
-public class Name extends AbstractEntry implements Externalizable {
+public class Name extends AbstractEntry implements SmartExternalizable {
     private static final long serialVersionUID = 2743215148071307201L;
 
     /**

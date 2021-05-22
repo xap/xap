@@ -15,9 +15,9 @@
  */
 package com.sun.jini.proxy;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.sun.jini.start.ServiceProxyAccessor;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.NotActiveException;
 import java.io.ObjectInput;
@@ -32,7 +32,7 @@ import java.rmi.UnmarshalException;
  * @author Guy
  */
 @com.gigaspaces.api.InternalApi
-public class DefaultProxyPivot implements MarshalPivot, Externalizable {
+public class DefaultProxyPivot implements MarshalPivot, SmartExternalizable {
 
     private static final ThreadLocal<Boolean> LAZY_ACCESS = new ThreadLocal<Boolean>() {
         @Override

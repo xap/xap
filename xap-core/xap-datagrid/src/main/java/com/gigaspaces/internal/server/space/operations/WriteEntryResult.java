@@ -23,6 +23,7 @@ import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.utils.Textualizable;
 import com.gigaspaces.internal.utils.Textualizer;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.LeaseContext;
 import com.j_spaces.core.LeaseInitializer;
 import com.j_spaces.core.LeaseProxy;
@@ -31,7 +32,6 @@ import com.j_spaces.core.client.UpdateModifiers;
 
 import net.jini.core.lease.Lease;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -41,7 +41,7 @@ import java.io.ObjectOutput;
  * @since 9.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class WriteEntryResult implements Externalizable, Textualizable {
+public class WriteEntryResult implements SmartExternalizable, Textualizable {
     private static final long serialVersionUID = 1L;
 
     private static final boolean ReturnPrevOnUpdate = Boolean.getBoolean("com.gigaspaces.client.returnPrevOnUpdate");

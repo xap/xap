@@ -16,7 +16,8 @@
 
 package com.gigaspaces.lrmi.nio.info;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -25,7 +26,7 @@ import java.io.ObjectOutput;
  * @author kimchy
  */
 @com.gigaspaces.api.InternalApi
-public class NIODetails implements Externalizable {
+public class NIODetails implements SmartExternalizable {
     private static final long serialVersionUID = -4614637448976120646L;
 
     private long id;

@@ -16,7 +16,6 @@
 
 package com.gigaspaces.internal.server.storage;
 
-import com.gigaspaces.document.DocumentProperties;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.EntryTypeDesc;
@@ -24,8 +23,8 @@ import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
 import com.gigaspaces.metadata.SpaceMetadataException;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -36,7 +35,7 @@ import java.util.Map;
  * @since 8.0.5
  */
 @com.gigaspaces.api.InternalApi
-public class ExternalizableServerEntry implements IEntryData, Externalizable, ICustomTypeDescLoader, ISwapExternalizable {
+public class ExternalizableServerEntry implements IEntryData, SmartExternalizable, ICustomTypeDescLoader, ISwapExternalizable {
     private static final long serialVersionUID = 1L;
 
     private transient EntryTypeDesc _entryTypeDesc;

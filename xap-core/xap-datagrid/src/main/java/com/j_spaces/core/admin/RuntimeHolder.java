@@ -17,11 +17,11 @@
 package com.j_spaces.core.admin;
 
 import com.gigaspaces.cluster.activeelection.SpaceMode;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.server.space.suspend.SuspendInfo;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.j_spaces.core.ISpaceState;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -33,7 +33,7 @@ import java.io.ObjectOutput;
  * @author kimchy
  */
 @com.gigaspaces.api.InternalApi
-public class RuntimeHolder implements Externalizable {
+public class RuntimeHolder implements SmartExternalizable {
 
     static final long serialVersionUID = -6308647788360370371L;
 

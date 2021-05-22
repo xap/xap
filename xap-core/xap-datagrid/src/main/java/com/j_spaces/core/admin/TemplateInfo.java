@@ -17,7 +17,8 @@
 
 package com.j_spaces.core.admin;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,7 +32,7 @@ import java.util.Date;
  * @since 6.0
  */
 @com.gigaspaces.api.InternalApi
-public class TemplateInfo implements Externalizable {
+public class TemplateInfo implements SmartExternalizable {
     private static final long serialVersionUID = -4483974697687984245L;
 
     private boolean _isFIFO;

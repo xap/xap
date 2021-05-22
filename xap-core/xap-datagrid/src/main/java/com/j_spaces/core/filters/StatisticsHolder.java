@@ -20,9 +20,9 @@ import com.gigaspaces.cluster.replication.async.mirror.MirrorStatistics;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.server.blobstore.BlobStoreStatistics;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,7 +31,7 @@ import java.io.ObjectOutput;
  * @author kimchy
  */
 @com.gigaspaces.api.InternalApi
-public class StatisticsHolder implements Externalizable {
+public class StatisticsHolder implements SmartExternalizable {
 
     private static final long serialVersionUID = 1505093042251118792L;
 

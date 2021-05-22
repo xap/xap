@@ -16,7 +16,7 @@
 
 package com.gigaspaces.internal.cluster.node.impl.packets.data;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 /**
  * A possible fix for a {@link IReplicationPacketDataConsumer#consume(String,
@@ -29,6 +29,6 @@ import java.io.Externalizable;
  * @author eitany
  * @since 8.0
  */
-public interface IDataConsumeFix extends Externalizable {
+public interface IDataConsumeFix extends SmartExternalizable {
 
 }

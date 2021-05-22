@@ -23,10 +23,10 @@ import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.metadata.index.CompoundIndex;
 import com.gigaspaces.metadata.index.SpaceIndex;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.jdbc.builder.range.*;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -40,7 +40,7 @@ import java.util.Map;
  * @since 12.0.1
  */
 @ExperimentalApi
-public class SingleExplainPlan implements Externalizable {
+public class SingleExplainPlan implements SmartExternalizable {
 
     //    private static final long serialVersionUID =
     private String partitionId;

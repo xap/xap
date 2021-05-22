@@ -17,10 +17,9 @@
 package com.gigaspaces.internal.cluster.node.impl.groups;
 
 import com.gigaspaces.internal.cluster.node.handlers.IReplicationInFacade;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
-
-public interface IReplicationUnreliableOperation extends Externalizable {
+public interface IReplicationUnreliableOperation extends SmartExternalizable {
     enum Type {
         NotificationSent,
     }

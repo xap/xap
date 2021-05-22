@@ -24,7 +24,6 @@ import com.gigaspaces.internal.stubcache.StubId;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -34,6 +33,7 @@ import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  */
 @com.gigaspaces.api.InternalApi
 public class RemoteStub<T>
-        implements Remote, Externalizable, ILRMIProxy {
+        implements Remote, SmartExternalizable, ILRMIProxy {
     static final long serialVersionUID = 1L;
 
     // logger

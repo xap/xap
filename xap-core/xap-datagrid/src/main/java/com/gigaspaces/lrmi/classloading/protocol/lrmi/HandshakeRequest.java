@@ -18,9 +18,9 @@ package com.gigaspaces.lrmi.classloading.protocol.lrmi;
 
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.internal.version.PlatformVersion;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.start.SystemInfo;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -33,7 +33,7 @@ import java.rmi.UnmarshalException;
  * @since 7.1
  */
 @com.gigaspaces.api.InternalApi
-public class HandshakeRequest implements Externalizable {
+public class HandshakeRequest implements SmartExternalizable {
     // DO NOT CHANGE. use SERIAL_VERSION instead.
     private static final long serialVersionUID = 1L;
     private static final byte SERIAL_VERSION = Byte.MIN_VALUE;

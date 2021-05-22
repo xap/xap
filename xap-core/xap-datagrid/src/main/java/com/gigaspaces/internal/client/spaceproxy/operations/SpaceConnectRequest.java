@@ -18,8 +18,8 @@ package com.gigaspaces.internal.client.spaceproxy.operations;
 
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -29,7 +29,7 @@ import java.io.ObjectOutput;
  * @since 10.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceConnectRequest implements Externalizable {
+public class SpaceConnectRequest implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

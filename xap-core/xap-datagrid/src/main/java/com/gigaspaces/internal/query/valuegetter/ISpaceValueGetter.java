@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.query.valuegetter;
 
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 
@@ -27,7 +28,7 @@ import java.io.Externalizable;
  * @author Niv Ingberg
  * @since 7.1
  */
-public interface ISpaceValueGetter<T> extends Externalizable, ISwapExternalizable {
+public interface ISpaceValueGetter<T> extends SmartExternalizable, ISwapExternalizable {
     /**
      * Gets the value from the specified target.
      *

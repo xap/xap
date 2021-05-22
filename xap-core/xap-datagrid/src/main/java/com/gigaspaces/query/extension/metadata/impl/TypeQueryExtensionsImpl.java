@@ -27,8 +27,8 @@ import com.gigaspaces.query.extension.metadata.QueryExtensionPathInfo;
 import com.gigaspaces.query.extension.metadata.QueryExtensionPropertyInfo;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtension;
 import com.gigaspaces.query.extension.metadata.TypeQueryExtensions;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -38,7 +38,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @com.gigaspaces.api.InternalApi
-public class TypeQueryExtensionsImpl implements TypeQueryExtensions, Externalizable {
+public class TypeQueryExtensionsImpl implements TypeQueryExtensions, SmartExternalizable {
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 

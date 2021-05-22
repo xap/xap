@@ -21,9 +21,9 @@ import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
 import com.gigaspaces.internal.utils.Textualizable;
 import com.gigaspaces.internal.utils.Textualizer;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.exception.internal.ProxyInternalSpaceException;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +32,7 @@ import java.io.ObjectOutput;
  * @author Niv Ingberg
  * @since 9.0.0
  */
-public abstract class SpaceOperationResult implements RemoteOperationResult, Externalizable, Textualizable {
+public abstract class SpaceOperationResult implements RemoteOperationResult, SmartExternalizable, Textualizable {
     private static final long serialVersionUID = 1L;
 
     private Exception _executionException;

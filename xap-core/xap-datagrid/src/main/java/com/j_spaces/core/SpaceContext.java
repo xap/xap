@@ -22,6 +22,7 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.security.service.SecurityContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -33,7 +34,7 @@ import java.io.ObjectOutput;
  * there is no context information, the context reference is null.
  **/
 
-public class SpaceContext implements Externalizable {
+public class SpaceContext implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     // Security context holding authentication request or identification

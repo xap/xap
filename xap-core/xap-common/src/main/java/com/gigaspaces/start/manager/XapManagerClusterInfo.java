@@ -8,18 +8,18 @@ import com.gigaspaces.grid.zookeeper.ZookeeperConfig;
 import com.gigaspaces.internal.io.BootIOUtils;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.logger.Constants;
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.net.util.IPAddressUtil;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.InetAddress;
 import java.util.*;
 
-public class XapManagerClusterInfo implements ManagerClusterInfo, Externalizable {
+public class XapManagerClusterInfo implements ManagerClusterInfo, SmartExternalizable {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(Constants.LOGGER_MANAGER);
 

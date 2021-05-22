@@ -16,7 +16,8 @@
 
 package com.gigaspaces.client;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +33,7 @@ import java.util.Map;
  * @author idan
  * @since 7.1.1
  */
-public abstract class ReadTakeByIdsException extends RuntimeException implements Externalizable {
+public abstract class ReadTakeByIdsException extends RuntimeException implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
     protected ReadTakeByIdResult[] _results;

@@ -16,11 +16,11 @@
 
 package com.gigaspaces.internal.space.responses;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 /**
  * @author Niv Ingberg
  * @since 8.0
  */
-public interface SpaceResponseInfo extends Externalizable {
+public interface SpaceResponseInfo extends SmartExternalizable {
 }

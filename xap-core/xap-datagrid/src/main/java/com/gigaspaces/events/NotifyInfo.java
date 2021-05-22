@@ -23,6 +23,7 @@ import com.gigaspaces.internal.utils.Textualizable;
 import com.gigaspaces.internal.utils.Textualizer;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.client.INotifyDelegatorFilter;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.NotifyModifiers;
@@ -31,7 +32,6 @@ import com.j_spaces.core.cluster.ClusterPolicy;
 import net.jini.core.event.RemoteEventListener;
 import net.jini.id.UuidFactory;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
@@ -47,7 +47,7 @@ import java.rmi.MarshalledObject;
  * @since 6.0
  */
 @com.gigaspaces.api.InternalApi
-public class NotifyInfo implements Externalizable, ISwapExternalizable, Textualizable {
+public class NotifyInfo implements SmartExternalizable, ISwapExternalizable, Textualizable {
     private static final long serialVersionUID = 9213790201720650891L;
 
     private Boolean _replicateTemplate;

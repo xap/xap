@@ -21,8 +21,8 @@ import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.RollingFileHandler;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -35,7 +35,7 @@ import java.util.Map;
  *         the process ID, therefore this class must not use Logger in order to avoid deadlock.
  */
 @com.gigaspaces.api.InternalApi
-public class JVMDetails implements Externalizable {
+public class JVMDetails implements SmartExternalizable {
 
     private static final long serialVersionUID = -4083973634154614496L;
 

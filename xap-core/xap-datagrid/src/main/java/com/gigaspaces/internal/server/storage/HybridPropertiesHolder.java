@@ -2,11 +2,12 @@ package com.gigaspaces.internal.server.storage;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.*;
 import java.util.Arrays;
 
-public class HybridPropertiesHolder implements Externalizable {
+public class HybridPropertiesHolder implements SmartExternalizable {
     private static final Object[] EMPTY_OBJECTS_ARRAY = new Object[0];
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
     private Object[] unpackedSerializedProperties;

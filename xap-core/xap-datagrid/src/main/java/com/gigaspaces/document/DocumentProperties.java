@@ -20,8 +20,8 @@ package com.gigaspaces.document;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.MapProcedure;
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -43,7 +43,7 @@ import java.util.Set;
  * @since 8.0
  */
 
-public class DocumentProperties implements Map<String, Object>, Externalizable {
+public class DocumentProperties implements Map<String, Object>, SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private Map<String, Object> _map;

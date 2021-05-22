@@ -17,13 +17,13 @@
 
 package org.openspaces.remoting.scripting;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.openspaces.remoting.RemoteResultReducer;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.util.FileCopyUtils;
 
 import java.io.BufferedReader;
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInput;
@@ -41,7 +41,7 @@ import java.util.Map;
  *
  * @author kimchy
  */
-public class ResourceLazyLoadingScript implements LazyLoadingScript, Externalizable {
+public class ResourceLazyLoadingScript implements LazyLoadingScript, SmartExternalizable {
 
     private static final long serialVersionUID = -2086880053176632088L;
 

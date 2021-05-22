@@ -16,9 +16,9 @@
 
 package com.j_spaces.lookup.entry;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import net.jini.lookup.entry.ServiceControlled;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -29,7 +29,7 @@ import java.io.ObjectOutput;
  * @since 5.1
  */
 @com.gigaspaces.api.InternalApi
-public class JoinState extends net.jini.entry.AbstractEntry implements ServiceControlled, Externalizable {
+public class JoinState extends net.jini.entry.AbstractEntry implements ServiceControlled, SmartExternalizable {
     private static final long serialVersionUID = -6689429246684479833L;
 
     public Integer _state;

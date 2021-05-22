@@ -16,7 +16,7 @@
 
 package com.gigaspaces.internal.cluster.node.impl.processlog;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-public interface IProcessResult extends Externalizable {
+public interface IProcessResult extends SmartExternalizable {
 }

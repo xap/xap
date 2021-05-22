@@ -16,7 +16,8 @@
 
 package com.gigaspaces.internal.serialization;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -28,7 +29,7 @@ import java.io.ObjectOutput;
  * @author Niv Ingberg
  * @since 7.1
  */
-public abstract class AbstractExternalizable implements Externalizable {
+public abstract class AbstractExternalizable implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     protected AbstractExternalizable() {

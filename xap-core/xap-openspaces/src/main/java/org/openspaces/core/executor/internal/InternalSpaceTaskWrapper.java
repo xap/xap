@@ -23,6 +23,7 @@ import com.gigaspaces.executor.SpaceTaskWrapper;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.utils.CodeChangeUtilities;
 import com.j_spaces.core.IJSpace;
 import net.jini.core.transaction.Transaction;
@@ -38,7 +39,7 @@ import java.io.*;
  *
  * @author kimchy
  */
-public class InternalSpaceTaskWrapper<T extends Serializable> implements SpaceTask<T>, SpaceTaskWrapper, Externalizable {
+public class InternalSpaceTaskWrapper<T extends Serializable> implements SpaceTask<T>, SpaceTaskWrapper, SmartExternalizable {
     private static final long serialVersionUID = -7391977361461247102L;
 
     private Task<T> task;

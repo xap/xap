@@ -17,8 +17,8 @@
 package com.gigaspaces.management.space;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -30,7 +30,7 @@ import java.io.ObjectOutput;
  * @since 9.5.0
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceQueryDetails implements Externalizable {
+public class SpaceQueryDetails implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private String _description;

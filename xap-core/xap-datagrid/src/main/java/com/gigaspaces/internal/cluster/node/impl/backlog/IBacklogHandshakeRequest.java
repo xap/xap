@@ -16,9 +16,9 @@
 
 package com.gigaspaces.internal.cluster.node.impl.backlog;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-public interface IBacklogHandshakeRequest extends Externalizable {
+public interface IBacklogHandshakeRequest extends SmartExternalizable {
     boolean isFirstHandshake();
 
     default boolean isResetTarget(){

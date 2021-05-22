@@ -19,6 +19,7 @@ package com.j_spaces.core.admin;
 
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -53,7 +54,7 @@ import java.util.List;
  * @version 1.0
  */
 
-public class SpaceRuntimeInfo implements Externalizable {
+public class SpaceRuntimeInfo implements SmartExternalizable {
 
 
     private static final long serialVersionUID = -5586653306007649053L;

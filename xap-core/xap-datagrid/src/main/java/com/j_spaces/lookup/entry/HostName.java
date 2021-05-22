@@ -17,9 +17,9 @@
 package com.j_spaces.lookup.entry;
 
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import net.jini.core.entry.Entry;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -29,7 +29,7 @@ import java.io.ObjectOutput;
  * registered with <code>HostName</code> attribute.
  */
 @com.gigaspaces.api.InternalApi
-public class HostName extends GenericEntry implements Externalizable {
+public class HostName extends GenericEntry implements SmartExternalizable {
     private static final long serialVersionUID = 3654894087785340873L;
 
     public String name;

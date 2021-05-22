@@ -25,8 +25,8 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.management.transport.ConnectionEndpointDetails;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -45,7 +45,7 @@ import java.util.Map;
  */
 
 public class ReplicationStatistics
-        implements Externalizable {
+        implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private OutgoingReplication _outgoingReplication;
@@ -70,7 +70,7 @@ public class ReplicationStatistics
     }
 
     public static class OutgoingReplication
-            implements Externalizable {
+            implements SmartExternalizable {
         private static final long serialVersionUID = 1L;
 
         private long _lastKeyInRedoLog;
@@ -396,7 +396,7 @@ public class ReplicationStatistics
      * @author eitany
      */
     public static class OutgoingChannel
-            implements Externalizable {
+            implements SmartExternalizable {
 
         private static final long serialVersionUID = 1L;
 

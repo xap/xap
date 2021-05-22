@@ -16,7 +16,8 @@
 
 package com.gigaspaces.internal.utils.math;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -24,7 +25,7 @@ import java.math.BigInteger;
  * @author Niv Ingberg
  * @since 10.0
  */
-public abstract class MutableNumber implements Externalizable {
+public abstract class MutableNumber implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

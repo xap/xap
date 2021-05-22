@@ -15,7 +15,8 @@
  */
 package net.jini.core.lookup;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -24,7 +25,7 @@ import java.io.ObjectOutput;
  * @author kimchy (shay.banon)
  */
 @com.gigaspaces.api.InternalApi
-public class ServiceDetails implements Externalizable {
+public class ServiceDetails implements SmartExternalizable {
     private static final long serialVersionUID = -7773947979481705736L;
 
     private ServiceID lusId;

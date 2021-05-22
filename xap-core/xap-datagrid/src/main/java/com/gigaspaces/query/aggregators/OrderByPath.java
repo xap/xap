@@ -17,6 +17,7 @@
 package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -27,7 +28,7 @@ import java.io.ObjectOutput;
  * Created by anna on 11/10/14.
  */
 @com.gigaspaces.api.InternalApi
-public class OrderByPath implements Externalizable {
+public class OrderByPath implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

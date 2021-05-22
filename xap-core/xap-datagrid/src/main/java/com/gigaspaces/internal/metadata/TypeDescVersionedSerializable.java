@@ -17,8 +17,8 @@
 package com.gigaspaces.internal.metadata;
 
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -28,7 +28,7 @@ import java.io.ObjectOutput;
  * @since 9.1.1
  */
 @com.gigaspaces.api.InternalApi
-public class TypeDescVersionedSerializable implements Externalizable {
+public class TypeDescVersionedSerializable implements SmartExternalizable {
     private static final long serialVersionUID = 6859190936042333450L;
 
     private TypeDesc _typeDesc;

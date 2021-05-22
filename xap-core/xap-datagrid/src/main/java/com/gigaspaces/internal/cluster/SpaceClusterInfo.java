@@ -23,13 +23,13 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.server.SpaceCustomComponent;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.JSpaceAttributes;
 import com.j_spaces.core.cluster.ClusterPolicy;
 import com.j_spaces.core.cluster.ClusterXML;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -41,7 +41,7 @@ import java.util.*;
  * @since 9.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceClusterInfo implements Externalizable {
+public class SpaceClusterInfo implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private static final Set<String> supportedSchemas = initSupportedSchemas();

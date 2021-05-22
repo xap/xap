@@ -18,9 +18,9 @@ package com.gigaspaces.internal.exceptions;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.multiple.query.QueryMultiplePartialFailureException;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -50,7 +50,7 @@ import java.util.Map;
  */
 @com.gigaspaces.api.InternalApi
 public class BatchQueryException
-        extends QueryMultiplePartialFailureException implements Externalizable {
+        extends QueryMultiplePartialFailureException implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private static final IEntryPacket[] _emptyResultsArray = new IEntryPacket[0];

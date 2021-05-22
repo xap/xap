@@ -19,6 +19,7 @@ package com.gigaspaces.internal.remoting;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterExecutionType;
 import com.gigaspaces.internal.remoting.routing.partitioned.PartitionedClusterRemoteOperationRouter;
 import com.gigaspaces.lrmi.nio.LRMIMethodTrackingIdProvider;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.SpaceContext;
 
 import java.util.List;
@@ -27,7 +28,7 @@ import java.util.List;
  * @author Niv Ingberg
  * @since 9.0.0
  */
-public interface RemoteOperationRequest<TResult extends RemoteOperationResult> extends LRMIMethodTrackingIdProvider {
+public interface RemoteOperationRequest<TResult extends RemoteOperationResult> extends LRMIMethodTrackingIdProvider, SmartExternalizable {
     int getOperationCode();
 
     TResult createRemoteOperationResult();

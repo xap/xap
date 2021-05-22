@@ -17,9 +17,8 @@
 package com.gigaspaces.metadata.index;
 
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.server.ServerEntry;
-
-import java.io.Externalizable;
 
 /**
  * <p> Encapsulates information about an index in a space type.
@@ -37,7 +36,7 @@ import java.io.Externalizable;
  * @author Niv Ingberg
  * @since 7.1
  */
-public interface ISpaceIndex extends SpaceIndex, Externalizable, ISwapExternalizable {
+public interface ISpaceIndex extends SpaceIndex, SmartExternalizable, ISwapExternalizable {
 
     //multi-value per entry index types
     public static enum MultiValuePerEntryIndexTypes {

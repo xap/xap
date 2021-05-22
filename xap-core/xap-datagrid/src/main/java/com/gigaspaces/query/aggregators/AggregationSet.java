@@ -18,6 +18,7 @@
 package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ import java.util.List;
  * @since 10.0
  */
 
-public class AggregationSet implements Externalizable {
+public class AggregationSet implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private final ArrayList<SpaceEntriesAggregator> aggregators = new ArrayList<SpaceEntriesAggregator>();

@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.query.predicate;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.cache.CacheManager;
 
 import java.io.Externalizable;
@@ -26,7 +27,7 @@ import java.io.Externalizable;
  * @author Niv Ingberg
  * @since 7.1
  */
-public interface ISpacePredicate extends Externalizable {
+public interface ISpacePredicate extends SmartExternalizable {
     /**
      * Executes this predicate on the specified target.
      *

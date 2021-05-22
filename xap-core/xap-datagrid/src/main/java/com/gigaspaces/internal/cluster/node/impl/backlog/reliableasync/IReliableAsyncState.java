@@ -16,8 +16,8 @@
 
 package com.gigaspaces.internal.cluster.node.impl.backlog.reliableasync;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-public interface IReliableAsyncState extends Externalizable {
+public interface IReliableAsyncState extends SmartExternalizable {
     IReliableAsyncTargetState[] getReliableAsyncTargetsState();
 }

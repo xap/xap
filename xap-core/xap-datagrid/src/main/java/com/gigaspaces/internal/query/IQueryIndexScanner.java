@@ -18,6 +18,7 @@ package com.gigaspaces.internal.query;
 
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.metrics.LongCounter;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.TypeDataIndex;
 import com.j_spaces.core.cache.context.Context;
@@ -32,7 +33,7 @@ import java.io.Externalizable;
  * @author anna
  * @since 7.1
  */
-public interface IQueryIndexScanner extends Externalizable
+public interface IQueryIndexScanner extends SmartExternalizable
 
 {
     public static final class ResultIndicator implements IObjectsList {

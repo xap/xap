@@ -32,7 +32,7 @@ import java.util.Arrays;
  * @since 6.5
  */
 @com.gigaspaces.api.InternalApi
-public class BinaryObject implements Externalizable {
+public class BinaryObject implements SmartExternalizable {
     private static final long serialVersionUID = -7441531324541073950L;
 
     private byte formatCode;

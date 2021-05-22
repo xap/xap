@@ -20,6 +20,7 @@ package com.gigaspaces.document;
 import com.gigaspaces.entry.VirtualEntry;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.utils.ObjectUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -45,7 +46,7 @@ import java.util.Map;
  * @since 8.0
  */
 
-public class SpaceDocument implements VirtualEntry, Externalizable {
+public class SpaceDocument implements VirtualEntry, SmartExternalizable {
     private static final long serialVersionUID = 1L;
     private static final byte _classVersion = 1;
     private static final String _defaultTypeName = Object.class.getName();

@@ -18,8 +18,8 @@
 package com.gigaspaces.security;
 
 import com.gigaspaces.security.session.SessionId;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +32,7 @@ import java.io.ObjectOutput;
  * @since 7.0.1
  */
 @com.gigaspaces.api.InternalApi
-public class AuthenticationToken implements Externalizable {
+public class AuthenticationToken implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
     private SessionId sessionId;
 

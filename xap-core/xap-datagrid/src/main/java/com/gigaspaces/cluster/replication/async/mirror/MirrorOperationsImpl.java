@@ -20,8 +20,8 @@ import com.gigaspaces.datasource.BulkItem;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.metrics.MetricRegistrator;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +32,7 @@ import java.util.List;
  * @since 7.1.1
  */
 @com.gigaspaces.api.InternalApi
-public class MirrorOperationsImpl extends AbstractMirrorOperations implements MirrorOperations, Externalizable {
+public class MirrorOperationsImpl extends AbstractMirrorOperations implements MirrorOperations, SmartExternalizable {
     private final static long serialVersionUID = 1L;
 
     private MirrorOperationStatisticsImpl _writeOperationStatistics = new MirrorOperationStatisticsImpl();

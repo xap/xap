@@ -20,11 +20,11 @@ package com.gigaspaces.config.lrmi.nio;
 import com.gigaspaces.config.lrmi.ITransportConfig;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.lrmi.nio.PAdapter;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.kernel.SystemProperties;
 import com.j_spaces.kernel.TimeUnitProperty;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * @since 5.2
  **/
 
-public class NIOConfiguration implements ITransportConfig, Cloneable, Externalizable {
+public class NIOConfiguration implements ITransportConfig, Cloneable, SmartExternalizable {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(NIOConfiguration.class.getName());
 

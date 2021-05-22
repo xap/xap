@@ -19,8 +19,8 @@ package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.query.RawEntry;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -39,7 +39,7 @@ import java.util.TreeMap;
  * @since 10.1
  */
 
-public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregator.OrderByScanResult> implements Externalizable {
+public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregator.OrderByScanResult> implements SmartExternalizable {
 
     //used to post process the entries and apply projection template
     private transient SpaceEntriesAggregatorContext context;
@@ -194,7 +194,7 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
     }
 
 
-    public static class OrderByScanResult implements Externalizable {
+    public static class OrderByScanResult implements SmartExternalizable {
 
         private static final long serialVersionUID = 1L;
 

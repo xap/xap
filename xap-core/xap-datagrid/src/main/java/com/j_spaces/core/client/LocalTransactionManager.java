@@ -17,9 +17,9 @@
 
 package com.j_spaces.core.client;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import net.jini.core.transaction.server.ExtendedTransactionManager;
 
-import java.io.Externalizable;
 import java.io.Serializable;
 
 
@@ -27,7 +27,7 @@ import java.io.Serializable;
  * @deprecated Since 8.0 - Use JINI transactions instead.
  */
 @Deprecated
-public abstract class LocalTransactionManager implements ExtendedTransactionManager, Serializable, Externalizable {
+public abstract class LocalTransactionManager implements ExtendedTransactionManager, Serializable, SmartExternalizable {
     private static final long serialVersionUID = -69391725399050981L;
 
     public abstract void destroy();

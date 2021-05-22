@@ -21,8 +21,8 @@ import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.metrics.DummyMetricRegistrator;
 import com.gigaspaces.metrics.MetricConstants;
 import com.gigaspaces.metrics.MetricRegistrator;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 7.1.1
  */
 @com.gigaspaces.api.InternalApi
-public class MirrorStatisticsImpl extends AbstractMirrorOperations implements MirrorStatistics, Externalizable,
+public class MirrorStatisticsImpl extends AbstractMirrorOperations implements MirrorStatistics, SmartExternalizable,
         IReplicationInOperationsStatistics<MirrorOperations> {
     private static final long serialVersionUID = 1L;
 

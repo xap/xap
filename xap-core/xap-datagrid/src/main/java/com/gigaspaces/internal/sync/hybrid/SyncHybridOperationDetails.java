@@ -11,9 +11,9 @@ import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.sync.DataSyncOperationType;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -22,7 +22,7 @@ import java.io.ObjectOutput;
  * @author yaeln
  * @since 11.0.1
  */
-public class SyncHybridOperationDetails implements Externalizable {
+public class SyncHybridOperationDetails implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
     private String spaceName;
     private DataSyncOperationType dataSyncOperationType;

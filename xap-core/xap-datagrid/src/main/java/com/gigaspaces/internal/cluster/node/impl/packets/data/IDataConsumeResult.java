@@ -16,9 +16,9 @@
 
 package com.gigaspaces.internal.cluster.node.impl.packets.data;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-public interface IDataConsumeResult extends Externalizable {
+public interface IDataConsumeResult extends SmartExternalizable {
     boolean isFailed();
 
     Exception toException();

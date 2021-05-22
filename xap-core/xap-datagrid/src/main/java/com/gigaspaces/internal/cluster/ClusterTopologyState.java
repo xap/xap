@@ -1,13 +1,14 @@
 package com.gigaspaces.internal.cluster;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ClusterTopologyState implements Externalizable {
+public class ClusterTopologyState implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private Map <Integer,Integer> partitionGenerationMap;

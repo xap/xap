@@ -33,6 +33,7 @@ import com.gigaspaces.internal.server.storage.EntryDataType;
 import com.gigaspaces.internal.server.storage.FlatEntryData;
 import com.gigaspaces.internal.server.storage.ITransactionalEntryData;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.TypeData;
 import com.j_spaces.core.cache.blobStore.sadapter.BlobStoreStorageAdapterClassInfo;
@@ -46,7 +47,7 @@ import java.util.Map.Entry;
 
 
 @com.gigaspaces.api.InternalApi
-public class BlobStoreEntryLayout implements Externalizable {
+public class BlobStoreEntryLayout implements SmartExternalizable {
     private static final long serialVersionUID = -5072883352415904068L;
     private transient boolean _recoverable;
     private transient boolean _onlyIndexesPart;

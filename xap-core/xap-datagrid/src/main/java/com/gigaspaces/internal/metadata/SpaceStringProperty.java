@@ -17,14 +17,14 @@
 package com.gigaspaces.internal.metadata;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 @com.gigaspaces.api.InternalApi
-public class SpaceStringProperty implements Externalizable {
+public class SpaceStringProperty implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

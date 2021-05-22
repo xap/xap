@@ -17,9 +17,9 @@
 
 package org.openspaces.core.executor.support;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.openspaces.core.executor.Task;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -33,7 +33,7 @@ import java.security.PrivilegedAction;
  *
  * @author kimchy
  */
-public class PrivilegedTask<T extends Serializable> extends SimpleDelegatingTask<T> implements Externalizable {
+public class PrivilegedTask<T extends Serializable> extends SimpleDelegatingTask<T> implements SmartExternalizable {
 
     private static final long serialVersionUID = 5299631827451867456L;
 

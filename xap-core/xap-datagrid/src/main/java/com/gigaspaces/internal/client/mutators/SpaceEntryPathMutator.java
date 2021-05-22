@@ -22,8 +22,8 @@ import com.gigaspaces.internal.utils.Textualizable;
 import com.gigaspaces.internal.utils.Textualizer;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +32,7 @@ import java.io.ObjectOutput;
  * @author Niv Ingberg
  * @since 9.1
  */
-public abstract class SpaceEntryPathMutator extends SpaceEntryMutator implements Externalizable, Textualizable {
+public abstract class SpaceEntryPathMutator extends SpaceEntryMutator implements SmartExternalizable, Textualizable {
     private static final long serialVersionUID = 1L;
 
     private String _path;

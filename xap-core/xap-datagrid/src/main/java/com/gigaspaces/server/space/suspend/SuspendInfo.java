@@ -1,5 +1,7 @@
 package com.gigaspaces.server.space.suspend;
 
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.*;
 
 /**
@@ -7,7 +9,7 @@ import java.io.*;
  * @author yohanakh
  * @since 14.0.0
  **/
-public class SuspendInfo implements Externalizable {
+public class SuspendInfo implements SmartExternalizable {
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 

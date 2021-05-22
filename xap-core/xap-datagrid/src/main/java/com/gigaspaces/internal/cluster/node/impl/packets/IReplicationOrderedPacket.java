@@ -18,8 +18,8 @@ package com.gigaspaces.internal.cluster.node.impl.packets;
 
 import com.gigaspaces.internal.cluster.node.impl.packets.data.IReplicationPacketData;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 
 /**
  * A replication packet that has an order that specify a certain order of these packets that needs
@@ -28,7 +28,7 @@ import java.io.Externalizable;
  * @author eitany
  * @since 8.0
  */
-public interface IReplicationOrderedPacket extends Cloneable, Externalizable, ISwapExternalizable {
+public interface IReplicationOrderedPacket extends Cloneable, SmartExternalizable, ISwapExternalizable {
     /**
      * @return the actual packet data that is needed for the processing
      */

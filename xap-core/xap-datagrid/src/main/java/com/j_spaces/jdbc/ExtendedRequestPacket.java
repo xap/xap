@@ -17,16 +17,16 @@
 package com.j_spaces.jdbc;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.jdbc.driver.GPreparedStatement.PreparedValuesCollection;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 @com.gigaspaces.api.InternalApi
 public class ExtendedRequestPacket
-        extends RequestPacket implements Externalizable {
+        extends RequestPacket implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private Integer modifiers;
