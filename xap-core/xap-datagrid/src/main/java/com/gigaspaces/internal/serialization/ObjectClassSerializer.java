@@ -33,6 +33,11 @@ import java.io.ObjectOutput;
 public class ObjectClassSerializer implements IClassSerializer<Object> {
     private static final Logger logger = LoggerFactory.getLogger(ObjectClassSerializer.class);
 
+    public static final ObjectClassSerializer instance = new ObjectClassSerializer();
+
+    private ObjectClassSerializer() {
+    }
+
     public byte getCode() {
         return CODE_OBJECT;
     }

@@ -16,8 +16,11 @@
 
 package com.gigaspaces.lrmi.nio;
 
-import com.gigaspaces.internal.io.AnnotatedObjectInputStream;
-import com.gigaspaces.internal.io.AnnotatedObjectOutputStream;
+import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.internal.io.MarshalInputStream;
+import com.gigaspaces.internal.io.MarshalOutputStream;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.lrmi.classloading.LRMIRemoteClassLoaderIdentifier;
 import com.gigaspaces.lrmi.classloading.protocol.lrmi.LRMIConnection;
 
@@ -76,7 +79,7 @@ public class ReplyPacket<T> implements IPacket {
     /*
      * @see java.io.Externalizable#readExternal(java.io.ObjectInput)
      */
-    public void readExternal(AnnotatedObjectInputStream in) throws IOException, ClassNotFoundException {
+    public void readExternal(MarshalInputStream in) throws IOException, ClassNotFoundException {
         if (in.readByte() != SERIAL_VERSION)
             throw new UnmarshalException("Requested version does not match local version. Please make sure you are using the same version on both ends.");
 
@@ -85,8 +88,14 @@ public class ReplyPacket<T> implements IPacket {
         if (remoteClassLoaderId != null)
             previousIdentifier = LRMIConnection.setRemoteClassLoaderIdentifier(remoteClassLoaderId);
 
-        result = (T) in.readUnshared();
-        exception = (Exception) in.readUnshared();
+        PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
+        if (version != null && version.greaterOrEquals(PlatformLogicalVersion.v16_0_0)) {
+            result = IOUtils.readObject(in);
+            exception = IOUtils.readObject(in);
+        } else {
+            result = (T) in.readUnshared();
+            exception = (Exception) in.readUnshared();
+        }
 
         if (remoteClassLoaderId != null)
             LRMIConnection.setRemoteClassLoaderIdentifier(previousIdentifier);
@@ -95,12 +104,18 @@ public class ReplyPacket<T> implements IPacket {
     /*
      * @see java.io.Externalizable#writeExternal(java.io.ObjectOutput)
 	 */
-    public void writeExternal(AnnotatedObjectOutputStream out) throws IOException {
+    public void writeExternal(MarshalOutputStream out) throws IOException {
         //Writes serial version
         out.writeByte(SERIAL_VERSION);
 
-        out.writeUnshared(result);
-        out.writeUnshared(exception);
+        PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
+        if (version != null && version.greaterOrEquals(PlatformLogicalVersion.v16_0_0)) {
+            IOUtils.writeObject(out, result);
+            IOUtils.writeObject(out, exception);
+        } else {
+            out.writeUnshared(result);
+            out.writeUnshared(exception);
+        }
     }
 
     @Override

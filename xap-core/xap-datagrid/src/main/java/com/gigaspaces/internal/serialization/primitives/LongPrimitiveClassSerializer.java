@@ -10,6 +10,11 @@ import java.io.ObjectOutput;
 public class LongPrimitiveClassSerializer implements IClassSerializer<Long> {
     private static final Long DEFAULT_VALUE = 0L;
 
+    public static final LongPrimitiveClassSerializer instance = new LongPrimitiveClassSerializer();
+
+    private LongPrimitiveClassSerializer() {
+    }
+
     public byte getCode() {
         return CODE_LONG;
     }

@@ -10,6 +10,11 @@ import java.io.ObjectOutput;
 public class BooleanPrimitiveClassSerializer implements IClassSerializer<Boolean> {
     private static final Boolean DEFAULT_VALUE = false;
 
+    public static final BooleanPrimitiveClassSerializer instance = new BooleanPrimitiveClassSerializer();
+
+    private BooleanPrimitiveClassSerializer() {
+    }
+
     public byte getCode() {
         return CODE_BOOLEAN;
     }

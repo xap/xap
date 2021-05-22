@@ -10,6 +10,11 @@ import java.io.ObjectOutput;
 public class ShortPrimitiveClassSerializer implements IClassSerializer<Short> {
     private static final Short DEFAULT_VALUE = 0;
 
+    public static final ShortPrimitiveClassSerializer instance = new ShortPrimitiveClassSerializer();
+
+    private ShortPrimitiveClassSerializer() {
+    }
+
     public byte getCode() {
         return CODE_SHORT;
     }

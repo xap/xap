@@ -16,13 +16,10 @@
 
 package com.gigaspaces.internal.io;
 
-
 import com.gigaspaces.internal.classloader.ClassLoaderCache;
 import com.gigaspaces.internal.classloader.IClassLoaderCacheStateListener;
 import com.gigaspaces.internal.collections.CollectionsFactory;
 import com.gigaspaces.internal.collections.ObjectIntegerMap;
-import com.gigaspaces.internal.utils.GsEnv;
-import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.logger.Constants;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.serialization.SmartExternalizable;
@@ -36,7 +33,6 @@ import java.rmi.server.RMIClassLoader;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import com.j_spaces.kernel.SystemProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -166,18 +162,6 @@ public class MarshalOutputStream
             writeInt(code);
             writeObject(obj);
         }
-    }
-
-    private static final boolean SMART_EXTERNALIZABLE_BACKWARDS_PROTECTION = GsEnv.propertyBoolean(SystemProperties.SMART_EXTERNALIZABLE_BACKWARDS_PROTECTION).get(true);
-
-    public boolean targetSupportsSmartExternalizable() {
-        if (SMART_EXTERNALIZABLE_BACKWARDS_PROTECTION) {
-            // consider caching endpoint version on stream (pending verification stream is associated with a single channel).
-            PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
-            // Special case: this feature was introduced in 16.0.0 so checking the major is sufficient.
-            return version.major() >= 16;
-        }
-        return true;
     }
 
     /**

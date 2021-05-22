@@ -25,6 +25,7 @@ import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExte
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.utils.GsEnv;
+import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.utils.CodeChangeUtilities;
@@ -62,10 +63,11 @@ public class IOUtils {
     private static final IntegerObjectMap<Class<?>> _codeToClass = CollectionsFactory.getInstance().createIntegerObjectMap();
     private static int _swapExtenKey = 0;
 
-    private static final IClassSerializer<?> _defaultSerializer = new ObjectClassSerializer();
+    private static final IClassSerializer<?> _defaultSerializer = ObjectClassSerializer.instance;
     private static final IClassSerializer<?> _nullSerializer = new NullClassSerializer<>();
-    private static final IClassSerializer<?> _smartExternalizableSerializer = new SmartExternalizableSerializer<>();
-    private static final boolean SMART_EXTERNALIZABLE_ENABLED = GsEnv.propertyBoolean(SystemProperties.SMART_EXTERNALIZABLE_ENABLED).get(true);
+    private static final IClassSerializer<?> _smartExternalizableSerializer = SmartExternalizableSerializer.instance;
+    public static final boolean SMART_EXTERNALIZABLE_ENABLED = GsEnv.propertyBoolean(SystemProperties.SMART_EXTERNALIZABLE_ENABLED).get(true);
+    private static final boolean SMART_EXTERNALIZABLE_BACKWARDS_PROTECTION = GsEnv.propertyBoolean(SystemProperties.SMART_EXTERNALIZABLE_BACKWARDS_PROTECTION).get(true);
 
     static {
         _typeCache = new HashMap<Class<?>, IClassSerializer<?>>();
@@ -205,86 +207,6 @@ public class IOUtils {
         protected void readStreamHeader() throws IOException, StreamCorruptedException {
         }
     }
-
-    /**
-     * Marshals <code>value</code> to an <code>ObjectOutputStream</code> stream, <code>out</code>,
-     * using RMI's serialization format for arguments or return values.  For primitive types, the
-     * primitive type's class should be specified (i.e., for the type <code>int</code>, specify
-     * <code>int.class</code>), and the primitive value should be wrapped in instances of the
-     * appropriate wrapper class, such as <code>java.lang.Integer</code> or
-     * <code>java.lang.Boolean</code>.
-     *
-     * @param type  <code>Class</code> object for the value to be marshalled
-     * @param value value to marshal
-     * @param out   stream to which the value is marshalled
-     * @throws IOException if an I/O error occurs marshalling the value to the output stream
-     **/
-    public static void marshalValue(Class type, Object value, ObjectOutput out)
-            throws IOException {
-        //TODO cache isPrimitive because it appear in profiling
-        if (type.isPrimitive()) {
-            if (type == int.class) {
-                out.writeInt(((Integer) value).intValue());
-            } else if (type == boolean.class) {
-                out.writeBoolean(((Boolean) value).booleanValue());
-            } else if (type == long.class) {
-                out.writeLong(((Long) value).longValue());
-            } else if (type == short.class) {
-                out.writeShort(((Short) value).shortValue());
-            } else if (type == float.class) {
-                out.writeFloat(((Float) value).floatValue());
-            } else if (type == double.class) {
-                out.writeDouble(((Double) value).doubleValue());
-            } else if (type == char.class) {
-                out.writeChar(((Character) value).charValue());
-            } else if (type == byte.class) {
-                out.writeByte(((Byte) value).byteValue());
-            } else {
-                throw new AssertionError("Unrecognized primitive type: " + type);
-            }
-        } else {
-            out.writeObject(value);
-        }
-    }
-
-    /**
-     * Unmarshals a value of the specified <code>type</code> from the <code>ObjectInputStream</code>
-     * stream, <code>in</code>, using RMI's serialization format for arguments or return values and
-     * returns the result.  For primitive types, the primitive type's class should be specified
-     * (i.e., for the primitive type <code>int</code>, specify <code>int.class</code>).
-     *
-     * @param type <code>Class</code> object for the value to be unmarshalled
-     * @param in   stream from which the value is unmarshalled
-     * @return value unmarshalled from the input stream
-     * @throws IOException            if an I/O error occurs marshalling the value to the output
-     *                                stream
-     * @throws ClassNotFoundException if the <code>type</code>'s class could not	be found
-     **/
-    public static Object unmarshalValue(Class type, ObjectInput in)
-            throws IOException, ClassNotFoundException {
-        if (type.isPrimitive()) {
-            if (type == int.class)
-                return in.readInt();
-            if (type == boolean.class)
-                return in.readBoolean();
-            if (type == long.class)
-                return in.readLong();
-            if (type == short.class)
-                return in.readShort();
-            if (type == float.class)
-                return in.readFloat();
-            if (type == double.class)
-                return in.readDouble();
-            if (type == char.class)
-                return in.readChar();
-            if (type == byte.class)
-                return in.readByte();
-
-            throw new AssertionError("Unrecognized primitive type: " + type);
-        }
-        return in.readObject();
-    }
-
 
     /**
      * Checks whether a supplied socket port is busy. The port must be between 0 and 65535,
@@ -740,13 +662,23 @@ public class IOUtils {
             writeObject(out, obj);
     }
 
+    public static boolean targetSupportsSmartExternalizable() {
+        if (SMART_EXTERNALIZABLE_BACKWARDS_PROTECTION) {
+            // consider caching endpoint version on stream (pending verification stream is associated with a single channel).
+            PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
+            // Special case: this feature was introduced in 16.0.0 so checking the major is sufficient.
+            return version.major() >= 16;
+        }
+        return true;
+    }
+
     public static void writeObject(ObjectOutput out, Object obj)
             throws IOException {
         IClassSerializer serializer;
         if (SMART_EXTERNALIZABLE_ENABLED &&
                 obj instanceof SmartExternalizable &&
                 out instanceof MarshalOutputStream &&
-                ((MarshalOutputStream) out).targetSupportsSmartExternalizable()) {
+                targetSupportsSmartExternalizable()) {
             serializer = _smartExternalizableSerializer;
         } else if (obj == null) {
             serializer = _nullSerializer;

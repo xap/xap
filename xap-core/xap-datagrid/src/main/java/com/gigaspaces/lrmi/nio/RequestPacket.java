@@ -16,9 +16,7 @@
 
 package com.gigaspaces.lrmi.nio;
 
-import com.gigaspaces.internal.io.AnnotatedObjectInputStream;
-import com.gigaspaces.internal.io.AnnotatedObjectOutputStream;
-import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.internal.io.*;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.logger.Constants;
@@ -153,7 +151,7 @@ public class RequestPacket implements IPacket {
      * @param in request the input stream, MarshalInputStream is passed to allow changing the
      *           default classloader.
      */
-    public void readExternal(AnnotatedObjectInputStream in) throws IOException,
+    public void readExternal(MarshalInputStream in) throws IOException,
             ClassNotFoundException {
         byte version = in.readByte();
         if (version != SERIAL_VERSION)
@@ -227,18 +225,14 @@ public class RequestPacket implements IPacket {
                 /* unmarsh method values with ClassLoader of target invocation object */
                 ClassLoader unmarshallClassLoader = entry.getExportedThreadClassLoader();
 
-                Class<?>[] types = invokeMethod.methodTypes;
-
-                if (types.length > 0) {
+                if (invokeMethod.getNumOfArguments() != 0) {
                     ClassLoader orgThreadCL = Thread.currentThread().getContextClassLoader();
                     final boolean changeCL = orgThreadCL != unmarshallClassLoader;
                     if (changeCL)
                         ClassLoaderHelper.setContextClassLoader(unmarshallClassLoader, true /*ignore security*/);
 
                     try {
-                        args = new Object[types.length];
-                        for (int i = 0; i < types.length; i++)
-                            args[i] = IOUtils.unmarshalValue(types[i], in);
+                        args = invokeMethod.readRequest(in);
                         //Update context for debug logging purpose
                         if (logContext) {
                             LRMIInvocationContext currentContext = LRMIInvocationContext.getCurrentContext();
@@ -260,7 +254,7 @@ public class RequestPacket implements IPacket {
     /*
       * @see java.io.Externalizable#writeExternal(java.io.ObjectOutput)
       */
-    public void writeExternal(AnnotatedObjectOutputStream out) throws IOException {
+    public void writeExternal(MarshalOutputStream out) throws IOException {
         out.writeByte(SERIAL_VERSION);
         out.writeByte(buildFlags());
         if (_requestObj != null) {
@@ -277,10 +271,7 @@ public class RequestPacket implements IPacket {
                 IOUtils.writeRepetitiveString(out, "");
             }
 
-            Class<?>[] types = invokeMethod.methodTypes;
-            for (int i = 0; i < types.length; i++) {
-                IOUtils.marshalValue(types[i], args[i], out);
-            }
+            invokeMethod.writeRequest(out, args);
         }
     }
 
