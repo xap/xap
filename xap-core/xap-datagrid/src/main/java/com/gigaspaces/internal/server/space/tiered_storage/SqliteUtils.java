@@ -20,10 +20,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.*;
 import java.time.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.util.*;
+
 
 public class SqliteUtils {
     private static final long NANOS_PER_SEC = 1_000_000_000;
@@ -115,7 +113,7 @@ public class SqliteUtils {
         map.put(Byte[].class.getName(), "BINARY");
         map.put(Instant.class.getName(), "BIGINT");
         map.put(Timestamp.class.getName(), "BIGINT");
-        map.put(Date.class.getName(), "BIGINT");
+        map.put(java.util.Date.class.getName(), "BIGINT");
         map.put(java.sql.Date.class.getName(), "BIGINT");
         map.put(java.sql.Time.class.getName(), "BIGINT");
         map.put(LocalDate.class.getName(), "BIGINT");
@@ -128,31 +126,32 @@ public class SqliteUtils {
         Map<String, ExtractFunction> map = new HashMap<>();
         map.put(String.class.getName(), ResultSet::getString);
         map.put(boolean.class.getName(), ResultSet::getBoolean);
-        map.put(Boolean.class.getName(), ResultSet::getBoolean);
         map.put(byte.class.getName(), ResultSet::getByte);
-        map.put(Byte.class.getName(), ResultSet::getByte);
         map.put(short.class.getName(), ResultSet::getShort);
-        map.put(Short.class.getName(), ResultSet::getShort);
         map.put(int.class.getName(), ResultSet::getInt);
-        map.put(Integer.class.getName(), ResultSet::getInt);
         map.put(long.class.getName(), ResultSet::getLong);
-        map.put(Long.class.getName(), ResultSet::getLong);
-        map.put(BigInteger.class.getName(), ResultSet::getLong); // todo - check
-        map.put(BigDecimal.class.getName(), ResultSet::getBigDecimal);
         map.put(float.class.getName(), ResultSet::getFloat);
-        map.put(Float.class.getName(), ResultSet::getFloat);
         map.put(double.class.getName(), ResultSet::getDouble);
-        map.put(Double.class.getName(), ResultSet::getDouble);
         map.put(byte[].class.getName(), ResultSet::getBytes);
-        map.put(Byte[].class.getName(), ResultSet::getBytes);
         map.put(Instant.class.getName(), (res, i) -> fromGsTime(res.getLong(i)));
         map.put(Timestamp.class.getName(), (res, i) -> Timestamp.from(fromGsTime(res.getLong(i))));
-        map.put(Date.class.getName(), (res, i) -> new Date(res.getLong(i)));
+        map.put(java.util.Date.class.getName(), (res, i) -> new java.util.Date(res.getLong(i)));
         map.put(java.sql.Date.class.getName(), (res, i) -> new java.sql.Date(res.getLong(i)));
-        map.put(java.sql.Time.class.getName(), (res, i) -> new Time(res.getLong(i)));
+        map.put(java.sql.Time.class.getName(), (res, i) -> new java.sql.Time(res.getLong(i)));
         map.put(LocalDate.class.getName(), (res, i) -> LocalDate.ofEpochDay(res.getLong(i)));
         map.put(LocalTime.class.getName(), (res, i) -> LocalTime.ofNanoOfDay(res.getLong(i)));
         map.put(LocalDateTime.class.getName(), (res, i) -> LocalDateTime.ofInstant(fromGsTime(res.getLong(i)), ZoneId.of("UTC")));
+
+        map.put(Boolean.class.getName(), ResultSet::getObject);
+        map.put(Byte.class.getName(), ResultSet::getObject);
+        map.put(Short.class.getName(), ResultSet::getObject);
+        map.put(Integer.class.getName(), ResultSet::getObject);
+        map.put(Long.class.getName(), ResultSet::getObject);
+        map.put(BigInteger.class.getName(), ResultSet::getObject);
+        map.put(BigDecimal.class.getName(), ResultSet::getObject);
+        map.put(Float.class.getName(), ResultSet::getObject);
+        map.put(Double.class.getName(), ResultSet::getObject);
+        map.put(Byte[].class.getName(), ResultSet::getObject);
         return map;
     }
 
@@ -160,31 +159,32 @@ public class SqliteUtils {
         Map<String, InjectFunction> map = new HashMap<>();
         map.put(String.class.getName(), (statement, i, val) -> statement.setString(i, (String) val));
         map.put(boolean.class.getName(), (statement, i, val) -> statement.setBoolean(i, (boolean) val));
-        map.put(Boolean.class.getName(), (statement, i, val) -> statement.setBoolean(i, (Boolean) val));
         map.put(byte.class.getName(), (statement, i, val) -> statement.setByte(i, (byte) val));
-        map.put(Byte.class.getName(), (statement, i, val) -> statement.setByte(i, (Byte) val));
         map.put(short.class.getName(), (statement, i, val) -> statement.setShort(i, (short) val));
-        map.put(Short.class.getName(), (statement, i, val) -> statement.setShort(i, (Short) val));
         map.put(int.class.getName(), (statement, i, val) -> statement.setInt(i, (int) val));
-        map.put(Integer.class.getName(), (statement, i, val) -> statement.setInt(i, (Integer) val));
         map.put(long.class.getName(), (statement, i, val) -> statement.setLong(i, (long) val));
-        map.put(Long.class.getName(), (statement, i, val) -> statement.setLong(i, (Long) val));
-        map.put(BigInteger.class.getName(), (statement, i, val) -> statement.setLong(i, (Long) val));//todo - check
-        map.put(BigDecimal.class.getName(), (statement, i, val) -> statement.setBigDecimal(i, (BigDecimal) val));
         map.put(float.class.getName(), (statement, i, val) -> statement.setFloat(i, (float) val));
-        map.put(Float.class.getName(), (statement, i, val) -> statement.setFloat(i, (Float) val));
         map.put(double.class.getName(), (statement, i, val) -> statement.setDouble(i, (double) val));
-        map.put(Double.class.getName(), (statement, i, val) -> statement.setDouble(i, (Double) val));
         map.put(byte[].class.getName(), (statement, i, val) -> statement.setBytes(i, (byte[]) val));
-        map.put(Byte[].class.getName(), (statement, i, val) -> statement.setBytes(i, (byte[]) val));
         map.put(Instant.class.getName(), (statement, i, val) -> statement.setLong(i, toGSTime(((Instant) val))));
         map.put(Timestamp.class.getName(), (statement, i, val) -> statement.setLong(i, toGSTime(((Timestamp) val).toInstant())));
-        map.put(Date.class.getName(), (statement, i, val) -> statement.setLong(i, ((Date) val).getTime()));
+        map.put(java.util.Date.class.getName(), (statement, i, val) -> statement.setLong(i, ((java.util.Date) val).getTime()));
         map.put(java.sql.Date.class.getName(), (statement, i, val) -> statement.setLong(i, ((java.sql.Date) val).getTime()));
         map.put(java.sql.Time.class.getName(), (statement, i, val) -> statement.setLong(i, ((Time) val).getTime()));
         map.put(LocalDate.class.getName(), (statement, i, val) -> statement.setLong(i, ((LocalDate) val).toEpochDay()));
         map.put(LocalTime.class.getName(), (statement, i, val) -> statement.setLong(i, ((LocalTime) val).toNanoOfDay()));
         map.put(LocalDateTime.class.getName(), (statement, i, val) -> statement.setLong(i, toGSTime(((LocalDateTime) val).atZone(ZoneId.of("UTC")).toInstant())));
+
+        map.put(Boolean.class.getName(), PreparedStatement::setObject);
+        map.put(Byte.class.getName(), PreparedStatement::setObject);
+        map.put(Short.class.getName(), PreparedStatement::setObject);
+        map.put(Integer.class.getName(), PreparedStatement::setObject);
+        map.put(Long.class.getName(), PreparedStatement::setObject);
+        map.put(BigInteger.class.getName(), PreparedStatement::setObject);
+        map.put(BigDecimal.class.getName(), PreparedStatement::setObject);
+        map.put(Float.class.getName(), PreparedStatement::setObject);
+        map.put(Double.class.getName(), PreparedStatement::setObject);
+        map.put(Byte[].class.getName(), PreparedStatement::setObject);
         return map;
     }
 
@@ -204,12 +204,20 @@ public class SqliteUtils {
     }
 
 
-    public static void setPropertyValue(PreparedStatement statement, Class<?> propertyType, int index, Object value) throws SQLException {
+    public static void setPropertyValue(boolean isUpdate, PreparedStatement statement, Class<?> propertyType, int index, Object value) throws SQLException {
         if (!sqlInjectorsMap.containsKey(propertyType.getName())) {
             throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
         }
-        final InjectFunction injectFunction = sqlInjectorsMap.get(propertyType.getName());
-        injectFunction.inject(statement, index, value);
+        if(value == null){
+            if(isUpdate){
+                statement.setObject(index, value);
+            } else {
+                statement.setString(index, "Null");
+            }
+        } else {
+            final InjectFunction injectFunction = sqlInjectorsMap.get(propertyType.getName());
+            injectFunction.inject(statement, index, value);
+        }
     }
 
 
@@ -257,12 +265,14 @@ public class SqliteUtils {
 
     public static void appendCustomQueryString(ICustomQuery customQuery, StringBuilder queryBuilder, QueryParameters queryParams) {
         if (customQuery instanceof AbstractCompundCustomQuery) {
-            StringJoiner joiner = new StringJoiner(customQuery.getClass().equals(CompoundAndCustomQuery.class) ? " AND " : " OR ");
+            String operation = customQuery.getClass().equals(CompoundAndCustomQuery.class) ? " AND " : " OR ";
             List<ICustomQuery> subQueries = ((AbstractCompundCustomQuery) customQuery).get_subQueries();
-            for (ICustomQuery subQuery : subQueries) {
-                appendCustomQueryString(subQuery, queryBuilder, queryParams);
+            for (int i = 0; i < subQueries.size(); i++) {
+                appendCustomQueryString(subQueries.get(i), queryBuilder, queryParams);
+                if(i != subQueries.size() -1){
+                    queryBuilder.append(operation);
+                }
             }
-            queryBuilder.append(joiner);
         } else if (customQuery instanceof Range) {
             SqliteUtils.appendRangeString((Range) customQuery, queryBuilder, queryParams);
         } else {
@@ -343,8 +353,8 @@ public class SqliteUtils {
             return ((Timestamp) value).toInstant();
         } else if (Long.class.equals(value.getClass())) {
             return Instant.ofEpochMilli((long) value);
-        } else if (Date.class.equals(value.getClass())) {
-            return Instant.ofEpochMilli(((Date) value).getTime());
+        } else if (java.util.Date.class.equals(value.getClass())) {
+            return Instant.ofEpochMilli(((java.util.Date) value).getTime());
         } else if (LocalDateTime.class.equals(value.getClass())) {
             return ((LocalDateTime) value).toInstant(ZoneOffset.UTC);
         }
@@ -379,12 +389,12 @@ public class SqliteUtils {
 
     private static Range convertRangeFromJavaUtilDateToInstant(Range queryValueRange) {
         if (queryValueRange.isEqualValueRange()) {
-            Date value = (Date) ((EqualValueRange) queryValueRange).getValue();
+            java.util.Date value = (java.util.Date) ((EqualValueRange) queryValueRange).getValue();
             return new EqualValueRange(queryValueRange.getPath(), value.toInstant());
         } else if (queryValueRange.isSegmentRange()) {
             SegmentRange segmentRange = (SegmentRange) queryValueRange;
-            Comparable<Instant> minInstant = segmentRange.getMin() != null ? ((Date) segmentRange.getMin()).toInstant() : null;
-            Comparable<Instant> maxInstant = segmentRange.getMax() != null ? ((Date) segmentRange.getMax()).toInstant() : null;
+            Comparable<Instant> minInstant = segmentRange.getMin() != null ? ((java.util.Date) segmentRange.getMin()).toInstant() : null;
+            Comparable<Instant> maxInstant = segmentRange.getMax() != null ? ((java.util.Date) segmentRange.getMax()).toInstant() : null;
             return new SegmentRange(queryValueRange.getPath(), minInstant, ((SegmentRange) queryValueRange).isIncludeMin(), maxInstant, ((SegmentRange) queryValueRange).isIncludeMax());
         }
         throw new IllegalStateException("Supports only equal and segment Range");
@@ -410,7 +420,7 @@ public class SqliteUtils {
                     queryValueRange = convertRangeFromTimestampToInstant(queryValueRange);
                 } else if (Long.class.getName().equals(timeType) || long.class.getName().equals(timeType)) {
                     queryValueRange = convertRangeFromLongToInstant(queryValueRange);
-                } else if (Date.class.getName().equals(timeType)) {
+                } else if (java.util.Date.class.getName().equals(timeType)) {
                     queryValueRange = convertRangeFromJavaUtilDateToInstant(queryValueRange);
                 } else if (LocalDateTime.class.getName().equals(timeType)) {
                     queryValueRange = convertRangeFromLocalDateTimeToInstant(queryValueRange);
