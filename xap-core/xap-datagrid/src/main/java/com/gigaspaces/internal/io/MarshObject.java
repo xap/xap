@@ -17,8 +17,8 @@
 package com.gigaspaces.internal.io;
 
 import com.gigaspaces.client.storage_adapters.BinaryWrapper;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -33,7 +33,7 @@ import java.util.Arrays;
  * @since 4.0
  */
 @com.gigaspaces.api.InternalApi
-public class MarshObject implements BinaryWrapper, Externalizable {
+public class MarshObject implements BinaryWrapper, SmartExternalizable {
     private static final long serialVersionUID = 1L;
     private static final int NULL_HASHCODE = 13;
 

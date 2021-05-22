@@ -25,11 +25,11 @@ import com.gigaspaces.cluster.replication.sync.SyncReplPolicy;
 import com.gigaspaces.internal.cluster.node.impl.config.MultiBucketReplicationPolicy;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.ISpaceState;
 import com.j_spaces.core.JSpaceState;
 import com.j_spaces.core.client.SpaceURL;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -44,7 +44,7 @@ import java.util.Map;
 import java.util.Set;
 
 
-public class ReplicationPolicy implements Serializable, Externalizable {
+public class ReplicationPolicy implements Serializable, SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     final static public String UNICAST_COMMUNICATION_MODE = "unicast";
@@ -1112,7 +1112,7 @@ public class ReplicationPolicy implements Serializable, Externalizable {
     /**
      * Replication policy description for every member.
      */
-    public static class ReplicationPolicyDescription implements Externalizable {
+    public static class ReplicationPolicyDescription implements SmartExternalizable {
 
         private static final long serialVersionUID = 2L;
         // transmission policy matrix for this member value = ReplicationTransmissionPolicy

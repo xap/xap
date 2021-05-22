@@ -1,8 +1,8 @@
 package org.jini.rio.boot;
 
 import com.gigaspaces.internal.io.BootIOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -11,7 +11,7 @@ import java.io.ObjectOutput;
  * Created by tamirs
  * on 11/8/16.
  */
-public class SupportCodeChangeAnnotationContainer implements Externalizable{
+public class SupportCodeChangeAnnotationContainer implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private String version = "";

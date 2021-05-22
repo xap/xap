@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.cluster.node.impl.directPersistency.embeddedSyncList.embeddedAdmin;
 
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -35,7 +36,7 @@ import java.util.TreeMap;
  * @since 11.0
  */
 @com.gigaspaces.api.InternalApi
-public class EmbeddedSyncTransferredInfo implements Externalizable {
+public class EmbeddedSyncTransferredInfo implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

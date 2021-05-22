@@ -30,7 +30,6 @@ import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.lrmi.LRMIInvocationContext.ProxyWriteType;
 import com.gigaspaces.lrmi.LRMIRuntime;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -41,6 +40,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * A base class for all the Proxies created by reflection.
  *
  * @author Guy
- * @Since 7.0
+ * @since 7.0
  */
 public abstract class AbstractProxy implements Serializable, IDynamicProxy {
     private static final long serialVersionUID = -7155145351229271987L;
@@ -155,7 +155,7 @@ public abstract class AbstractProxy implements Serializable, IDynamicProxy {
         return set.toArray(new MethodHolder[set.size()]);
     }
 
-    public static class ProxyReplace implements Externalizable {
+    public static class ProxyReplace implements SmartExternalizable {
         private static final long serialVersionUID = 1L;
 
         private Class[] _interfaces;
@@ -250,7 +250,7 @@ public abstract class AbstractProxy implements Serializable, IDynamicProxy {
      * @author eitany
      * @since 7.5
      */
-    private static class LightProxyReplace implements Externalizable {
+    private static class LightProxyReplace implements SmartExternalizable {
         private static final long serialVersionUID = 1L;
 
         private StubId _stubId;

@@ -24,8 +24,8 @@ import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
 import com.gigaspaces.query.aggregators.SpaceEntriesAggregatorContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -36,7 +36,7 @@ import java.io.ObjectOutput;
  */
 @com.gigaspaces.api.InternalApi
 public class SpaceIteratorAggregator extends SpaceEntriesAggregator<ISpaceIteratorAggregatorPartitionResult>
-        implements Externalizable {
+        implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

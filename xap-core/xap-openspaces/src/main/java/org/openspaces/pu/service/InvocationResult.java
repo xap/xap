@@ -16,12 +16,13 @@
 
 package org.openspaces.pu.service;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-public class InvocationResult implements Externalizable {
+public class InvocationResult implements SmartExternalizable {
 
     private static final long serialVersionUID = 1051610996828142259L;
 

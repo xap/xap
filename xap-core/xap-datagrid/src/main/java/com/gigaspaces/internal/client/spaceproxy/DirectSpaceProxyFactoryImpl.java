@@ -19,10 +19,10 @@ package com.gigaspaces.internal.client.spaceproxy;
 import com.gigaspaces.client.DirectSpaceProxyFactory;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.client.ProxySettings;
 import com.j_spaces.core.client.SpaceSettings;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +32,7 @@ import java.io.ObjectOutput;
  * @since 11.0
  */
 @com.gigaspaces.api.InternalApi
-public class DirectSpaceProxyFactoryImpl implements DirectSpaceProxyFactory, Externalizable {
+public class DirectSpaceProxyFactoryImpl implements DirectSpaceProxyFactory, SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

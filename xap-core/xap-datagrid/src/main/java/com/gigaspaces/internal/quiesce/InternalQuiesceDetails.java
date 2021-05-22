@@ -21,8 +21,8 @@ import com.gigaspaces.admin.quiesce.InstancesQuiesceState;
 import com.gigaspaces.admin.quiesce.QuiesceState;
 import com.gigaspaces.admin.quiesce.QuiesceToken;
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -33,7 +33,7 @@ import java.io.ObjectOutput;
  * @since 10.1.0
  */
 @com.gigaspaces.api.InternalApi
-public class InternalQuiesceDetails implements Externalizable {
+public class InternalQuiesceDetails implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
     private QuiesceState status;

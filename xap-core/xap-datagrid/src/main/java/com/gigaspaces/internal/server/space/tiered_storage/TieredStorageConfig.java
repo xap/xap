@@ -1,8 +1,8 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.server.SpaceCustomComponent;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -11,7 +11,7 @@ import java.util.Map;
 
 import static com.j_spaces.core.Constants.TieredStorage.SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME;
 
-public class TieredStorageConfig extends SpaceCustomComponent implements Externalizable {
+public class TieredStorageConfig extends SpaceCustomComponent implements SmartExternalizable {
 
 
     private Map<String, TieredStorageTableConfig> tables;

@@ -16,7 +16,8 @@
 
 package com.j_spaces.lookup.entry;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -30,7 +31,7 @@ import java.io.ObjectOutput;
  *******************************************************************************/
 
 @com.gigaspaces.api.InternalApi
-public class ClusterGroup extends com.j_spaces.lookup.entry.GenericEntry implements Externalizable {
+public class ClusterGroup extends com.j_spaces.lookup.entry.GenericEntry implements SmartExternalizable {
     private static final long serialVersionUID = -3820632312122408764L;
 
     public String electionGroup;

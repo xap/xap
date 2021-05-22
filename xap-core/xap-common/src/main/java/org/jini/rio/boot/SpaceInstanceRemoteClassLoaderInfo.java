@@ -1,6 +1,7 @@
 package org.jini.rio.boot;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -10,7 +11,7 @@ import java.util.HashMap;
  * Created by tamirs
  * on 11/14/16.
  */
-public class SpaceInstanceRemoteClassLoaderInfo implements Externalizable {
+public class SpaceInstanceRemoteClassLoaderInfo implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

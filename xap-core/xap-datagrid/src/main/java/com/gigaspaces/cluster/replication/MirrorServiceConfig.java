@@ -19,11 +19,11 @@ package com.gigaspaces.cluster.replication;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.client.SpaceURL;
 import com.j_spaces.core.cluster.RedoLogCapacityExceededPolicy;
 import com.j_spaces.core.cluster.ReplicationPolicy;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * mirror service configuration
  */
-final public class MirrorServiceConfig implements Externalizable {
+final public class MirrorServiceConfig implements SmartExternalizable {
     private static final long serialVersionUID = 2L;
 
     private static final Long DEFAULT_MIRROR_REDO_LOG_CAPACITY = null;

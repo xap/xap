@@ -19,6 +19,7 @@ package com.gigaspaces.internal.lrmi;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.lrmi.LRMIOutboundMonitoringDetails;
 import com.gigaspaces.lrmi.LRMIProxyMonitoringDetails;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -31,7 +32,7 @@ import java.io.ObjectOutput;
  */
 @com.gigaspaces.api.InternalApi
 public class LRMIOutboundMonitoringDetailsImpl
-        implements LRMIOutboundMonitoringDetails, Externalizable {
+        implements LRMIOutboundMonitoringDetails, SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
     private LRMIProxyMonitoringDetailsImpl[] _proxyMonitoringDetails;

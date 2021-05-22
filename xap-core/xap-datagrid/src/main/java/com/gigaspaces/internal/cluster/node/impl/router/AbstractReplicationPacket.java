@@ -22,13 +22,13 @@ import com.gigaspaces.internal.utils.Textualizable;
 import com.gigaspaces.internal.utils.Textualizer;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-public abstract class AbstractReplicationPacket<T> implements Externalizable, Textualizable {
+public abstract class AbstractReplicationPacket<T> implements SmartExternalizable, Textualizable {
     private static final long serialVersionUID = 1L;
     private ReplicationEndpointDetails _sourceEndpointDetails;
 

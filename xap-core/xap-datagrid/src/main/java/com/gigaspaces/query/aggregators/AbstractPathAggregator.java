@@ -18,8 +18,8 @@
 package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -29,7 +29,7 @@ import java.io.Serializable;
  * @author Niv Ingberg
  * @since 10.0
  */
-public abstract class AbstractPathAggregator<T extends Serializable> extends SpaceEntriesAggregator<T> implements Externalizable {
+public abstract class AbstractPathAggregator<T extends Serializable> extends SpaceEntriesAggregator<T> implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

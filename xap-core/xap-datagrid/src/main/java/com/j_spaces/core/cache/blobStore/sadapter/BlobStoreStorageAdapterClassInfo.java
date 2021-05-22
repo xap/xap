@@ -17,7 +17,8 @@
 package com.j_spaces.core.cache.blobStore.sadapter;
 
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -30,7 +31,7 @@ import java.util.HashSet;
  * @since 10.1
  */
 @com.gigaspaces.api.InternalApi
-public class BlobStoreStorageAdapterClassInfo implements Externalizable {
+public class BlobStoreStorageAdapterClassInfo implements SmartExternalizable {
 
     private static final long serialVersionUID = 8551182143707595380L;
 

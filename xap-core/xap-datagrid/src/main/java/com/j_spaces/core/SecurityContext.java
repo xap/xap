@@ -16,7 +16,8 @@
 
 package com.j_spaces.core;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,7 +32,7 @@ import java.io.ObjectOutput;
 @Deprecated
 @com.gigaspaces.api.InternalApi
 public class SecurityContext
-        implements Externalizable
+        implements SmartExternalizable
 
 {
     private static final long serialVersionUID = 1L;

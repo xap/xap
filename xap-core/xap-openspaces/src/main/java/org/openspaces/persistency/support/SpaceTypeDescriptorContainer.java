@@ -19,8 +19,8 @@ package org.openspaces.persistency.support;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.metadata.SpaceTypeDescriptor;
 import com.gigaspaces.metadata.SpaceTypeDescriptorVersionedSerializationUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -30,7 +30,7 @@ import java.io.Serializable;
  * @author Niv Ingberg
  * @since 9.7
  */
-public class SpaceTypeDescriptorContainer implements Externalizable {
+public class SpaceTypeDescriptorContainer implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

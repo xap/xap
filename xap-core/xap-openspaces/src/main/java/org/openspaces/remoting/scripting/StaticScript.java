@@ -17,9 +17,9 @@
 
 package org.openspaces.remoting.scripting;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.openspaces.remoting.RemoteResultReducer;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,7 +31,7 @@ import java.util.Map;
  *
  * @author kimchy
  */
-public class StaticScript implements Script, Externalizable {
+public class StaticScript implements Script, SmartExternalizable {
 
     private static final long serialVersionUID = -5652707951323528455L;
 

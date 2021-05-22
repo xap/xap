@@ -19,8 +19,8 @@ package com.j_spaces.core.filters;
 
 import com.gigaspaces.metrics.MetricRegistrator;
 import com.gigaspaces.metrics.ThroughputMetric;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +32,7 @@ import java.io.ObjectOutput;
  * @version 4.1
  * @see com.j_spaces.core.admin.StatisticsAdmin
  */
-public class StatisticsContext implements Externalizable {
+public class StatisticsContext implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private final ThroughputMetric metric;

@@ -19,15 +19,15 @@ package com.gigaspaces.internal.cluster.node.impl.backlog.globalorder;
 import com.gigaspaces.internal.cluster.node.impl.backlog.reliableasync.IReliableAsyncState;
 import com.gigaspaces.internal.cluster.node.impl.backlog.reliableasync.IReliableAsyncTargetState;
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 
 @com.gigaspaces.api.InternalApi
-public class GlobalOrderReliableAsyncState implements Externalizable, IReliableAsyncState {
+public class GlobalOrderReliableAsyncState implements SmartExternalizable, IReliableAsyncState {
     private static final long serialVersionUID = 1L;
 
     private AsyncTargetState[] _asyncTargetsState;
@@ -74,7 +74,7 @@ public class GlobalOrderReliableAsyncState implements Externalizable, IReliableA
         return Arrays.toString(_asyncTargetsState);
     }
 
-    public static class AsyncTargetState implements Externalizable, IReliableAsyncTargetState {
+    public static class AsyncTargetState implements SmartExternalizable, IReliableAsyncTargetState {
         private static final long serialVersionUID = 1L;
 
         private String _targetMemberName;

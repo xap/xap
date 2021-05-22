@@ -16,10 +16,10 @@
 
 package com.gigaspaces.cluster.replication;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.cluster.ReplicationPolicy;
 import com.j_spaces.core.cluster.ReplicationPolicy.ReplicationPolicyDescription;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +32,7 @@ import java.io.ObjectOutput;
  */
 @com.gigaspaces.api.InternalApi
 public class ReplicationTransmissionPolicy
-        implements Cloneable, Externalizable {
+        implements Cloneable, SmartExternalizable {
     private static final long serialVersionUID = 2L;
 
     final static public char REPLICATION_TRANSMISSION_OPERATION_WRITE = 'W'; //includes lease-extend

@@ -19,14 +19,14 @@ package com.gigaspaces.internal.cluster.node.impl.backlog;
 import com.gigaspaces.internal.cluster.node.impl.backlog.BacklogConfig.LimitReachedPolicy;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 @com.gigaspaces.api.InternalApi
-public class BacklogMemberLimitationConfig implements Externalizable {
+public class BacklogMemberLimitationConfig implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

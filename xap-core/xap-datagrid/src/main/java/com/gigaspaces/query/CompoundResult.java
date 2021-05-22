@@ -18,8 +18,8 @@
 package com.gigaspaces.query;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -30,7 +30,7 @@ import java.util.Map;
  * @author Niv Ingberg
  * @since 10.0
  */
-public abstract class CompoundResult implements Externalizable, Cloneable {
+public abstract class CompoundResult implements SmartExternalizable, Cloneable {
 
     private static final long serialVersionUID = 1L;
 

@@ -19,6 +19,7 @@ package com.j_spaces.jdbc.query;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.Query;
 import com.j_spaces.jdbc.SelectColumn;
@@ -35,7 +36,7 @@ import java.util.function.Function;
  * @since 7.0
  */
 @com.gigaspaces.api.InternalApi
-public class QueryColumnData implements Externalizable {
+public class QueryColumnData implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     protected static final String ASTERIX_COLUMN = "*";

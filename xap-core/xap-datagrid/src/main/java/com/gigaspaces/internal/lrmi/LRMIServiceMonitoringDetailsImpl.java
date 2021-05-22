@@ -22,6 +22,7 @@ import com.gigaspaces.lrmi.LRMIServiceClientMonitoringDetails;
 import com.gigaspaces.lrmi.LRMIServiceClientMonitoringId;
 import com.gigaspaces.lrmi.LRMIServiceMonitoringDetails;
 import com.gigaspaces.lrmi.nio.ChannelEntry;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -44,7 +45,7 @@ import java.util.Map.Entry;
  * @since 9.1
  */
 @com.gigaspaces.api.InternalApi
-public class LRMIServiceMonitoringDetailsImpl implements Externalizable, LRMIServiceMonitoringDetails {
+public class LRMIServiceMonitoringDetailsImpl implements SmartExternalizable, LRMIServiceMonitoringDetails {
 
     private static final long serialVersionUID = 1L;
     private String _serviceDetails;

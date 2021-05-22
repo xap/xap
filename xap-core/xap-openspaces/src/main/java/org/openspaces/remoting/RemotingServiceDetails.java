@@ -17,9 +17,9 @@
 
 package org.openspaces.remoting;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.openspaces.pu.service.PlainServiceDetails;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -36,7 +36,7 @@ public class RemotingServiceDetails extends PlainServiceDetails {
 
     public static final String SERVICE_TYPE = "remoting";
 
-    public static class RemoteService implements Externalizable {
+    public static class RemoteService implements SmartExternalizable {
 
         private static final long serialVersionUID = -8527660067530155L;
 

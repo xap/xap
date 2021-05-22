@@ -23,6 +23,7 @@ package com.gigaspaces.cluster.replication.sync;
 import com.gigaspaces.cluster.replication.ConsistencyLevel;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -37,7 +38,7 @@ import java.lang.reflect.Field;
  * @version 4.0
  **/
 @com.gigaspaces.api.InternalApi
-public class SyncReplPolicy implements Externalizable {
+public class SyncReplPolicy implements SmartExternalizable {
     private static final long serialVersionUID = 2L;
 
 

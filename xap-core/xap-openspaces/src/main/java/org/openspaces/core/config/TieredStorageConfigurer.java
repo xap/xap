@@ -3,10 +3,10 @@ package org.openspaces.core.config;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageConfig;
 import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageTableConfig;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.server.SpaceCustomComponent;
 import org.openspaces.core.extension.SpaceCustomComponentFactoryBean;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -17,7 +17,7 @@ import java.util.Map;
  * @author Yael Nahon
  * @since 16.0
  */
-public class TieredStorageConfigurer implements SpaceCustomComponentFactoryBean, Externalizable {
+public class TieredStorageConfigurer implements SpaceCustomComponentFactoryBean, SmartExternalizable {
 
     private Map<String, TieredStorageTableConfig> tables = new HashMap<>();
 

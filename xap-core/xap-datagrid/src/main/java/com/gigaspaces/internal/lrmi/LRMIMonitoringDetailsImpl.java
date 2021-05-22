@@ -21,9 +21,9 @@ import com.gigaspaces.lrmi.LRMIInboundMonitoringDetails;
 import com.gigaspaces.lrmi.LRMIMonitoringDetails;
 import com.gigaspaces.lrmi.LRMIOutboundMonitoringDetails;
 import com.gigaspaces.lrmi.nio.info.NIOInfoHelper;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.start.SystemInfo;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -34,7 +34,7 @@ import java.io.ObjectOutput;
  */
 @com.gigaspaces.api.InternalApi
 public class LRMIMonitoringDetailsImpl
-        implements LRMIMonitoringDetails, Externalizable {
+        implements LRMIMonitoringDetails, SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
     private LRMIInboundMonitoringDetailsImpl _inboundMonitoringDetails;

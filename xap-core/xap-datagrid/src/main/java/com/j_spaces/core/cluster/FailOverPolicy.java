@@ -23,9 +23,9 @@ package com.j_spaces.core.cluster;
 
 import com.gigaspaces.cluster.activeelection.core.ActiveElectionConfig;
 import com.gigaspaces.cluster.activeelection.core.ActiveElectionState;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.client.SpaceURL;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -46,7 +46,7 @@ import java.util.Map;
  *******************************************************************************/
 
 @com.gigaspaces.api.InternalApi
-public class FailOverPolicy implements Serializable, Externalizable {
+public class FailOverPolicy implements Serializable, SmartExternalizable {
     private static final long serialVersionUID = 2L;
 
     /**
@@ -255,7 +255,7 @@ public class FailOverPolicy implements Serializable, Externalizable {
         spaceFinderTimeout = DEFAULT_FAILOVER_SPACE_FINDER_TIMEOUT;
     }
 
-    public static class FailOverPolicyDescription implements Externalizable {
+    public static class FailOverPolicyDescription implements SmartExternalizable {
         private static final long serialVersionUID = -2885295494848244093L;
 
         public int m_PolicyType = -1;      // policy type

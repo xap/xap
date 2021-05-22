@@ -19,8 +19,8 @@ package com.gigaspaces.internal.query;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.query.predicate.ISpacePredicate;
 import com.gigaspaces.query.ISpaceQuery;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -33,7 +33,7 @@ import java.util.List;
  * @author Niv Ingberg
  * @since 7.1
  */
-public abstract class AbstractSpaceQuery<T> implements ISpaceQuery<T>, ICustomQuery, Externalizable {
+public abstract class AbstractSpaceQuery<T> implements ISpaceQuery<T>, ICustomQuery, SmartExternalizable {
     private static final long serialVersionUID = 537740993667475544L;
 
     private String _entryTypeName;

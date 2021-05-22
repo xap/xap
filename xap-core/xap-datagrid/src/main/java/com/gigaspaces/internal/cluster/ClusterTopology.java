@@ -2,15 +2,15 @@ package com.gigaspaces.internal.cluster;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.utils.GsEnv;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.Constants;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
 
-public class ClusterTopology implements Externalizable {
+public class ClusterTopology implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
     public static final int CHUNKS_COUNT = GsEnv.propertyInt(Constants.ChunksRouting.CHUNKS_SPACE_ROUTING_COUNT).get(Constants.ChunksRouting.CHUNKS_SPACE_ROUTING_COUNT_DEFAULT);
 

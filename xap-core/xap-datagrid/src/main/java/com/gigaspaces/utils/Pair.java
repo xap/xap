@@ -17,8 +17,8 @@
 package com.gigaspaces.utils;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -27,7 +27,7 @@ import java.io.ObjectOutput;
  * @author yael nahon
  * @since 12.0.1
  */
-public class Pair<T,V> implements Externalizable{
+public class Pair<T,V> implements SmartExternalizable {
     private  T first;
     private  V second;
 

@@ -18,9 +18,9 @@
 package com.gigaspaces.security.audit;
 
 import com.gigaspaces.security.service.SecurityContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.start.SystemInfo;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -39,7 +39,7 @@ import java.net.InetAddress;
  * @since 7.0.1
  */
 
-public class AuditDetails implements Externalizable {
+public class AuditDetails implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

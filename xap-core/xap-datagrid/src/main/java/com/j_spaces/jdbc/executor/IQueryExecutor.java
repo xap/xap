@@ -18,6 +18,7 @@ package com.j_spaces.jdbc.executor;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.jdbc.OrderColumn;
 import com.j_spaces.jdbc.ResultEntry;
 import com.j_spaces.jdbc.SelectColumn;
@@ -34,8 +35,6 @@ import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 
-import java.io.Externalizable;
-import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.List;
@@ -44,7 +43,7 @@ import java.util.List;
  * @author anna
  * @since 7.0
  */
-public interface IQueryExecutor extends Externalizable {
+public interface IQueryExecutor extends SmartExternalizable {
 
     /**
      * Execute Or expression - execute both children and union the results

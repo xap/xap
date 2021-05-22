@@ -16,14 +16,14 @@
 
 package com.gigaspaces.internal.cluster.node.impl.backlog;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 /**
  * @author idan
  * @author eitan
  * @since 9.0
  */
-public interface IIdleStateData extends Externalizable {
+public interface IIdleStateData extends SmartExternalizable {
 
     boolean isEmpty();
 

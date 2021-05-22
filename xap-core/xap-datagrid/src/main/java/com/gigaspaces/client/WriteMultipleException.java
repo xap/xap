@@ -18,9 +18,9 @@
 package com.gigaspaces.client;
 
 import com.gigaspaces.internal.exceptions.WriteResultImpl;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.multiple.write.WriteMultiplePartialFailureException;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -46,7 +46,7 @@ import java.util.Map;
  * @since 7.1
  */
 
-public class WriteMultipleException extends WriteMultiplePartialFailureException implements Externalizable {
+public class WriteMultipleException extends WriteMultiplePartialFailureException implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     public static interface IWriteResult extends com.j_spaces.core.multiple.write.IWriteResult {

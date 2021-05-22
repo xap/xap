@@ -16,9 +16,9 @@
 
 package org.openspaces.memcached;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.openspaces.memcached.util.BufferUtils;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -28,7 +28,7 @@ import java.util.Arrays;
 /**
  * Represents information about a cache entry.
  */
-public final class LocalCacheElement implements Externalizable {
+public final class LocalCacheElement implements SmartExternalizable {
 
     private static final long serialVersionUID = -1132098185117104961L;
 

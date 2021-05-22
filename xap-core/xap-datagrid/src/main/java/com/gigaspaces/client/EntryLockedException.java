@@ -16,7 +16,8 @@
 
 package com.gigaspaces.client;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -26,7 +27,7 @@ import java.io.ObjectOutput;
  * @since 10.0
  */
 @com.gigaspaces.api.InternalApi
-public class EntryLockedException extends RuntimeException implements Externalizable {
+public class EntryLockedException extends RuntimeException implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

@@ -16,7 +16,8 @@
 
 package com.gigaspaces.internal.version;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -29,7 +30,7 @@ import java.rmi.UnmarshalException;
  * @since 7.1
  */
 @com.gigaspaces.api.InternalApi
-public class PlatformLogicalVersion implements Externalizable, Comparable<PlatformLogicalVersion> {
+public class PlatformLogicalVersion implements SmartExternalizable, Comparable<PlatformLogicalVersion> {
     private static final long serialVersionUID = 1L;
     private static final byte SERIAL_VERSION = Byte.MIN_VALUE + 1;
     private static final int LAST_BUILD_NUMBER = 30_000;

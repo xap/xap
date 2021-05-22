@@ -17,6 +17,7 @@
 package com.j_spaces.jdbc.driver;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.jdbc.ResponsePacket;
 import com.j_spaces.jdbc.SQLUtil;
 import com.j_spaces.jdbc.batching.BatchResponsePacket;
@@ -576,7 +577,7 @@ public class GPreparedStatement extends GStatement implements PreparedStatement 
      * @author idan
      * @since 8.0
      */
-    public static class PreparedValuesCollection implements Externalizable {
+    public static class PreparedValuesCollection implements SmartExternalizable {
         private static final long serialVersionUID = 1L;
         private Object[] _currentValues;
         private boolean[] _currentValuesSetStatus;

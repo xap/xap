@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.space.requests;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.SpaceContext;
 
 import java.io.Externalizable;
@@ -24,7 +25,7 @@ import java.io.Externalizable;
  * @author Niv Ingberg
  * @since 8.0
  */
-public interface SpaceRequestInfo extends Externalizable {
+public interface SpaceRequestInfo extends SmartExternalizable {
     SpaceContext getSpaceContext();
 
     void setSpaceContext(SpaceContext spaceContext);

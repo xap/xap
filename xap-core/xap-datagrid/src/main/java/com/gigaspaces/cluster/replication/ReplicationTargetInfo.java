@@ -1,6 +1,7 @@
 package com.gigaspaces.cluster.replication;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -9,7 +10,7 @@ import java.io.ObjectOutput;
  * @author yael nahon
  * @since 12.1
  */
-public class ReplicationTargetInfo implements Externalizable{
+public class ReplicationTargetInfo implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

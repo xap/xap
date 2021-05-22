@@ -18,9 +18,9 @@ package com.gigaspaces.internal.metadata;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.utils.ObjectUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.kernel.ClassLoaderHelper;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,7 +31,7 @@ import java.lang.reflect.Constructor;
  * @since 9.6
  */
 @com.gigaspaces.api.InternalApi
-public class ConstructorInstantiationDescriptor implements Externalizable {
+public class ConstructorInstantiationDescriptor implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private static final int NO_MATCH = -1;

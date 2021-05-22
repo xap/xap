@@ -26,6 +26,7 @@ import com.gigaspaces.internal.query.CompoundContainsItemsCustomQuery;
 import com.gigaspaces.internal.query.IContainsItemsCustomQuery;
 import com.gigaspaces.internal.utils.ObjectConverter;
 import com.gigaspaces.metadata.StorageType;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.client.TemplateMatchCodes;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.SQLFunctions;
@@ -45,7 +46,7 @@ import java.util.*;
  * @author anna
  */
 @com.gigaspaces.api.InternalApi
-public class QueryTemplateBuilder implements Externalizable
+public class QueryTemplateBuilder implements SmartExternalizable
 {
     private static final long serialVersionUID = 1L;
 

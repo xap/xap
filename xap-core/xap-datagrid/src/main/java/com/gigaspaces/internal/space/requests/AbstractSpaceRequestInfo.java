@@ -18,6 +18,7 @@ package com.gigaspaces.internal.space.requests;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.SpaceContext;
 
 import java.io.Externalizable;
@@ -29,7 +30,7 @@ import java.io.ObjectOutput;
  * @author Niv Ingberg
  * @since 8.0
  */
-public abstract class AbstractSpaceRequestInfo implements SpaceRequestInfo, Externalizable, ISwapExternalizable {
+public abstract class AbstractSpaceRequestInfo implements SpaceRequestInfo, SmartExternalizable, ISwapExternalizable {
     private static final long serialVersionUID = 1L;
 
     private static final int FROM_GATEWAY = 1; // 1 << 0 same as 1

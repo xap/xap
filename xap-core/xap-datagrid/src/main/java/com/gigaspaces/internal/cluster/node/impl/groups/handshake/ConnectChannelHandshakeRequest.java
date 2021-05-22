@@ -18,6 +18,7 @@ package com.gigaspaces.internal.cluster.node.impl.groups.handshake;
 
 import com.gigaspaces.internal.cluster.node.impl.backlog.IBacklogHandshakeRequest;
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -29,7 +30,7 @@ import java.io.ObjectOutput;
  * @since 9.0.1
  */
 @com.gigaspaces.api.InternalApi
-public class ConnectChannelHandshakeRequest implements Externalizable {
+public class ConnectChannelHandshakeRequest implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private IBacklogHandshakeRequest _backlogHandshakeRequest;

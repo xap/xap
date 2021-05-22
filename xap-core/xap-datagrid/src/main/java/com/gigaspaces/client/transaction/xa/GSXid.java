@@ -19,7 +19,8 @@
  */
 package com.gigaspaces.client.transaction.xa;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +33,7 @@ import javax.transaction.xa.Xid;
  * Local implementation of Xid to be store in Space
  */
 @com.gigaspaces.api.InternalApi
-public class GSXid implements Xid, Externalizable {
+public class GSXid implements Xid, SmartExternalizable {
     static final long serialVersionUID = 836721541656259722L;
 
     private byte[] _branchQualifier;

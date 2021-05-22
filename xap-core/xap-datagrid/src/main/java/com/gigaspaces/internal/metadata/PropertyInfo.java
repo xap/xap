@@ -53,14 +53,14 @@ public class PropertyInfo implements SpacePropertyDescriptor{
     private static Map<Class<?>, IClassSerializer<?>> initBinarySerializers() {
         // Create a copy of the ioutils serializers (for backwards), then add more:
         Map<Class<?>, IClassSerializer<?>> result = new HashMap<>(IOUtils.getClassSerializers());
-        result.put(byte.class, new BytePrimitiveClassSerializer());
-        result.put(short.class, new ShortPrimitiveClassSerializer());
-        result.put(int.class, new IntPrimitiveClassSerializer());
-        result.put(long.class, new LongPrimitiveClassSerializer());
-        result.put(float.class, new FloatPrimitiveClassSerializer());
-        result.put(double.class, new DoublePrimitiveClassSerializer());
-        result.put(boolean.class, new BooleanPrimitiveClassSerializer());
-        result.put(char.class, new CharPrimitiveClassSerializer());
+        result.put(byte.class, BytePrimitiveClassSerializer.instance);
+        result.put(short.class, ShortPrimitiveClassSerializer.instance);
+        result.put(int.class, IntPrimitiveClassSerializer.instance);
+        result.put(long.class, LongPrimitiveClassSerializer.instance);
+        result.put(float.class, FloatPrimitiveClassSerializer.instance);
+        result.put(double.class, DoublePrimitiveClassSerializer.instance);
+        result.put(boolean.class, BooleanPrimitiveClassSerializer.instance);
+        result.put(char.class, CharPrimitiveClassSerializer.instance);
         return result;
     }
 

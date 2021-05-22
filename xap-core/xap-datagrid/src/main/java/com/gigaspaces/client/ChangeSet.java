@@ -29,9 +29,9 @@ import com.gigaspaces.internal.client.mutators.UnsetValueSpaceEntryMutator;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.utils.Textualizable;
 import com.gigaspaces.internal.utils.Textualizer;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.server.MutableServerEntry;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -50,7 +50,7 @@ import java.util.Set;
  * @since 9.1
  */
 
-public class ChangeSet implements Externalizable, Textualizable {
+public class ChangeSet implements SmartExternalizable, Textualizable {
     private static final long serialVersionUID = 1L;
 
     private final Collection<SpaceEntryMutator> _mutators;

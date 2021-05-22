@@ -16,11 +16,11 @@
 
 package com.j_spaces.lookup.entry;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.JSpaceState;
 
 import net.jini.core.entry.Entry;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -37,7 +37,7 @@ import java.io.ObjectOutput;
  * @since 5.0
  */
 @com.gigaspaces.api.InternalApi
-public class State extends GenericEntry implements Externalizable {
+public class State extends GenericEntry implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     public String state;

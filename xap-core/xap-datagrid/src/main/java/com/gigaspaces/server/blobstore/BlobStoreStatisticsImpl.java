@@ -16,6 +16,7 @@
 package com.gigaspaces.server.blobstore;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -27,7 +28,7 @@ import java.util.Collection;
  * @author Niv Ingberg
  * @since 12.3
  */
-public class BlobStoreStatisticsImpl implements BlobStoreStatistics, Externalizable {
+public class BlobStoreStatisticsImpl implements BlobStoreStatistics, SmartExternalizable {
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 

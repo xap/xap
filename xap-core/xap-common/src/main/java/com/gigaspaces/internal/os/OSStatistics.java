@@ -18,8 +18,8 @@ package com.gigaspaces.internal.os;
 
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -28,7 +28,7 @@ import java.io.ObjectOutput;
  * @author kimchy
  */
 @com.gigaspaces.api.InternalApi
-public class OSStatistics implements Externalizable {
+public class OSStatistics implements SmartExternalizable {
     private static final long serialVersionUID = -6526052574312023489L;
 
     private long timestamp = -1;
@@ -160,7 +160,7 @@ public class OSStatistics implements Externalizable {
         }
     }
 
-    public static class OSNetInterfaceStats implements Externalizable {
+    public static class OSNetInterfaceStats implements SmartExternalizable {
         private static final long serialVersionUID = 2554963851193006126L;
 
         private String name;

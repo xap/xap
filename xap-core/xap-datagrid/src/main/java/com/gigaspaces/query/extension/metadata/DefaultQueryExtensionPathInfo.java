@@ -18,6 +18,7 @@ package com.gigaspaces.query.extension.metadata;
 
 import com.gigaspaces.query.extension.QueryExtensionProvider;
 import com.gigaspaces.query.extension.SpaceQueryExtension;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -29,7 +30,7 @@ import java.io.ObjectOutput;
  * @since 11.0
  */
 @com.gigaspaces.api.InternalApi
-public class DefaultQueryExtensionPathInfo extends QueryExtensionPathInfo implements Externalizable {
+public class DefaultQueryExtensionPathInfo extends QueryExtensionPathInfo implements SmartExternalizable {
     // serialVersionUID should never be changed.
     private static final long serialVersionUID = 1L;
 

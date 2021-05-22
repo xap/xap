@@ -16,8 +16,8 @@
 package com.gigaspaces.internal.query.explainplan;
 
 import com.gigaspaces.api.ExperimentalApi;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -27,7 +27,7 @@ import java.io.ObjectOutput;
  * @since 12.0.1
  */
 @ExperimentalApi
-public class ScanningInfo implements Externalizable {
+public class ScanningInfo implements SmartExternalizable {
 
     private Integer scanned;
     private Integer matched;

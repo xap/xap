@@ -16,7 +16,8 @@
 
 package com.gigaspaces.internal.cluster.node.impl.directPersistency;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -28,7 +29,7 @@ import java.util.List;
  * @since 10.2.0
  */
 @com.gigaspaces.api.InternalApi
-public class DirectPersistencySyncListBatch implements Externalizable {
+public class DirectPersistencySyncListBatch implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

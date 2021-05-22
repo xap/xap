@@ -16,12 +16,12 @@
 
 package com.gigaspaces.cluster.activeelection.core;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.lookup.entry.GenericEntry;
 
 import net.jini.core.entry.Entry;
 import net.jini.lookup.entry.ServiceControlled;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -46,7 +46,7 @@ import java.io.ObjectOutput;
 @com.gigaspaces.api.InternalApi
 public class ActiveElectionState
         extends GenericEntry
-        implements ServiceControlled, Externalizable {
+        implements ServiceControlled, SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     /**

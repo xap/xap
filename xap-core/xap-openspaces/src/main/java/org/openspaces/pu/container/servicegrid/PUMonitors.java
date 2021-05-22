@@ -16,7 +16,8 @@
 
 package org.openspaces.pu.container.servicegrid;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -24,7 +25,7 @@ import java.io.ObjectOutput;
 /**
  * @author kimchy
  */
-public class PUMonitors implements Externalizable {
+public class PUMonitors implements SmartExternalizable {
 
     private static final long serialVersionUID = -2151337794076639780L;
 

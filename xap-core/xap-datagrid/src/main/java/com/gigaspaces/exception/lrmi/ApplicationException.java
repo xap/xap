@@ -16,7 +16,8 @@
 
 package com.gigaspaces.exception.lrmi;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -36,7 +37,7 @@ import java.util.concurrent.ExecutionException;
  * @since 4.0
  */
 @com.gigaspaces.api.InternalApi
-public class ApplicationException extends ExecutionException implements Externalizable {
+public class ApplicationException extends ExecutionException implements SmartExternalizable {
     private static final long serialVersionUID = 2L;
 
     /**

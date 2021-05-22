@@ -17,7 +17,7 @@
 
 package com.gigaspaces.metadata.index;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 /**
  * Encapsulates information on the result of an add type indexes operation.
@@ -26,5 +26,5 @@ import java.io.Externalizable;
  * @see com.gigaspaces.metadata.index.SpaceIndex
  * @since 8.0
  */
-public interface AddTypeIndexesResult extends Externalizable {
+public interface AddTypeIndexesResult extends SmartExternalizable {
 }

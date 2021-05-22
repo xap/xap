@@ -16,7 +16,8 @@
 
 package com.j_spaces.core;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -28,7 +29,7 @@ import java.io.ObjectOutput;
  * @author asy ronen
  * @since 7.0
  */
-public final class OperationID implements Externalizable {
+public final class OperationID implements SmartExternalizable {
 
     private static final long serialVersionUID = 634112122503389345L;
     private long clientID;

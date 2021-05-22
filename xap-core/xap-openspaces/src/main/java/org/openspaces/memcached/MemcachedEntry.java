@@ -20,8 +20,8 @@ import com.gigaspaces.annotation.pojo.SpaceClass;
 import com.gigaspaces.annotation.pojo.SpaceId;
 import com.gigaspaces.annotation.pojo.SpaceRouting;
 import com.gigaspaces.annotation.pojo.SpaceVersion;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -30,7 +30,7 @@ import java.io.ObjectOutput;
  * @author kimchy (shay.banon)
  */
 @SpaceClass
-public class MemcachedEntry implements Externalizable {
+public class MemcachedEntry implements SmartExternalizable {
 
     private static final long serialVersionUID = 7080552232191270155L;
 

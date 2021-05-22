@@ -17,7 +17,8 @@
 
 package com.gigaspaces.security.directory;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -27,7 +28,7 @@ import java.util.Properties;
  * @author Niv Ingberg
  * @since 9.5.1
  */
-public abstract class CredentialsProvider implements Externalizable {
+public abstract class CredentialsProvider implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

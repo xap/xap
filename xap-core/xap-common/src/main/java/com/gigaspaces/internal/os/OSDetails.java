@@ -16,7 +16,8 @@
 
 package com.gigaspaces.internal.os;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -27,7 +28,7 @@ import java.net.SocketException;
  * @author kimchy
  */
 @com.gigaspaces.api.InternalApi
-public class OSDetails implements Externalizable {
+public class OSDetails implements SmartExternalizable {
 
     //compatible with serialVersionUID of 7.1.1
     private static final long serialVersionUID = -290262929223386658L;
@@ -205,7 +206,7 @@ public class OSDetails implements Externalizable {
     }
 
 
-    public static class OSNetInterfaceDetails implements Externalizable {
+    public static class OSNetInterfaceDetails implements SmartExternalizable {
         private static final long serialVersionUID = 6720043955636646719L;
 
         private String address;
@@ -276,7 +277,7 @@ public class OSDetails implements Externalizable {
         }
     }
 
-    public static class OSDriveDetails implements Externalizable {
+    public static class OSDriveDetails implements SmartExternalizable {
         private static final long serialVersionUID = -1579157666784550069L;
 
         private String name;
@@ -327,7 +328,7 @@ public class OSDetails implements Externalizable {
     /**
      * @since 8.0.4
      */
-    public static class OSVendorDetails implements Externalizable {
+    public static class OSVendorDetails implements SmartExternalizable {
         private static final long serialVersionUID = 422639202428429664L;
 
         private String vendor;

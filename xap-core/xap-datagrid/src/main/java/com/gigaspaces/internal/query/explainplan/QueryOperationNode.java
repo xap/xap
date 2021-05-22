@@ -16,8 +16,8 @@
 package com.gigaspaces.internal.query.explainplan;
 
 import com.gigaspaces.api.ExperimentalApi;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.util.List;
 
 /**
@@ -25,7 +25,7 @@ import java.util.List;
  * @since 12.0.1
  */
 @ExperimentalApi
-public interface QueryOperationNode extends Externalizable{
+public interface QueryOperationNode extends SmartExternalizable {
 
     List<QueryOperationNode> getChildren();
 

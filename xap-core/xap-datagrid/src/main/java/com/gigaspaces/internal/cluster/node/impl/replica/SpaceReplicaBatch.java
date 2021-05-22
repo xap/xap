@@ -1,8 +1,8 @@
 package com.gigaspaces.internal.cluster.node.impl.replica;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -18,7 +18,7 @@ import java.util.Iterator;
  * If fifoId != 0 the batch contains entries of fifo / fifo-grouping type
  *
  */
-public class SpaceReplicaBatch implements Collection<ISpaceReplicaData>, Externalizable {
+public class SpaceReplicaBatch implements Collection<ISpaceReplicaData>, SmartExternalizable {
     private Collection<ISpaceReplicaData> batch;
 
     private int fifoId = 0 ;

@@ -17,10 +17,10 @@
 
 package org.openspaces.remoting;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.client.IReplicatable;
 import com.j_spaces.core.client.MetaDataEntry;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -34,7 +34,7 @@ import java.util.Arrays;
  * @deprecated
  */
 @Deprecated
-public class EventDrivenSpaceRemotingEntry extends MetaDataEntry implements SpaceRemotingEntry, Externalizable, IReplicatable {
+public class EventDrivenSpaceRemotingEntry extends MetaDataEntry implements SpaceRemotingEntry, SmartExternalizable, IReplicatable {
 
     static final long serialVersionUID = 7009426586658014410L;
     static int bitIndexCounter = 0;

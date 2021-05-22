@@ -17,8 +17,8 @@
 package com.gigaspaces.internal.jvm;
 
 import com.gigaspaces.internal.os.ProcessCpuSampler;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -27,7 +27,7 @@ import java.io.ObjectOutput;
  * @author kimchy
  */
 @com.gigaspaces.api.InternalApi
-public class JVMStatistics implements Externalizable {
+public class JVMStatistics implements SmartExternalizable {
 
     // for backwards compatibility
     private static final long serialVersionUID = 1688670775236533438L;

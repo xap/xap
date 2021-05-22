@@ -22,8 +22,8 @@ import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.metadata.ServerTypeDesc;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -36,7 +36,7 @@ import java.util.Map;
  * @since 9.7
  */
 
-public abstract class AbstractProjectionTemplate implements Externalizable {
+public abstract class AbstractProjectionTemplate implements SmartExternalizable {
     private static final long serialVersionUID = 2034439490260048928L;
 
     private transient volatile PathsProjectionHandler _pathsHandler;

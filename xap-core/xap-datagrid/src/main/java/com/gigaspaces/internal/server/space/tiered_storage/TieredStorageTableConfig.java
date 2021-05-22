@@ -1,14 +1,14 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.time.Duration;
 
-public class TieredStorageTableConfig implements Externalizable {
+public class TieredStorageTableConfig implements SmartExternalizable {
     private String name;
     private String timeColumn;
     private Duration retention;

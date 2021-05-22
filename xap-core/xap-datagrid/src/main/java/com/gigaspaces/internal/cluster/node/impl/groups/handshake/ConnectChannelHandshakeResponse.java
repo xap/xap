@@ -19,6 +19,7 @@ package com.gigaspaces.internal.cluster.node.impl.groups.handshake;
 import com.gigaspaces.internal.cluster.node.impl.processlog.IProcessLogHandshakeResponse;
 import com.gigaspaces.internal.cluster.node.impl.router.ReplicationEndpointDetails;
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -31,7 +32,7 @@ import java.io.ObjectOutput;
  */
 @com.gigaspaces.api.InternalApi
 public class ConnectChannelHandshakeResponse
-        implements Externalizable {
+        implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private ReplicationEndpointDetails _targetEndpointDetails;

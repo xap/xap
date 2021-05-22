@@ -25,6 +25,7 @@ import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
 import com.gigaspaces.lrmi.RemoteStub;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.IJSpaceContainer;
 import com.j_spaces.core.IStubHandler;
 import com.j_spaces.core.admin.SpaceConfig;
@@ -46,7 +47,7 @@ import java.util.Properties;
  * @since 6.5
  */
 @com.gigaspaces.api.InternalApi
-public class ProxySettings implements Externalizable {
+public class ProxySettings implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
     private static final int SERIAL_VERSION = 1;
 

@@ -18,8 +18,8 @@ package com.gigaspaces.internal.cluster.node.impl.directPersistency;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.server.space.IRemoteSpace;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -30,7 +30,7 @@ import java.rmi.RemoteException;
  * @since 10.2.0
  */
 @com.gigaspaces.api.InternalApi
-public class DirectPersistencySyncListFetcher implements Externalizable {
+public class DirectPersistencySyncListFetcher implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

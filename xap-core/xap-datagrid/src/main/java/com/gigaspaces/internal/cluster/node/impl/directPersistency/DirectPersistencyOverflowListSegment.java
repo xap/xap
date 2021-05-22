@@ -19,8 +19,8 @@ package com.gigaspaces.internal.cluster.node.impl.directPersistency;
 
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.admin.DirectPersistencySyncListAdmin;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -34,7 +34,7 @@ import java.util.LinkedList;
  * @since 10.2
  */
 @com.gigaspaces.api.InternalApi
-public class DirectPersistencyOverflowListSegment implements Externalizable {
+public class DirectPersistencyOverflowListSegment implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
     public static final int OVERFLOW_ELEMENT_MAX_SIZE = 10000;
 

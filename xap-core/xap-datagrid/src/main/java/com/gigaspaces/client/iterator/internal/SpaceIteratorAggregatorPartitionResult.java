@@ -18,8 +18,8 @@ package com.gigaspaces.client.iterator.internal;
 
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,7 +31,7 @@ import java.util.List;
  * @since 10.1
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceIteratorAggregatorPartitionResult implements Externalizable ,ISpaceIteratorAggregatorPartitionResult{
+public class SpaceIteratorAggregatorPartitionResult implements SmartExternalizable,ISpaceIteratorAggregatorPartitionResult{
 
     private static final long serialVersionUID = 1L;
 

@@ -17,8 +17,8 @@
 package com.j_spaces.core.cluster;
 
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ByteBufferRedoLogFileConfig;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -30,7 +30,7 @@ import java.io.ObjectOutput;
  */
 @com.gigaspaces.api.InternalApi
 public class SwapBacklogConfig
-        implements Externalizable {
+        implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

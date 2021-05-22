@@ -16,7 +16,8 @@
 
 package com.gigaspaces.management.entry;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -25,7 +26,7 @@ import java.io.ObjectOutput;
  * Used as a means for a service to publish information about a JMX Connector.
  **/
 @com.gigaspaces.api.InternalApi
-public class JMXConnection extends net.jini.entry.AbstractEntry implements Externalizable {
+public class JMXConnection extends net.jini.entry.AbstractEntry implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
     /**
      * The name of the property.

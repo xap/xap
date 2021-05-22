@@ -18,6 +18,7 @@
 package net.jini.core.transaction.server;
 
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.sun.jini.mahalo.TxnMgrProxy;
 
 import net.jini.core.transaction.CannotAbortException;
@@ -27,7 +28,6 @@ import net.jini.core.transaction.ManagedTransaction;
 import net.jini.core.transaction.TimeoutExpiredException;
 import net.jini.core.transaction.UnknownTransactionException;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -45,7 +45,7 @@ import java.rmi.RemoteException;
  * @since 1.0
  */
 @com.gigaspaces.api.InternalApi
-public class  ServerTransaction implements ManagedTransaction, java.io.Serializable, Externalizable, ISwapExternalizable {
+public class  ServerTransaction implements ManagedTransaction, java.io.Serializable, SmartExternalizable, ISwapExternalizable {
     private static final long serialVersionUID = 4552277137549765374L;
 
     // NOTE: All were final fields (can't be now since we implement externalizable)

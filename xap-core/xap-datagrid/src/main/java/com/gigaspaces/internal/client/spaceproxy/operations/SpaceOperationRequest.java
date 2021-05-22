@@ -20,13 +20,11 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.utils.Textualizable;
 import com.gigaspaces.internal.utils.Textualizer;
-import com.gigaspaces.internal.version.PlatformLogicalVersion;
-import com.gigaspaces.lrmi.LRMIInvocationContext;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.SpaceContext;
 
 import net.jini.core.transaction.Transaction;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -36,7 +34,7 @@ import java.util.List;
  * @author Niv Ingberg
  * @since 9.0.0
  */
-public abstract class SpaceOperationRequest<TResult extends SpaceOperationResult> implements RemoteOperationRequest<TResult>, Cloneable, Externalizable, Textualizable {
+public abstract class SpaceOperationRequest<TResult extends SpaceOperationResult> implements RemoteOperationRequest<TResult>, Cloneable, SmartExternalizable, Textualizable {
     private static final long serialVersionUID = 1L;
 
     // TODO: consider merging SpaceContext with Request

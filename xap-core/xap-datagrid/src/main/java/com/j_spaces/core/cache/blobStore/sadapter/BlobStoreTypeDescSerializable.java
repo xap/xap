@@ -19,8 +19,8 @@ package com.j_spaces.core.cache.blobStore.sadapter;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.TypeDesc;
 import com.gigaspaces.internal.metadata.TypeDescVersionedSerializable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +32,7 @@ import java.io.ObjectOutput;
  * @since 10.1
  */
 @com.gigaspaces.api.InternalApi
-public class BlobStoreTypeDescSerializable implements Externalizable {
+public class BlobStoreTypeDescSerializable implements SmartExternalizable {
     private static final long serialVersionUID = -8263097363680036604L;
 
     private TypeDescVersionedSerializable _typeDescWrapper;

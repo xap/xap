@@ -20,6 +20,7 @@ import com.gigaspaces.internal.reflection.IMethod;
 import com.gigaspaces.internal.reflection.ReflectionUtil;
 import com.gigaspaces.internal.reflection.standard.StandardMethod;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;
@@ -27,7 +28,6 @@ import org.springframework.util.StringUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -46,7 +46,7 @@ import java.util.Set;
  */
 public class RemotingUtils {
 
-    public static class MethodHash implements Externalizable {
+    public static class MethodHash implements SmartExternalizable {
 
         private static final long serialVersionUID = 872088354835809493L;
 

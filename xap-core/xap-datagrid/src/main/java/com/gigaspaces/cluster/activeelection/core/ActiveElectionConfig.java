@@ -16,9 +16,9 @@
 
 package com.gigaspaces.cluster.activeelection.core;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.cluster.startup.GigaSpacesFaultDetectionHandler;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,7 +31,7 @@ import java.io.ObjectOutput;
  * @since 6.0
  **/
 @com.gigaspaces.api.InternalApi
-public class ActiveElectionConfig implements Externalizable {
+public class ActiveElectionConfig implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     public final static int DEFAULT_RETRY_COUNT = 60;

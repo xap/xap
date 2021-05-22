@@ -17,11 +17,11 @@
 
 package org.openspaces.core.executor.juc;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.openspaces.core.executor.Task;
 import org.openspaces.core.executor.TaskRoutingProvider;
 import org.openspaces.core.executor.support.ProcessObjectsProvider;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +32,7 @@ import java.io.Serializable;
  *
  * @author kimchy
  */
-public class RunnableTaskAdapter<T extends Serializable> implements Task<T>, ProcessObjectsProvider, TaskRoutingProvider, Externalizable {
+public class RunnableTaskAdapter<T extends Serializable> implements Task<T>, ProcessObjectsProvider, TaskRoutingProvider, SmartExternalizable {
 
     private static final long serialVersionUID = -5958775825432335114L;
 

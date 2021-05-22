@@ -18,6 +18,7 @@
 package org.openspaces.remoting;
 
 import com.gigaspaces.async.AsyncResult;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.kernel.JSpaceUtilities;
 
 import org.apache.commons.logging.Log;
@@ -30,7 +31,6 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.ObjectInput;
@@ -49,7 +49,7 @@ import java.util.List;
  * @author kimchy
  */
 public class ExecutorRemotingTask<T extends Serializable> implements DistributedTask<ExecutorRemotingTask.InternalExecutorResult<T>, List<AsyncResult<ExecutorRemotingTask.InternalExecutorResult<T>>>>,
-        ApplicationContextAware, ClusterInfoAware, TaskRoutingProvider, SpaceRemotingInvocation, Externalizable {
+        ApplicationContextAware, ClusterInfoAware, TaskRoutingProvider, SpaceRemotingInvocation, SmartExternalizable {
 
     static final long serialVersionUID = -3901451909736348231L;
 
@@ -210,7 +210,7 @@ public class ExecutorRemotingTask<T extends Serializable> implements Distributed
      * A wrapper executor result that holds more information on the exception, such as the instance
      * id.
      */
-    public static class InternalExecutorResult<T extends Serializable> implements Externalizable {
+    public static class InternalExecutorResult<T extends Serializable> implements SmartExternalizable {
 
         private static final long serialVersionUID = -5336727166040169828L;
 
@@ -263,7 +263,7 @@ public class ExecutorRemotingTask<T extends Serializable> implements Distributed
      * A wrapper executor exception that holds more information on the exception, such as the
      * instance id.
      */
-    public static class InternalExecutorException extends Exception implements Externalizable {
+    public static class InternalExecutorException extends Exception implements SmartExternalizable {
 
         private static final long serialVersionUID = 7604645076693946565L;
 

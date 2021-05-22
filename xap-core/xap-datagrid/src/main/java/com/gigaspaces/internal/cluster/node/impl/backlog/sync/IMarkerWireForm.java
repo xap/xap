@@ -17,8 +17,7 @@
 package com.gigaspaces.internal.cluster.node.impl.backlog.sync;
 
 import com.gigaspaces.internal.cluster.node.impl.backlog.IReplicationGroupBacklog;
-
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
 /**
  * A wire form of {@link IMarker} which can be serialized and deserialized
@@ -26,7 +25,7 @@ import java.io.Externalizable;
  * @author eitany
  * @since 9.1
  */
-public interface IMarkerWireForm extends Externalizable {
+public interface IMarkerWireForm extends SmartExternalizable {
     IMarker toFinalizedForm(IReplicationGroupBacklog backlog);
 
     String getGroupName();

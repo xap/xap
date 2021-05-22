@@ -17,8 +17,8 @@
 package com.gigaspaces.internal.client.mutators;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,7 +31,7 @@ import java.io.Serializable;
  * @since 9.7
  */
 public final class MapChangeSpaceEntryMutatorResult
-        implements Externalizable {
+        implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
     private Serializable _value;

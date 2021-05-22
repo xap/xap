@@ -16,7 +16,8 @@
 
 package org.openspaces.pu.service;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -29,7 +30,7 @@ import java.util.Map;
  *
  * @author kimchy
  */
-public class PlainServiceMonitors implements ServiceMonitors, Externalizable {
+public class PlainServiceMonitors implements ServiceMonitors, SmartExternalizable {
 
     private static final long serialVersionUID = -2530051320077906919L;
 

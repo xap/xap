@@ -23,6 +23,7 @@ import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.lookup.SpaceUrlUtils;
 import com.gigaspaces.internal.utils.CollectionUtils;
 import com.gigaspaces.internal.utils.StringUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.LookupManager;
@@ -56,7 +57,7 @@ import org.slf4j.LoggerFactory;
  *******************************************************************************/
 @Deprecated
 
-public class SpaceURL extends Properties implements Externalizable {
+public class SpaceURL extends Properties implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private static final Logger _logger = LoggerFactory.getLogger(com.gigaspaces.logger.Constants.LOGGER_SPACE_URL);

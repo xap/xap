@@ -16,7 +16,8 @@
 
 package com.gigaspaces.internal.cluster.node.impl.config;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -26,7 +27,7 @@ import java.io.ObjectOutput;
  * @since 9.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class SourceChannelConfig implements Externalizable {
+public class SourceChannelConfig implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

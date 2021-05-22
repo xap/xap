@@ -3,18 +3,18 @@ package com.j_spaces.jdbc;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.security.service.SecurityInterceptor;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.jdbc.parser.AndNode;
 import com.j_spaces.jdbc.parser.ExpNode;
 import net.jini.core.transaction.Transaction;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.sql.SQLException;
 
 @com.gigaspaces.api.InternalApi
-public class Join implements Query, Cloneable, Externalizable {
+public class Join implements Query, Cloneable, SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     public enum JoinType {

@@ -19,9 +19,9 @@ package com.gigaspaces.internal.metadata;
 import com.gigaspaces.internal.client.StorageTypeDeserialization;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.IGSEntry;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -33,7 +33,7 @@ import java.util.Map;
  * @author Niv Ingberg
  * @since 7.0
  */
-public interface ITypeIntrospector<T> extends Externalizable {
+public interface ITypeIntrospector<T> extends SmartExternalizable {
     byte getExternalizableCode();
 
     void writeExternal(ObjectOutput out, PlatformLogicalVersion version) throws IOException;

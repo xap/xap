@@ -17,9 +17,9 @@
 package com.gigaspaces.internal.client.spaceproxy.operations;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.client.SpaceSettings;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -29,7 +29,7 @@ import java.io.ObjectOutput;
  * @since 10.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceConnectResult implements Externalizable {
+public class SpaceConnectResult implements SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

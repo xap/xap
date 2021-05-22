@@ -16,9 +16,9 @@
 
 package com.gigaspaces.internal.cluster.node.impl.backlog;
 
-import java.io.Externalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-public interface IBacklogMemberState extends Externalizable {
+public interface IBacklogMemberState extends SmartExternalizable {
     boolean isExistingMember();
 
     boolean isBacklogDropped();

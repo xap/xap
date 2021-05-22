@@ -21,8 +21,8 @@ import com.gigaspaces.internal.cluster.node.impl.config.DynamicSourceGroupMember
 import com.gigaspaces.internal.cluster.node.impl.groups.IReplicationChannelDataFilter;
 import com.gigaspaces.internal.cluster.node.impl.router.RouterStubHolder;
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +32,7 @@ import java.io.ObjectOutput;
  * @since 8.0.5
  */
 @com.gigaspaces.api.InternalApi
-public class ReliableAsyncMemberData implements Externalizable {
+public class ReliableAsyncMemberData implements SmartExternalizable {
     private static final long serialVersionUID = 1L;
 
     private BacklogMemberLimitationConfig _memberBacklogLimitationConfig;

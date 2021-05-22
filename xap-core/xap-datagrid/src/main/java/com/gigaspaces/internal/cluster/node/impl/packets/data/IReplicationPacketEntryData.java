@@ -18,11 +18,10 @@ package com.gigaspaces.internal.cluster.node.impl.packets.data;
 
 import com.gigaspaces.internal.cluster.node.impl.ReplicationSingleOperationType;
 import com.gigaspaces.internal.server.space.redolog.storage.bytebuffer.ISwapExternalizable;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.OperationID;
 
-import java.io.Externalizable;
-
-public interface IReplicationPacketEntryData extends Externalizable, ISwapExternalizable {
+public interface IReplicationPacketEntryData extends SmartExternalizable, ISwapExternalizable {
 
     ReplicationSingleOperationType getOperationType();
 

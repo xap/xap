@@ -19,8 +19,8 @@ package com.gigaspaces.internal.lrmi;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.lrmi.LRMIInboundMonitoringDetails;
 import com.gigaspaces.lrmi.LRMIServiceMonitoringDetails;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,7 +31,7 @@ import java.io.ObjectOutput;
  */
 @com.gigaspaces.api.InternalApi
 public class LRMIInboundMonitoringDetailsImpl
-        implements LRMIInboundMonitoringDetails, Externalizable {
+        implements LRMIInboundMonitoringDetails, SmartExternalizable {
 
     private static final long serialVersionUID = 1L;
 

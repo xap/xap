@@ -21,16 +21,16 @@ import com.gigaspaces.internal.client.StorageTypeDeserialization;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.query.ICustomQuery;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.OperationID;
 
-import java.io.Externalizable;
 import java.util.Map;
 
 /**
  * @author Niv Ingberg
  * @since 7.1
  */
-public interface ITransportPacket extends Externalizable, Cloneable {
+public interface ITransportPacket extends SmartExternalizable, Cloneable {
     OperationID getOperationID();
 
     void setOperationID(OperationID operationID);

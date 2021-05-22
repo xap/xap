@@ -22,13 +22,13 @@ package com.j_spaces.core.client;
 import com.gigaspaces.config.lrmi.ITransportConfig;
 import com.gigaspaces.internal.cluster.ClusterTopology;
 import com.gigaspaces.internal.cluster.SpaceClusterInfo;
+import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.core.IJSpaceContainer;
 import com.j_spaces.core.IStubHandler;
 import com.j_spaces.core.admin.SpaceConfig;
 
 import net.jini.id.Uuid;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -41,7 +41,7 @@ import java.rmi.UnmarshalException;
  * @since 6.5
  */
 @com.gigaspaces.api.InternalApi
-public class SpaceSettings implements Externalizable, Cloneable {
+public class SpaceSettings implements SmartExternalizable, Cloneable {
     private static final long serialVersionUID = 1L;
     private static final int SERIAL_VERSION = 1;
 

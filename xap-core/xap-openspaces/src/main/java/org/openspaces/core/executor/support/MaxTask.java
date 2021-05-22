@@ -20,9 +20,9 @@ package org.openspaces.core.executor.support;
 import com.gigaspaces.async.AsyncResult;
 import com.gigaspaces.async.AsyncResultFilter;
 
+import com.gigaspaces.serialization.SmartExternalizable;
 import org.openspaces.core.executor.Task;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -41,7 +41,7 @@ import java.util.List;
  * @author kimchy
  * @see MaxReducer
  */
-public class MaxTask<T extends Number> extends AbstractDelegatingDistributedTask<T, T> implements Externalizable {
+public class MaxTask<T extends Number> extends AbstractDelegatingDistributedTask<T, T> implements SmartExternalizable {
 
     private static final long serialVersionUID = 8467204680463687573L;
 

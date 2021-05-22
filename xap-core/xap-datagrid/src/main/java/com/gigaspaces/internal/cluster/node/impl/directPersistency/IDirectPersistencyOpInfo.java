@@ -17,14 +17,14 @@
 package com.gigaspaces.internal.cluster.node.impl.directPersistency;
 
 import com.gigaspaces.internal.cluster.node.impl.directPersistency.embeddedSyncList.IEmbeddedSyncOpInfo;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.util.List;
 
 /**
  * Created by yechielf on 28/04/2015.
  */
-public interface IDirectPersistencyOpInfo extends Externalizable {
+public interface IDirectPersistencyOpInfo extends SmartExternalizable {
 
     long getGenerationId();
 

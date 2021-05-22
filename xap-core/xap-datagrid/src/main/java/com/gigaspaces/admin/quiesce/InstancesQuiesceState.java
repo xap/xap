@@ -18,8 +18,8 @@
 package com.gigaspaces.admin.quiesce;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -39,7 +39,7 @@ import java.util.Set;
  * @since 10.1.0
  */
 @com.gigaspaces.api.InternalApi
-public class InstancesQuiesceState implements Externalizable {
+public class InstancesQuiesceState implements SmartExternalizable {
 
     private static final long serialVersionUID = 7886735384418998738L;
 
