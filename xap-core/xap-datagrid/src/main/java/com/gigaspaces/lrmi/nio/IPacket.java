@@ -17,19 +17,19 @@
 
 package com.gigaspaces.lrmi.nio;
 
-import com.gigaspaces.internal.io.AnnotatedObjectInputStream;
-import com.gigaspaces.internal.io.AnnotatedObjectOutputStream;
+import com.gigaspaces.internal.io.MarshalInputStream;
+import com.gigaspaces.internal.io.MarshalOutputStream;
 
 import java.io.IOException;
 
 /**
- * Similar to {@link java.io.Externalizable} but expects {@link AnnotatedObjectOutputStream}
+ * Similar to {@link java.io.Externalizable} but expects {@link MarshalOutputStream}
  *
  * @author GuyK
  * @since 6.02
  */
 public interface IPacket {
-    public void writeExternal(AnnotatedObjectOutputStream out) throws IOException;
+    void writeExternal(MarshalOutputStream out) throws IOException;
 
-    public void readExternal(AnnotatedObjectInputStream in) throws IOException, ClassNotFoundException;
+    void readExternal(MarshalInputStream in) throws IOException, ClassNotFoundException;
 }

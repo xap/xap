@@ -14,6 +14,12 @@ import java.io.ObjectOutput;
  * @since 16.0
  */
 public class SmartExternalizableSerializer<T extends Externalizable> implements IClassSerializer<T> {
+
+    public static final SmartExternalizableSerializer instance = new SmartExternalizableSerializer();
+
+    private SmartExternalizableSerializer() {
+    }
+
     @Override
     public byte getCode() {
         return CODE_SMART_EXTERNALIZABLE;

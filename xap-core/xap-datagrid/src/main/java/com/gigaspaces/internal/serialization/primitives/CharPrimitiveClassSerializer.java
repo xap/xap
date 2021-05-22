@@ -10,6 +10,11 @@ import java.io.ObjectOutput;
 public class CharPrimitiveClassSerializer implements IClassSerializer<Character> {
     private static final Character DEFAULT_VALUE = 	'\u0000';
 
+    public static final CharPrimitiveClassSerializer instance = new CharPrimitiveClassSerializer();
+
+    private CharPrimitiveClassSerializer() {
+    }
+
     public byte getCode() {
         return CODE_CHARACTER;
     }

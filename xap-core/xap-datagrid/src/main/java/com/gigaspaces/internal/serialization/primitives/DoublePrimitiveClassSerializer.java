@@ -10,6 +10,11 @@ import java.io.ObjectOutput;
 public class DoublePrimitiveClassSerializer implements IClassSerializer<Double> {
     private static final Double DEFAULT_VALUE = 0.0d;
 
+    public static final DoublePrimitiveClassSerializer instance = new DoublePrimitiveClassSerializer();
+
+    private DoublePrimitiveClassSerializer() {
+    }
+
     public byte getCode() {
         return CODE_DOUBLE;
     }

@@ -10,6 +10,11 @@ import java.io.ObjectOutput;
 public class BytePrimitiveClassSerializer  implements IClassSerializer<Byte> {
     private static final Byte DEFAULT_VALUE = 0;
 
+    public static final BytePrimitiveClassSerializer instance = new BytePrimitiveClassSerializer();
+
+    private BytePrimitiveClassSerializer() {
+    }
+
     public byte getCode() {
         return CODE_BYTE;
     }

@@ -10,6 +10,11 @@ import java.io.ObjectOutput;
 public class FloatPrimitiveClassSerializer implements IClassSerializer<Float> {
     private static final Float DEFAULT_VALUE = 0.0f;
 
+    public static final FloatPrimitiveClassSerializer instance = new FloatPrimitiveClassSerializer();
+
+    private FloatPrimitiveClassSerializer() {
+    }
+
     public byte getCode() {
         return CODE_FLOAT;
     }
