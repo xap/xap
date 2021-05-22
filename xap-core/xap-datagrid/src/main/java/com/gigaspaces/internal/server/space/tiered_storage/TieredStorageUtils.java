@@ -21,7 +21,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 
 import static com.gigaspaces.internal.server.space.tiered_storage.SqliteUtils.getPropertyValue;
@@ -94,7 +97,7 @@ public class TieredStorageUtils {
         try {
             if (typeDesc.getTypeDesc().isAutoGenerateId()) {
                 coldEntryHolder = space.getTieredStorageManager().getInternalStorage().getEntryByUID(context, typeDesc.getTypeName(), (String) id);
-            }else {
+            } else {
                 coldEntryHolder = space.getTieredStorageManager().getInternalStorage().getEntryById(context, typeDesc.getTypeName(), id);
             }
         } catch (SAException e) { //entry doesn't exist in cold tier
@@ -134,7 +137,7 @@ public class TieredStorageUtils {
             if (hotValue == null || coldValue == null) {
                 return hotValue == coldValue;
             }
-            if(!hotValue.equals(coldValue)){
+            if (!hotValue.equals(coldValue)) {
                 logger.warn("Failed to have consistency between hot and cold tier for id: " +
                         hotEntry.getEntryDataType().name() + " Hot: " + hotValue + " Cold: " + coldValue);
 
@@ -162,7 +165,7 @@ public class TieredStorageUtils {
         PropertyInfo[] properties = typeDesc.getProperties();
         Object[] values = new Object[properties.length];
         for (int i = 0; i < properties.length; i++) {
-            values[i] = getPropertyValue(resultSet, properties[i]);
+            values[i] = getPropertyValue(resultSet, properties[i].getType(), properties[i].getOriginalIndex() + 1);
         }
         FlatEntryData data = new FlatEntryData(values, null, typeDesc.getEntryTypeDesc(EntryType.DOCUMENT_JAVA), 0, Lease.FOREVER, null);
         String uid;
@@ -175,11 +178,11 @@ public class TieredStorageUtils {
         return new EntryHolder(serverTypeDesc, uid, 0, false, data);
     }
 
-    public static boolean isSupportedPropertyType(Class<?> type){
+    public static boolean isSupportedPropertyType(Class<?> type) {
         return supportedTypes.contains(type.getName());
     }
 
-    public static boolean isSupportedTimeColumn(Class<?> type){
+    public static boolean isSupportedTimeColumn(Class<?> type) {
         return type.equals(Instant.class) || type.equals(Timestamp.class) || type.equals(long.class) || type.equals(Long.class)
                 || type.equals(Date.class) || type.equals(LocalDateTime.class);
     }
