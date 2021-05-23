@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Aggregator for order by operation. Supports several paths,asc/desc and limited results
@@ -35,19 +36,15 @@ import java.util.*;
 
 public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregator.OrderByScanResult> implements Externalizable {
 
+    private static final long serialVersionUID = 1L;
     //used to post process the entries and apply projection template
     private transient SpaceEntriesAggregatorContext context;
-
-    private static final long serialVersionUID = 1L;
-
-    private transient SortedMap<OrderByKey, ArrayList<RawEntry>> map;
-    private transient OrderByKey key;
-
-
-    private int limit = Integer.MAX_VALUE;
+    private transient List<OrderByElement> list;
+    private transient HashMap<OrderByValues, OrderByElement> map;
     private transient int aggregatedCount = 0;
 
-    private List<OrderByPath> orderByPaths = new LinkedList<OrderByPath>();
+    private int limit = Integer.MAX_VALUE;
+    private List<OrderByPath> orderByPaths = new LinkedList<>();
 
     public OrderByAggregator() {
     }
@@ -71,10 +68,6 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         return this;
     }
 
-    public int getLimit() {
-        return limit;
-    }
-
     public List<OrderByPath> getOrderByPaths() {
         return Collections.unmodifiableList(orderByPaths);
     }
@@ -86,58 +79,72 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
     }
 
     @Override
-    public void aggregate(SpaceEntriesAggregatorContext context) {
+    public void aggregate(SpaceEntriesAggregatorContext context) { //at each partition (server)
         this.context = context;
+
+        if (list == null) {
+            list = new ArrayList<>();
+        }
         if (map == null) {
-            map = new TreeMap<OrderByKey, ArrayList<RawEntry>>();
-            key = new OrderByKey(orderByPaths.size());
+            map = new HashMap<>();
         }
 
-        // Get key from current entry:
-        if (!key.initialize(orderByPaths, this.context))
-            return;
+        OrderByValues values = getOrderValues(context);
 
-        if (map.get(key) == null)
-            map.put((OrderByKey) key.clone(), new ArrayList<RawEntry>());
-
-        map.get(key).add(context.getRawEntry());
+        OrderByElement existingOrderByElement = map.get(values);
+        if (existingOrderByElement == null) {
+            OrderByElement orderByElement = new OrderByElement(values);
+            orderByElement.addRawEntry(context.getRawEntry());
+            map.put(values, orderByElement);
+            list.add(orderByElement);
+        } else {
+            existingOrderByElement.addRawEntry(context.getRawEntry());
+        }
 
         aggregatedCount++;
-        //if more found more than allowed limit - evict
+
+        //if found more than allowed limit - evict highest
         if (aggregatedCount > limit) {
-            removeLastEntry();
-            aggregatedCount--;
+            list.sort(new OrderByElementComparator(this.orderByPaths));
+            evictHighestRaw();
         }
+
     }
 
 
     @Override
-    public void aggregateIntermediateResult(OrderByScanResult partitionResult) {
+    public void aggregateIntermediateResult(OrderByScanResult partitionResult) { //at the client
         // Initialize if first time:
+        if (list == null) {
+            list = new ArrayList<>();
+        }
         if (map == null) {
-            map = new TreeMap<OrderByKey, ArrayList<RawEntry>>();
+            map = new HashMap<>();
         }
 
-        if (partitionResult.getResultMap() == null)
+        List<OrderByElement> partitionResultList = partitionResult.getResultList();
+        if (partitionResultList == null) {
             return;
-        // Iterate new results and merge them with existing results:
-        for (Map.Entry<OrderByKey, ArrayList<RawEntry>> entry : partitionResult.getResultMap().entrySet()) {
-            ArrayList<RawEntry> entryList = entry.getValue();
-            ArrayList<RawEntry> currentEntryList = map.get(entry.getKey());
-
-            if (currentEntryList == null) {
-                map.put(entry.getKey(), entryList);
-            } else {
-                currentEntryList.addAll(entryList);
-            }
-            aggregatedCount += entryList.size();
-
-            //if more found more than allowed limit - evict
-            while (aggregatedCount > limit) {
-                removeLastEntry();
-                aggregatedCount--;
+        }
+        for (OrderByElement orderByElement : partitionResultList) { // come sorted from each partitions.
+            OrderByValues values = orderByElement.getOrderByValues();
+            OrderByElement existingOrderByElement = map.get(values);
+            if (existingOrderByElement == null) { // not exist at the compound map, so not exist at the list too
+                map.put(values, orderByElement);
+                list.add(orderByElement);
+            } else { // marge
+                existingOrderByElement.addRawEntries(orderByElement.getRawEntries());
             }
 
+            aggregatedCount += orderByElement.getRawEntries().size();
+
+            //if found more than allowed limit - evict highest
+            if (aggregatedCount > limit) {
+                list.sort(new OrderByElementComparator(this.orderByPaths));
+                while (aggregatedCount > limit) {
+                    evictHighestRaw();
+                }
+            }
         }
     }
 
@@ -145,14 +152,12 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
     public OrderByScanResult getIntermediateResult() {
 
         OrderByScanResult orderByResult = new OrderByScanResult();
-        if (map != null) {
-
-            for (List<RawEntry> entriesList : map.values()) {
-                for (RawEntry entry : entriesList)
-                    context.applyProjectionTemplate(entry);
-
-            }
-            orderByResult.setResultMap(map);
+        if (list != null) {
+            list.forEach(orderByElement ->
+                    orderByElement.getRawEntries().forEach(rawEntry ->
+                            context.applyProjectionTemplate(rawEntry)));
+            list.sort(new OrderByElementComparator(this.orderByPaths));
+            orderByResult.setResultList(list);
         }
         return orderByResult;
     }
@@ -160,28 +165,18 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
 
     @Override
     public Collection<T> getFinalResult() {
+        if (list == null) {
+            return new ArrayList<>();
+        }
+        list.sort(new OrderByElementComparator(this.orderByPaths));
 
-        ArrayList<T> list = new ArrayList<T>(aggregatedCount);
-        if (map == null) {
-            return list;
+        ArrayList<T> finalResults = new ArrayList<T>(aggregatedCount);
+
+        for (OrderByElement orderByElement : list) {
+            finalResults.addAll(orderByElement.getRawEntries().stream().map(rawEntry -> (T) toObject(rawEntry)).collect(Collectors.toList()));
         }
 
-        for (List<RawEntry> entriesList : map.values()) {
-            for (RawEntry entry : entriesList)
-                list.add((T) toObject(entry));
-        }
-
-        return list;
-    }
-
-    private void removeLastEntry() {
-
-        ArrayList<RawEntry> lastEntries = map.get(map.lastKey());
-        RawEntry r = lastEntries.remove(lastEntries.size() - 1);
-
-        if (lastEntries.isEmpty()) {
-            map.remove(map.lastKey());
-        }
+        return finalResults;
     }
 
     @Override
@@ -196,16 +191,27 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         limit = in.readInt();
     }
 
+    private OrderByValues getOrderValues(SpaceEntriesAggregatorContext context) {
+        return new OrderByValues(this.orderByPaths.stream().map(orderByPath -> context.getPathValue(orderByPath.getPath())).toArray());
+    }
+
+    private void evictHighestRaw() {
+        OrderByElement orderByElement = list.remove(list.size() - 1); //pop last
+        List<RawEntry> rawEntries = orderByElement.getRawEntries();
+        if (rawEntries.size() > 1) {
+            rawEntries.remove(rawEntries.size() - 1);
+            list.add(orderByElement); //put it back.
+        } else { //has only 1 rawEntry therefore remove from map too. and don't put it back in list.
+            map.remove(orderByElement.getOrderByValues());
+        }
+        aggregatedCount--;
+    }
 
     public static class OrderByScanResult implements Externalizable {
 
         private static final long serialVersionUID = 1L;
 
-        private Map<OrderByKey, ArrayList<RawEntry>> resultMap;
-
-        public Map<OrderByKey, ArrayList<RawEntry>> getResultMap() {
-            return resultMap;
-        }
+        private List<OrderByElement> resultList;
 
         /**
          * Required for Externalizable
@@ -213,22 +219,55 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         public OrderByScanResult() {
         }
 
+        public List<OrderByElement> getResultList() {
+            return resultList;
+        }
 
-        public void setResultMap(Map<OrderByKey, ArrayList<RawEntry>> resultMap) {
-            this.resultMap = resultMap;
+        public void setResultList(List<OrderByElement> resultList) {
+            this.resultList = resultList;
         }
 
         @Override
         public void writeExternal(ObjectOutput out) throws IOException {
-
-            IOUtils.writeObject(out, resultMap);
+            IOUtils.writeList(out, resultList);
         }
 
         @Override
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            this.resultList = IOUtils.readList(in);
+        }
+    }
 
-            this.resultMap = IOUtils.readObject(in);
+    public static class OrderByElementComparator implements Comparator<OrderByElement> {
+
+        private final List<OrderByPath> orderByPaths;
+
+        public OrderByElementComparator(List<OrderByPath> orderByPaths) {
+            this.orderByPaths = orderByPaths;
         }
 
+        @Override
+        public int compare(OrderByElement o1, OrderByElement o2) {
+            int rc = 0;
+            for (int i = 0; i < this.orderByPaths.size(); i++) {
+                Comparable c1 = (Comparable) o1.getValue(i);
+                Comparable c2 = (Comparable) o2.getValue(i);
+
+                if (c1 == c2) {
+                    continue;
+                }
+                if (c1 == null) {
+                    return this.orderByPaths.get(i).isNullsLast() ? 1 : -1;
+                }
+                if (c2 == null) {
+                    return this.orderByPaths.get(i).isNullsLast() ? -1 : 1;
+                }
+                rc = c1.compareTo(c2);
+                if (rc != 0) {
+                    return this.orderByPaths.get(i).getOrderBy() == OrderBy.DESC ? -rc : rc;
+                }
+            }
+            return rc;
+        }
     }
 }

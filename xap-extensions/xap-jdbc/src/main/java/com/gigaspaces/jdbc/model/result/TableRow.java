@@ -33,7 +33,6 @@ public class TableRow implements Comparable<TableRow>{
             }
         }
 
-        //TODO: think of better way
         this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
         orderValues = new Object[this.orderColumns.length];
         for (int i = 0; i < orderColumns.size(); i++) {
@@ -55,7 +54,7 @@ public class TableRow implements Comparable<TableRow>{
             Object value = queryColumns.get(i).getCurrentValue();
             values[i] = value;
         }
-        //TODO: think of better way
+
         this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
         orderValues = new Object[this.orderColumns.length];
         for (int i = 0; i < orderColumns.size(); i++) {
@@ -70,7 +69,7 @@ public class TableRow implements Comparable<TableRow>{
             QueryColumn queryColumn = queryColumns.get(i);
             values[i] = row.getPropertyValue(queryColumn);
         }
-        //TODO: think of better way
+
         this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
         orderValues = new Object[this.orderColumns.length];
         for (int i = 0; i < orderColumns.size(); i++) {

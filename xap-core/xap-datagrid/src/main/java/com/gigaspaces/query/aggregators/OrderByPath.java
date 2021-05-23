@@ -22,6 +22,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 /**
  * Created by anna on 11/10/14.
@@ -86,5 +87,18 @@ public class OrderByPath implements Externalizable {
     @Override
     public String toString() {
         return path + " " + orderBy + " " + (nullsLast ? "NULLS LAST" : "NULLS FIRST");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof OrderByPath)) return false;
+        OrderByPath that = (OrderByPath) o;
+        return isNullsLast() == that.isNullsLast() && Objects.equals(getPath(), that.getPath()) && getOrderBy() == that.getOrderBy();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getPath(), getOrderBy(), isNullsLast());
     }
 }
