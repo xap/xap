@@ -35,41 +35,31 @@ public class OrderByElement implements Externalizable, Comparable<OrderByElement
 
     private RawEntry rawEntry;
     private OrderByPath[] orderByPaths;
-    private Object[]  orderByValues;
-//    private HashMap<OrderByPath, Object> orderByPathsAndValuesMap;
+    private Object[] orderByValues;
 
     public OrderByElement(List<OrderByPath> orderByPaths, SpaceEntriesAggregatorContext context) {
         this.rawEntry = context.getRawEntry();
         this.orderByPaths = orderByPaths.toArray(new OrderByPath[0]);
         this.orderByValues = new Object[orderByPaths.size()];
-        for (int i = 0; i < this.orderByPaths.length ; i++) {
+        for (int i = 0; i < this.orderByPaths.length; i++) {
             this.orderByValues[i] = context.getPathValue(this.orderByPaths[i].getPath());
         }
-
-//        this.orderByPathsAndValuesMap = new HashMap<>();
-//        for (OrderByPath orderByPath : orderByPaths) {
-//            this.orderByPathsAndValuesMap.put(orderByPath, context.getPathValue(orderByPath.getPath()));
-//        }
     }
 
     public OrderByElement() {
     }
 
-
     public RawEntry getRawEntry() {
         return rawEntry;
     }
 
-
     public Object getValue(OrderByPath orderByPath) {
         for (int i = 0; i < this.orderByPaths.length; i++) {
-            if(this.orderByPaths[i].equals(orderByPath)) {
+            if (this.orderByPaths[i].equals(orderByPath)) {
                 return orderByValues[i];
             }
         }
         return null;
-
-//        return orderByPathsAndValuesMap.get(orderByPath);
     }
 
     @Override
@@ -81,21 +71,20 @@ public class OrderByElement implements Externalizable, Comparable<OrderByElement
             Comparable c1 = (Comparable) getValue(orderByPath);
             Comparable c2 = (Comparable) other.getValue(orderByPath);
 
-            if (c1 == c2)
+            if (c1 == c2) {
                 continue;
-
-            if (c1 == null)
+            }
+            if (c1 == null) {
                 return orderByPath.isNullsLast() ? 1 : -1;
-
-            if (c2 == null)
+            }
+            if (c2 == null) {
                 return orderByPath.isNullsLast() ? -1 : 1;
-
+            }
             rc = c1.compareTo(c2);
-            if (rc != 0)
+            if (rc != 0) {
                 return orderByPath.getOrderBy() == OrderBy.DESC ? -rc : rc;
-
+            }
         }
-
         return rc;
     }
 

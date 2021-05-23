@@ -35,11 +35,9 @@ import java.util.stream.Collectors;
 
 public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregator.OrderByScanResult> implements Externalizable {
 
+    private static final long serialVersionUID = 1L;
     //used to post process the entries and apply projection template
     private transient SpaceEntriesAggregatorContext context;
-
-    private static final long serialVersionUID = 1L;
-
     private transient List<OrderByElement> list;
 
 
@@ -70,10 +68,6 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         return this;
     }
 
-    public int getLimit() {
-        return limit;
-    }
-
     public List<OrderByPath> getOrderByPaths() {
         return Collections.unmodifiableList(orderByPaths);
     }
@@ -87,11 +81,12 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
     @Override
     public void aggregate(SpaceEntriesAggregatorContext context) { //at each partition (server)
         this.context = context;
-        if(list == null) {
+
+        if (list == null) {
             list = new ArrayList<>();
         }
 
-        if(aggregatedCount < limit) {
+        if (aggregatedCount < limit) { //TODO: use list.size()?
             list.add(new OrderByElement(orderByPaths, context));
             aggregatedCount++;
         }
@@ -113,7 +108,7 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         //collect results from each partitions
         list.addAll(partitionResultList);
         aggregatedCount += partitionResultList.size();
-        //if more found more than allowed limit - evict
+        //if found more than allowed limit - evict
         while (aggregatedCount > limit) {
             list.remove(list.size() - 1);
             aggregatedCount--;
@@ -169,13 +164,12 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         public OrderByScanResult() {
         }
 
+        public List<OrderByElement> getResultList() {
+            return resultList;
+        }
 
         public void setResultList(List<OrderByElement> resultList) {
             this.resultList = resultList;
-        }
-
-        public List<OrderByElement> getResultList() {
-            return resultList;
         }
 
         @Override
