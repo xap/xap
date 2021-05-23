@@ -25,10 +25,9 @@ import java.util.Collections;
  */
 public class TextReportFormatter {
 
+    private static final String INDENTATION = "  ";
     private final StringBuilder sb;
-    private int prefixPosition;
-
-    private String indentation = "";
+    private String currentIndentation = "";
     private String firstLinePrefix;
 
     public TextReportFormatter() {
@@ -44,10 +43,10 @@ public class TextReportFormatter {
     }
 
     public TextReportFormatter line(String s) {
-        sb.append(indentation);
+        sb.append(currentIndentation);
         if (firstLinePrefix != null) {
             sb.append(firstLinePrefix).append(" ");
-            indentation = indentation + String.join("", Collections.nCopies(firstLinePrefix.length() + 1, " "));
+            currentIndentation = currentIndentation + String.join("", Collections.nCopies(firstLinePrefix.length() + 1, " "));
             firstLinePrefix = null;
         }
         sb.append(s);
@@ -56,12 +55,12 @@ public class TextReportFormatter {
     }
 
     public TextReportFormatter indent() {
-        indentation = indentation+"  ";//2 spaces
+        currentIndentation = currentIndentation + INDENTATION;
         return this;
     }
 
     public TextReportFormatter unindent() {
-        indentation = indentation.substring(indentation.length() - 1);
+        currentIndentation = currentIndentation.substring(0, currentIndentation.length() - INDENTATION.length());
         return this;
     }
 
@@ -72,17 +71,17 @@ public class TextReportFormatter {
     }
 
     public void withFirstLine(String firstLinePrefix, Runnable function) {
-        String orgIndenation = indentation;
+        String orgIndenation = currentIndentation;
         this.firstLinePrefix = firstLinePrefix;
         function.run();
-        this.indentation = orgIndenation;
+        this.currentIndentation = orgIndenation;
     }
 
     public void withPrefix(String prefix, Runnable function) {
-        String orgIndentation = indentation;
-        indentation = indentation + prefix;
+        String orgIndentation = currentIndentation;
+        currentIndentation = currentIndentation + prefix;
         function.run();
-        indentation = orgIndentation;
+        currentIndentation = orgIndentation;
 
     }
 }

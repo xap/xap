@@ -15,7 +15,10 @@ import com.j_spaces.jdbc.builder.range.SegmentRange;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class TempTableContainer extends TableContainer {
@@ -23,17 +26,23 @@ public class TempTableContainer extends TableContainer {
     private final String alias;
     private TableContainer joinedTable;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
-    private final List<QueryColumn> tableColumns = new ArrayList<>();
+    private final Map<String, QueryColumn> tableColumns = new LinkedHashMap<>();
     private TempTableQTP queryTemplatePacket;
 
     public TempTableContainer(QueryResult tableResult, String alias) {
         this.tableResult = tableResult;
         this.alias = alias;
+        Map<String, QueryColumn> nameAndColumnMap;
         if (tableResult instanceof ExplainPlanResult) {
-            tableColumns.addAll(((ExplainPlanResult) tableResult).getVisibleColumns());
+            nameAndColumnMap = ((ExplainPlanResult) tableResult).getVisibleColumns().stream().collect(getLinkedHashMapCollector());
         } else {
-            tableColumns.addAll(tableResult.getQueryColumns());
+            nameAndColumnMap = tableResult.getQueryColumns().stream().collect(getLinkedHashMapCollector());
         }
+        tableColumns.putAll(nameAndColumnMap);
+    }
+
+    private Collector<QueryColumn, ?, LinkedHashMap<String, QueryColumn>> getLinkedHashMapCollector() {
+        return Collectors.toMap(QueryColumn::getName, queryColumn -> queryColumn, (oldValue, newValue) -> newValue, LinkedHashMap::new);
     }
 
     @Override
@@ -50,7 +59,10 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public QueryColumn addQueryColumn(String columnName, String alias, boolean visible) {
-        QueryColumn queryColumn = tableColumns.stream().filter(qc -> qc.getName().equalsIgnoreCase(columnName)).findFirst().orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
+        QueryColumn queryColumn = tableColumns.get(columnName);
+        if (queryColumn == null) {
+            throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]");
+        }
         if (visible) visibleColumns.add(queryColumn);
         return queryColumn;
     }
@@ -62,7 +74,7 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public List<String> getAllColumnNames() {
-        return tableColumns.stream().map(QueryColumn::getName).collect(Collectors.toList());
+        return new ArrayList<>(tableColumns.keySet());
     }
 
     @Override
@@ -124,9 +136,10 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public Object getColumnValue(String columnName, Object value) throws SQLException {
-        QueryColumn column = tableColumns.stream().filter(queryColumn -> queryColumn.getName().equalsIgnoreCase(columnName)).findFirst()
-                .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
-        //todo change table column into map and review with Yohana
+        QueryColumn column = tableColumns.get(columnName);
+        if (column == null) {
+            throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]");
+        }
         return ObjectConverter.convert(value, column.getPropertyType());
     }
 
