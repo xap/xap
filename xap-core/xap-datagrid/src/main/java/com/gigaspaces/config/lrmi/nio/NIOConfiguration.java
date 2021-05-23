@@ -24,13 +24,12 @@ import com.gigaspaces.serialization.SmartExternalizable;
 import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.kernel.SystemProperties;
 import com.j_spaces.kernel.TimeUnitProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class provides configuration object of NIO communication transport protocol.
@@ -48,7 +47,7 @@ public class NIOConfiguration implements ITransportConfig, Cloneable, SmartExter
     public static final String BIND_PORT_SYS_PROP = "com.gs.transport_protocol.lrmi.bind-port";
     public static final String BIND_PORT_ENV_VAR = "LRMI_PORT";
     private static final int DEFAULT_MIN_THREADS = 1;
-    private static final int DEFAULT_MAX_THREADS = 128;
+    private static final int DEFAULT_MAX_THREADS = 4;
     private static final int DEFAULT_THREAD_QUEUE_SIZE = Integer.MAX_VALUE;
     private static final int DEFAULT_MAX_CONN_POOL = 1024;
     private static final String DEFAULT_BIND_PORT = "8200-8299";
