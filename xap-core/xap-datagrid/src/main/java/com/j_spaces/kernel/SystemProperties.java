@@ -361,7 +361,7 @@ public class SystemProperties extends CommonSystemProperties {
     public final static String SERIALIZE_USING_EXTERNALIZABLE = "com.gs.transport_protocol.lrmi.serialize-using-externalizable";
 
     public final static String SMART_EXTERNALIZABLE_ENABLED = "com.gs.smart-externalizable.enabled";
-    public final static String SMART_EXTERNALIZABLE_BACKWARDS_PROTECTION = "com.gs.smart-externalizable.backwards-protection";
+
     /**
      * Set the maximum used buffer size that may be cached for storage type serialization
      */
