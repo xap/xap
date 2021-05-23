@@ -31,7 +31,7 @@ public class LocalTimeParser extends AbstractDateTimeParser {
     private final DateTimeFormatter formatter;
 
     public LocalTimeParser() {
-        super("java.time.LocalTime", QueryProcessor.getDefaultConfig().getTimeFormat());
+        super("java.time.LocalTime", QueryProcessor.getDefaultConfig().getLocalTimeFormat());
         this.formatter = DateTimeFormatter.ofPattern(_pattern);
     }
 

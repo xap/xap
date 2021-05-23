@@ -59,17 +59,29 @@ public class QueryProcessorConfiguration {
 
     private static final int PORT_DEFAULT = 2872;
 
-    private static final String DATE_FORMAT_PROPERTY = "DATE_FORMAT";
-    private static final String DATE_TIME_FORMAT_PROPERTY = "DATETIME_FORMAT";
-    private static final String TIME_FORMAT_PROPERTY = "TIME_FORMAT";
+    private static final String SQL_DATE_FORMAT_PROPERTY = "SQL_DATE_FORMAT";
+    private static final String LOCAL_DATE_TIME_FORMAT_PROPERTY = "LOCAL_DATETIME_FORMAT";
+    private static final String SQL_TIME_FORMAT_PROPERTY = "SQL_TIME_FORMAT";
+    private static final String TIMESTAMP_FORMAT_PROPERTY = "TIMESTAMP_FORMAT";
+    private static final String UTIL_DATE_FORMAT_PROPERTY = "UTIL_DATE_FORMAT_FORMAT";
+    private static final String LOCAL_TIME_FORMAT_PROPERTY = "LOCAL_TIME_FORMAT";
+    private static final String LOCAL_DATE_FORMAT_PROPERTY = "LOCAL_DATE_FORMAT_PROPERTY";
+    private static final String INSTANT_FORMAT_PROPERTY = "INSTANT_FORMAT";
 
     private int _readLease = Integer.parseInt(QueryProcessorInfo.QP_SPACE_READ_LEASE_TIME_DEFAULT);
     private long _writeLease = Long.parseLong(QueryProcessorInfo.QP_SPACE_WRITE_LEASE_DEFAULT);
     private long _transactionTimeout = Integer.parseInt(QueryProcessorInfo.QP_TRANSACTION_TIMEOUT_DEFAULT);
     private boolean _parserCaseSensitivity = Boolean.parseBoolean(QueryProcessorInfo.QP_PARSER_CASE_SENSETIVITY_DEFAULT);
-    private String _dateFormat = QueryProcessorInfo.QP_DATE_FORMAT_DEFAULT;
-    private String _dateTimeFormat = QueryProcessorInfo.QP_DATETIME_FORMAT_DEFAULT;
-    private String _timeFormat = QueryProcessorInfo.QP_TIME_FORMAT_DEFAULT;
+
+    private String _utilDateFormat = QueryProcessorInfo.QP_UTILDATE_FORMAT_DEFAULT;
+    private String _localDateTimeFormat = QueryProcessorInfo.QP_LOCALDATETIME_FORMAT_DEFAULT;
+    private String _localTimeFormat = QueryProcessorInfo.QP_LOCALTIME_FORMAT_DEFAULT;
+    private String _localDateFormat = QueryProcessorInfo.QP_LOCALDATE_FORMAT_DEFAULT;
+    private String _sqlDateFormat = QueryProcessorInfo.QP_SQLDATE_FORMAT_DEFAULT;
+    private String _sqlTimeFormat = QueryProcessorInfo.QP_SQLTIME_FORMAT_DEFAULT;
+    private String _timestampFormat = QueryProcessorInfo.QP_TIMESTAMP_FORMAT_DEFAULT;
+    private String _instantFormat = QueryProcessorInfo.QP_INSTANT_FORMAT_DEFAULT;
+
     private boolean _traceExecTime = Boolean.parseBoolean(QueryProcessorInfo.QP_TRACE_EXEC_TIME_DEFAULT);
     private boolean _autoCommit = Boolean.parseBoolean(QueryProcessorInfo.QP_AUTO_COMMIT_DEFAULT);
     private String _spaceURL;
@@ -87,9 +99,39 @@ public class QueryProcessorConfiguration {
             _parserCaseSensitivity = conf.isQPParserCaseSensetivity();
             _autoCommit = conf.isQPAutoCommit();
             _traceExecTime = conf.isQPTraceExecTime();
-            _dateFormat = conf.getQpDateFormat();
-            _dateTimeFormat = conf.getQpDateTimeFormat();
-            _timeFormat = conf.getQpTimeFormat();
+            String oldTimeFormat = conf.getQpTimeFormat();
+            String oldDateFormat = conf.getQpDateFormat();
+            String oldDateTimeFormat = conf.getQpDateTimeFormat();
+            if (oldTimeFormat.equals(""))
+            {
+                _sqlTimeFormat = conf.getQpSqlTimeFormat();
+                _localTimeFormat = conf.getQpLocalTimeFormat();
+            }
+            else{
+                _sqlTimeFormat = oldTimeFormat;
+                _localTimeFormat = oldTimeFormat;
+            }
+            if (oldDateFormat.equals(""))
+            {
+                _utilDateFormat = conf.getQpUtilDateFormat();
+                _localDateFormat = conf.getQpLocalDateFormat();
+                _sqlDateFormat = conf.getQpSqlDateFormat();
+            }
+            else{
+                _utilDateFormat = oldDateFormat;
+                _localDateFormat = oldDateFormat;
+                _sqlDateFormat = oldDateFormat;
+            }
+            if (oldDateTimeFormat.equals(""))
+            {
+                _localDateTimeFormat = conf.getQpLocalDateTimeFormat();
+                _timestampFormat = conf.getQpTimestampFormat();
+            }
+            else{
+                _localDateTimeFormat = oldDateTimeFormat;
+                _timestampFormat = oldDateTimeFormat;
+            }
+            _instantFormat = conf.getQpInstantFormat();
         }
 
         // set properties from override properties file
@@ -103,9 +145,9 @@ public class QueryProcessorConfiguration {
                     + "transactionTimeout=" + _transactionTimeout + "\n\t"
                     + "autoCommit=" + _autoCommit + "\n\t"
                     + "traceExecTime=" + _traceExecTime + "\n\t"
-                    + "dateFormat=" + _dateFormat + "\n\t"
-                    + "dateTimeFormat=" + _dateTimeFormat + "\n\t"
-                    + "timeFormat=" + _timeFormat
+                    + "dateFormat=" + _sqlDateFormat + "\n\t"
+                    + "dateTimeFormat=" + _localDateTimeFormat + "\n\t"
+                    + "timeFormat=" + _sqlTimeFormat
             );
         }
     }
@@ -120,9 +162,14 @@ public class QueryProcessorConfiguration {
         _parserCaseSensitivity = getBoolean(localProps.getProperty(PARSER_CASE_SENSETIVITY_PROPERTY), _parserCaseSensitivity);
         _autoCommit = getBoolean(localProps.getProperty(AUTO_COMMIT_PROPERTY), _autoCommit);
         _traceExecTime = getBoolean(localProps.getProperty(TRACE_EXEC_TIME_PROPERTY), _traceExecTime);
-        _dateFormat = localProps.getProperty(DATE_FORMAT_PROPERTY, _dateFormat);
-        _dateTimeFormat = localProps.getProperty(DATE_TIME_FORMAT_PROPERTY, _dateTimeFormat);
-        _timeFormat = localProps.getProperty(TIME_FORMAT_PROPERTY, _timeFormat);
+        _sqlDateFormat = localProps.getProperty(SQL_DATE_FORMAT_PROPERTY, _sqlDateFormat);
+        _localDateTimeFormat = localProps.getProperty(LOCAL_DATE_TIME_FORMAT_PROPERTY, _localDateTimeFormat);
+        _utilDateFormat = localProps.getProperty(UTIL_DATE_FORMAT_PROPERTY, _utilDateFormat);
+        _localTimeFormat = localProps.getProperty(LOCAL_TIME_FORMAT_PROPERTY, _localTimeFormat);
+        _localDateFormat = localProps.getProperty(LOCAL_DATE_FORMAT_PROPERTY, _localDateFormat);
+        _instantFormat = localProps.getProperty(INSTANT_FORMAT_PROPERTY, _instantFormat);
+        _sqlTimeFormat = localProps.getProperty(SQL_TIME_FORMAT_PROPERTY, _sqlTimeFormat);
+        _timestampFormat = localProps.getProperty(TIMESTAMP_FORMAT_PROPERTY, _timestampFormat);
         _spaceURL = localProps.getProperty(SPACE_URL);
         _listenPort = getInteger(localProps.getProperty(PORT_PROPERTY), PORT_DEFAULT);
 
@@ -192,28 +239,68 @@ public class QueryProcessorConfiguration {
         _parserCaseSensitivity = parserCaseSensitivity;
     }
 
-    public String getDateFormat() {
-        return _dateFormat;
+    public String getUtilDateFormat() {
+        return _utilDateFormat;
     }
 
-    public void setDateFormat(String dateFormat) {
-        _dateFormat = dateFormat;
+    public void setUtilDateFormat(String dateFormat) {
+        _utilDateFormat = dateFormat;
     }
 
-    public String getDateTimeFormat() {
-        return _dateTimeFormat;
+    public String getSqlDateFormat() {
+        return _sqlDateFormat;
     }
 
-    public void setDateTimeFormat(String dateTimeFormat) {
-        _dateTimeFormat = dateTimeFormat;
+    public void setSqlDateFormat(String dateFormat) {
+        _sqlDateFormat = dateFormat;
     }
 
-    public String getTimeFormat() {
-        return _timeFormat;
+    public String getLocalDateTimeFormat() {
+        return _localDateTimeFormat;
     }
 
-    public void setTimeFormat(String timeFormat) {
-        _timeFormat = timeFormat;
+    public void setLocalDateTimeFormat(String localDateTimeFormat) {
+        _localDateTimeFormat = localDateTimeFormat;
+    }
+
+    public String getLocalTimeFormat() {
+        return _localTimeFormat;
+    }
+
+    public void setLocalTimeFormat(String localTimeFormat) {
+        _localTimeFormat = localTimeFormat;
+    }
+
+    public String getLocalDateFormat() {
+        return _localDateFormat;
+    }
+
+    public void setLocalDateFormat(String localDateFormat) {
+        _localTimeFormat = localDateFormat;
+    }
+
+    public String getSqlTimeFormat() {
+        return _sqlTimeFormat;
+    }
+
+    public void setSqlTimeFormat(String timeFormat) {
+        _sqlTimeFormat = timeFormat;
+    }
+
+    public void setTimestampFormat(String timestampFormat) {
+        _timestampFormat = timestampFormat;
+    }
+
+    public String getTimestampFormat() {
+        return _timestampFormat;
+    }
+
+    public String getInstantFormat() {
+        return _instantFormat;
+    }
+
+    public void setInstantFormat(String _instantFormat) {
+        this._instantFormat = _instantFormat;
     }
 
     public boolean isTraceExecTime() {

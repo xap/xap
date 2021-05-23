@@ -16,28 +16,7 @@
 
 package com.gigaspaces.internal.utils;
 
-import com.gigaspaces.internal.utils.parsers.AbstractParser;
-import com.gigaspaces.internal.utils.parsers.BigDecimalParser;
-import com.gigaspaces.internal.utils.parsers.BlobParser;
-import com.gigaspaces.internal.utils.parsers.BooleanParser;
-import com.gigaspaces.internal.utils.parsers.ByteParser;
-import com.gigaspaces.internal.utils.parsers.CharacterParser;
-import com.gigaspaces.internal.utils.parsers.ClobParser;
-import com.gigaspaces.internal.utils.parsers.ConventionObjectParser;
-import com.gigaspaces.internal.utils.parsers.DateParser;
-import com.gigaspaces.internal.utils.parsers.DoubleParser;
-import com.gigaspaces.internal.utils.parsers.EnumParser;
-import com.gigaspaces.internal.utils.parsers.FloatParser;
-import com.gigaspaces.internal.utils.parsers.IntegerParser;
-import com.gigaspaces.internal.utils.parsers.LocalDateParser;
-import com.gigaspaces.internal.utils.parsers.LocalDateTimeParser;
-import com.gigaspaces.internal.utils.parsers.LocalTimeParser;
-import com.gigaspaces.internal.utils.parsers.LongParser;
-import com.gigaspaces.internal.utils.parsers.ShortParser;
-import com.gigaspaces.internal.utils.parsers.SqlDateParser;
-import com.gigaspaces.internal.utils.parsers.SqlTimeParser;
-import com.gigaspaces.internal.utils.parsers.SqlTimestampParser;
-import com.gigaspaces.internal.utils.parsers.StringParser;
+import com.gigaspaces.internal.utils.parsers.*;
 
 import java.sql.SQLException;
 import java.util.Map;
@@ -164,6 +143,7 @@ public abstract class ObjectConverter {
         _runtimeGeneratedParserMap.put(java.sql.Date.class.getName(), new SqlDateParser());
         _runtimeGeneratedParserMap.put(java.sql.Time.class.getName(), new SqlTimeParser());
         _runtimeGeneratedParserMap.put(java.sql.Timestamp.class.getName(), new SqlTimestampParser());
+        _runtimeGeneratedParserMap.put(java.time.Instant.class.getName(), new InstantParser());
     }
 
 

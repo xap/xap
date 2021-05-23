@@ -17,7 +17,6 @@
 package com.j_spaces.core;
 
 import com.gigaspaces.internal.server.space.SpaceImpl;
-import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.Constants.QueryProcessorInfo;
 import com.j_spaces.core.Constants.SpaceProxy;
 import com.j_spaces.core.admin.SpaceConfig;
@@ -260,17 +259,50 @@ public class SpaceConfigFactory {
         spaceConfig.setQpSpaceWriteLeaseTime(Long.parseLong(schemaProps.getProperty(
                 QueryProcessorInfo.QP_SPACE_WRITE_LEASE_PROP, QueryProcessorInfo.QP_SPACE_WRITE_LEASE_DEFAULT)));
 
+
         spaceConfig.setQpDateFormat(schemaProps.getProperty(
                 Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_DATE_FORMAT_PROP,
                 QueryProcessorInfo.QP_DATE_FORMAT_DEFAULT));
+
+        spaceConfig.setQpTimeFormat(schemaProps.getProperty(
+                Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_TIME_FORMAT_PROP,
+                QueryProcessorInfo.QP_TIME_FORMAT_DEFAULT));
 
         spaceConfig.setQpDateTimeFormat(schemaProps.getProperty(
                 Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_DATETIME_FORMAT_PROP,
                 QueryProcessorInfo.QP_DATETIME_FORMAT_DEFAULT));
 
-        spaceConfig.setQpTimeFormat(schemaProps.getProperty(
-                Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_TIME_FORMAT_PROP,
-                QueryProcessorInfo.QP_TIME_FORMAT_DEFAULT));
+        spaceConfig.setQpUtilDateFormat(schemaProps.getProperty(
+                Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_UTILDATE_FORMAT_PROP,
+                QueryProcessorInfo.QP_UTILDATE_FORMAT_DEFAULT));
+
+        spaceConfig.setQpSqlDateFormat(schemaProps.getProperty(
+                Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_SQLDATE_FORMAT_PROP,
+                QueryProcessorInfo.QP_SQLDATE_FORMAT_DEFAULT));
+
+        spaceConfig.setQpLocalDateTimeFormat(schemaProps.getProperty(
+                Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_LOCALDATETIME_FORMAT_PROP,
+                QueryProcessorInfo.QP_LOCALDATETIME_FORMAT_DEFAULT));
+
+        spaceConfig.setQpLocalTimeFormat(schemaProps.getProperty(
+                Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_LOCALTIME_FORMAT_PROP,
+                QueryProcessorInfo.QP_LOCALTIME_FORMAT_DEFAULT));
+
+        spaceConfig.setQpLocalDateFormat(schemaProps.getProperty(
+                Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_LOCALDATE_FORMAT_PROP,
+                QueryProcessorInfo.QP_LOCALDATE_FORMAT_DEFAULT));
+
+        spaceConfig.setQpSqlTimeFormat(schemaProps.getProperty(
+                Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_SQLTIME_FORMAT_PROP,
+                QueryProcessorInfo.QP_SQLTIME_FORMAT_DEFAULT));
+
+        spaceConfig.setQpTimestampFormat(schemaProps.getProperty(
+                Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_TIMESTAMP_FORMAT_PROP,
+                QueryProcessorInfo.QP_TIMESTAMP_FORMAT_DEFAULT));
+
+        spaceConfig.setQpInstantFormat(schemaProps.getProperty(
+                Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_INSTANT_FORMAT_PROP,
+                QueryProcessorInfo.QP_INSTANT_FORMAT_DEFAULT));
         // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
