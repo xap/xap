@@ -16,6 +16,8 @@
 
 package com.gigaspaces.lrmi;
 
+import com.gigaspaces.CommonSystemProperties;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 
 import java.net.InetSocketAddress;
@@ -70,6 +72,9 @@ public class LRMIInvocationContext {
             return result;
         }
     };
+
+    private static final boolean VERSION_DETECTION_DISABLED = !GsEnv.propertyBoolean(CommonSystemProperties.TRANSPORT_VERSION_DETECTION_ENABLED).get(true);
+    private static final PlatformLogicalVersion CURRENT_VERSION = PlatformLogicalVersion.getLogicalVersion();
 
     private LRMIInvocationTrace _trace;
     private PlatformLogicalVersion _sourceLogicalVersion;
@@ -149,9 +154,11 @@ public class LRMIInvocationContext {
      * version is returned.
      */
     public static PlatformLogicalVersion getEndpointLogicalVersion() {
+        if (VERSION_DETECTION_DISABLED)
+            return CURRENT_VERSION;
         LRMIInvocationContext currentContext = LRMIInvocationContext.getCurrentContext();
         if (currentContext == null || currentContext.isEmpty())
-            return PlatformLogicalVersion.getLogicalVersion();
+            return CURRENT_VERSION;
         InvocationStage invocationStage = currentContext._invocationStage;
         PlatformLogicalVersion result;
         switch (invocationStage) {
