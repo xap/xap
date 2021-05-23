@@ -168,7 +168,7 @@ public interface Constants {
         String FULL_QP_AUTO_COMMIT_PROP = SPACE_CONFIG_PREFIX + QP_AUTO_COMMIT_PROP;
 
         String QP_UTILDATE_FORMAT = "utildate_format";
-        String QP_UTILDATE_FORMAT_DEFAULT = "yyyy-MM-dd HH:mm:ss.SSS";
+        String QP_UTILDATE_FORMAT_DEFAULT = "yyyy-MM-dd";
         String QP_UTILDATE_FORMAT_PROP = PREFIX + QP_UTILDATE_FORMAT;
         String FULL_QP_UTILDATE_FORMAT_PROP = SPACE_CONFIG_PREFIX + QP_UTILDATE_FORMAT_PROP;
 
