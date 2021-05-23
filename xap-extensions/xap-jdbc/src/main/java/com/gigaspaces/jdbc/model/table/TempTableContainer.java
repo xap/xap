@@ -97,7 +97,7 @@ public class TempTableContainer extends TableContainer {
             return new TempTableQTP((EqualValueRange) range);
         } else if (range instanceof SegmentRange) {
             return new TempTableQTP((SegmentRange) range);
-        } else { //todo ask Yohana why there were no support for NotEqualValueRange
+        } else {
             throw new UnsupportedOperationException("Range: " + range);
         }
     }
@@ -123,14 +123,11 @@ public class TempTableContainer extends TableContainer {
     }
 
     @Override
-    public Object getColumnValue(String columnName, Object value) {
+    public Object getColumnValue(String columnName, Object value) throws SQLException {
         QueryColumn column = tableColumns.stream().filter(queryColumn -> queryColumn.getName().equalsIgnoreCase(columnName)).findFirst()
                 .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
-        try {
-            return ObjectConverter.convert(value, column.getPropertyType());
-        } catch (SQLException e) {
-            throw new UnsupportedOperationException("Couldn't convert the requested column with name [" + columnName + "]" + " to an object type of " + column.getPropertyType().getName(), e);
-        }
+        //todo change table column into map and review with Yohana
+        return ObjectConverter.convert(value, column.getPropertyType());
     }
 
     @Override
