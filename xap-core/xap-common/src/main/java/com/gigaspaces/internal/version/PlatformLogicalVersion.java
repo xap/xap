@@ -42,6 +42,7 @@ public class PlatformLogicalVersion implements SmartExternalizable, Comparable<P
     private byte _servicePackVersion;
     private int _buildNumber;
     private int _subBuildNumber;
+    private transient int _comparableValue;
 
     /**
      * @return this jar platform logical version
@@ -60,6 +61,7 @@ public class PlatformLogicalVersion implements SmartExternalizable, Comparable<P
         _servicePackVersion = (byte) servicePackVersion;
         _buildNumber = buildNumber;
         _subBuildNumber = subBuildNumber;
+        initialize();
     }
 
     static PlatformLogicalVersion fromBuild(int majorVersion, int minorVersion, int servicePackVersion, int buildNumber) {
@@ -95,20 +97,15 @@ public class PlatformLogicalVersion implements SmartExternalizable, Comparable<P
         return _servicePackVersion;
     }
 
+    private void initialize() {
+        _comparableValue = (_buildNumber >= LAST_BUILD_NUMBER && _majorVersion >= 14)
+                ? _majorVersion * 1000_000 + _minorVersion * 1000 + _servicePackVersion
+                : _buildNumber * 100 + _subBuildNumber;
+    }
+
     @Override
     public int compareTo(PlatformLogicalVersion other) {
-        int code;
-        if (_buildNumber >= LAST_BUILD_NUMBER && _majorVersion >= 14) {
-            if ((code = Integer.compare(this._majorVersion, other._majorVersion)) != 0)
-                return code;
-            if ((code = Integer.compare(this._minorVersion, other._minorVersion)) != 0)
-                return code;
-            return Integer.compare(this._servicePackVersion, other._servicePackVersion);
-        } else {
-            if ((code = Integer.compare(this._buildNumber, other._buildNumber)) != 0)
-                return code;
-            return Integer.compare(this._subBuildNumber, other._subBuildNumber);
-        }
+        return Integer.compare(this._comparableValue, other._comparableValue);
     }
 
     public boolean patchSameOrGreater(PlatformLogicalVersion other) {
@@ -151,6 +148,7 @@ public class PlatformLogicalVersion implements SmartExternalizable, Comparable<P
         _servicePackVersion = in.readByte();
         _buildNumber = in.readInt();
         _subBuildNumber = in.readInt();
+        initialize();
     }
 
     @Override
@@ -169,7 +167,7 @@ public class PlatformLogicalVersion implements SmartExternalizable, Comparable<P
 
     @Override
     public String toString() {
-        return "" + _majorVersion + "." + _minorVersion + "." + _servicePackVersion + "." + _buildNumber + "-" + _subBuildNumber;
+        return "" + _majorVersion + "." + _minorVersion + "." + _servicePackVersion + "." + _buildNumber + "-" + _subBuildNumber + " [" + _comparableValue + "]";
     }
 
     @Override
@@ -276,5 +274,9 @@ public class PlatformLogicalVersion implements SmartExternalizable, Comparable<P
     //GS-7725: Partial update replication
     //GS-7753: ReplicationPolicy new parameter, replicate full take
     //GS-8130: TypeDesc and SpaceTypeInfo have new non-transient field isSystemType.
-    //END DOCUMENT BACKWARD BREAKING CHANGES    
+    //END DOCUMENT BACKWARD BREAKING CHANGES
+
+    public static void main(String[] args) {
+
+    }
 }
