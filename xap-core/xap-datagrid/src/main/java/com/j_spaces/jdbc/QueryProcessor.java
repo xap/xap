@@ -195,9 +195,9 @@ public class QueryProcessor implements IQueryProcessor {
             QueryProcessor.defaultConfig = defaultConfig;
             if( _logger.isDebugEnabled()) {
                 _logger.debug("~~~INITIALIZING of QueryProcessor.defaultConfig" +
-                             ", DateTimeFormat=" + defaultConfig.getDateTimeFormat() +
-                             ", DateFormat=" + defaultConfig.getDateFormat() +
-                             ", TimeFormat=" + defaultConfig.getTimeFormat());
+                             ", DateTimeFormat=" + defaultConfig.getLocalDateTimeFormat() +
+                             ", DateFormat=" + defaultConfig.getSqlDateFormat() +
+                             ", TimeFormat=" + defaultConfig.getSqlTimeFormat());
             }
         }
     }
