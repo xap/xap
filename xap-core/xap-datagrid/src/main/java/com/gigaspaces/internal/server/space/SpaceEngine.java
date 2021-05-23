@@ -158,6 +158,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.Xid;
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -512,6 +513,39 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 return countTransactions(TransactionInfo.Types.ALL, TransactionConstants.ACTIVE);
             }
         });
+        registerDiskSizeMetric(registrator);
+
+    }
+    private void registerDiskSizeMetric (MetricRegistrator registrator){
+        if (!this.isTieredStorage()) {
+            return;
+        }
+
+//        if (!_engine.getMetricManager().getMetricFlagsState().isTieredDiskSizeMetricEnabled()){
+//            return;
+//        }
+
+        long diskSize = 0;
+        try {
+            diskSize = this.getTieredStorageManager().getInternalStorage().getDiskSize();
+        } catch (SAException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        registrator.register("disk-size", createHeapUsedInBytesGauge(diskSize));
+
+    }
+
+
+    public Gauge<Long> createHeapUsedInBytesGauge(Long diskSize) {
+        return new Gauge<Long>() {
+            @Override
+            public Long getValue() {
+                return diskSize;
+            }
+        };
     }
 
     private IDuplicateOperationFilter createDuplicateOperationIDFilter() {

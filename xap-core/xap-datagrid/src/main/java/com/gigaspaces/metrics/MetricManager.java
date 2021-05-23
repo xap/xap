@@ -432,9 +432,13 @@ public class MetricManager implements Closeable {
         private final boolean dataReadCountsMetricEnabled = isEnabled("space", "data", "read-count");
         private final boolean dataTypesMetricEnabled = isEnabled("space", "data", "data-types");
         private final boolean tieredRamReadCountDataTypesMetricEnabled = isEnabled("space", "data", "read-count-ram");
+        private final boolean tieredDiskSizeMetricEnabled = isEnabled( "space","disk-size");
 
         public boolean isDataIndexHitsMetricEnabled() {
             return dataIndexHitsMetricEnabled;
+        }
+        public boolean isTieredDiskSizeMetricEnabled() {
+            return tieredDiskSizeMetricEnabled;
         }
 
         public boolean isTieredRamReadCountDataTypesMetricEnabled() {
