@@ -18,13 +18,13 @@
 package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.internal.io.IOUtils;
-import com.gigaspaces.internal.query.RawEntry;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Aggregator for order by operation. Supports several paths,asc/desc and limited results
@@ -40,8 +40,7 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
 
     private static final long serialVersionUID = 1L;
 
-    private transient SortedMap<OrderByKey, ArrayList<RawEntry>> map;
-    private transient OrderByKey key;
+    private transient List<OrderByElement> list;
 
 
     private int limit = Integer.MAX_VALUE;
@@ -86,58 +85,38 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
     }
 
     @Override
-    public void aggregate(SpaceEntriesAggregatorContext context) {
+    public void aggregate(SpaceEntriesAggregatorContext context) { //at each partition (server)
         this.context = context;
-        if (map == null) {
-            map = new TreeMap<OrderByKey, ArrayList<RawEntry>>();
-            key = new OrderByKey(orderByPaths.size());
+        if(list == null) {
+            list = new ArrayList<>();
         }
 
-        // Get key from current entry:
-        if (!key.initialize(orderByPaths, this.context))
-            return;
-
-        if (map.get(key) == null)
-            map.put((OrderByKey) key.clone(), new ArrayList<RawEntry>());
-
-        map.get(key).add(context.getRawEntry());
-
-        aggregatedCount++;
-        //if more found more than allowed limit - evict
-        if (aggregatedCount > limit) {
-            removeLastEntry();
-            aggregatedCount--;
+        if(aggregatedCount < limit) {
+            list.add(new OrderByElement(orderByPaths, context));
+            aggregatedCount++;
         }
+
     }
 
 
     @Override
-    public void aggregateIntermediateResult(OrderByScanResult partitionResult) {
+    public void aggregateIntermediateResult(OrderByScanResult partitionResult) { //at the client
         // Initialize if first time:
-        if (map == null) {
-            map = new TreeMap<OrderByKey, ArrayList<RawEntry>>();
+        if (list == null) {
+            list = new ArrayList<>();
         }
 
-        if (partitionResult.getResultMap() == null)
+        List<OrderByElement> partitionResultList = partitionResult.getResultList();
+        if (partitionResultList == null) {
             return;
-        // Iterate new results and merge them with existing results:
-        for (Map.Entry<OrderByKey, ArrayList<RawEntry>> entry : partitionResult.getResultMap().entrySet()) {
-            ArrayList<RawEntry> entryList = entry.getValue();
-            ArrayList<RawEntry> currentEntryList = map.get(entry.getKey());
-
-            if (currentEntryList == null) {
-                map.put(entry.getKey(), entryList);
-            } else {
-                currentEntryList.addAll(entryList);
-            }
-            aggregatedCount += entryList.size();
-
-            //if more found more than allowed limit - evict
-            while (aggregatedCount > limit) {
-                removeLastEntry();
-                aggregatedCount--;
-            }
-
+        }
+        //collect results from each partitions
+        list.addAll(partitionResultList);
+        aggregatedCount += partitionResultList.size();
+        //if more found more than allowed limit - evict
+        while (aggregatedCount > limit) {
+            list.remove(list.size() - 1);
+            aggregatedCount--;
         }
     }
 
@@ -145,14 +124,10 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
     public OrderByScanResult getIntermediateResult() {
 
         OrderByScanResult orderByResult = new OrderByScanResult();
-        if (map != null) {
-
-            for (List<RawEntry> entriesList : map.values()) {
-                for (RawEntry entry : entriesList)
-                    context.applyProjectionTemplate(entry);
-
-            }
-            orderByResult.setResultMap(map);
+        if (list != null) {
+            list.forEach(orderByElement -> context.applyProjectionTemplate(orderByElement.getRawEntry()));
+            Collections.sort(list);
+            orderByResult.setResultList(list);
         }
         return orderByResult;
     }
@@ -160,28 +135,13 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
 
     @Override
     public Collection<T> getFinalResult() {
-
-        ArrayList<T> list = new ArrayList<T>(aggregatedCount);
-        if (map == null) {
-            return list;
+        if (list == null) {
+            return new ArrayList<>();
         }
-
-        for (List<RawEntry> entriesList : map.values()) {
-            for (RawEntry entry : entriesList)
-                list.add((T) toObject(entry));
-        }
-
-        return list;
-    }
-
-    private void removeLastEntry() {
-
-        ArrayList<RawEntry> lastEntries = map.get(map.lastKey());
-        RawEntry r = lastEntries.remove(lastEntries.size() - 1);
-
-        if (lastEntries.isEmpty()) {
-            map.remove(map.lastKey());
-        }
+        Collections.sort(list);
+        return list.stream()
+                .map(orderByElement -> (T) toObject(orderByElement.getRawEntry()))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -201,11 +161,7 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
 
         private static final long serialVersionUID = 1L;
 
-        private Map<OrderByKey, ArrayList<RawEntry>> resultMap;
-
-        public Map<OrderByKey, ArrayList<RawEntry>> getResultMap() {
-            return resultMap;
-        }
+        private List<OrderByElement> resultList;
 
         /**
          * Required for Externalizable
@@ -214,20 +170,22 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         }
 
 
-        public void setResultMap(Map<OrderByKey, ArrayList<RawEntry>> resultMap) {
-            this.resultMap = resultMap;
+        public void setResultList(List<OrderByElement> resultList) {
+            this.resultList = resultList;
+        }
+
+        public List<OrderByElement> getResultList() {
+            return resultList;
         }
 
         @Override
         public void writeExternal(ObjectOutput out) throws IOException {
-
-            IOUtils.writeObject(out, resultMap);
+            IOUtils.writeList(out, resultList);
         }
 
         @Override
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-
-            this.resultMap = IOUtils.readObject(in);
+            this.resultList = IOUtils.readList(in);
         }
 
     }
