@@ -1004,6 +1004,7 @@ public class LeaseManager {
 
             try {
                 while (!isInterrupted()) {
+                    _logger.info("+++++++++++++++++++test log+++++++++++++++++++++++");
                     try {
                         boolean skippedReapingInQuiesceMode = false;
                         fallAsleep(skippedReapingInQuiesceMode);
