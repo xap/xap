@@ -27,7 +27,7 @@ import java.sql.SQLException;
 @com.gigaspaces.api.InternalApi
 public class SqlTimestampParser extends AbstractDateTimeParser {
     public SqlTimestampParser() {
-        super("java.sql.Timestamp", QueryProcessor.getDefaultConfig().getDateTimeFormat());
+        super("java.sql.Timestamp", QueryProcessor.getDefaultConfig().getTimestampFormat());
     }
 
     @Override

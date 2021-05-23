@@ -1414,12 +1414,22 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 QueryProcessorInfo.QP_SPACE_READ_LEASE_TIME_PROP, QueryProcessorInfo.QP_SPACE_READ_LEASE_TIME_DEFAULT, false));
         spaceAttr.setQpSpaceWriteLeaseTime(configReader.getLongSpaceProperty(
                 QueryProcessorInfo.QP_SPACE_WRITE_LEASE_PROP, QueryProcessorInfo.QP_SPACE_WRITE_LEASE_DEFAULT, false));
-        spaceAttr.setQpDateFormat(configReader.getSpaceProperty(
-                QueryProcessorInfo.QP_DATE_FORMAT_PROP, QueryProcessorInfo.QP_DATE_FORMAT_DEFAULT, false));
-        spaceAttr.setQpDateTimeFormat(configReader.getSpaceProperty(
-                QueryProcessorInfo.QP_DATETIME_FORMAT_PROP, QueryProcessorInfo.QP_DATETIME_FORMAT_DEFAULT, false));
-        spaceAttr.setQpTimeFormat(configReader.getSpaceProperty(
-                QueryProcessorInfo.QP_TIME_FORMAT_PROP, QueryProcessorInfo.QP_TIME_FORMAT_DEFAULT, false));
+        spaceAttr.setQpUtilDateFormat(configReader.getSpaceProperty(
+                QueryProcessorInfo.QP_UTILDATE_FORMAT_PROP, QueryProcessorInfo.QP_UTILDATE_FORMAT_DEFAULT, false));
+        spaceAttr.setQpSqlDateFormat(configReader.getSpaceProperty(
+                QueryProcessorInfo.QP_SQLDATE_FORMAT_PROP, QueryProcessorInfo.QP_SQLDATE_FORMAT_DEFAULT, false));
+        spaceAttr.setQpLocalDateTimeFormat(configReader.getSpaceProperty(
+                QueryProcessorInfo.QP_LOCALDATETIME_FORMAT_PROP, QueryProcessorInfo.QP_LOCALDATETIME_FORMAT_DEFAULT, false));
+        spaceAttr.setQpLocalTimeFormat(configReader.getSpaceProperty(
+                QueryProcessorInfo.QP_LOCALTIME_FORMAT_PROP, QueryProcessorInfo.QP_LOCALTIME_FORMAT_DEFAULT, false));
+        spaceAttr.setQpLocalDateFormat(configReader.getSpaceProperty(
+                QueryProcessorInfo.QP_LOCALDATE_FORMAT_PROP, QueryProcessorInfo.QP_LOCALDATE_FORMAT_DEFAULT, false));
+        spaceAttr.setQpSqlTimeFormat(configReader.getSpaceProperty(
+                QueryProcessorInfo.QP_SQLTIME_FORMAT_PROP, QueryProcessorInfo.QP_SQLTIME_FORMAT_DEFAULT, false));
+        spaceAttr.setQpTimestampFormat(configReader.getSpaceProperty(
+                QueryProcessorInfo.QP_TIMESTAMP_FORMAT_PROP, QueryProcessorInfo.QP_TIMESTAMP_FORMAT_DEFAULT, false));
+        spaceAttr.setQpInstantFormat(configReader.getSpaceProperty(
+                QueryProcessorInfo.QP_INSTANT_FORMAT_PROP, QueryProcessorInfo.QP_INSTANT_FORMAT_DEFAULT, false));
         // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         spaceAttr.setMirrorServiceEnabled(configReader.getBooleanSpaceProperty(

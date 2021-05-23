@@ -127,24 +127,7 @@ import static com.j_spaces.core.Constants.LookupManager.FULL_LOOKUP_IS_PRIVATE_P
 import static com.j_spaces.core.Constants.LookupManager.LOOKUP_IS_PRIVATE_DEFAULT;
 import static com.j_spaces.core.Constants.Mirror.FULL_MIRROR_SERVICE_ENABLED_PROP;
 import static com.j_spaces.core.Constants.Mirror.MIRROR_SERVICE_ENABLED_DEFAULT;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.FULL_QP_AUTO_COMMIT_PROP;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.FULL_QP_DATETIME_FORMAT_PROP;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.FULL_QP_DATE_FORMAT_PROP;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.FULL_QP_PARSER_CASE_SENSETIVITY_PROP;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.FULL_QP_SPACE_READ_LEASE_TIME_PROP;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.FULL_QP_SPACE_WRITE_LEASE_PROP;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.FULL_QP_TIME_FORMAT_PROP;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.FULL_QP_TRACE_EXEC_TIME_PROP;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.FULL_QP_TRANSACTION_TIMEOUT_PROP;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.QP_AUTO_COMMIT_DEFAULT;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.QP_DATETIME_FORMAT_DEFAULT;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.QP_DATE_FORMAT_DEFAULT;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.QP_PARSER_CASE_SENSETIVITY_DEFAULT;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.QP_SPACE_READ_LEASE_TIME_DEFAULT;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.QP_SPACE_WRITE_LEASE_DEFAULT;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.QP_TIME_FORMAT_DEFAULT;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.QP_TRACE_EXEC_TIME_DEFAULT;
-import static com.j_spaces.core.Constants.QueryProcessorInfo.QP_TRANSACTION_TIMEOUT_DEFAULT;
+import static com.j_spaces.core.Constants.QueryProcessorInfo.*;
 import static com.j_spaces.core.Constants.RemoteCode.FULL_REMOTE_CODE_MAX_CLASS_LOADERS_PROP;
 import static com.j_spaces.core.Constants.RemoteCode.FULL_REMOTE_CODE_SUPPORT_CODE_CHANGE_PROP;
 import static com.j_spaces.core.Constants.RemoteCode.REMOTE_CODE_MAX_CLASS_LOADERS_DEFAULT;
@@ -416,46 +399,121 @@ public class JSpaceAttributes
      *
      *
      */
-    public String getQpDateFormat() {
-        return getProperty(FULL_QP_DATE_FORMAT_PROP, QP_DATE_FORMAT_DEFAULT);
+    public String getQpUtilDateFormat() {
+        return getProperty(FULL_QP_UTILDATE_FORMAT_PROP, QP_UTILDATE_FORMAT_DEFAULT);
     }
 
     /**
-     * @param qpDateFormat
+     * @param qpUtilDateFormat
      */
-    public void setQpDateFormat(String qpDateFormat) {
-        this.setProperty(FULL_QP_DATE_FORMAT_PROP, qpDateFormat);
-    }
-
-    /**
-     *
-     *
-     */
-    public String getQpDateTimeFormat() {
-        return getProperty(FULL_QP_DATETIME_FORMAT_PROP,
-                QP_DATETIME_FORMAT_DEFAULT);
-    }
-
-    /**
-     * @param qpDateTimeFormat
-     */
-    public void setQpDateTimeFormat(String qpDateTimeFormat) {
-        this.setProperty(FULL_QP_DATETIME_FORMAT_PROP, qpDateTimeFormat);
+    public void setQpUtilDateFormat(String qpUtilDateFormat) {
+        this.setProperty(FULL_QP_UTILDATE_FORMAT_PROP, qpUtilDateFormat);
     }
 
     /**
      *
      *
      */
-    public String getQpTimeFormat() {
-        return getProperty(FULL_QP_TIME_FORMAT_PROP, QP_TIME_FORMAT_DEFAULT);
+    public String getQpSqlDateFormat() {
+        return getProperty(FULL_QP_SQLDATE_FORMAT_PROP, QP_SQLDATE_FORMAT_DEFAULT);
     }
 
     /**
-     * @param qpTimeFormat
+     * @param qpSqlDateFormat
      */
-    public void setQpTimeFormat(String qpTimeFormat) {
-        this.setProperty(FULL_QP_TIME_FORMAT_PROP, qpTimeFormat);
+    public void setQpSqlDateFormat(String qpSqlDateFormat) {
+        this.setProperty(FULL_QP_SQLDATE_FORMAT_PROP, qpSqlDateFormat);
+    }
+
+    /**
+     *
+     *
+     */
+    public String getQpLocalDateTimeFormat() {
+        return getProperty(FULL_QP_LOCALDATETIME_FORMAT_PROP,
+                QP_LOCALDATETIME_FORMAT_DEFAULT);
+    }
+
+    /**
+     * @param qpLocalDateTimeFormat
+     */
+    public void setQpLocalDateTimeFormat(String qpLocalDateTimeFormat) {
+        this.setProperty(FULL_QP_LOCALDATETIME_FORMAT_PROP, qpLocalDateTimeFormat);
+    }
+
+    /**
+     *
+     *
+     */
+    public String getQpLocalTimeFormat() {
+        return getProperty(FULL_QP_LOCALTIME_FORMAT_PROP,
+                QP_LOCALTIME_FORMAT_DEFAULT);
+    }
+
+    /**
+     * @param qpLocalTimeFormat
+     */
+    public void setQpLocalTimeFormat(String qpLocalTimeFormat) {
+        this.setProperty(FULL_QP_LOCALTIME_FORMAT_PROP, qpLocalTimeFormat);
+    }
+
+    /**
+     *
+     *
+     */
+    public String getQpLocalDateFormat() {
+        return getProperty(FULL_QP_LOCALDATE_FORMAT_PROP,
+                QP_LOCALDATE_FORMAT_DEFAULT);
+    }
+
+    /**
+     * @param qpLocalDateFormat
+     */
+    public void setQpLocalDateFormat(String qpLocalDateFormat) {
+        this.setProperty(FULL_QP_LOCALDATE_FORMAT_PROP, qpLocalDateFormat);
+    }
+
+    /**
+     *
+     *
+     */
+    public String getQpSqlTimeFormat() {
+        return getProperty(FULL_QP_SQLTIME_FORMAT_PROP, QP_SQLTIME_FORMAT_DEFAULT);
+    }
+
+    /**
+     * @param qpSqlTimeFormat
+     */
+    public void setQpSqlTimeFormat(String qpSqlTimeFormat) {
+        this.setProperty(FULL_QP_SQLTIME_FORMAT_PROP, qpSqlTimeFormat);
+    }
+
+    /**
+     *
+     */
+    public String getQpTimestampFormat() {
+        return getProperty(FULL_QP_TIMESTAMP_FORMAT_PROP, QP_TIMESTAMP_FORMAT_DEFAULT);
+    }
+
+    /**
+     * @param qpTimestampFormat
+     */
+    public void setQpTimestampFormat(String qpTimestampFormat) {
+        this.setProperty(FULL_QP_TIMESTAMP_FORMAT_PROP, qpTimestampFormat);
+    }
+
+    /**
+     *
+     */
+    public String getQpInstantFormat() {
+        return getProperty(FULL_QP_INSTANT_FORMAT_PROP, QP_INSTANT_FORMAT_DEFAULT);
+    }
+
+    /**
+     * @param qpInstantFormat
+     */
+    public void setQpInstantFormat(String qpInstantFormat) {
+        this.setProperty(FULL_QP_INSTANT_FORMAT_PROP, qpInstantFormat);
     }
 
     // Engine setters and getters methods

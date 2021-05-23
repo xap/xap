@@ -27,7 +27,7 @@ import java.sql.SQLException;
 @com.gigaspaces.api.InternalApi
 public class SqlTimeParser extends AbstractDateTimeParser {
     public SqlTimeParser() {
-        super("java.sql.Time", QueryProcessor.getDefaultConfig().getTimeFormat());
+        super("java.sql.Time", QueryProcessor.getDefaultConfig().getSqlTimeFormat());
     }
 
     @Override

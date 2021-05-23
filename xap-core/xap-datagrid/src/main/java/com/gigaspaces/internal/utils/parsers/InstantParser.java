@@ -19,28 +19,20 @@ package com.gigaspaces.internal.utils.parsers;
 import com.j_spaces.jdbc.QueryProcessor;
 
 import java.sql.SQLException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 
-/**
- * @author Kobi
- * @since 10.1
- */
-@com.gigaspaces.api.InternalApi
-public class LocalDateTimeParser extends AbstractDateTimeParser {
-    private final DateTimeFormatter formatter;
 
-    public LocalDateTimeParser() {
-        super("java.time.LocalDateTime", QueryProcessor.getDefaultConfig().getLocalDateTimeFormat());
-        this.formatter = DateTimeFormatter.ofPattern(_pattern);
+@com.gigaspaces.api.InternalApi
+public class InstantParser extends AbstractDateTimeParser {
+
+    public InstantParser() {
+        super("java.time.Instant", QueryProcessor.getDefaultConfig().getInstantFormat());
     }
 
     @Override
     public Object parse(String s) throws SQLException {
-        LocalDateTime date = LocalDateTime.parse(s, formatter);
-        if (date == null)
-            throw new SQLException("Wrong " + _desc + " format, expected format=[" + _pattern + "], provided=[" + s + "]", "GSP", -132);
+        return parseDateTime(s).toInstant();
 
-        return date;
     }
 }
