@@ -76,7 +76,6 @@ public class IOUtils {
     private static final IClassSerializer<?> _nullSerializer = new NullClassSerializer<>();
     private static final IClassSerializer<?> _smartExternalizableSerializer = SmartExternalizableSerializer.instance;
     public static final boolean SMART_EXTERNALIZABLE_ENABLED = GsEnv.propertyBoolean(SystemProperties.SMART_EXTERNALIZABLE_ENABLED).get(true);
-    private static final boolean SMART_EXTERNALIZABLE_BACKWARDS_PROTECTION = GsEnv.propertyBoolean(SystemProperties.SMART_EXTERNALIZABLE_BACKWARDS_PROTECTION).get(true);
 
     static {
         _typeCache = new HashMap<Class<?>, IClassSerializer<?>>();
@@ -650,13 +649,8 @@ public class IOUtils {
     }
 
     public static boolean targetSupportsSmartExternalizable() {
-        if (SMART_EXTERNALIZABLE_BACKWARDS_PROTECTION) {
-            // consider caching endpoint version on stream (pending verification stream is associated with a single channel).
-            PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
-            // Special case: this feature was introduced in 16.0.0 so checking the major is sufficient.
-            return version.major() >= 16;
-        }
-        return true;
+        // consider caching endpoint version on stream (pending verification stream is associated with a single channel).
+        return LRMIInvocationContext.getEndpointLogicalVersion().greaterOrEquals(PlatformLogicalVersion.v16_0_0);
     }
 
     public static void writeObject(ObjectOutput out, Object obj)
