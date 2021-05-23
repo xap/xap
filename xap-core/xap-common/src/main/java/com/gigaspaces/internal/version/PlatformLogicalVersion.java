@@ -167,7 +167,7 @@ public class PlatformLogicalVersion implements SmartExternalizable, Comparable<P
 
     @Override
     public String toString() {
-        return "" + _majorVersion + "." + _minorVersion + "." + _servicePackVersion + "." + _buildNumber + "-" + _subBuildNumber + " [" + _comparableValue + "]";
+        return "" + _majorVersion + "." + _minorVersion + "." + _servicePackVersion + "." + _buildNumber + "-" + _subBuildNumber;
     }
 
     @Override
