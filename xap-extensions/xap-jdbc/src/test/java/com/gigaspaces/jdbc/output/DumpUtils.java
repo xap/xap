@@ -1,4 +1,4 @@
-package com.gigaspaces.jdbc;
+package com.gigaspaces.jdbc.output;
 
 import com.gigaspaces.jdbc.output.ConsoleOutput;
 import com.gigaspaces.jdbc.output.Output;

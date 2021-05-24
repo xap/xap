@@ -1,5 +1,6 @@
 package com.gigaspaces.jdbc;
 
+import com.gigaspaces.jdbc.output.DumpUtils;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.GigaSpaceConfigurer;
 import org.openspaces.core.space.AbstractSpaceConfigurer;
