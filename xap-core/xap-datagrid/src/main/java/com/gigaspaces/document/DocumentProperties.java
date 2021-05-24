@@ -22,6 +22,7 @@ import com.gigaspaces.internal.collections.MapProcedure;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.serialization.SmartExternalizable;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -42,8 +43,8 @@ import java.util.Set;
  * @see com.gigaspaces.document.SpaceDocument
  * @since 8.0
  */
-
-public class DocumentProperties implements Map<String, Object>, SmartExternalizable {
+// NOTE: SmartExternalizable is not used here since DocumentProperties might contain cyclic references
+public class DocumentProperties implements Map<String, Object>, Externalizable {
     private static final long serialVersionUID = 1L;
 
     private Map<String, Object> _map;
@@ -209,6 +210,7 @@ public class DocumentProperties implements Map<String, Object>, SmartExternaliza
     public void writeExternal(ObjectOutput out)
             throws IOException {
         final int size = _map.size();
+        System.out.println("Writing DocumentProperties - size: " + size + ", id: " + System.identityHashCode(this));
         out.writeInt(size);
         if (size != 0)
             SerializationProcedure.execute(_map, out);
