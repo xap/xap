@@ -157,10 +157,13 @@ public class MarshalOutputStream
             writeInt(code);
             obj.writeExternal(this);
         } else {
+            // Add class to cache, return assigned code:
             code = _context.cacheExternalizable(objClass);
-            // Write code and object:
+            // Write code and class, so reader can populate its cache accordingly:
             writeInt(code);
-            writeObject(obj);
+            writeObject(obj.getClass());
+            // Write actual object
+            obj.writeExternal(this);
         }
     }
 

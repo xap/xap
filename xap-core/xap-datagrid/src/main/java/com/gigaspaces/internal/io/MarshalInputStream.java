@@ -132,18 +132,17 @@ public class MarshalInputStream
             return readObject();
 
         // Look for cached constructor by code:
-        IConstructor<?> ctor = _context.getExternalizableCtorCache().get(code);
-        if (ctor != null) {
-            // Instantiate object using cached factory which invokes default constructor:
-            Object value = ctor.newInstance();
-            // Deserialize object using standard Externalizable:
-            ((Externalizable)value).readExternal(this);
-            return value;
-        }
-
+        IConstructor<?> ctor = _context._externalizableCtorCache.get(code);
         // If object constructor is not cached, read it from the stream and cache it for next time:
-        Object value = readObject();
-        _context.getExternalizableCtorCache().put(code, ReflectionUtil.createCtor(value.getClass()));
+        if (ctor == null) {
+            Class<?> clazz = (Class<?>) readObject();
+            ctor = ReflectionUtil.createCtor(clazz);
+            _context._externalizableCtorCache.put(code, ctor);
+        }
+        // Instantiate object using cached factory which invokes default constructor:
+        Object value = ctor.newInstance();
+        // Deserialize object using standard Externalizable:
+        ((Externalizable)value).readExternal(this);
         return value;
     }
 
@@ -314,15 +313,11 @@ public class MarshalInputStream
         private final static ClassLoaderContext REMOVED_CONTEXT_MARKER = new ClassLoaderContext(-2L);
         private final static long NULL_CL_MARKER = -1;
         private final IntegerObjectMap<Object> _repetitiveObjectsCache = CollectionsFactory.getInstance().createIntegerObjectMap();
-        private final IntegerObjectMap<IConstructor<?>> _externalizableCtorCache = CollectionsFactory.getInstance().createIntegerObjectMap();
+        public final IntegerObjectMap<IConstructor<?>> _externalizableCtorCache = CollectionsFactory.getInstance().createIntegerObjectMap();
 
 
         public IntegerObjectMap<Object> getRepetitiveObjectsCache() {
             return _repetitiveObjectsCache;
-        }
-
-        public IntegerObjectMap<IConstructor<?>> getExternalizableCtorCache() {
-            return _externalizableCtorCache;
         }
 
         public synchronized void addObjectStreamClass(int index, ObjectStreamClass cl) {
