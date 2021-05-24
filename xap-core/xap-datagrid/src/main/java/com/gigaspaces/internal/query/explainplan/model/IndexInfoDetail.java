@@ -1,5 +1,6 @@
 package com.gigaspaces.internal.query.explainplan.model;
 
+import com.gigaspaces.internal.query.explainplan.ExplainPlanUtil;
 import com.gigaspaces.internal.query.explainplan.IndexInfo;
 import com.gigaspaces.internal.query.explainplan.QueryOperator;
 import com.gigaspaces.metadata.index.SpaceIndexType;
@@ -114,7 +115,7 @@ public class IndexInfoDetail {
     }
 
     protected String getOperationDescription(){
-        return getOperator().getOperatorString();
+        return ExplainPlanUtil.getQueryOperatorDescription( operator );
     }
 
     protected Object getValueDescription( Object value ){

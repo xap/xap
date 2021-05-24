@@ -64,10 +64,10 @@ public class ExplainPlanUtil {
             return new IndexInfo(abstractIndexScanner.getIndexName(), size, index.getIndexType(), ((InValueIndexScanner) abstractIndexScanner).get_indexInValueSet(), QueryOperator.IN, usable);
         }
         if (abstractIndexScanner instanceof NotRegexIndexScanner) {
-            return new IndexInfo(abstractIndexScanner.getIndexName(), size, index.getIndexType(), abstractIndexScanner.getIndexValue(), QueryOperator.NOT_REGEX, usable);
+            return new IndexInfo(abstractIndexScanner.getIndexName(), size, index.getIndexType(), ((NotRegexIndexScanner)abstractIndexScanner).getRegex(), QueryOperator.NOT_REGEX, usable);
         }
         if (abstractIndexScanner instanceof RegexIndexScanner) {
-            return new IndexInfo(abstractIndexScanner.getIndexName(), size, index.getIndexType(), abstractIndexScanner.getIndexValue(), QueryOperator.REGEX, usable);
+            return new IndexInfo(abstractIndexScanner.getIndexName(), size, index.getIndexType(), ((RegexIndexScanner)abstractIndexScanner).getRegex(), QueryOperator.REGEX, usable);
         }
         if (abstractIndexScanner instanceof NullValueIndexScanner) {
             return new IndexInfo(abstractIndexScanner.getIndexName(), size, index.getIndexType(), abstractIndexScanner.getIndexValue(), QueryOperator.IS_NULL, usable);
@@ -220,5 +220,23 @@ public class ExplainPlanUtil {
 
     public static Object getValueDesc( Object value ){
          return ( value == null ) ? "" : " " + value;
+    }
+
+    public static String getQueryOperatorDescription( QueryOperator queryOperator ){
+
+        String operatorString;
+        switch( queryOperator ){
+            case REGEX:
+                operatorString = "LIKE";
+                break;
+            case NOT_REGEX:
+                operatorString = "NOT LIKE";
+                break;
+            default:
+                operatorString = queryOperator.getOperatorString();
+                break;
+        }
+
+        return operatorString;
     }
 }

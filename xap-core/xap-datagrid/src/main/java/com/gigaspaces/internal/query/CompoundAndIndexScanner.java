@@ -204,7 +204,7 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
 
             return shortestExtendedIndexMatch;
         }
-        if(isExplainPlan){
+        if(isExplainPlan && !choiceNode.getOptions().isEmpty()){
             IndexInfo firstOption = choiceNode.getOptions().get(0);
             fatherNode.addOption(firstOption);
             if (firstOption.isUsable()) {
@@ -224,7 +224,7 @@ public class CompoundAndIndexScanner extends AbstractCompoundIndexScanner {
 
     private MultiIntersectedStoredList<IEntryCacheInfo> addToIntersectedList(Context context, MultiIntersectedStoredList<IEntryCacheInfo> intersectedList, IObjectsList list, boolean fifoScan, boolean shortest, TypeData typeData) {
         if (intersectedList == null)
-            intersectedList = new MultiIntersectedStoredList<IEntryCacheInfo>(context, list, fifoScan, typeData.getEntries(), !context.isBlobStoreUsePureIndexesAccess() /*false positive only*/);
+            intersectedList = new MultiIntersectedStoredList<>(context, list, fifoScan, typeData.getEntries(), !context.isBlobStoreUsePureIndexesAccess() /*false positive only*/);
         else
             intersectedList.add(list, shortest);
         return intersectedList;

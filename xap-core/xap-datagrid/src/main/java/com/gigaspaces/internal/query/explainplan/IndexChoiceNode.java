@@ -38,7 +38,7 @@ public class IndexChoiceNode implements Externalizable {
 
     public IndexChoiceNode(String name) {
         this.name = name;
-        options = new ArrayList<IndexInfo>();
+        options = new ArrayList<>();
     }
 
     public IndexChoiceNode(String name, List<IndexInfo> options, IndexInfo chosen) {
@@ -48,7 +48,7 @@ public class IndexChoiceNode implements Externalizable {
     }
 
     public IndexChoiceNode() {
-        this.options = new ArrayList<IndexInfo>();
+        this.options = new ArrayList<>();
     }
 
     public String getName() {
@@ -109,7 +109,7 @@ public class IndexChoiceNode implements Externalizable {
     }
 
     private List<IndexInfo> readList(ObjectInput objectInput) throws IOException, ClassNotFoundException {
-        List<IndexInfo> res = new ArrayList<IndexInfo>();
+        List<IndexInfo> res = new ArrayList<>();
         int size = objectInput.readInt();
         for(int i=0; i<size; i++){
             res.add((IndexInfo) objectInput.readObject());

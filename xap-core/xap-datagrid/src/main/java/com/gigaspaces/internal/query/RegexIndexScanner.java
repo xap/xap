@@ -80,7 +80,7 @@ public class RegexIndexScanner extends AbstractQueryIndex {
         if (index.getNonUniqueEntriesStore().size() == 0 || typeData.getEntries().size() / index.getNonUniqueEntriesStore().size() < 2)
             return IQueryIndexScanner.RESULT_IGNORE_INDEX;
 
-        MultiStoredList<IEntryCacheInfo> matchResult = new MultiStoredList<IEntryCacheInfo>();
+        MultiStoredList<IEntryCacheInfo> matchResult = new MultiStoredList<>();
 
         Pattern pattern = index.getCacheManager().getEngine().getTemplateScanner().getRegexCache().getPattern(_regex);
 
@@ -135,5 +135,9 @@ public class RegexIndexScanner extends AbstractQueryIndex {
 
     public boolean supportsTemplateIndex() {
         return false;
+    }
+
+    public String getRegex() {
+        return _regex;
     }
 }
