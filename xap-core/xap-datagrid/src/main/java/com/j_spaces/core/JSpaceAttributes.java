@@ -399,6 +399,52 @@ public class JSpaceAttributes
      *
      *
      */
+    public String getQpDateFormat() {
+        return getProperty(FULL_QP_DATE_FORMAT_PROP, QP_DATE_FORMAT_DEFAULT);
+    }
+
+    /**
+     * @param qpDateFormat
+     */
+    public void setQpDateFormat(String qpDateFormat) {
+        this.setProperty(FULL_QP_DATE_FORMAT_PROP, qpDateFormat);
+    }
+
+    /**
+     *
+     *
+     */
+    public String getQpDateTimeFormat() {
+        return getProperty(FULL_QP_DATETIME_FORMAT_PROP,
+                QP_DATETIME_FORMAT_DEFAULT);
+    }
+
+    /**
+     * @param qpDateTimeFormat
+     */
+    public void setQpDateTimeFormat(String qpDateTimeFormat) {
+        this.setProperty(FULL_QP_DATETIME_FORMAT_PROP, qpDateTimeFormat);
+    }
+
+    /**
+     *
+     *
+     */
+    public String getQpTimeFormat() {
+        return getProperty(FULL_QP_TIME_FORMAT_PROP, QP_TIME_FORMAT_DEFAULT);
+    }
+
+    /**
+     * @param qpTimeFormat
+     */
+    public void setQpTimeFormat(String qpTimeFormat) {
+        this.setProperty(FULL_QP_TIME_FORMAT_PROP, qpTimeFormat);
+    }
+
+    /**
+     *
+     *
+     */
     public String getQpUtilDateFormat() {
         return getProperty(FULL_QP_UTILDATE_FORMAT_PROP, QP_UTILDATE_FORMAT_DEFAULT);
     }

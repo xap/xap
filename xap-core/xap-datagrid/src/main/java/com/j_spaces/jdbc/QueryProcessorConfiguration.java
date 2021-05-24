@@ -95,9 +95,39 @@ public class QueryProcessorConfiguration {
             _parserCaseSensitivity = conf.isQPParserCaseSensetivity();
             _autoCommit = conf.isQPAutoCommit();
             _traceExecTime = conf.isQPTraceExecTime();
-            _sqlDateFormat = conf.getQpSqlDateFormat();
-            _localDateTimeFormat = conf.getQpLocalDateTimeFormat();
-            _sqlTimeFormat = conf.getQpSqlTimeFormat();
+            String oldTimeFormat = conf.getQpTimeFormat();
+            String oldDateFormat = conf.getQpDateFormat();
+            String oldDateTimeFormat = conf.getQpDateTimeFormat();
+            if (oldTimeFormat.equals(""))
+            {
+                _sqlTimeFormat = conf.getQpSqlTimeFormat();
+                _localTimeFormat = conf.getQpLocalTimeFormat();
+            }
+            else{
+                _sqlTimeFormat = oldTimeFormat;
+                _localTimeFormat = oldTimeFormat;
+            }
+            if (oldDateFormat.equals(""))
+            {
+                _utilDateFormat = conf.getQpUtilDateFormat();
+                _localDateFormat = conf.getQpLocalDateFormat();
+                _sqlDateFormat = conf.getQpSqlDateFormat();
+            }
+            else{
+                _utilDateFormat = oldDateFormat;
+                _localDateFormat = oldDateFormat;
+                _sqlDateFormat = oldDateFormat;
+            }
+            if (oldDateTimeFormat.equals(""))
+            {
+                _localDateTimeFormat = conf.getQpLocalDateTimeFormat();
+                _timestampFormat = conf.getQpTimestampFormat();
+            }
+            else{
+                _localDateTimeFormat = oldDateTimeFormat;
+                _timestampFormat = oldDateTimeFormat;
+            }
+            _instantFormat = conf.getQpInstantFormat();
         }
 
         // set properties from override properties file

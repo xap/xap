@@ -167,6 +167,21 @@ public interface Constants {
         String QP_AUTO_COMMIT_PROP = PREFIX + QP_AUTO_COMMIT;
         String FULL_QP_AUTO_COMMIT_PROP = SPACE_CONFIG_PREFIX + QP_AUTO_COMMIT_PROP;
 
+        String QP_DATE_FORMAT = "date_format";
+        String QP_DATE_FORMAT_DEFAULT = "";
+        String QP_DATE_FORMAT_PROP = PREFIX + QP_DATE_FORMAT;
+        String FULL_QP_DATE_FORMAT_PROP = SPACE_CONFIG_PREFIX + QP_DATE_FORMAT_PROP;
+
+        String QP_DATETIME_FORMAT = "datetime_format";
+        String QP_DATETIME_FORMAT_DEFAULT = "";
+        String QP_DATETIME_FORMAT_PROP = PREFIX + QP_DATETIME_FORMAT;
+        String FULL_QP_DATETIME_FORMAT_PROP = SPACE_CONFIG_PREFIX + QP_DATETIME_FORMAT_PROP;
+
+        String QP_TIME_FORMAT = "time_format";
+        String QP_TIME_FORMAT_DEFAULT = "";
+        String QP_TIME_FORMAT_PROP = PREFIX + QP_TIME_FORMAT;
+        String FULL_QP_TIME_FORMAT_PROP = SPACE_CONFIG_PREFIX + QP_TIME_FORMAT_PROP;
+
         String QP_UTILDATE_FORMAT = "utildate_format";
         String QP_UTILDATE_FORMAT_DEFAULT = "yyyy-MM-dd";
         String QP_UTILDATE_FORMAT_PROP = PREFIX + QP_UTILDATE_FORMAT;
@@ -182,8 +197,8 @@ public interface Constants {
         String QP_SQLTIME_FORMAT_PROP = PREFIX + QP_SQLTIME_FORMAT;
         String FULL_QP_SQLTIME_FORMAT_PROP = SPACE_CONFIG_PREFIX + QP_SQLTIME_FORMAT_PROP;
 
-        String QP_TIMESTAMP_FORMAT = "time_format";
-        String QP_TIMESTAMP_FORMAT_DEFAULT = "yyyy-MM-dd HH:mm:ss.SSS";
+        String QP_TIMESTAMP_FORMAT = "timestamp_format";
+        String QP_TIMESTAMP_FORMAT_DEFAULT = "yyyy-MM-dd HH:mm:ss";
         String QP_TIMESTAMP_FORMAT_PROP = PREFIX + QP_TIMESTAMP_FORMAT;
         String FULL_QP_TIMESTAMP_FORMAT_PROP = SPACE_CONFIG_PREFIX + QP_TIMESTAMP_FORMAT_PROP;
 
