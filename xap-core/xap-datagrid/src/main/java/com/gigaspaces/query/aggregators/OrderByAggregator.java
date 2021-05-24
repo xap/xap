@@ -86,9 +86,14 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
             list = new ArrayList<>();
         }
 
-        if (aggregatedCount < limit) { //TODO: use list.size()?
-            list.add(new OrderByElement(orderByPaths, context));
-            aggregatedCount++;
+        list.add(new OrderByElement(orderByPaths, context));
+        aggregatedCount++;
+
+        //if found more than allowed limit - evict highest
+        if (aggregatedCount > limit) {
+            Collections.sort(list);
+            list.remove(list.size() - 1);
+            aggregatedCount--;
         }
 
     }
@@ -108,10 +113,13 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         //collect results from each partitions
         list.addAll(partitionResultList);
         aggregatedCount += partitionResultList.size();
-        //if found more than allowed limit - evict
-        while (aggregatedCount > limit) {
-            list.remove(list.size() - 1);
-            aggregatedCount--;
+        //if found more than allowed limit - evict highest
+        if (aggregatedCount > limit) {
+            Collections.sort(list);
+            while (aggregatedCount > limit) {
+                list.remove(list.size() - 1);
+                aggregatedCount--;
+            }
         }
     }
 
