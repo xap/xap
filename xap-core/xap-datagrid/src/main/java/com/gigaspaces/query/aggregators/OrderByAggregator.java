@@ -91,7 +91,7 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
 
         //if found more than allowed limit - evict highest
         if (aggregatedCount > limit) {
-            Collections.sort(list);
+            list.sort(new OrderByElementComparator(this.orderByPaths));
             list.remove(list.size() - 1);
             aggregatedCount--;
         }
@@ -115,7 +115,7 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         aggregatedCount += partitionResultList.size();
         //if found more than allowed limit - evict highest
         if (aggregatedCount > limit) {
-            Collections.sort(list);
+            list.sort(new OrderByElementComparator(this.orderByPaths));
             while (aggregatedCount > limit) {
                 list.remove(list.size() - 1);
                 aggregatedCount--;
@@ -129,7 +129,7 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         OrderByScanResult orderByResult = new OrderByScanResult();
         if (list != null) {
             list.forEach(orderByElement -> context.applyProjectionTemplate(orderByElement.getRawEntry()));
-            Collections.sort(list);
+            list.sort(new OrderByElementComparator(this.orderByPaths));
             orderByResult.setResultList(list);
         }
         return orderByResult;
@@ -141,7 +141,7 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         if (list == null) {
             return new ArrayList<>();
         }
-        Collections.sort(list);
+        list.sort(new OrderByElementComparator(this.orderByPaths));
         return list.stream()
                 .map(orderByElement -> (T) toObject(orderByElement.getRawEntry()))
                 .collect(Collectors.toList());
@@ -189,6 +189,38 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
             this.resultList = IOUtils.readList(in);
         }
+    }
 
+    public static class OrderByElementComparator implements Comparator<OrderByElement> {
+
+        private final List<OrderByPath> orderByPaths;
+
+        public OrderByElementComparator(List<OrderByPath> orderByPaths) {
+            this.orderByPaths = orderByPaths;
+        }
+
+        @Override
+        public int compare(OrderByElement o1, OrderByElement o2) {
+            int rc = 0;
+            for (int i = 0; i< this.orderByPaths.size() ; i++) {
+                Comparable c1 = (Comparable) o1.getValue(i);
+                Comparable c2 = (Comparable) o2.getValue(i);
+
+                if (c1 == c2) {
+                    continue;
+                }
+                if (c1 == null) {
+                    return this.orderByPaths.get(i).isNullsLast() ? 1 : -1;
+                }
+                if (c2 == null) {
+                    return this.orderByPaths.get(i).isNullsLast() ? -1 : 1;
+                }
+                rc = c1.compareTo(c2);
+                if (rc != 0) {
+                    return this.orderByPaths.get(i).getOrderBy() == OrderBy.DESC ? -rc : rc;
+                }
+            }
+            return rc;
+        }
     }
 }

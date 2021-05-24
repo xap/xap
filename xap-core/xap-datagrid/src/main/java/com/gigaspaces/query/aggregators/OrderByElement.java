@@ -31,18 +31,16 @@ import java.util.List;
  * @since 16.0.0
  */
 
-public class OrderByElement implements Externalizable, Comparable<OrderByElement> {
+public class OrderByElement implements Externalizable {
 
     private RawEntry rawEntry;
-    private OrderByPath[] orderByPaths;
     private Object[] orderByValues;
 
     public OrderByElement(List<OrderByPath> orderByPaths, SpaceEntriesAggregatorContext context) {
         this.rawEntry = context.getRawEntry();
-        this.orderByPaths = orderByPaths.toArray(new OrderByPath[0]);
         this.orderByValues = new Object[orderByPaths.size()];
-        for (int i = 0; i < this.orderByPaths.length; i++) {
-            this.orderByValues[i] = context.getPathValue(this.orderByPaths[i].getPath());
+        for (int i = 0; i < orderByPaths.size(); i++) {
+            this.orderByValues[i] = context.getPathValue(orderByPaths.get(i).getPath());
         }
     }
 
@@ -53,65 +51,19 @@ public class OrderByElement implements Externalizable, Comparable<OrderByElement
         return rawEntry;
     }
 
-    public Object getValue(OrderByPath orderByPath) {
-        for (int i = 0; i < this.orderByPaths.length; i++) {
-            if (this.orderByPaths[i].equals(orderByPath)) {
-                return orderByValues[i];
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public int compareTo(OrderByElement other) {
-        int rc = 0;
-
-        for (OrderByPath orderByPath : this.orderByPaths) {
-
-            Comparable c1 = (Comparable) getValue(orderByPath);
-            Comparable c2 = (Comparable) other.getValue(orderByPath);
-
-            if (c1 == c2) {
-                continue;
-            }
-            if (c1 == null) {
-                return orderByPath.isNullsLast() ? 1 : -1;
-            }
-            if (c2 == null) {
-                return orderByPath.isNullsLast() ? -1 : 1;
-            }
-            rc = c1.compareTo(c2);
-            if (rc != 0) {
-                return orderByPath.getOrderBy() == OrderBy.DESC ? -rc : rc;
-            }
-        }
-        return rc;
+    public Object getValue(int index) {
+        return this.orderByValues[index];
     }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         IOUtils.writeObject(out, rawEntry);
-        IOUtils.writeObjectArray(out, orderByPaths);
         IOUtils.writeObjectArray(out, orderByValues);
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         this.rawEntry = (RawEntry) IOUtils.readObject(in);
-        this.orderByPaths = readOrderByPathArray(in);
         this.orderByValues = IOUtils.readObjectArray(in);
-    }
-
-
-    private OrderByPath[] readOrderByPathArray(ObjectInput in) throws IOException, ClassNotFoundException {
-        final int length = in.readInt();
-        if (length < 0) {
-            return null;
-        }
-        final OrderByPath[] array = new OrderByPath[length];
-        for (int i = 0; i < length; i++) {
-            array[i] = IOUtils.readObject(in);
-        }
-        return array;
     }
 }
