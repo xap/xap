@@ -21,8 +21,12 @@ public final class ObjectEchoServer {
     static final boolean SSL = System.getProperty("ssl") != null;
     static final int PORT = Integer.parseInt(System.getProperty("port", "8007"));
 
-    public static void main(String[] args) throws Exception {
+    public ObjectEchoServer() {
+    }
+
+    public void init() throws Exception {
         // Configure SSL.
+        System.out.println("INIT!");
         final SslContext sslCtx;
         if (SSL) {
             SelfSignedCertificate ssc = new SelfSignedCertificate();

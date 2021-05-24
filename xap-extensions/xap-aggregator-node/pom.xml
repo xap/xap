@@ -29,6 +29,18 @@
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-jdbc</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.gigaspaces</groupId>
+            <artifactId>xap-openspaces</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

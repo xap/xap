@@ -1,6 +1,10 @@
 package my;
 
 import com.gigaspaces.sql.aggregatornode.netty.client.output.DumpUtils;
+import my.model.Model;
+import org.openspaces.core .GigaSpace;
+import org.openspaces.core.GigaSpaceConfigurer;
+import org.openspaces.core.space.SpaceProxyConfigurer;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -9,11 +13,21 @@ import java.sql.SQLException;
 
 public class Test {
     public static void main(String[] args) {
+        fillSpace();
         try (Connection conn = DriverManager.getConnection("jdbc::aggregator")) {
-            ResultSet res = conn.createStatement().executeQuery("SELECT * FROM com.j_spaces.examples.benchmark.messages.MessagePOJO where rowNum < 2");
+            ResultSet res = conn.createStatement().executeQuery(String.format("SELECT * FROM %s where rowNum < 4", Model.class.getName()));
             DumpUtils.dump(res);
         } catch (SQLException throwables) {
             throwables.printStackTrace();
+        }
+    }
+
+    private static void fillSpace() {
+        SpaceProxyConfigurer configurer = new SpaceProxyConfigurer("mySpace").lookupGroups("yohanaPC");
+        GigaSpace gigaSpace = new GigaSpaceConfigurer(configurer).gigaSpace();
+        if (gigaSpace.count(null) != 0) return;
+        for (int i = 0; i < 10; i++) {
+            gigaSpace.write(new Model("Name" + i, i));
         }
     }
 }
