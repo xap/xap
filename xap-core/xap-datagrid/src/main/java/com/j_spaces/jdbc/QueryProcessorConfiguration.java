@@ -59,10 +59,14 @@ public class QueryProcessorConfiguration {
 
     private static final int PORT_DEFAULT = 2872;
 
-    private static final String DATE_FORMAT_PROPERTY = "DATE_FORMAT";
-    private static final String DATE_TIME_FORMAT_PROPERTY = "DATETIME_FORMAT";
-    private static final String TIME_FORMAT_PROPERTY = "TIME_FORMAT";
+    private static final String SQL_DATE_FORMAT_PROPERTY = "SQL_DATE_FORMAT";
+    private static final String LOCAL_DATE_TIME_FORMAT_PROPERTY = "LOCAL_DATETIME_FORMAT";
+    private static final String SQL_TIME_FORMAT_PROPERTY = "SQL_TIME_FORMAT";
     private static final String TIMESTAMP_FORMAT_PROPERTY = "TIMESTAMP_FORMAT";
+    private static final String UTIL_DATE_FORMAT_PROPERTY = "UTIL_DATE_FORMAT_FORMAT";
+    private static final String LOCAL_TIME_FORMAT_PROPERTY = "LOCAL_TIME_FORMAT";
+    private static final String LOCAL_DATE_FORMAT_PROPERTY = "LOCAL_DATE_FORMAT_PROPERTY";
+    private static final String INSTANT_FORMAT_PROPERTY = "INSTANT_FORMAT";
 
     private int _readLease = Integer.parseInt(QueryProcessorInfo.QP_SPACE_READ_LEASE_TIME_DEFAULT);
     private long _writeLease = Long.parseLong(QueryProcessorInfo.QP_SPACE_WRITE_LEASE_DEFAULT);
@@ -158,9 +162,13 @@ public class QueryProcessorConfiguration {
         _parserCaseSensitivity = getBoolean(localProps.getProperty(PARSER_CASE_SENSETIVITY_PROPERTY), _parserCaseSensitivity);
         _autoCommit = getBoolean(localProps.getProperty(AUTO_COMMIT_PROPERTY), _autoCommit);
         _traceExecTime = getBoolean(localProps.getProperty(TRACE_EXEC_TIME_PROPERTY), _traceExecTime);
-        _sqlDateFormat = localProps.getProperty(DATE_FORMAT_PROPERTY, _sqlDateFormat);
-        _localDateTimeFormat = localProps.getProperty(DATE_TIME_FORMAT_PROPERTY, _localDateTimeFormat);
-        _sqlTimeFormat = localProps.getProperty(TIME_FORMAT_PROPERTY, _sqlTimeFormat);
+        _sqlDateFormat = localProps.getProperty(SQL_DATE_FORMAT_PROPERTY, _sqlDateFormat);
+        _localDateTimeFormat = localProps.getProperty(LOCAL_DATE_TIME_FORMAT_PROPERTY, _localDateTimeFormat);
+        _utilDateFormat = localProps.getProperty(UTIL_DATE_FORMAT_PROPERTY, _utilDateFormat);
+        _localTimeFormat = localProps.getProperty(LOCAL_TIME_FORMAT_PROPERTY, _localTimeFormat);
+        _localDateFormat = localProps.getProperty(LOCAL_DATE_FORMAT_PROPERTY, _localDateFormat);
+        _instantFormat = localProps.getProperty(INSTANT_FORMAT_PROPERTY, _instantFormat);
+        _sqlTimeFormat = localProps.getProperty(SQL_TIME_FORMAT_PROPERTY, _sqlTimeFormat);
         _timestampFormat = localProps.getProperty(TIMESTAMP_FORMAT_PROPERTY, _timestampFormat);
         _spaceURL = localProps.getProperty(SPACE_URL);
         _listenPort = getInteger(localProps.getProperty(PORT_PROPERTY), PORT_DEFAULT);

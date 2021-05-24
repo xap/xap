@@ -259,6 +259,19 @@ public class SpaceConfigFactory {
         spaceConfig.setQpSpaceWriteLeaseTime(Long.parseLong(schemaProps.getProperty(
                 QueryProcessorInfo.QP_SPACE_WRITE_LEASE_PROP, QueryProcessorInfo.QP_SPACE_WRITE_LEASE_DEFAULT)));
 
+
+        spaceConfig.setQpDateFormat(schemaProps.getProperty(
+                Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_DATE_FORMAT_PROP,
+                QueryProcessorInfo.QP_DATE_FORMAT_DEFAULT));
+
+        spaceConfig.setQpTimeFormat(schemaProps.getProperty(
+                Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_TIME_FORMAT_PROP,
+                QueryProcessorInfo.QP_TIME_FORMAT_DEFAULT));
+
+        spaceConfig.setQpDateTimeFormat(schemaProps.getProperty(
+                Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_DATETIME_FORMAT_PROP,
+                QueryProcessorInfo.QP_DATETIME_FORMAT_DEFAULT));
+
         spaceConfig.setQpUtilDateFormat(schemaProps.getProperty(
                 Constants.SPACE_CONFIG_PREFIX + QueryProcessorInfo.QP_UTILDATE_FORMAT_PROP,
                 QueryProcessorInfo.QP_UTILDATE_FORMAT_DEFAULT));

@@ -1414,6 +1414,12 @@ public class JSpaceContainerImpl implements IJSpaceContainer, IJSpaceContainerAd
                 QueryProcessorInfo.QP_SPACE_READ_LEASE_TIME_PROP, QueryProcessorInfo.QP_SPACE_READ_LEASE_TIME_DEFAULT, false));
         spaceAttr.setQpSpaceWriteLeaseTime(configReader.getLongSpaceProperty(
                 QueryProcessorInfo.QP_SPACE_WRITE_LEASE_PROP, QueryProcessorInfo.QP_SPACE_WRITE_LEASE_DEFAULT, false));
+        spaceAttr.setQpTimeFormat(configReader.getSpaceProperty(
+                QueryProcessorInfo.QP_TIME_FORMAT_PROP, QueryProcessorInfo.QP_TIME_FORMAT_DEFAULT, false));
+        spaceAttr.setQpDateFormat(configReader.getSpaceProperty(
+                QueryProcessorInfo.QP_DATE_FORMAT_PROP, QueryProcessorInfo.QP_DATE_FORMAT_DEFAULT, false));
+        spaceAttr.setQpDateTimeFormat(configReader.getSpaceProperty(
+                QueryProcessorInfo.QP_DATETIME_FORMAT_PROP, QueryProcessorInfo.QP_DATETIME_FORMAT_DEFAULT, false));
         spaceAttr.setQpUtilDateFormat(configReader.getSpaceProperty(
                 QueryProcessorInfo.QP_UTILDATE_FORMAT_PROP, QueryProcessorInfo.QP_UTILDATE_FORMAT_DEFAULT, false));
         spaceAttr.setQpSqlDateFormat(configReader.getSpaceProperty(
