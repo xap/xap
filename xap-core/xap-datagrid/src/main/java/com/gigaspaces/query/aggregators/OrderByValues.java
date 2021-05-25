@@ -18,61 +18,55 @@
 package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.internal.io.IOUtils;
-import com.gigaspaces.internal.query.RawEntry;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author Sagiv Michael
  * @since 16.0.0
  */
 
-public class OrderByElement implements Externalizable {
+public class OrderByValues implements Externalizable{
 
-    private List<RawEntry> rawEntries = new ArrayList<>();
-    private OrderByValues orderByValues;
+    private Object[] values;
 
-    public OrderByElement(OrderByValues orderByValues) {
-        this.orderByValues = orderByValues;
+    public OrderByValues() {
     }
 
-    public OrderByElement() {
+    public OrderByValues(Object[] values) {
+        this.values = values;
     }
 
-    public void addRawEntry(RawEntry rawEntry) {
-        this.rawEntries.add(rawEntry);
+    public Object[] getValues() {
+        return values;
     }
 
-    public void addRawEntries(List<RawEntry> rawEntries) {
-        this.rawEntries.addAll(rawEntries);
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof OrderByValues)) return false;
+        OrderByValues that = (OrderByValues) o;
+        return Arrays.equals(getValues(), that.getValues());
     }
 
-    public List<RawEntry> getRawEntries() {
-        return rawEntries;
-    }
-
-    public Object getValue(int index) {
-        return this.orderByValues.getValues()[index];
-    }
-
-    public OrderByValues getOrderByValues() {
-        return this.orderByValues;
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(getValues());
     }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        IOUtils.writeList(out, rawEntries);
-        IOUtils.writeObject(out, orderByValues);
+        IOUtils.writeObjectArray(out, values);
+
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        this.rawEntries = IOUtils.readList(in);
-        this.orderByValues = IOUtils.readObject(in);
+        this.values = IOUtils.readObjectArray(in);
+
     }
 }

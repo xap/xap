@@ -18,6 +18,7 @@
 package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.internal.io.IOUtils;
+import com.gigaspaces.internal.query.RawEntry;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -39,12 +40,11 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
     //used to post process the entries and apply projection template
     private transient SpaceEntriesAggregatorContext context;
     private transient List<OrderByElement> list;
-
-
-    private int limit = Integer.MAX_VALUE;
+    private transient HashMap<OrderByValues, OrderByElement> map;
     private transient int aggregatedCount = 0;
 
-    private List<OrderByPath> orderByPaths = new LinkedList<OrderByPath>();
+    private int limit = Integer.MAX_VALUE;
+    private List<OrderByPath> orderByPaths = new LinkedList<>();
 
     public OrderByAggregator() {
     }
@@ -85,15 +85,25 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         if (list == null) {
             list = new ArrayList<>();
         }
+        if (map == null) {
+            map = new HashMap<>();
+        }
 
-        list.add(new OrderByElement(orderByPaths, context));
+        OrderByValues values = getOrderValues(context);
+
+        if (!map.containsKey(values)) {
+            OrderByElement orderByElement = new OrderByElement(values);
+            map.put(values, orderByElement);
+            list.add(orderByElement);
+        }
+        map.get(values).addRawEntry(context.getRawEntry());
+
         aggregatedCount++;
 
         //if found more than allowed limit - evict highest
         if (aggregatedCount > limit) {
             list.sort(new OrderByElementComparator(this.orderByPaths));
-            list.remove(list.size() - 1);
-            aggregatedCount--;
+            evictHighestRaw();
         }
 
     }
@@ -105,20 +115,31 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         if (list == null) {
             list = new ArrayList<>();
         }
+        if (map == null) {
+            map = new HashMap<>();
+        }
 
         List<OrderByElement> partitionResultList = partitionResult.getResultList();
         if (partitionResultList == null) {
             return;
         }
-        //collect results from each partitions
-        list.addAll(partitionResultList);
-        aggregatedCount += partitionResultList.size();
-        //if found more than allowed limit - evict highest
-        if (aggregatedCount > limit) {
-            list.sort(new OrderByElementComparator(this.orderByPaths));
-            while (aggregatedCount > limit) {
-                list.remove(list.size() - 1);
-                aggregatedCount--;
+        for (OrderByElement orderByElement : partitionResultList) { // come sorted from each partitions.
+            OrderByValues values = orderByElement.getOrderByValues();
+            if (!map.containsKey(values)) { // not exist at the compound map, so not exist at the list too
+                map.put(values, orderByElement);
+                list.add(orderByElement);
+            } else { // marge
+                map.get(values).addRawEntries(orderByElement.getRawEntries());
+            }
+
+            aggregatedCount += orderByElement.getRawEntries().size();
+
+            //if found more than allowed limit - evict highest
+            if (aggregatedCount > limit) {
+                list.sort(new OrderByElementComparator(this.orderByPaths));
+                while (aggregatedCount > limit) {
+                    evictHighestRaw();
+                }
             }
         }
     }
@@ -128,7 +149,9 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
 
         OrderByScanResult orderByResult = new OrderByScanResult();
         if (list != null) {
-            list.forEach(orderByElement -> context.applyProjectionTemplate(orderByElement.getRawEntry()));
+            list.forEach(orderByElement ->
+                    orderByElement.getRawEntries().forEach(rawEntry ->
+                            context.applyProjectionTemplate(rawEntry)));
             list.sort(new OrderByElementComparator(this.orderByPaths));
             orderByResult.setResultList(list);
         }
@@ -142,9 +165,14 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
             return new ArrayList<>();
         }
         list.sort(new OrderByElementComparator(this.orderByPaths));
-        return list.stream()
-                .map(orderByElement -> (T) toObject(orderByElement.getRawEntry()))
-                .collect(Collectors.toList());
+
+        ArrayList<T> finalResults = new ArrayList<T>(aggregatedCount);
+
+        for (OrderByElement orderByElement : list) {
+            finalResults.addAll(orderByElement.getRawEntries().stream().map(rawEntry -> (T) toObject(rawEntry)).collect(Collectors.toList()));
+        }
+
+        return finalResults;
     }
 
     @Override
@@ -159,6 +187,21 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         limit = in.readInt();
     }
 
+    private OrderByValues getOrderValues(SpaceEntriesAggregatorContext context) {
+        return new OrderByValues(this.orderByPaths.stream().map(orderByPath -> context.getPathValue(orderByPath.getPath())).toArray());
+    }
+
+    private void evictHighestRaw() {
+        OrderByElement orderByElement = list.remove(list.size() - 1); //pop last
+        List<RawEntry> rawEntries = orderByElement.getRawEntries();
+        if (rawEntries.size() > 1) {
+            rawEntries.remove(rawEntries.size() - 1);
+            list.add(orderByElement); //put it back.
+        } else { //has only 1 rawEntry therefore remove from map too. and don't put it back in list.
+            map.remove(orderByElement.getOrderByValues());
+        }
+        aggregatedCount--;
+    }
 
     public static class OrderByScanResult implements Externalizable {
 
@@ -202,7 +245,7 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         @Override
         public int compare(OrderByElement o1, OrderByElement o2) {
             int rc = 0;
-            for (int i = 0; i< this.orderByPaths.size() ; i++) {
+            for (int i = 0; i < this.orderByPaths.size(); i++) {
                 Comparable c1 = (Comparable) o1.getValue(i);
                 Comparable c2 = (Comparable) o2.getValue(i);
 
