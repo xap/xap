@@ -598,7 +598,7 @@ public class Reader {
                 if (isReusedBuffer)
                     _ois = new MarshalInputStream(_bais, _streamContext);
             } catch (IOException ioe) {
-                throw new UnMarshallingException("Failed to unmarsh :" + packet, ioe);
+                throw new UnMarshallingException("Failed to unmarsh:" + packet + " - " + ioe, ioe);
             } finally {
                 if (isReusedBuffer && _bufferIsOccupied) {
                     _bais.setBuffer(DUMMY_BUFFER); // release the internal reference for the byte array
@@ -608,7 +608,7 @@ public class Reader {
 
             throw e;
         } catch (Exception e) {
-            throw new UnMarshallingException("Failed to unmarsh :" + packet, e);
+            throw new UnMarshallingException("Failed to unmarsh: " + packet + " - " + e, e);
         }
     }
 
