@@ -17,20 +17,17 @@
 package com.gigaspaces.processor;
 
 import com.gigaspaces.common.Data;
-
-import org.junit.runner.RunWith;
-import org.junit.Before;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.openspaces.core.GigaSpace;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import org.openspaces.core.GigaSpace;
 
 
 /**
@@ -63,7 +60,7 @@ public class ProcessorIntegrationTest {
         template.setProcessed(true);
 
         // wait for the result
-        Data result = gigaSpace.take(template, 500);
+        Data result = gigaSpace.take(template, 60_000);
         // verify it
         assertNotNull("No data object was processed", result);
         assertEquals("Processed Flag is false, data was not processed", true, result.isProcessed());
