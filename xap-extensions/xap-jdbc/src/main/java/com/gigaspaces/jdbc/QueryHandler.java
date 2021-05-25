@@ -1,7 +1,6 @@
 package com.gigaspaces.jdbc;
 
-import com.gigaspaces.jdbc.calcite.GSOptimizer;
-import com.gigaspaces.jdbc.calcite.GSRelNode;
+import com.gigaspaces.jdbc.calcite.*;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
 import com.gigaspaces.jdbc.jsql.JsqlPhysicalPlanHandler;
@@ -21,8 +20,12 @@ import net.sf.jsqlparser.util.validation.ValidationContext;
 import net.sf.jsqlparser.util.validation.ValidationException;
 import net.sf.jsqlparser.util.validation.feature.FeaturesAllowed;
 import net.sf.jsqlparser.util.validation.validator.StatementValidator;
+import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.externalize.RelWriterImpl;
+import org.apache.calcite.rel.logical.ToLogicalConverter;
+import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.SqlNode;
 
@@ -38,18 +41,29 @@ public class QueryHandler {
 
     public ResponsePacket handle(String query, IJSpace space, Object[] preparedValues) throws SQLException {
         GSRelNode calcitePlan = optimizeWithCalcite(query, space);
+        return executeStatement(space, calcitePlan, preparedValues);
 
-        try {
-            Statement statement = CCJSqlParserUtil.parse(query);
-            validateStatement(statement);
-            return executeStatement(space, statement, preparedValues);
-        } catch (JSQLParserException e) {
-            throw new SQLException("Failed to parse query", e);
-        } catch (SQLExceptionWrapper e) {
-            throw e.getException();
-        } catch (GenericJdbcException | UnsupportedOperationException e) {
-            throw new SQLException(e.getMessage(), e);
-        }
+//        try {
+//            Statement statement = CCJSqlParserUtil.parse(query);
+//            validateStatement(statement);
+//            return executeStatement(space, statement, preparedValues);
+//        } catch (JSQLParserException e) {
+//            throw new SQLException("Failed to parse query", e);
+//        } catch (SQLExceptionWrapper e) {
+//            throw e.getException();
+//        } catch (GenericJdbcException | UnsupportedOperationException e) {
+//            throw new SQLException(e.getMessage(), e);
+//        }
+    }
+
+    private ResponsePacket  executeStatement(IJSpace space, GSRelNode relNode, Object[] preparedValues) throws SQLException {
+        ResponsePacket packet = new ResponsePacket();
+        QueryExecutor qE = new QueryExecutor(space, preparedValues);
+        RelNodePhysicalPlanHandler planHandler = new RelNodePhysicalPlanHandler(qE);
+        qE = planHandler.prepareForExecution(relNode);
+        QueryResult queryResult = qE.execute();
+        packet.setResultEntry(queryResult.convertEntriesToResultArrays(null));
+        return packet;
     }
 
     private ResponsePacket executeStatement(IJSpace space, Statement statement, Object[] preparedValues) {
@@ -107,7 +121,6 @@ public class QueryHandler {
         SqlNode validatedAst = optimizer.validate(ast);
         RelNode logicalPlan = optimizer.createLogicalPlan(validatedAst);
         GSRelNode physicalPlan = optimizer.createPhysicalPlan(logicalPlan);
-
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         RelWriterImpl writer = new RelWriterImpl(pw, SqlExplainLevel.EXPPLAN_ATTRIBUTES, false);

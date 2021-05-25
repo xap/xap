@@ -45,4 +45,8 @@ public class GSTable extends AbstractTable {
 
         throw new UnsupportedOperationException("Unsupported type: " + clazz);
     }
+
+    public ITypeDesc getTypeDesc() {
+        return typeDesc;
+    }
 }
