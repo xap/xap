@@ -31,7 +31,7 @@ import java.sql.SQLException;
  * @author Michael Mitrani, 2Train4, 2004
  */
 @com.gigaspaces.api.InternalApi
-public class SelectColumn implements SmartExternalizable {
+public class SelectColumn implements Externalizable {
     private static final long serialVersionUID = 1L;
 
     private String name = null;
