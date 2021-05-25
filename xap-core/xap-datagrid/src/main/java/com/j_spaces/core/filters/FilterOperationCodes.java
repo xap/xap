@@ -126,8 +126,6 @@ public class FilterOperationCodes {
      * @see net.jini.core.event.RemoteEventListener#notify(net.jini.core.event.RemoteEvent)
      */
     public final static int AFTER_ALL_NOTIFY_TRIGGER = 18;
-    public final static int TIERED_STORAGE_READ = 26;
-    public final static int TIERED_STORAGE_WRITE = 27;
     /**
      * Before execute operation.
      *

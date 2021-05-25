@@ -89,8 +89,6 @@ public class JSpaceStatistics implements ISpaceFilter {
         _statRepository[FilterOperationCodes.BEFORE_NOTIFY].register(registrator, "register-listener");
         _statRepository[FilterOperationCodes.BEFORE_NOTIFY_TRIGGER].register(registrator, "before-listener-trigger");
         _statRepository[FilterOperationCodes.AFTER_NOTIFY_TRIGGER].register(registrator, "after-listener-trigger");
-        _statRepository[FilterOperationCodes.TIERED_STORAGE_READ].register(registrator, "tiered-storage-read");
-        _statRepository[FilterOperationCodes.TIERED_STORAGE_WRITE].register(registrator, "tiered-storage-write");
     }
 
     public void process(SpaceContext context, ISpaceFilterEntry subject, int operationCode) {

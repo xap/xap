@@ -26,13 +26,14 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     private ConcurrentHashMap<String, TimePredicate> retentionRules = new ConcurrentHashMap<>(); //TODO - tiered storage - lazy init retention rules
     private ConcurrentHashMap<String, CachePredicate> hotCacheRules = new ConcurrentHashMap<>();
 
-    private InternalRDBMS internalDiskStorage;
+    private InternalRDBMSManager internalDiskStorage;
 
     public TieredStorageManagerImpl() {
 
     }
 
-    public TieredStorageManagerImpl(TieredStorageConfig storageConfig, InternalRDBMS internalDiskStorage, IDirectSpaceProxy proxy, String fullSpaceName) {
+
+    public TieredStorageManagerImpl(TieredStorageConfig storageConfig, InternalRDBMSManager internalDiskStorage, IDirectSpaceProxy proxy, String fullSpaceName) {
         this.logger = LoggerFactory.getLogger(Constants.TieredStorage.getLoggerName(fullSpaceName));
         this.internalDiskStorage = internalDiskStorage;
         this.storageConfig = storageConfig;
@@ -75,7 +76,7 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     }
 
     @Override
-    public InternalRDBMS getInternalStorage() {
+    public InternalRDBMSManager getInternalStorage() {
         return this.internalDiskStorage;
     }
 
