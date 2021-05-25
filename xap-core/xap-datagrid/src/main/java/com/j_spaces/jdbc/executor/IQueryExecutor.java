@@ -35,6 +35,7 @@ import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
 
+import java.io.Externalizable;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.List;
@@ -43,7 +44,7 @@ import java.util.List;
  * @author anna
  * @since 7.0
  */
-public interface IQueryExecutor extends SmartExternalizable {
+public interface IQueryExecutor extends Externalizable {
 
     /**
      * Execute Or expression - execute both children and union the results

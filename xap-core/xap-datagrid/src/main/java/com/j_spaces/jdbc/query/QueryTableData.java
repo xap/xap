@@ -21,7 +21,6 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
-import com.gigaspaces.serialization.SmartExternalizable;
 import com.j_spaces.jdbc.*;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.executor.EntriesCursor;
@@ -39,7 +38,7 @@ import java.io.*;
  * @since 7.0
  */
 @com.gigaspaces.api.InternalApi
-public class QueryTableData implements SmartExternalizable {
+public class QueryTableData implements Externalizable {
     private static final long serialVersionUID = 1L;
 
     private String _tableName;
