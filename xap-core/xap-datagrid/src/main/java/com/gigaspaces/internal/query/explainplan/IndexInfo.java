@@ -18,8 +18,8 @@ package com.gigaspaces.internal.query.explainplan;
 import com.gigaspaces.api.ExperimentalApi;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.metadata.index.SpaceIndexType;
-import com.gigaspaces.serialization.SmartExternalizable;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -29,7 +29,8 @@ import java.io.ObjectOutput;
  * @since 12.0.1
  */
 @ExperimentalApi
-public class IndexInfo implements SmartExternalizable {
+// NOTE: SmartExternalizable is not used here since explain plan relies on reference identity
+public class IndexInfo implements Externalizable {
 
     private String name;
     private Integer size;
