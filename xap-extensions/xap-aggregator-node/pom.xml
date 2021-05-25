@@ -23,17 +23,20 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
             <version>4.1.65.Final</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-jdbc</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
             <version>${spring.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -42,5 +45,10 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+
+    <build>
+        <finalName>aggregator-node</finalName>
+    </build>
 
 </project>
