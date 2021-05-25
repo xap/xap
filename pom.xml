@@ -293,6 +293,12 @@
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>
+            <dependency>
+                <groupId>org.gigaspaces</groupId>
+                <artifactId>xap-aggregator-node</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
