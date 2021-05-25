@@ -20,8 +20,8 @@ public class Statement implements java.sql.Statement {
     @Override
     public ResultSet executeQuery(String sql) throws SQLException {
         try {
-            ResponsePacket res = connection.client.send(sql).get();
-            return new GResultSet(null, res.getResultEntry()) ;
+            ResponsePacket res = connection.getClient().send(sql).get();
+            return new GResultSet(this, res.getResultEntry()) ;
         } catch (Exception e) {
             throw new SQLException(e);
         }

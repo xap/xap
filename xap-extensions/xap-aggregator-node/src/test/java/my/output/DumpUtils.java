@@ -1,4 +1,4 @@
-package com.gigaspaces.sql.aggregatornode.netty.client.output;
+package my.output;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;

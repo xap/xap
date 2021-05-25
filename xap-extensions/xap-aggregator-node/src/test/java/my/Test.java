@@ -1,6 +1,6 @@
 package my;
 
-import com.gigaspaces.sql.aggregatornode.netty.client.output.DumpUtils;
+import my.output.DumpUtils;
 import my.model.Model;
 import org.openspaces.core .GigaSpace;
 import org.openspaces.core.GigaSpaceConfigurer;
@@ -14,12 +14,19 @@ import java.sql.SQLException;
 public class Test {
     public static void main(String[] args) {
         fillSpace();
-        try (Connection conn = DriverManager.getConnection("jdbc::aggregator")) {
-            ResultSet res = conn.createStatement().executeQuery(String.format("SELECT * FROM %s where rowNum < 4", Model.class.getName()));
-            DumpUtils.dump(res);
+        try (Connection conn = DriverManager.getConnection("jdbc:gigaspaces:aggregator")) {
+            execute(conn, (String.format("SELECT * FROM %s where rowNum < 4", Model.class.getName())));
+            execute(conn, (String.format("SELECT * FROM %s where rowNum < 4", Model.class.getName())));
+
+
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
+    }
+
+    private static void execute(Connection conn, String statement) throws SQLException {
+        ResultSet res = conn.createStatement().executeQuery(statement);
+        DumpUtils.dump(res);
     }
 
     private static void fillSpace() {

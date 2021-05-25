@@ -51,11 +51,11 @@ import java.util.Map;
 public class GResultSet implements ResultSet {
 
     private final ResultEntry results;
-    private final GStatement statement;
+    private final Statement statement;
     private boolean last_was_null = false;
     private int currentRow = 0; //first time after next it will be 1
 
-    public GResultSet(GStatement statement, ResultEntry results) {
+    public GResultSet(Statement statement, ResultEntry results) {
         this.statement = statement;
         this.results = results;
     }

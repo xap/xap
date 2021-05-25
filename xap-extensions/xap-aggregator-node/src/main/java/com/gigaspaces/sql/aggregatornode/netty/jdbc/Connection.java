@@ -1,6 +1,6 @@
 package com.gigaspaces.sql.aggregatornode.netty.jdbc;
 
-import com.gigaspaces.sql.aggregatornode.netty.client.EchoClient;
+import com.gigaspaces.sql.aggregatornode.netty.client.Client;
 
 import java.sql.*;
 import java.util.Map;
@@ -8,15 +8,19 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 
 public class Connection implements java.sql.Connection {
-    public final EchoClient client;
+    private final Client client;
 
     public Connection() {
-        this.client = new EchoClient();
+        this.client = new Client();
         try {
             client.init();
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public Client getClient() {
+        return client;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.gigaspaces.sql.aggregatornode.netty.client.output;
+package my.output;
 
 /**
  * Created by moran on 6/8/18.
