@@ -26,17 +26,19 @@ import com.gigaspaces.internal.services.ZooKeeperServiceFactory;
 import com.gigaspaces.internal.version.PlatformVersion;
 import com.gigaspaces.start.manager.XapManagerConfig;
 import com.sun.jini.start.ServiceDescriptor;
-
 import net.jini.config.Configuration;
 import net.jini.config.ConfigurationException;
 import net.jini.config.ConfigurationProvider;
-
 import org.jini.rio.boot.BootUtil;
 import org.jini.rio.boot.CommonClassLoader;
 import org.jini.rio.boot.RioServiceDescriptor;
 import org.jini.rio.jmx.MBeanServerFactory;
 import org.jini.rio.tools.webster.Webster;
 
+import javax.management.MBeanServer;
+import javax.management.remote.JMXConnectorServer;
+import javax.management.remote.JMXConnectorServerFactory;
+import javax.management.remote.JMXServiceURL;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileFilter;
@@ -52,11 +54,6 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-
-import javax.management.MBeanServer;
-import javax.management.remote.JMXConnectorServer;
-import javax.management.remote.JMXConnectorServerFactory;
-import javax.management.remote.JMXServiceURL;
 
 /**
  * Provides system configuration support.
@@ -1078,7 +1075,7 @@ public class SystemConfig {
                 if (mbs != null) {
                     String publicHostAddress= SystemInfo.singleton().network().getPublicHostId();
                     final String jmxServiceURL = JMXUtilities.createJMXUrl(hostAddress, jmxRemotePort);
-                    final String jmxServicePublicURL = JMXUtilities.createJMXUrl(publicHostAddress, registryPort);
+                    final String jmxServicePublicURL = JMXUtilities.createJMXUrl(publicHostAddress, jmxRemotePort);
                     /* Set the JMX property to true */
                     System.setProperty(CommonSystemProperties.JMX_ENABLED_PROP, Boolean.TRUE.toString());
                     System.setProperty(CommonSystemProperties.CREATE_JMX_CONNECTOR_PROP, Boolean.FALSE.toString());

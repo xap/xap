@@ -121,6 +121,10 @@ public class JavaCommandBuilder {
         return this;
     }
 
+    public String getEnvVarValue(String envVarName){
+        return env.get(envVarName);
+    }
+
     public JavaCommandBuilder heap(String heap) {
         initialHeap(heap);
         maxHeap(heap);
