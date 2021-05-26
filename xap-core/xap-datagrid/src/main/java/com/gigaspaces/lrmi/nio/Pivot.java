@@ -479,6 +479,7 @@ public class Pivot {
             if (reqObject instanceof HandshakeRequest) {
                 HandshakeRequest handshakeRequest = (HandshakeRequest) reqObject;
                 channelEntry.setSourceDetails(handshakeRequest.getSourcePlatformLogicalVersion(), handshakeRequest.getSourcePid());
+                LRMIInvocationContext.getCurrentContext().setSourceLogicalVersion(handshakeRequest.getSourcePlatformLogicalVersion());
                 return new ReplyPacket<Object>(null, null);
             }
         }

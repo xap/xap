@@ -89,7 +89,7 @@ public class ReplyPacket<T> implements IPacket {
             previousIdentifier = LRMIConnection.setRemoteClassLoaderIdentifier(remoteClassLoaderId);
 
         PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
-        if (version != null && version.greaterOrEquals(PlatformLogicalVersion.v16_0_0)) {
+        if (version.greaterOrEquals(PlatformLogicalVersion.v16_0_0)) {
             result = IOUtils.readObject(in);
             exception = IOUtils.readObject(in);
         } else {
@@ -109,7 +109,7 @@ public class ReplyPacket<T> implements IPacket {
         out.writeByte(SERIAL_VERSION);
 
         PlatformLogicalVersion version = LRMIInvocationContext.getEndpointLogicalVersion();
-        if (version != null && version.greaterOrEquals(PlatformLogicalVersion.v16_0_0)) {
+        if (version.greaterOrEquals(PlatformLogicalVersion.v16_0_0)) {
             IOUtils.writeObject(out, result);
             IOUtils.writeObject(out, exception);
         } else {
