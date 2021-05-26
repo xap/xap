@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.gigaspaces</groupId>
     <artifactId>hello-world-example</artifactId>
-    <version>14.2.0</version>
+    <version>14.2.0-20410</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -23,7 +23,7 @@
         <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-openspaces</artifactId>
-            <version>14.2.0</version>
+            <version>14.2.0-20410</version>
         </dependency>
     </dependencies>
 
