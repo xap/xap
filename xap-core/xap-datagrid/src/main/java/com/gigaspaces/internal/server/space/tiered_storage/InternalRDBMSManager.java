@@ -13,26 +13,17 @@ import com.j_spaces.core.sadapter.SAException;
 import java.io.IOException;
 
 public class InternalRDBMSManager {
+
+    InternalRDBMS internalRDBMS;
     private final LongCounter readDisk = new LongCounter();
-
-    public LongCounter getReadDisk() {
-        return readDisk;
-    }
-
-    public LongCounter getWriteDisk() {
-        return writeDisk;
-    }
-
     private final LongCounter writeDisk = new LongCounter();
 
     public InternalRDBMSManager(InternalRDBMS internalRDBMS) {
         this.internalRDBMS = internalRDBMS;
     }
 
-    InternalRDBMS internalRDBMS;
 
-
-    public void initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager, MetricRegistrator registrator) throws SAException{
+    public void initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager) throws SAException{
         internalRDBMS.initialize(spaceName, fullMemberName, typeManager);
     }
 
@@ -51,6 +42,7 @@ public class InternalRDBMSManager {
      */
     public void insertEntry(Context context,  IEntryHolder entryHolder) throws SAException{
         writeDisk.inc();
+        System.out.println("insertEntry writeDisk "+ writeDisk.getCount());
         internalRDBMS.insertEntry(context, entryHolder);
     }
 
@@ -82,6 +74,7 @@ public class InternalRDBMSManager {
 
     public ISAdapterIterator<IEntryHolder> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder) throws SAException{
         readDisk.inc();
+        System.out.println("makeEntriesIter readDisk "+ readDisk.getCount());
         return internalRDBMS.makeEntriesIter(context, typeName, templateHolder);
     }
 
@@ -92,5 +85,14 @@ public class InternalRDBMSManager {
     public void shutDown(){
         internalRDBMS.shutDown();
     }
+
+    public LongCounter getReadDisk() {
+        return readDisk;
+    }
+
+    public LongCounter getWriteDisk() {
+        return writeDisk;
+    }
+
 }
 

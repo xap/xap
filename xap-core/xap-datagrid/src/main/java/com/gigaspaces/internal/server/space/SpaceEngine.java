@@ -319,7 +319,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             final TypeDescFactory typeDescFactory = new TypeDescFactory(_directProxy);
             _typeManager = new SpaceTypeManager(typeDescFactory, _configReader, tieredStorageManager);
             if (isTieredStorage()) {
-                tieredStorageManager.getInternalStorage().initialize(_spaceName, _fullSpaceName, _typeManager, getMetricRegistrator());
+                tieredStorageManager.getInternalStorage().initialize(_spaceName, _fullSpaceName, _typeManager);
             }
         } catch (SAException e) {
             throw new CreateException("Failed to initialize InternalRDBMS", e);
@@ -514,12 +514,9 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 return countTransactions(TransactionInfo.Types.ALL, TransactionConstants.ACTIVE);
             }
         });
-        registerDiskSizeMetric(registrator);
-        registrator.register( ("tiered-storage-read-tp"), tieredStorageManager.getInternalStorage().getReadDisk());
-        registrator.register("tiered-storage-write-tp", tieredStorageManager.getInternalStorage().getWriteDisk());
-
+        trieredStorageMetrics(registrator);
     }
-    private void registerDiskSizeMetric (MetricRegistrator registrator){
+    private void trieredStorageMetrics (MetricRegistrator registrator){
         if (!this.isTieredStorage()) {
             return;
         }
@@ -527,6 +524,8 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 //        if (!_engine.getMetricManager().getMetricFlagsState().isTieredDiskSizeMetricEnabled()){
 //            return;
 //        }
+        registrator.register( ("tiered-storage-read-tp"), tieredStorageManager.getInternalStorage().getReadDisk());
+        registrator.register("tiered-storage-write-tp", tieredStorageManager.getInternalStorage().getWriteDisk());
 
         long diskSize = 0;
         try {
