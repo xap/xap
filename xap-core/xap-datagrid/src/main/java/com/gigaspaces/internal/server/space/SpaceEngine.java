@@ -2150,6 +2150,12 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 tHolder.getAnswerHolder().setSyncRelplicationLevel(context.getReplicationContext().getCompleted());
             }
         } finally {
+            if (tHolder.isServerIterator() && tHolder.getServerIteratorInfo().getScanEntriesIter() != null){
+                IScanListIterator scanListIterator = tHolder.getServerIteratorInfo().getScanEntriesIter();
+                if (scanListIterator instanceof ScanListSAIterator){
+                    ((EntriesIter)((ScanListSAIterator)scanListIterator).get_SAiter()).afterAlternatingThreadBatch();
+                }
+            }
             context = _cacheManager.freeCacheContext(context);
         }
 
@@ -4094,12 +4100,31 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
     public void executeOnMatchingEntries(Context context, ITemplateHolder template, boolean makeWaitForInfo)
             throws TransactionException, TemplateDeletedException, SAException {
+        boolean isServerIterator = template.isServerIterator();
+        ServerIteratorInfo serverIteratorInfo = template.getServerIteratorInfo();
 
         if(isTieredStorage()){
-            if(context.getTemplateTieredState() == null){
-                context.setTemplateTieredState(getTieredStorageManager().guessTemplateTier(template));
+            if (isServerIterator){
+                if (serverIteratorInfo.getTemplateMatchTier() != null){
+                    if (context.getTemplateTieredState() == null){ //todo- when context is not null?
+                        context.setTemplateTieredState(serverIteratorInfo.getTemplateMatchTier());
+                    }
+                } else {
+                    TemplateMatchTier templateMatchTier = getTieredStorageManager().guessTemplateTier(template);
+                    serverIteratorInfo.setTemplateMatchTier(templateMatchTier);
+                    CachePredicate cachePredicate = getTieredStorageManager().getCacheRule(template.getClassName());
+                    if (cachePredicate != null && cachePredicate.isTimeRule()){
+                        serverIteratorInfo.setTimeBased(true);
+                    }
+                    if (context.getTemplateTieredState() == null){
+                        context.setTemplateTieredState(templateMatchTier);
+                    }
+                }
+            } else {
+                if (context.getTemplateTieredState() == null){
+                    context.setTemplateTieredState(getTieredStorageManager().guessTemplateTier(template));
+                }
             }
-
             if (template.getExplainPlan() != null && context.getExplainPlanContext() == null) {
                 template.getExplainPlan().setPartitionId(Integer.toString(getPartitionIdOneBased()));
                 ExplainPlanContext explainPlanContext = new ExplainPlanContext();
@@ -4143,13 +4168,21 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         long leaseFilter = SystemTime.timeMillis();
 
-
-        if ((getCacheManager().isEvictableCachePolicy() && !_cacheManager.isMemorySpace()) || (isTieredStorage() && context.getTemplateTieredState() != TemplateMatchTier.MATCH_HOT)) {
-            IScanListIterator<IEntryCacheInfo> toScan =
-                    _cacheManager.makeScanableEntriesIter(context, template, serverTypeDesc,
-                            0 /*scnFilter*/, leaseFilter /*leaseFilter*/,
-                            isMemoryOnlyOperation(template)/*memoryonly*/);
-
+        if ((getCacheManager().isEvictableCachePolicy() && !_cacheManager.isMemorySpace()) ||
+                (isTieredStorage() && (context.getTemplateTieredState() != TemplateMatchTier.MATCH_HOT ||
+                        (isServerIterator && template.getServerIteratorInfo().isTimeBased() && !template.isMemoryOnlySearch())))){
+            IScanListIterator<IEntryCacheInfo> toScan;
+            if (isServerIterator && serverIteratorInfo.getScanEntriesIter() != null){
+                toScan = serverIteratorInfo.getScanEntriesIter();
+                ((EntriesIter)(((ScanListSAIterator)toScan).get_SAiter())).beforeAlternatingThreadBatch(context);
+            } else {
+                toScan = _cacheManager.makeScanableEntriesIter(context, template, serverTypeDesc,
+                        0 /*scnFilter*/, leaseFilter /*leaseFilter*/,
+                        isMemoryOnlyOperation(template)/*memoryonly*/);
+                if (isServerIterator){
+                    serverIteratorInfo.setScanEntriesIter(toScan);
+                }
+            }
             getMatchedEntriesAndOperateSA_Scan(context,
                     template,
                     toScan, makeWaitForInfo, null);
@@ -4157,11 +4190,11 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         else // all in cache- direct work with cm SLs- performance!!!
         { //m_CacheManager.m_CachePolicy == CacheManager.CACHE_POLICY_ALL_IN_CACHE || m_CacheManager.m_IsMemorySA
             // perform anti-starvation random scan
-            CircularNumerator<IServerTypeDesc> subTypesCircularNumerator = template.isServerIterator() ? template.getServerIteratorInfo().getSubTypesCircularNumerator() : null;
+            CircularNumerator<IServerTypeDesc> subTypesCircularNumerator = isServerIterator ? template.getServerIteratorInfo().getSubTypesCircularNumerator() : null;
             if(subTypesCircularNumerator == null) {
                 int start =  template.isFifoSearch() || subTypes.length == 1 ? 0 : new Random().nextInt(subTypes.length);
                 subTypesCircularNumerator = new CircularNumerator<>(subTypes, start);
-                if(template.isServerIterator())
+                if(isServerIterator)
                     template.getServerIteratorInfo().setSubTypesCircularNumerator(subTypesCircularNumerator);
             }
             while (subTypesCircularNumerator.getCurrent() != null){
@@ -4232,7 +4265,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             if( template.isServerIterator()){
                 if(!hasNext){
                     toScan.releaseScan();
-                    template.getServerIteratorInfo().setScanListIterator(null);
+                    template.getServerIteratorInfo().setScanEntriesIter(null);
                 }
             }
             else{
@@ -4315,7 +4348,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             return;  //in-place-update by id no inheritance
         if(entryTypeDesc.getTypeDesc().isBroadcast() && skipBroadcastTable(context, template))
             return;
-        IScanListIterator<IEntryCacheInfo> toScan = template.isServerIterator() ? getOrCreateScanListIteratorFromServerIterator(context, entryTypeDesc, template, serverTypeDesc) : _cacheManager.getMatchingMemoryEntriesForScanning(context, entryTypeDesc, template, serverTypeDesc);
+        IScanListIterator<IEntryCacheInfo> toScan = template.isServerIterator()? getOrCreateScanListIteratorFromServerIterator(context, entryTypeDesc, template, serverTypeDesc) : _cacheManager.getMatchingMemoryEntriesForScanning(context, entryTypeDesc, template, serverTypeDesc);
         if (toScan == null)
             return;
 
@@ -4325,7 +4358,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                     true /*needMatch*/, -1 /*indexPos*/, null, SystemTime.timeMillis(),
                     toScan.next(), makeWaitForInfo, entryTypeDesc);
             if(template.isServerIterator()){
-                template.getServerIteratorInfo().setScanListIterator(null);
+                template.getServerIteratorInfo().setScanEntriesIter(null);
             }
         }
 
@@ -4351,15 +4384,15 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 _logger.debug("Server Iterator " + serverIteratorInfo.getUuid() + " is not active.");
             return null;
         }
-        if(serverIteratorInfo.getScanListIterator() == null){
+        if(serverIteratorInfo.getScanEntriesIter() == null){
             IScanListIterator scanListIterator = _cacheManager.getMatchingMemoryEntriesForScanning(context, entryTypeDesc, template, serverTypeDesc);
             if(scanListIterator != null) {
-                serverIteratorInfo.setScanListIterator(scanListIterator);
+                serverIteratorInfo.setScanEntriesIter(scanListIterator);
                 return scanListIterator;
             }
             return null;
         }
-        return serverIteratorInfo.getScanListIterator();
+        return serverIteratorInfo.getScanEntriesIter();
     }
 
 

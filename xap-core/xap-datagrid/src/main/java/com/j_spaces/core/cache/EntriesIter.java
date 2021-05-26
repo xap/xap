@@ -31,7 +31,6 @@ import com.j_spaces.core.XtnStatus;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.blobStore.IBlobStoreRefCacheInfo;
 import com.j_spaces.core.cache.context.TemplateMatchTier;
-import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.IStoredList;
@@ -64,6 +63,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
     //NOTE-meaningless in FIFO. ignored
     final private boolean _memoryOnly;
     final private boolean _transientOnly;
+    volatile long alternatingThreadBarrier = 1;
 
 
     //FIFO-related +++++++++++++++++++++++++++++++++++++++++++
@@ -96,22 +96,23 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
             if(context.getTemplateTieredState() == null){
                 context.setTemplateTieredState(_cacheManager.getEngine().getTieredStorageManager().guessTemplateTier(template));
             }
-
-            if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT || memoryOnly || template.isMemoryOnlySearch()){
+            boolean isTimeBased = template.isServerIterator() && template.getServerIteratorInfo().isTimeBased();
+             if( (!isTimeBased && context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT) || memoryOnly || template.isMemoryOnlySearch()){
                 _memoryOnly = true;
             } else {
-                _memoryOnly = memoryOnly;
+                if (isTimeBased){
+                    _memoryOnly = false;
+                } else{
+                    _memoryOnly = memoryOnly;
+                }
                 if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_COLD){
                     _doneWithCache = true;
                 }
 
-
-                if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
+                if(isTimeBased || context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
                     _entriesReturned = new HashSet<>();
                 }
-
             }
-
             _notRefreshCache = true;
 
         } else {
@@ -219,6 +220,25 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
 
     }
 
+    private Context get_context() {
+        return _context;
+    }
+
+    public void beforeAlternatingThreadBatch(Context context){
+        if (alternatingThreadBarrier == 0){
+            throw new RuntimeException("internal error alternating thread");
+        }
+        set_context(context);
+    }
+
+    public void afterAlternatingThreadBatch(){
+        alternatingThreadBarrier++;
+        set_context(null);
+    }
+
+    private void set_context(Context _context) {
+        this._context = _context;
+    }
 
     private int getMathRandom(int size) {
         return randomGenerator.nextInt(size);
@@ -248,6 +268,13 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
             if (_currentEntryCacheInfo == null) {
                 // finished with cache, starting with SA
                 _doneWithCache = true;
+                if (_templateHolder.isServerIterator() && _templateHolder.getServerIteratorInfo().isTimeBased()){
+                    TemplateMatchTier updatedTieredState = _cacheManager.getEngine().getTieredStorageManager().guessTemplateTier(_templateHolder);
+                    if (updatedTieredState != _templateHolder.getServerIteratorInfo().getTemplateMatchTier()){
+                        _context.setTemplateTieredState(updatedTieredState);
+                        _templateHolder.getServerIteratorInfo().setTemplateMatchTier(updatedTieredState);
+                    }
+                }
                 if (_cacheManager.isEvictableCachePolicy() &&
                         !_cacheManager.isMemorySpace() && !_memoryOnly && !_transientOnly) {
 
