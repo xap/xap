@@ -103,7 +103,7 @@ public class LRMIInvocationContext {
         return _trace;
     }
 
-    private void setSourceLogicalVersion(PlatformLogicalVersion sourceLogicalVersion) {
+    public void setSourceLogicalVersion(PlatformLogicalVersion sourceLogicalVersion) {
         this._sourceLogicalVersion = sourceLogicalVersion;
     }
 
