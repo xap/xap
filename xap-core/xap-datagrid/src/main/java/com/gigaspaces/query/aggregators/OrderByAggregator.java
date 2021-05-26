@@ -91,12 +91,15 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
 
         OrderByValues values = getOrderValues(context);
 
-        if (!map.containsKey(values)) {
+        OrderByElement existingOrderByElement = map.get(values);
+        if (existingOrderByElement == null) {
             OrderByElement orderByElement = new OrderByElement(values);
+            orderByElement.addRawEntry(context.getRawEntry());
             map.put(values, orderByElement);
             list.add(orderByElement);
+        } else {
+            existingOrderByElement.addRawEntry(context.getRawEntry());
         }
-        map.get(values).addRawEntry(context.getRawEntry());
 
         aggregatedCount++;
 
@@ -125,11 +128,12 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
         }
         for (OrderByElement orderByElement : partitionResultList) { // come sorted from each partitions.
             OrderByValues values = orderByElement.getOrderByValues();
-            if (!map.containsKey(values)) { // not exist at the compound map, so not exist at the list too
+            OrderByElement existingOrderByElement = map.get(values);
+            if (existingOrderByElement == null) { // not exist at the compound map, so not exist at the list too
                 map.put(values, orderByElement);
                 list.add(orderByElement);
             } else { // marge
-                map.get(values).addRawEntries(orderByElement.getRawEntries());
+                existingOrderByElement.addRawEntries(orderByElement.getRawEntries());
             }
 
             aggregatedCount += orderByElement.getRawEntries().size();
