@@ -32,7 +32,14 @@ public class MainCalciteTester {
         try (Connection connection = DriverManager.getConnection("jdbc:gigaspaces:v3://localhost:4174/" + space.getSpaceName(), properties)) {
             Statement statement = connection.createStatement();
 
-            execute(statement, String.format("SELECT first_name FROM (SELECT id, age, email, first_name, last_name FROM %s) where (last_name = 'Bb' AND first_name = 'Adam') OR ((last_name = 'Cc') or (email = 'Adler@msn.com') or (age>=40))", "\"" + MyPojo.class.getName() + "\""));
+//            execute(statement, String.format("SELECT * FROM %s where last_name = 'Bb' OR first_name = 'Eve'", "\"" + MyPojo.class.getName() + "\""));
+//            execute(statement, String.format("SELECT first_name as first, last_name as last FROM %s where last_name = 'Bb'", "\"" + MyPojo.class.getName() + "\""));
+//            execute(statement, String.format("SELECT * FROM %s as T where (T.last_name = 'Bb' AND T.first_name = 'Adam') OR ((T.last_name = 'Cc') or (T.email = 'Adler@msn.com') or (T.age>=40))", "\"" + MyPojo.class.getName() + "\""));
+//            execute(statement, String.format("SELECT * FROM %s as T where T.last_name = 'Bb' or T.first_name = 'Adam' or T.last_name = 'Cc' or T.email = 'Adler@msn.com' or T.age>=40", "\"" + MyPojo.class.getName() + "\""));
+//            execute(statement, "SELECT * FROM com.gigaspaces.jdbc.MyPojo as T where (T.last_name = 'Bb' AND T.first_name = 'Adam') OR ((T.last_name = 'Cc') or (T.email = 'Adler@msn.com') or (T.age>=40))");
+            execute(statement, String.format("SELECT * FROM %s as T where T.last_name = 'Aa' OR T.first_name = 'Adam'", "\"" + MyPojo.class.getName() + "\""));
+//            execute(statement, String.format("SELECT * FROM %s as T where T.age <= 40", "\"" + MyPojo.class.getName() + "\""));
+//            execute(statement, String.format("EXPLAIN PLAN FOR SELECT * FROM %s ", "\"" + MyPojo.class.getName() + "\""));
         }
     }
 

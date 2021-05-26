@@ -52,11 +52,13 @@ public class RelNodePhysicalPlanHandler implements PhysicalPlanHandler<GSRelNode
                         String originalName = inputFields.get(program.getSourceField(i));
                         tableContainer.addQueryColumn(originalName, alias, true);
                     }
-                    RexHandler rexHandler = new RexHandler(program, queryExecutor);
+                    RexHandler rexHandler = new RexHandler(program);
                     for (RexNode expr : program.getExprList()) {
                         expr.accept(rexHandler);
                     }
-                    for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : rexHandler.getQTPMap().entrySet()) {
+                    ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, rexHandler.getFields());
+                    program.getCondition().accept(conditionHandler);
+                    for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : conditionHandler.getQTPMap().entrySet()) {
                         tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
                     }
 
