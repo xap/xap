@@ -31,6 +31,10 @@ public class InternalRDBMSManager {
         return internalRDBMS.getDiskSize();
     }
 
+    public long getFreeSpaceSize() throws SAException, IOException{
+        return internalRDBMS.getFreeSpaceSize();
+    }
+
     public void createTable(ITypeDesc typeDesc) throws SAException{
         internalRDBMS.createTable(typeDesc);
     }
@@ -64,17 +68,29 @@ public class InternalRDBMSManager {
         return internalRDBMS.removeEntry(context, entryHolder);
     }
 
-    public IEntryHolder getEntryById(Context context, String typeName, Object id) throws SAException{
+    public IEntryHolder getEntryById(Context context, String typeName, Object id, ITemplateHolder templateHolder) throws SAException{
+        if (templateHolder != null && templateHolder.isReadOperation()){
+            readDisk.inc();
+            System.out.println("makeEntriesIter readDisk "+ readDisk.getCount());
+        }
+
         return internalRDBMS.getEntryById(context, typeName, id);
     }
 
-    public IEntryHolder getEntryByUID(Context context, String typeName, String uid) throws SAException{
+    public IEntryHolder getEntryByUID(Context context, String typeName, String uid, ITemplateHolder templateHolder) throws SAException{
+        if (templateHolder != null && templateHolder.isReadOperation()){
+            readDisk.inc();
+            System.out.println("makeEntriesIter readDisk "+ readDisk.getCount());
+        }
         return internalRDBMS.getEntryByUID(context, typeName, uid);
     }
 
     public ISAdapterIterator<IEntryHolder> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder) throws SAException{
-        readDisk.inc();
-        System.out.println("makeEntriesIter readDisk "+ readDisk.getCount());
+        if (templateHolder != null && templateHolder.isReadOperation()){
+            readDisk.inc();
+            System.out.println("makeEntriesIter readDisk "+ readDisk.getCount());
+        }
+
         return internalRDBMS.makeEntriesIter(context, typeName, templateHolder);
     }
 

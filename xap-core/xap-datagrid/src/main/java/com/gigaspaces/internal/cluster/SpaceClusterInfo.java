@@ -21,6 +21,7 @@ import com.gigaspaces.internal.extension.CustomSerializer;
 import com.gigaspaces.internal.extension.XapExtensions;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageConfig;
+import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageTableConfig;
 import com.gigaspaces.internal.utils.StringUtils;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIInvocationContext;
@@ -308,7 +309,7 @@ public class SpaceClusterInfo implements Externalizable {
         return customComponents.get(Constants.TieredStorage.SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME) != null;
     }
 
-    public Map<String, String> tieredStorageConfigString (){
+    public Map<String, TieredStorageTableConfig> tieredStorageConfigString (){
         TieredStorageConfig tieredStorageConfig = (TieredStorageConfig) customComponents.get(Constants.TieredStorage.SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME);
        return tieredStorageConfig.toMapConfigurationForDisplay();
     }
