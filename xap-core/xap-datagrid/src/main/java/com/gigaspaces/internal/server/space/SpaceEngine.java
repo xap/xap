@@ -536,12 +536,12 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             e.printStackTrace();
         }
 
-        registrator.register("disk-size", createHeapUsedInBytesGauge(diskSize));
+        registrator.register("disk-size", createDiskSizeInBytesGauge(diskSize));
 
     }
 
 
-    public Gauge<Long> createHeapUsedInBytesGauge(Long diskSize) {
+    public Gauge<Long> createDiskSizeInBytesGauge(Long diskSize) {
         return new Gauge<Long>() {
             @Override
             public Long getValue() {
