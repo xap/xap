@@ -54,7 +54,10 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public QueryColumn addQueryColumn(String columnName, String alias, boolean visible) {
-        QueryColumn queryColumn = tableColumns.stream().filter(qc -> qc.getName().equalsIgnoreCase(columnName)).findFirst().orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
+        QueryColumn queryColumn = tableColumns.stream()
+                .filter(qc -> qc.getName().equalsIgnoreCase(columnName))
+                .findFirst()
+                .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
         if (visible) visibleColumns.add(queryColumn);
         return queryColumn;
     }
@@ -128,7 +131,9 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public Object getColumnValue(String columnName, Object value) throws SQLException {
-        QueryColumn column = tableColumns.stream().filter(queryColumn -> queryColumn.getName().equalsIgnoreCase(columnName)).findFirst()
+        QueryColumn column = tableColumns.stream()
+                .filter(queryColumn -> queryColumn.getName().equalsIgnoreCase(columnName))
+                .findFirst()
                 .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
         //todo change table column into map and review with Yohana
         return ObjectConverter.convert(value, column.getPropertyType());

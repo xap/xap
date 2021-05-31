@@ -4,6 +4,7 @@ import com.gigaspaces.jdbc.QueryExecutor;
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
+import com.gigaspaces.jdbc.model.table.TempTableContainer;
 import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.ExpressionVisitorAdapter;
 import net.sf.jsqlparser.schema.Column;
@@ -36,13 +37,13 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                 }
             }
             if (table.hasColumn(column.getColumnName())) {
-                    if (tableContainer == null) {
-                        tableContainer = table;
-                    } else {
-                        throw new IllegalArgumentException("Ambiguous column name [" + column.getColumnName() + "]");
-                    }
+                if (tableContainer == null) {
+                    tableContainer = table;
+                } else {
+                    throw new IllegalArgumentException("Ambiguous column name [" + column.getColumnName() + "]");
                 }
             }
+        }
         if (tableContainer == null) {
             throw new ColumnNotFoundException("Could not find column [" + column.getColumnName() + "]");
         }
@@ -72,6 +73,12 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
 
     private void fillQueryColumns(TableContainer table) {
         table.getAllColumnNames().forEach(columnName -> {
+            if (table instanceof TempTableContainer) {
+                long existingNames = table.getVisibleColumns().stream().filter(queryColumn -> queryColumn.getName().equalsIgnoreCase(columnName)).count();
+                if (existingNames != 0) {
+                    throw new IllegalArgumentException("Ambiguous column name [" + columnName + "]");
+                }
+            }
             QueryColumn qc = table.addQueryColumn(columnName, null, true);
             queryColumns.add(qc);
         });
