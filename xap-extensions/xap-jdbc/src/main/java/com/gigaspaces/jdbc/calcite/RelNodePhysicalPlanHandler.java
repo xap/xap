@@ -50,7 +50,7 @@ public class RelNodePhysicalPlanHandler implements PhysicalPlanHandler<GSRelNode
                     Object pop = stack.pop();
                     TableContainer tableContainer;
                     if (pop instanceof GSSchemaTable) {
-                        tableContainer = new SchemaTableContainer(((GSSchemaTable) pop));
+                        tableContainer = new SchemaTableContainer(((GSSchemaTable) pop), queryExecutor.getSpace());
                     } else if (pop instanceof GSTable) {
                         tableContainer = new ConcreteTableContainer(((GSTable) pop).getName(), null, queryExecutor.getSpace());
                     } else {

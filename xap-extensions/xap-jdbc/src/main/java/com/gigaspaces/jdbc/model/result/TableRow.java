@@ -18,7 +18,7 @@ public class TableRow implements Comparable<TableRow> {
     private final ConcreteColumn[] groupByColumns;
     private final Object[] groupByValues;
 
-    public TableRow(IQueryColumn[] columns, Object[] values) {
+    public TableRow(IQueryColumn[] columns, Object... values) {
         this(columns, values, new OrderColumn[0], new Object[0], new ConcreteColumn[0], new Object[0]);
     }
 
