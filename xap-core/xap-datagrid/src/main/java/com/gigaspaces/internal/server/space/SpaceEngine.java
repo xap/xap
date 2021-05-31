@@ -514,18 +514,40 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 return countTransactions(TransactionInfo.Types.ALL, TransactionConstants.ACTIVE);
             }
         });
-        trieredStorageMetrics(registrator);
+        trieredStorageMetrics();
     }
-    private void trieredStorageMetrics (MetricRegistrator registrator){
+    private void trieredStorageMetrics (){
         if (!this.isTieredStorage()) {
             return;
         }
+        final String prefix = "metrics.";
+        final Map<String, String> tags = new HashMap<>();
+        for (Map.Entry<Object, Object> property : _spaceImpl.getCustomProperties().entrySet()) {
+            String name = (String) property.getKey();
+            if (name.startsWith(prefix))
+                tags.put(name.substring(prefix.length()), (String) property.getValue());
+        }
+        tags.put("space_name", _spaceImpl.getName());
+        tags.put("space_instance_id", _spaceImpl.getInstanceId());
+        Map<String, DynamicMetricTag> dynamicTags = new HashMap<>();
+        dynamicTags.put("space_active", new DynamicMetricTag() {
+            @Override
+            public Object getValue() {
+                boolean active;
+                try {
+                    active = _spaceImpl.isActive();
+                } catch (RemoteException e) {
+                    active = false;
+                }
+                return active;
+            }
+        });
 
-//        if (!_engine.getMetricManager().getMetricFlagsState().isTieredDiskSizeMetricEnabled()){
-//            return;
-//        }
-        registrator.register( ("tiered-storage-read-tp"), tieredStorageManager.getInternalStorage().getReadDisk());
-        registrator.register("tiered-storage-write-tp", tieredStorageManager.getInternalStorage().getWriteDisk());
+        InternalMetricRegistrator registratorForPrimary = (InternalMetricRegistrator) _metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, tags, dynamicTags);
+        InternalMetricRegistrator registratorForAll = (InternalMetricRegistrator) _metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, tags);
+
+        registratorForPrimary.register( ("tiered-storage-read-tp"), tieredStorageManager.getInternalStorage().getReadDisk());
+        registratorForPrimary.register("tiered-storage-write-tp", tieredStorageManager.getInternalStorage().getWriteDisk());
 
         long diskSize = 0;
         try {
@@ -536,7 +558,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             e.printStackTrace();
         }
 
-        registrator.register("disk-size", createDiskSizeInBytesGauge(diskSize));
+        registratorForAll.register("disk-size", createDiskSizeInBytesGauge(diskSize));
 
     }
 
