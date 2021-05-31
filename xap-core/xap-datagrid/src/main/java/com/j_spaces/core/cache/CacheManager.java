@@ -607,6 +607,11 @@ public class CacheManager extends AbstractCacheManager
             _replicationNode.getDirectPesistencySyncHandler().afterInitializedBlobStoreIO(new DirectPersistencyBlobStoreIO(this, _logger, _replicationNode.getDirectPesistencySyncHandler().getCurrentGenerationId()));
         }
 
+
+        if(isTieredStorage()){
+            loadDataFromDB = _engine.getTieredStorageManager().isWarmStart() || _engine.isMirrorService();
+        }
+
         if (loadDataFromDB) {
             Context context = null;
             try {
@@ -927,6 +932,12 @@ public class CacheManager extends AbstractCacheManager
         context.setInitialLoadInfo(initialLoadInfo);
         // if cache policy is ALL_IN_CACHE- load all entries to cache from SA
         if (isResidentEntriesCachePolicy()) {
+            //if RDBMS is not empty init from RDBMS else if has mirror initial load from mirror
+            if(isTieredStorage() && _engine.getTieredStorageManager().isWarmStart()) {
+                _engine.getTieredStorageManager().getInternalStorage().initialLoad(context, _engine, initialLoadInfo);
+                return;
+            }
+
             //special first call to SA- SA will return all classes, not just fifo classes
             residentEntriesInitialLoad(context, configReader, initialLoadInfo);
             if (isBlobStoreCachePolicy() && _persistentBlobStore && _engine.getSpaceImpl().isPrimary() && _entries.isEmpty()) {
@@ -1390,7 +1401,7 @@ public class CacheManager extends AbstractCacheManager
             if(context.getEntryTieredState() == null){
                 throw new IllegalStateException("trying to write entry in tiered mode but context.getEntryTieredState() == null, uid = "+entryHolder.getUID());
             }
-            if(context.isColdEntry() && entryHolder.getXidOriginatedTransaction() == null) {
+            if(initialLoadOrigin != InitialLoadOrigin.FROM_TIERED_STORAGE && context.isColdEntry() && entryHolder.getXidOriginatedTransaction() == null) {
                 _engine.getTieredStorageManager().getInternalStorage().insertEntry(context, entryHolder);
             }
 
@@ -3551,7 +3562,7 @@ public class CacheManager extends AbstractCacheManager
      * INITIALLOAD INFO.
      */
     public static enum InitialLoadOrigin {
-        NON, FROM_NON_BLOBSTORE, FROM_BLOBSTORE
+        NON, FROM_NON_BLOBSTORE, FROM_BLOBSTORE, FROM_TIERED_STORAGE;
     }
 
     private void validateEntryCanBeWrittenToCache(IEntryHolder entryHolder) {

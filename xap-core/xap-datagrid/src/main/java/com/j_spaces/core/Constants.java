@@ -17,8 +17,8 @@
 package com.j_spaces.core;
 
 import com.gigaspaces.client.transaction.ITransactionManagerProvider.TransactionManagerType;
-import com.gigaspaces.internal.server.space.tiered_storage.AllPredicate;
 import com.gigaspaces.internal.server.space.tiered_storage.CachePredicate;
+import com.gigaspaces.internal.server.space.tiered_storage.TransientPredicate;
 import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.core.client.SpaceURL;
 import com.j_spaces.kernel.SystemProperties;
@@ -958,9 +958,10 @@ public interface Constants {
         String CACHE_MANAGER_TIERED_STORAGE_LOCKS_SIZE_DEFAULT = "10000";
         String TIERED_STORAGE_INTERNAL_RDBMS_CLASS_PROP = "engine.TieredStorage.RDBMSClass";
         String TIERED_STORAGE_INTERNAL_RDBMS_CLASS_DEFAULT = "com.gigaspaces.internal.server.space.tiered_storage.SqliteRDBMS";
-        CachePredicate TRANSIENT_ALL_CACHE_PREDICATE = new AllPredicate(true);
+        CachePredicate TRANSIENT_ALL_CACHE_PREDICATE = new TransientPredicate();
         String TIERED_STORAGE_LOGGER_NAME = "com.gigaspaces.internal.server.space.tiered_storage.InternalRDBMS";
         String UID_DB_FIELD_NAME = "UID$GS";
+        String TIERED_STORAGE_TYPES_TABLE = "com.gs.types.meta_data";
 
         static String getLoggerName(String memberName){
          return TIERED_STORAGE_LOGGER_NAME+"_"+memberName;

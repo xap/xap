@@ -20,7 +20,10 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.*;
 import java.time.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
 
 
 public class SqliteUtils {
@@ -30,6 +33,17 @@ public class SqliteUtils {
     private static Map<String, ExtractFunction> sqlExtractorsMap = initSqlExtractorsMap();
     private static Map<String, InjectFunction> sqlInjectorsMap = initSqlInjectorsMap();
     private static Map<String, RangeToStringFunction> rangeToStringFunctionMap = initRangeToStringFunctionMap();
+    private static Map<String, InstantToDateTypeFunction> instantToDateTypeFunctionMap = initInstantToDateTypeMap();
+
+    private static Map<String, InstantToDateTypeFunction> initInstantToDateTypeMap() {
+        Map<String, InstantToDateTypeFunction> map = new HashMap<>();
+        map.put(Timestamp.class.getName(), (instant)-> new Timestamp(instant.toEpochMilli()));
+        map.put(Long.class.getName(), Instant::toEpochMilli);
+        map.put(long.class.getName(), Instant::toEpochMilli);
+        map.put(java.util.Date.class.getName(),(instant)-> new java.util.Date(instant.toEpochMilli()));
+        map.put(LocalDateTime.class.getName(), (instant)-> LocalDateTime.ofInstant(instant, ZoneId.of("UTC")));
+        return map;
+    }
 
     private static Map<String, RangeToStringFunction> initRangeToStringFunctionMap() {
         Map<String, RangeToStringFunction> map = new HashMap<>();
@@ -280,7 +294,7 @@ public class SqliteUtils {
         }
     }
 
-    private static void appendRangeString(Range range, StringBuilder queryBuilder, QueryParameters queryParams) {
+    public static void appendRangeString(Range range, StringBuilder queryBuilder, QueryParameters queryParams) {
         if(!rangeToStringFunctionMap.containsKey(range.getClass().getName())){
             throw new IllegalStateException("SQL query of type" + range.getClass().getName() + " is unsupported");
         }
@@ -608,6 +622,10 @@ public class SqliteUtils {
         return false;
     }
 
+    public static Comparable convertInstantToDateType(Instant instant, String dateTypeName){
+        return instantToDateTypeFunctionMap.get(dateTypeName).toDateType(instant);
+    }
+
     @FunctionalInterface
     interface ExtractFunction {
         Object extract(ResultSet resultSet, int index) throws SQLException;
@@ -623,4 +641,16 @@ public class SqliteUtils {
         void toString(Range range, StringBuilder queryBuilder, QueryParameters queryParams) ;
     }
 
+    @FunctionalInterface
+    interface InstantToDateTypeFunction {
+        Comparable toDateType(Instant instant) ;
+    }
+
+    public static void main(String[] args) {
+        final String s = "2021-05-27T15:30:26.846Z";
+        final Instant instant = Instant.parse(s);
+        final long gsTime = toGSTime(instant);
+        System.out.println(gsTime);
+        System.out.println(fromGsTime(gsTime));
+    }
 }

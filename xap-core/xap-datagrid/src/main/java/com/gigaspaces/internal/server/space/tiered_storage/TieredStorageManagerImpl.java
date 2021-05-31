@@ -1,6 +1,7 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
+import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.j_spaces.core.Constants;
@@ -8,6 +9,7 @@ import com.j_spaces.core.cache.context.TemplateMatchTier;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.core.client.sql.ReadQueryParser;
+import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.Range;
@@ -23,20 +25,27 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     private Logger logger;
     private IDirectSpaceProxy spaceProxy;
     private TieredStorageConfig storageConfig;
+    private boolean warmStart;
     private ConcurrentHashMap<String, TimePredicate> retentionRules = new ConcurrentHashMap<>(); //TODO - tiered storage - lazy init retention rules
     private ConcurrentHashMap<String, CachePredicate> hotCacheRules = new ConcurrentHashMap<>();
 
     private InternalRDBMS internalDiskStorage;
-
-    public TieredStorageManagerImpl() {
-
-    }
 
     public TieredStorageManagerImpl(TieredStorageConfig storageConfig, InternalRDBMS internalDiskStorage, IDirectSpaceProxy proxy, String fullSpaceName) {
         this.logger = LoggerFactory.getLogger(Constants.TieredStorage.getLoggerName(fullSpaceName));
         this.internalDiskStorage = internalDiskStorage;
         this.storageConfig = storageConfig;
         this.spaceProxy = proxy;
+    }
+
+    @Override
+    public boolean isWarmStart() {
+        return warmStart;
+    }
+
+    @Override
+    public void initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager) throws SAException {
+        warmStart = getInternalStorage().initialize(spaceName, fullMemberName, typeManager);
     }
 
     @Override
@@ -144,27 +153,19 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
         }
     }
 
-
     private CachePredicate createCacheRule(TieredStorageTableConfig tableConfig, IDirectSpaceProxy proxy) {
         CachePredicate result = null;
         if (tableConfig.isTransient()) {
             result = Constants.TieredStorage.TRANSIENT_ALL_CACHE_PREDICATE;
         } else if (tableConfig.getTimeColumn() != null) {
             if (tableConfig.getPeriod() != null) {
-                return new TimePredicate(tableConfig.getName(), tableConfig.getTimeColumn(), tableConfig.getPeriod(), tableConfig.isTransient());
+                return new TimePredicate(tableConfig.getName(), tableConfig.getTimeColumn(), tableConfig.getPeriod());
             }
         } else if (tableConfig.getCriteria() != null) {
             if (tableConfig.getCriteria().equalsIgnoreCase(AllPredicate.ALL_KEY_WORD)) {
-                result = new AllPredicate(tableConfig.isTransient());
+                result = new AllPredicate(tableConfig.getName());
             } else {
-                ReadQueryParser parser = new ReadQueryParser();
-                AbstractDMLQuery sqlQuery;
-                try {
-                    sqlQuery = parser.parseSqlQuery(new SQLQuery(tableConfig.getName(), tableConfig.getCriteria()), proxy);
-                } catch (SQLException e) {
-                    throw new RuntimeException("failed to parse criteria cache rule '" + tableConfig.getCriteria() + "'", e);
-                }
-                QueryTemplatePacket template = sqlQuery.getExpTree().getTemplate();
+                QueryTemplatePacket template = getQueryTemplatePacketFromCriteria(tableConfig, proxy);
                 HashMap<String, Range> ranges = template.getRanges();
                 if (ranges.size() > 1) {
                     throw new IllegalArgumentException("currently only single range is supported");
@@ -172,7 +173,7 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
                 Iterator<String> iterator = ranges.keySet().iterator();
                 if (iterator.hasNext()) {
                     Range range = ranges.get(iterator.next());
-                    result = new CriteriaRangePredicate(template.getTypeName(), range, tableConfig.isTransient());
+                    result = new CriteriaRangePredicate(template.getTypeName(), range);
                 }
             }
         }
@@ -185,4 +186,21 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     }
 
 
+    /***
+     * parses tje criteria string to QueryTemplatePacket
+     * Note: uses v1 jdbc parser
+     * @param tableConfig tiered storage table configuration
+     * @param proxy proxy to current space instance
+     * @return QueryTemplatePacket representation of the criteria
+     */
+    private QueryTemplatePacket getQueryTemplatePacketFromCriteria(TieredStorageTableConfig tableConfig, IDirectSpaceProxy proxy) {
+        ReadQueryParser parser = new ReadQueryParser();
+        AbstractDMLQuery sqlQuery;
+        try {
+            sqlQuery = parser.parseSqlQuery(new SQLQuery(tableConfig.getName(), tableConfig.getCriteria()), proxy);
+        } catch (SQLException e) {
+            throw new RuntimeException("failed to parse criteria cache rule '" + tableConfig.getCriteria() + "'", e);
+        }
+        return sqlQuery.getExpTree().getTemplate();
+    }
 }

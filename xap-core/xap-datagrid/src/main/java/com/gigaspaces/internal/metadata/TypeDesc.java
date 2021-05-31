@@ -220,38 +220,39 @@ public class TypeDesc implements ITypeDesc {
         }
     }
 
-    public TypeDesc cloneWithoutObjectClass( TypeDesc typeDesc, EntryType entryType ) {
+    public TypeDesc cloneWithoutObjectClass(EntryType entryType ) {
 
         TypeDesc newTypeDesc = new TypeDesc();
         newTypeDesc._objectType = entryType;
 
-        newTypeDesc._typeName = typeDesc.getTypeName();
-        newTypeDesc._codeBase = typeDesc.getCodeBase();
-        newTypeDesc._superTypesNames = typeDesc.getSuperClassesNames();
-        newTypeDesc._fixedProperties = typeDesc.getProperties();
-        newTypeDesc._supportsDynamicProperties = typeDesc.supportsDynamicProperties();
-        newTypeDesc._indexes = typeDesc.getIndexes();
-        newTypeDesc._idPropertyName = typeDesc.getIdPropertyName();
-        newTypeDesc._autoGenerateId = typeDesc.isAutoGenerateId();
-        newTypeDesc._documentWrapperClassName = typeDesc.getDocumentWrapperClassName();
-        newTypeDesc._dotnetDocumentWrapperTypeName = typeDesc.getDotnetDocumentWrapperTypeName();
-        newTypeDesc._dotnetDynamicPropertiesStorageType = typeDesc.getDotnetDynamicPropertiesStorageType();
-        newTypeDesc._defaultPropertyName = typeDesc.getDefaultPropertyName();
-        newTypeDesc._routingPropertyName = typeDesc.getRoutingPropertyName();
-        newTypeDesc._fifoGroupingName = typeDesc.getFifoGroupingPropertyPath();
-        newTypeDesc._fifoGroupingIndexes = typeDesc.getFifoGroupingIndexesPaths();
+        newTypeDesc._typeName = this.getTypeName();
+        newTypeDesc._codeBase = this.getCodeBase();
+        newTypeDesc._superTypesNames = this.getSuperClassesNames();
+        newTypeDesc._fixedProperties = this.getProperties();
+        newTypeDesc._supportsDynamicProperties = this.supportsDynamicProperties();
+        newTypeDesc._indexes = this.getIndexes();
+        newTypeDesc._idPropertyName = this.getIdPropertyName();
+        newTypeDesc._autoGenerateId = this.isAutoGenerateId();
+        newTypeDesc._documentWrapperClassName = this.getDocumentWrapperClassName();
+        newTypeDesc._dotnetDocumentWrapperTypeName = this.getDotnetDocumentWrapperTypeName();
+        newTypeDesc._dotnetDynamicPropertiesStorageType = this.getDotnetDynamicPropertiesStorageType();
+        newTypeDesc._defaultPropertyName = this.getDefaultPropertyName();
+        newTypeDesc._routingPropertyName = this.getRoutingPropertyName();
+        newTypeDesc._fifoGroupingName = this.getFifoGroupingPropertyPath();
+        newTypeDesc._fifoGroupingIndexes = this.getFifoGroupingIndexesPaths();
 
-        newTypeDesc._systemType = typeDesc.isSystemType();
-        newTypeDesc._fifoSupport = typeDesc.getFifoSupport();
-        newTypeDesc._replicable = typeDesc.isReplicable();
-        newTypeDesc._supportsOptimisticLocking = typeDesc.supportsOptimisticLocking();
-        newTypeDesc._storageType = typeDesc.getStorageType();
+        newTypeDesc._systemType = this.isSystemType();
+        newTypeDesc._fifoSupport = this.getFifoSupport();
+        newTypeDesc._replicable = this.isReplicable();
+        newTypeDesc._supportsOptimisticLocking = this.supportsOptimisticLocking();
+        newTypeDesc._storageType = this.getStorageType();
 
-        newTypeDesc._externalEntryWrapperClass = typeDesc.getExternalEntryWrapperClass();
-        newTypeDesc._blobstoreEnabled = typeDesc.isBlobstoreEnabled();
-        newTypeDesc.queryExtensionsInfo = typeDesc.getQueryExtensions();
-        newTypeDesc._broadcast = typeDesc.isBroadcast();
-        newTypeDesc.classBinaryStorageAdapter = typeDesc.getClassBinaryStorageAdapter();
+        newTypeDesc._externalEntryWrapperClass = this.getExternalEntryWrapperClass();
+        newTypeDesc._blobstoreEnabled = this.isBlobstoreEnabled();
+        newTypeDesc.queryExtensionsInfo = this.getQueryExtensions();
+        newTypeDesc._broadcast = this.isBroadcast();
+        newTypeDesc.classBinaryStorageAdapter = this.getClassBinaryStorageAdapter();
+        newTypeDesc._sequenceNumberFixedPropertyPos = this._sequenceNumberFixedPropertyPos;
 
         newTypeDesc.initializeV9_0_0();
 

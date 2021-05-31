@@ -7,10 +7,14 @@ import com.j_spaces.core.cache.context.TemplateMatchTier;
 public class AllPredicate implements CachePredicate {
 
     public static final String ALL_KEY_WORD = "all";
-    public boolean isTransient;
+    private final String typeName;
 
-    public AllPredicate(boolean isTransient) {
-        this.isTransient = isTransient;
+    public AllPredicate(String typeName) {
+        this.typeName = typeName;
+    }
+
+    public String getTypeName() {
+        return typeName;
     }
 
     @Override
@@ -18,10 +22,6 @@ public class AllPredicate implements CachePredicate {
         return true;
     }
 
-    @Override
-    public boolean isTransient() {
-        return isTransient;
-    }
 
     @Override
     public TemplateMatchTier evaluate(ITemplateHolder template) {
