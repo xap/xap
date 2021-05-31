@@ -45,6 +45,8 @@ public class ExternalEntryIntrospector<T extends ExternalEntry> extends Abstract
     private static final long serialVersionUID = 1L;
     public static final byte EXTERNALIZABLE_CODE = 4;
 
+    private static final IConstructor<ExternalEntry> DEFAULT_CTOR = ExternalEntry::new;
+
     private Class<T> _implClass;
     private IConstructor<T> _constructor;
     private PropertyInfo[] _properties;
@@ -58,7 +60,7 @@ public class ExternalEntryIntrospector<T extends ExternalEntry> extends Abstract
     public ExternalEntryIntrospector(ITypeDesc typeDesc, Class<T> implClass) {
         super(typeDesc);
         this._implClass = implClass != null ? implClass : (Class<T>) ExternalEntry.class;
-        this._constructor = ReflectionUtil.createCtor(_implClass);
+        this._constructor = ExternalEntry.class.equals(_implClass) ? (IConstructor<T>) DEFAULT_CTOR : ReflectionUtil.createCtor(_implClass);
         this._properties = typeDesc.getProperties();
     }
 

@@ -17,6 +17,7 @@
 package com.gigaspaces.internal.metadata;
 
 import com.gigaspaces.document.DocumentProperties;
+import com.gigaspaces.document.SpaceDocument;
 import com.gigaspaces.entry.VirtualEntry;
 import com.gigaspaces.internal.reflection.IConstructor;
 import com.gigaspaces.internal.reflection.ReflectionUtil;
@@ -40,6 +41,7 @@ import java.util.Map.Entry;
 public class VirtualEntryIntrospector<T extends VirtualEntry> extends AbstractTypeIntrospector<T> {
     private static final long serialVersionUID = 1L;
 
+    private static final IConstructor<VirtualEntry> DEFAULT_CTOR = SpaceDocument::new;
     private final Class<T> _implClass;
     private final IConstructor<T> _constructor;
 
@@ -53,7 +55,7 @@ public class VirtualEntryIntrospector<T extends VirtualEntry> extends AbstractTy
     public VirtualEntryIntrospector(ITypeDesc typeDesc, Class<T> documentWrapperClass) {
         super(typeDesc);
         this._implClass = documentWrapperClass;
-        this._constructor = ReflectionUtil.createCtor(_implClass);
+        this._constructor = SpaceDocument.class.equals(_implClass) ? (IConstructor<T>) DEFAULT_CTOR : ReflectionUtil.createCtor(_implClass);
     }
 
     public Class<T> getType() {
