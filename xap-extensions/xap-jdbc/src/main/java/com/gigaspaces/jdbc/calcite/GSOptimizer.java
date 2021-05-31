@@ -111,6 +111,7 @@ public class GSOptimizer {
     private static CalciteSchema createSchema(IJSpace space) {
         CalciteSchema res = CalciteSchema.createRootSchema(true, false);
         res.add("root", new GSSchema(space));
+        res.add("pg_catalog", new GSSchema(space));
         return res;
     }
 }
