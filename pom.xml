@@ -10,7 +10,7 @@
         <oshi.version>5.5.0</oshi.version>
         <slf4j.version>1.7.26</slf4j.version>
         <jna.version>5.6.0</jna.version>
-        <spring.version>5.2.12.RELEASE</spring.version>
+        <spring.version>5.3.7</spring.version>
         <spring.security.version>5.4.2</spring.security.version>
         <junit.version>4.12</junit.version>
         <jetty.version>9.4.40.v20210413</jetty.version>
