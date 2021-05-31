@@ -1,6 +1,7 @@
 package com.gigaspaces.internal.server.space;
 
 import com.gigaspaces.attribute_store.AttributeStore;
+import com.gigaspaces.internal.zookeeper.ZNodePathFactory;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -72,7 +73,7 @@ public class ZookeeperLastPrimaryHandler {
     }
 
     public static String toPath(String spaceName, String partitionId) {
-        return "/xap/spaces/" + spaceName + "/leader-election/" + partitionId + "/leader";
+        return ZNodePathFactory.space(spaceName, "leader-election", partitionId, "leader");
     }
 
     public static String toId(String instanceId, String uid) {

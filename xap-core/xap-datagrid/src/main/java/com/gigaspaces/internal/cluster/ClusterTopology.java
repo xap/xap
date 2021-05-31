@@ -191,4 +191,10 @@ public class ClusterTopology implements SmartExternalizable {
                 .setNumOfBackups(numOfBackups)
                 .setPartitionsToChunksMap(partitionsToChunksMap);
     }
+
+    public boolean equivalent(ClusterTopology other) {
+        return this.schema.equals(other.schema) &&
+               this.numOfInstances == other.numOfInstances &&
+               this.numOfBackups == other.numOfBackups;
+    }
 }

@@ -23,6 +23,7 @@ import com.gigaspaces.admin.quiesce.QuiesceState;
 import com.gigaspaces.admin.quiesce.QuiesceStateChangedEvent;
 import com.gigaspaces.annotation.SupportCodeChange;
 import com.gigaspaces.attribute_store.AttributeStore;
+import com.gigaspaces.attribute_store.SharedLock;
 import com.gigaspaces.client.ReadTakeByIdResult;
 import com.gigaspaces.client.ReadTakeByIdsException;
 import com.gigaspaces.client.WriteMultipleException;
@@ -73,6 +74,8 @@ import com.gigaspaces.internal.os.OSStatistics;
 import com.gigaspaces.internal.query.explainplan.SingleExplainPlan;
 import com.gigaspaces.internal.remoting.RemoteOperationRequest;
 import com.gigaspaces.internal.remoting.RemoteOperationResult;
+import com.gigaspaces.internal.remoting.routing.clustered.LookupType;
+import com.gigaspaces.internal.remoting.routing.clustered.RemoteOperationsExecutorProxy;
 import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.broadcast_table.BroadcastTableHandler;
 import com.gigaspaces.internal.server.space.demote.DemoteHandler;
@@ -82,6 +85,7 @@ import com.gigaspaces.internal.server.space.operations.SpaceOperationsExecutor;
 import com.gigaspaces.internal.server.space.operations.WriteEntriesResult;
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.server.space.quiesce.QuiesceHandler;
+import com.gigaspaces.internal.server.space.quiesce.WaitForDrainUtils;
 import com.gigaspaces.internal.server.space.recovery.RecoveryManager;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryHelper;
@@ -91,8 +95,8 @@ import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageUtils;
 import com.gigaspaces.internal.server.storage.EntryTieredMetaData;
 import com.gigaspaces.internal.service.ServiceRegistrationException;
 import com.gigaspaces.internal.space.responses.SpaceResponseInfo;
-import com.gigaspaces.internal.space.transport.xnio.server.XNioServer;
 import com.gigaspaces.internal.space.transport.xnio.XNioSettings;
+import com.gigaspaces.internal.space.transport.xnio.server.XNioServer;
 import com.gigaspaces.internal.transaction.DefaultTransactionUniqueId;
 import com.gigaspaces.internal.transaction.XATransactionUniqueId;
 import com.gigaspaces.internal.transport.*;
@@ -100,6 +104,7 @@ import com.gigaspaces.internal.utils.ReplaceInFileUtils;
 import com.gigaspaces.internal.utils.concurrent.GSThreadFactory;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.internal.version.PlatformVersion;
+import com.gigaspaces.internal.zookeeper.ZNodePathFactory;
 import com.gigaspaces.lrmi.*;
 import com.gigaspaces.lrmi.classloading.LRMIClassLoadersHolder;
 import com.gigaspaces.lrmi.nio.*;
@@ -197,6 +202,7 @@ import static com.j_spaces.core.Constants.CacheManager.*;
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ATTRIBUET_STORE_HANDLER_CLASS_NAME;
 import static com.j_spaces.core.Constants.DirectPersistency.ZOOKEEPER.ZOOKEEPER_CLIENT_CLASS_NAME;
 import static com.j_spaces.core.Constants.LeaderSelector.LEADER_SELECTOR_HANDLER_CLASS_NAME;
+import static com.j_spaces.core.Constants.LeaderSelector.ZK_PARTICIPANT_NAME_SEPARATOR;
 import static com.j_spaces.core.Constants.LeaseManager.*;
 
 
@@ -1669,6 +1675,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                     leaderSelectorHandler = new LusBasedSelectorHandler(createSecuredProxy());
                     leaderSelectorHandler.initialize(leaderSelectorHandlerConfig);
                 } else {
+                    waitForLeaderIfNeeded();
                     leaderSelectorHandler = createZooKeeperLeaderSelector();
                     leaderSelectorHandler.initialize(leaderSelectorHandlerConfig);
                 }
@@ -1690,6 +1697,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                 latch.await();
                 lookupCache.terminate();
             } catch (Exception e) {
+                _logger.error("caught exception while trying to init LeaderSelectorHandler", e);
                 if (leaderSelectorHandler != null) {
                     leaderSelectorHandler.terminate();
                 }
@@ -1699,6 +1707,70 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         return leaderSelectorHandler;
     }
 
+    private void waitForLeaderIfNeeded() throws IOException, InterruptedException {
+        String lastPrimary = attributeStore.get(ZookeeperLastPrimaryHandler.toPath(_spaceName, String.valueOf(getPartitionIdOneBased())));
+        int i = 0;
+        if (differentLastPrimaryExist(lastPrimary)) {
+            _logger.info("Found last primary [{}] , my instance id = {}, will wait for primary to become available", lastPrimary, _instanceId);
+            while (true){
+                Thread.sleep(1000);
+                i++;
+                lastPrimary = attributeStore.get(ZookeeperLastPrimaryHandler.toPath(_spaceName, String.valueOf(getPartitionIdOneBased())));
+                if(differentLastPrimaryExist(lastPrimary)){
+                    final String lastPrimaryMemberName = getMemberName(lastPrimary);
+                    if(lastPrimaryMemberName != null && isPrimary(lastPrimaryMemberName, i%30==0)){
+                        return;
+                    }
+                    if(i != 0 && i %30 == 0){
+                        _logger.warn("Failed to locate last primary [{}]", lastPrimaryMemberName);
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean differentLastPrimaryExist(String lastPrimary) {
+        return lastPrimary != null && !lastPrimary.split(ZK_PARTICIPANT_NAME_SEPARATOR)[0].equals(_instanceId);
+    }
+
+    private String getMemberName(String participantId) {
+        String[] tokens = participantId.split(ZK_PARTICIPANT_NAME_SEPARATOR);
+        String instanceId;
+        if (0 < tokens.length) {
+            instanceId = tokens[0];
+            return getName() + "_container" + instanceId + ":" + getName();
+        } else {
+            return null;
+        }
+    }
+
+
+    private boolean isPrimary(String memberName, boolean printLog) throws RemoteException {
+        long start = System.currentTimeMillis();
+        RemoteOperationsExecutorProxy remoteOperationsExecutorProxy = getSpaceProxy().getDirectProxy().getProxyRouter().getProxyLocator()
+                .locateMember(memberName, null, LookupType.TimeBasedLastIteration);
+        if (remoteOperationsExecutorProxy != null) {
+            RemoteException re = null;
+            try {
+                if (remoteOperationsExecutorProxy.isActive()) {
+                    if(printLog && _logger.isDebugEnabled())
+                        _logger.debug("isPrimary(" + memberName + ") returned true [duration= " + (System.currentTimeMillis() - start) + "ms]");
+                    return true;
+                }
+            } catch (RemoteException e) {
+                // Space is not available - nothing to do here
+                re = e;
+            }
+            if(printLog && _logger.isDebugEnabled())
+                _logger.debug("isPrimary(" + memberName + ") returned false [duration= " + (System.currentTimeMillis() - start) + "ms]"
+                    + (re != null ? " Caught exception: " + re : ""));
+        } else {
+            if(printLog && _logger.isDebugEnabled())
+                _logger.debug("isPrimary(" + memberName + ") failed to locate member [duration= " + (System.currentTimeMillis() - start) + "ms]");
+        }
+
+        return false;
+    }
 
     public ClusterFailureDetector getClusterFailureDetector() {
         return _clusterFailureDetector;
@@ -2614,7 +2686,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     public void commitImpl(TransactionManager mgr, Object id,
                            int numOfParticipants, boolean supportsTwoPhaseReplication, OperationID operationID, boolean mayBeFromReplication) throws RemoteException,
             UnknownTransactionException {
-        beforeOperation(true, false /*checkQuiesceMode*/, null);
+        final boolean checkQuiesceMode = _quiesceHandler != null && _quiesceHandler.isUndeploy();
+        beforeOperation(true, checkQuiesceMode /*checkQuiesceMode*/, null);
 
         try {
             _engine.commit(mgr, createServerTransaction(mgr, id, numOfParticipants), supportsTwoPhaseReplication, operationID, mayBeFromReplication);
@@ -3249,6 +3322,20 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             _clusterFailureDetector = initClusterFailureDetector(_clusterPolicy);
             _engine = new SpaceEngine(this);
+            if(attributeStore != null){
+                final String persistentPath = ZNodePathFactory.space(_spaceName, "persistent");
+                String persistent = attributeStore.get(persistentPath);
+                if(persistent == null) {
+                    try (final SharedLock lock = attributeStore.getSharedLockProvider().acquire(ZNodePathFactory.lockPersistentName(_puName), 1, TimeUnit.SECONDS)) {
+                        persistent = attributeStore.get(persistentPath);
+                        if (persistent == null) {
+                            final String isPersistent = String.valueOf(_engine.isTieredStorage());
+                            attributeStore.set(persistentPath, isPersistent);
+                            attributeStore.set(ZNodePathFactory.processingUnit(_puName, "persistent"), isPersistent);
+                        }
+                    }
+                }
+            }
 
             if (zookeeperTopologyHandler != null && _clusterInfo.isChunksRouting()) {
                 zookeeperClient = createZooKeeperClient();
@@ -3261,6 +3348,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             _directPersistencyRecoveryHelper = initDirectPersistencyRecoveryHelper(_clusterPolicy);
             _leaderSelector = initLeaderSelectorHandler(isLookupServiceEnabled);
             initReplicationStateBasedOnActiveElection();
+            if (_engine.isTieredStorage()) {
+                _engine.getTieredStorageManager().initialize(_engine);
+                _engine.getTieredStorageManager().initTieredStorageMetrics(this, _engine.getMetricManager());
+            }
             recover();
             _qp = createQueryProcessor();
 
@@ -3917,6 +4008,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     public void demote(long maxSuspendTime, TimeUnit unit, SpaceContext sc) throws DemoteFailedException, RemoteException {
         assertAuthorizedForPrivilege(GridAuthority.GridPrivilege.MANAGE_PU, sc);
         _demoteHandler.demote(maxSuspendTime, unit);
+    }
+
+    public void waitForDrain(long timeoutMs, long minTimeToWait, boolean isDemote, Logger logger) throws TimeoutException {
+        WaitForDrainUtils.waitForDrain(this, timeoutMs, minTimeToWait, isDemote, logger);
     }
 
     public SuspendType addSpaceSuspendTypeListener(SuspendTypeChangedInternalListener listener) {

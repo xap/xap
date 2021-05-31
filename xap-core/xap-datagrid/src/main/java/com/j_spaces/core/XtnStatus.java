@@ -37,8 +37,21 @@ public enum XtnStatus {
     //error occured- will try to rollback
     ERROR,
     //xtn is marked as unused, will be cleaned by LeaseManager
-    UNUSED
+    UNUSED;
 
+    public boolean isFinalizing() {
+        switch (this) {
+            case PREPARING:
+            case PREPARED:
+            case COMMITING:
+            case COMMITED:
+            case ROLLING:
+            case ROLLED:
+                return true;
+            default:
+                return false;
+        }
+    }
 
 }
 

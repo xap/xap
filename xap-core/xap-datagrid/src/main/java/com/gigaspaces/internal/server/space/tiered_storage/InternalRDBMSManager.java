@@ -1,36 +1,33 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.metrics.LongCounter;
+import com.j_spaces.core.cache.CacheManager;
+import com.j_spaces.core.cache.InitialLoadInfo;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class InternalRDBMSManager {
 
     InternalRDBMS internalRDBMS;
     private final LongCounter readDisk = new LongCounter();
     private final LongCounter writeDisk = new LongCounter();
-    Map<String,LongCounter> totalCounterMap = new ConcurrentHashMap<>();
-    Map<String, LongCounter> ramCounterMap = new ConcurrentHashMap<>();
+    private final TypesMetaData metaData = new TypesMetaData();
 
     public InternalRDBMSManager(InternalRDBMS internalRDBMS) {
         this.internalRDBMS = internalRDBMS;
     }
 
-
-    public void initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager) throws SAException{
-        internalRDBMS.initialize(spaceName, fullMemberName, typeManager);
-        totalCounterMap.put("java.lang.Object",new LongCounter());
+    public boolean initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager, boolean isBackup) throws SAException{
+        return internalRDBMS.initialize(spaceName, fullMemberName, typeManager, isBackup);
     }
 
     public long getDiskSize() throws SAException, IOException{
@@ -45,20 +42,25 @@ public class InternalRDBMSManager {
         internalRDBMS.createTable(typeDesc);
     }
 
+    public TypesMetaData getMetaData(){
+        return metaData;
+    }
+
     /**
      * Inserts a new entry to the internalDiskStorage
      *
      * @param entryHolder entry to insert
+     * @param initialLoadOrigin
      */
-    public void insertEntry(Context context,  IEntryHolder entryHolder) throws SAException{
-        if(context.isDiskEntry() && entryHolder.getXidOriginatedTransaction() == null) {
+    public void insertEntry(Context context, IEntryHolder entryHolder, CacheManager.InitialLoadOrigin initialLoadOrigin) throws SAException{
+        if(initialLoadOrigin != CacheManager.InitialLoadOrigin.FROM_TIERED_STORAGE && context.isDiskEntry() && entryHolder.getXidOriginatedTransaction() == null) {
             internalRDBMS.insertEntry(context, entryHolder);
             writeDisk.inc();
         }
         String type = entryHolder.getServerTypeDesc().getTypeName();
-        getCounterFromCounterMap(type).inc();
+        metaData.increaseCounterMap(type);
         if(context.isRAMEntry()){
-            getRamCounterFromCounterMap(type).inc();
+            metaData.increaseRamCounterMap(type);
         }
     }
 
@@ -84,35 +86,23 @@ public class InternalRDBMSManager {
         }
         String type = entryHolder.getServerTypeDesc().getTypeName();
         if(removed || context.getEntryTieredState() == TieredState.TIERED_HOT){
-            getCounterFromCounterMap(type).dec();
+            metaData.decreaseCounterMap(type);
             if(context.isRAMEntry()){
-                getRamCounterFromCounterMap(type).dec();
+                metaData.decreaseRamCounterMap(type);
             }
         }
         return removed;
     }
 
-    private LongCounter getCounterFromCounterMap(String type){
-        if(!totalCounterMap.containsKey(type)){
-            totalCounterMap.putIfAbsent(type, new LongCounter());
-        }
-        return totalCounterMap.get(type);
-    }
 
-    private LongCounter getRamCounterFromCounterMap(String type){
-        if(!ramCounterMap.containsKey(type)){
-            ramCounterMap.putIfAbsent(type, new LongCounter());
-        }
-        return ramCounterMap.get(type);
-    }
 
     public void updateRamCounterAfterUpdate(String type, boolean isUpdatedEntryHot, boolean isOriginEntryHot){
         if(isOriginEntryHot != isUpdatedEntryHot){
             if(isUpdatedEntryHot){
-                getRamCounterFromCounterMap(type).inc();
+                metaData.increaseRamCounterMap(type);
             }
             else{
-                getRamCounterFromCounterMap(type).dec();
+                metaData.decreaseRamCounterMap(type);
             }
         }
     }
@@ -162,12 +152,20 @@ public class InternalRDBMSManager {
         return writeDisk;
     }
 
-    public Map<String,Integer> getCounterMap() {
-        return totalCounterMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (int) e.getValue().getCount()));
+    public void deleteData() throws SAException {
+        internalRDBMS.deleteData();
     }
 
-    public Map<String,Integer> getRamCounterMap() {
-        return ramCounterMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (int) e.getValue().getCount()));
+    public void persistType(ITypeDesc typeDesc) throws SAException {
+        internalRDBMS.persistType(typeDesc);
+    }
+
+    public void initialLoad(Context context, SpaceEngine engine, InitialLoadInfo initialLoadInfo) throws SAException {
+        internalRDBMS.initialLoad(context, engine, initialLoadInfo);
+    }
+
+    public SpaceTypeManager getTypeManager() {
+        return internalRDBMS.getTypeManager();
     }
 }
 

@@ -810,6 +810,9 @@ public class SystemProperties extends CommonSystemProperties {
 
     public static final String MANAGER_ADMIN_WITH_STATISTICS_HISTORY = "com.gs.admin.with-stats-history";
     public static final String MANAGER_ADMIN_DISCOVER_UN_MANAGED_SPACES = "com.gs.admin.discover-un-managed-spaces";
+    public static final String ADMIN_UNDEPLOY_DEFAULT_DRAIN_MODE = "com.gs.admin.undeploy-default-drain-mode";
+    public static final String ADMIN_UNDEPLOY_DEFAULT_DRAIN_TIMEOUT_PROP = "com.gs.admin.undeploy-default-drain-timeout";
+    public static final long ADMIN_UNDEPLOY_DEFAULT_DRAIN_TIMEOUT_VALUE = 60000;
 
     public static final String QUERY_PROCESSOR_CLUSTER_LOOKUP_TIMEOUT = "com.gs.queryProcessor.cluster-lookup-timeout";
     public static final long QUERY_PROCESSOR_CLUSTER_LOOKUP_TIMEOUT_DEFAULT = 15000; //in milliseconds

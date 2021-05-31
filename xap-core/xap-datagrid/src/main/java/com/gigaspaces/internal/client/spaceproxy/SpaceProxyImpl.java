@@ -786,7 +786,11 @@ public class SpaceProxyImpl extends AbstractDirectSpaceProxy implements SameProx
 
 
     public SpaceProxyImpl cloneProxy (){
-        SpaceProxyImpl copy = new SpaceProxyImpl(_factory.createCopy(false), _proxySettings);
+        return cloneProxy(false);
+    }
+
+    public SpaceProxyImpl cloneProxy (boolean clustered){
+        SpaceProxyImpl copy = new SpaceProxyImpl(_factory.createCopy(clustered), _proxySettings);
         if (this.isSecured())
             copy.getSecurityManager().initialize(this.getSecurityManager().getCredentialsProvider());
         return copy;

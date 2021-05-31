@@ -18,9 +18,9 @@ public class ZNodePathFactory {
     }
 
 
-    private static String path(String category, String categoryId, String component, int partitionId, String ... elements) {
+    private static String path(String category, String categoryId, String component, String partitionId, String ... elements) {
         String suffix = elements != null && elements.length != 0 ? "/" + String.join("/", elements) : "";
-        return XAP_PREFIX + String.join("/", category, categoryId, component, String.valueOf(partitionId)) + suffix;
+        return XAP_PREFIX + String.join("/", category, categoryId, component, partitionId) + suffix;
     }
 
     public static String processingUnit(String puName) {
@@ -31,12 +31,16 @@ public class ZNodePathFactory {
         return path(LOCKS,PUS, name);
     }
 
+    public static String lockPersistentName(String puName) {
+        return path(LOCKS,PUS, puName+"/persistent");
+    }
+
     public static String processingUnit(String puName, String component) {
         return path(PUS, puName, component);
     }
 
     public static String processingUnit(String puName, String component, int partitionId, String ... elements) {
-        return path(PUS, puName, component, partitionId, elements);
+        return path(PUS, puName, component, String.valueOf(partitionId), elements);
     }
 
     public static String space(String spaceName) {
@@ -44,6 +48,13 @@ public class ZNodePathFactory {
     }
 
     public static String space(String spaceName, String component, int partitionId, String ... elements) {
+        return path(SPACES, spaceName, component, String.valueOf(partitionId), elements);
+    }
+    public static String space(String spaceName, String component, String partitionId, String ... elements) {
         return path(SPACES, spaceName, component, partitionId, elements);
+    }
+
+    public static String space(String spaceName, String componenet) {
+        return path(SPACES, spaceName+"/"+componenet);
     }
 }

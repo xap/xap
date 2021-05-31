@@ -1,18 +1,34 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
+import com.gigaspaces.api.InternalApi;
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.j_spaces.core.cache.InitialLoadInfo;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 
 import java.io.IOException;
 
+@InternalApi
 public interface InternalRDBMS {
 
-    void initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager) throws SAException;
+
+    /***
+     *
+     * @param spaceName
+     * @param fullMemberName
+     * @param typeManager
+     * @return true if RDBMS is not empty on startup
+     * @throws SAException
+     */
+
+    boolean initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager, boolean isBackup) throws SAException;
+
+    void setLogger(String fullMemberName);
 
     long getDiskSize() throws SAException, IOException;
 
@@ -50,5 +66,13 @@ public interface InternalRDBMS {
     boolean isKnownType(String name);
 
     void shutDown();
+
+    void deleteData() throws SAException;
+
+    void persistType(ITypeDesc typeDesc) throws SAException;
+
+    void initialLoad(Context context, SpaceEngine engine, InitialLoadInfo initialLoadInfo) throws SAException;
+
+    SpaceTypeManager getTypeManager();
 }
 

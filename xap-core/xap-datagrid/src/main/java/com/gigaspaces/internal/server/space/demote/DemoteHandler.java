@@ -60,43 +60,11 @@ public class DemoteHandler implements ISpaceModeListener {
             _latch = new CountDownLatch(1);
             demoteImpl(maxSuspendTime, unit);
         } catch (TimeoutException e) {
-            throw new DemoteFailedException(e.getMessage());
+            throw new DemoteFailedException("Couldn't demote to backup - "+ e.getMessage());
         } finally {
             _spaceImpl.removeInternalSpaceModeListener(this);
             _isDemoteInProgress.set(false);
         }
-    }
-
-
-    private long tryWithinTimeout(String msg, long timeoutMs, ParametrizedConditionProvider predicate) throws TimeoutException {
-        long start = System.currentTimeMillis();
-        if (!predicate.test(timeoutMs)) {
-            throw new TimeoutException(msg);
-        }
-
-        long duration = System.currentTimeMillis() - start;
-        long remainingTime = timeoutMs - duration;
-        if (remainingTime < 0) {
-            throw new TimeoutException(msg);
-        }
-
-        return remainingTime;
-    }
-
-    private long repetitiveTryWithinTimeout(String msg, long timeoutMs, ConditionProvider f) throws TimeoutException, DemoteFailedException {
-        long deadline = System.currentTimeMillis() + timeoutMs;
-        long currTime;
-        while ((currTime = System.currentTimeMillis()) < deadline) {
-            if (f.test()) return deadline - currTime;
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new DemoteFailedException("Demote got interrupted");
-            }
-        }
-
-        throw new TimeoutException(msg);
     }
 
     private void demoteImpl(long timeout, TimeUnit timeoutUnit) throws DemoteFailedException, TimeoutException {
@@ -108,46 +76,7 @@ public class DemoteHandler implements ISpaceModeListener {
             _logger.info("Demoting to backup, setting suspend type to DEMOTING...");
             _spaceImpl.getQuiesceHandler().quiesceDemote("Space is demoting from primary to backup");
 
-
-            long remainingTime = timeoutMs;
-            remainingTime = tryWithinTimeout("Couldn't demote to backup - lease manager cycle timeout", remainingTime, new ParametrizedConditionProvider() {
-                        @Override
-                        public boolean test(long innerTimeout) {
-                            return _spaceImpl.getEngine().getLeaseManager().waitForNoCycleOnQuiesce(innerTimeout);
-                        }
-                    });
-
-
-            remainingTime = tryWithinTimeout("Couldn't demote to backup - timeout while waiting for transactions", remainingTime,
-                    new ParametrizedConditionProvider() {
-                        @Override
-                        public boolean test(long innerTimeout) {
-                            return waitForActiveTransactions(innerTimeout);
-                        }
-                    }
-            );
-
-
-            //Sleep remaining time to minTimeToDemoteInMs
-            long currentDuration = System.currentTimeMillis() - start;
-            if (currentDuration < _demoteMinTimeoutMillis) {
-                long timeToSleep = _demoteMinTimeoutMillis - currentDuration;
-                _logger.info("Sleeping for ["+timeToSleep+"ms] to satisfy " + MIN_TIME_TO_DEMOTE_IN_MS);
-                try {
-                    Thread.sleep(timeToSleep);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new DemoteFailedException("Demote got interrupted");
-                }
-            }
-
-            repetitiveTryWithinTimeout("Backup is not synced", remainingTime, new ConditionProvider() {
-                @Override
-                public boolean test() {
-                    return isBackupSynced();
-                }
-            });
-
+            _spaceImpl.waitForDrain(timeoutMs, _demoteMinTimeoutMillis, true,_logger);
 
             validateSpaceStatus(false);
 
@@ -260,31 +189,6 @@ public class DemoteHandler implements ISpaceModeListener {
                 _logger.debug("afterSpaceModeChange >> Unexpected Space mode changed to " + newMode);
         }
         _latch.countDown();
-    }
-
-    private boolean isBackupSynced() {
-        ReplicationStatistics.OutgoingReplication outGoingReplication = getOutgoingReplication();
-        long lastKeyInRedoLog = outGoingReplication.getLastKeyInRedoLog();
-        ReplicationStatistics.OutgoingChannel backupChannel = outGoingReplication.getChannels(ReplicationStatistics.ReplicationMode.BACKUP_SPACE).get(0);
-        //Backup is synced
-        return backupChannel.getLastConfirmedKeyFromTarget() == lastKeyInRedoLog;
-    }
-
-    public boolean waitForActiveTransactions(long timeoutInMillis) {
-        try {
-            return _spaceImpl.getEngine().getTransactionHandler().waitForActiveTransactions(timeoutInMillis);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        }
-    }
-
-    private interface ConditionProvider {
-        boolean test();
-    }
-
-    private interface ParametrizedConditionProvider {
-        boolean test(long value);
     }
 
 }

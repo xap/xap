@@ -22,6 +22,7 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.client.spaceproxy.metadata.ObjectType;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
@@ -543,6 +544,21 @@ public abstract class AbstractDMLQuery implements Query, Cloneable {
                 if (typeDesc == null) {
                     String tableName = tableData.getTableName();
                     typeDesc = SQLUtil.checkTableExistence(tableName, space);
+                    tableData.setTypeDesc(typeDesc);
+                }
+            }
+        }
+    }
+
+    public void validateQuery(SpaceTypeManager typeManager) throws SQLException {
+        for (QueryTableData tableData : _tablesData) {
+            if (tableData.getSubQuery() != null)
+                tableData.getSubQuery().validateQuery(typeManager);
+            else {
+                ITypeDesc typeDesc = tableData.getTypeDesc();
+                if (typeDesc == null) {
+                    String tableName = tableData.getTableName();
+                    typeDesc = SQLUtil.checkTableExistence(tableName, typeManager);
                     tableData.setTypeDesc(typeDesc);
                 }
             }
