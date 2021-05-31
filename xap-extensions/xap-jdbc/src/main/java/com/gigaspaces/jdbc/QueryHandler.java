@@ -25,7 +25,8 @@ import java.util.Set;
 public class QueryHandler {
 
     private final Feature[] allowedFeatures = new Feature[] {Feature.select, Feature.explain, Feature.exprLike,
-            Feature.jdbcParameter, Feature.join, Feature.joinInner, Feature.joinLeft, Feature.orderBy, Feature.orderByNullOrdering};
+            Feature.jdbcParameter, Feature.join, Feature.joinInner, Feature.joinLeft, Feature.orderBy,
+            Feature.orderByNullOrdering, Feature.function};
 
     public ResponsePacket handle(String query, IJSpace space, Object[] preparedValues) throws SQLException {
 

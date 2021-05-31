@@ -5,8 +5,8 @@ public class OrderColumn extends QueryColumn {
     private boolean isAsc = true;
     private boolean isNullsLast = false;
 
-    public OrderColumn(String name, boolean isVisible, TableContainer tableContainer) {
-        super(name, null, null, isVisible, tableContainer);
+    public OrderColumn(String name, boolean isVisible, TableContainer tableContainer, int columnIndex) {
+        super(name, null, null, isVisible, tableContainer, columnIndex);
     }
 
     public boolean isAsc() {
@@ -41,6 +41,6 @@ public class OrderColumn extends QueryColumn {
 
     @Override
     public String toString() {
-        return getName() + " " + (isAsc ? "ASC" : "DESC") + " " + (isNullsLast ? "NULLS LAST" : "NULLS FIRST");
+        return getNameOrAlias() + " " + (isAsc ? "ASC" : "DESC") + " " + (isNullsLast ? "NULLS LAST" : "NULLS FIRST");
     }
 }

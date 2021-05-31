@@ -7,10 +7,7 @@ import com.gigaspaces.jdbc.handlers.WhereHandler;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.QueryResult;
-import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
-import com.gigaspaces.jdbc.model.table.QueryColumn;
-import com.gigaspaces.jdbc.model.table.TableContainer;
-import com.gigaspaces.jdbc.model.table.TempTableContainer;
+import com.gigaspaces.jdbc.model.table.*;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import net.sf.jsqlparser.expression.Expression;
@@ -20,13 +17,13 @@ import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.*;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisitor {
     private final List<TableContainer> tables = new ArrayList<>();
-    private final List<QueryColumn> queryColumns = new ArrayList<>();
+    private final Set<QueryColumn> invisibleColumns = new HashSet<>();
+    private final List<QueryColumn> visibleColumns = new ArrayList<>();
+    private final List<AggregationColumn> aggregationColumns = new ArrayList<>();
     private final IJSpace space;
     private final QueryExecutionConfig config;
     private final Object[] preparedValues;
@@ -71,8 +68,8 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
             }
             TableContainer rightTable = QueryColumnHandler.getTableForColumn(rColumn, tables);
             TableContainer leftTable = QueryColumnHandler.getTableForColumn(lColumn, tables);
-            QueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false);
-            QueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false);
+            QueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false, 0);
+            QueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false, 0);
             rightTable.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinInfo.JoinType.getType(join)));
             if (leftTable.getJoinedTable() == null) { // TODO set right table every time and align it to recursive form in JoinTablesIterator
                 if (!rightTable.isJoined()) {
@@ -87,8 +84,8 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     }
 
     private void prepareQueryColumns(PlainSelect plainSelect) {
-        QueryColumnHandler visitor = new QueryColumnHandler(this);
-        plainSelect.getSelectItems().forEach(selectItem -> selectItem.accept(visitor));
+        QueryColumnHandler queryColumnHandler = new QueryColumnHandler(this);
+        plainSelect.getSelectItems().forEach(selectItem -> selectItem.accept(queryColumnHandler));
     }
 
     private void prepareWhereClause(PlainSelect plainSelect) {
@@ -163,7 +160,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         if (tables.size() == 1) { //Simple Query
             return tables.get(0).executeRead(config);
         }
-        JoinQueryExecutor joinE = new JoinQueryExecutor(tables, space, queryColumns, config);
+        JoinQueryExecutor joinE = new JoinQueryExecutor(this);
         return joinE.execute();
     }
 
@@ -176,8 +173,12 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         return tables;
     }
 
-    public List<QueryColumn> getQueryColumns() {
-        return queryColumns;
+    public Set<QueryColumn> getInvisibleColumns() {
+        return invisibleColumns;
+    }
+
+    public List<QueryColumn> getVisibleColumns() {
+        return visibleColumns;
     }
 
     public Object[] getPreparedValues() {
@@ -190,5 +191,29 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
 
     public void setAllColumnsSelected(boolean isAllColumnsSelected) {
         this.isAllColumnsSelected = isAllColumnsSelected;
+    }
+
+    public List<AggregationColumn> getAggregationFunctionColumns() {
+        return aggregationColumns;
+    }
+
+    public IJSpace getSpace() {
+        return space;
+    }
+
+    public QueryExecutionConfig getConfig() {
+        return config;
+    }
+
+    public void addColumn(QueryColumn queryColumn) {
+        if (queryColumn.isVisible()) {
+            visibleColumns.add(queryColumn);
+        } else {
+            invisibleColumns.add(queryColumn);
+        }
+    }
+
+    public void addAggregationFunction(AggregationColumn aggregationColumn) {
+        this.aggregationColumns.add(aggregationColumn);
     }
 }

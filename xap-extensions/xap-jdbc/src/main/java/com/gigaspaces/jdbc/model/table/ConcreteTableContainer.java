@@ -33,6 +33,7 @@ public class ConcreteTableContainer extends TableContainer {
     private final ITypeDesc typeDesc;
     private final List<String> allColumnNamesSorted;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
+    private final Set<QueryColumn> invisibleColumns = new HashSet<>();
     private final String name;
     private final String alias;
     private Integer limit = Integer.MAX_VALUE;
@@ -59,7 +60,8 @@ public class ConcreteTableContainer extends TableContainer {
     public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
         if (queryResult != null)
             return queryResult;
-        String[] projectionC = visibleColumns.stream().map(QueryColumn::getName).toArray(String[]::new);
+        //TODO: @sagiv at old JDBC, projectionC contains Aggregation column too. do the same here?
+        String[] projectionC = createProjectionTable();
 
         try {
             ProjectionTemplate _projectionTemplate = ProjectionTemplate.create(projectionC, typeDesc);
@@ -82,9 +84,12 @@ public class ConcreteTableContainer extends TableContainer {
                 modifiers = Modifiers.add(modifiers, Modifiers.EXPLAIN_PLAN);
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
-            // When we use join, we sort the results on the client side instead of on the server.
+
+            validateAggregationFunction();
+
+            // When we use join, we aggregate the results on the client side instead of on the server.
             if(!config.isJoinUsed()) {
-                setOrderByAggregation();
+                setAggregation();
             }
             queryTemplatePacket.prepareForSpace(typeDesc);
 
@@ -92,7 +97,7 @@ public class ConcreteTableContainer extends TableContainer {
             if (explainPlanImpl != null) {
                 queryResult = new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
             } else {
-                queryResult = new QueryResult(res, visibleColumns, this, getOrderColumns());
+                queryResult = new QueryResult(res, this);
             }
             return queryResult;
         } catch (Exception e) {
@@ -100,26 +105,74 @@ public class ConcreteTableContainer extends TableContainer {
         }
     }
 
-    private void setOrderByAggregation() {
-        //orderBy in server
-        if(!getOrderColumns().isEmpty()){
+    private String[] createProjectionTable() {
+        Set<QueryColumn> tmp = new HashSet<>(invisibleColumns);
+        tmp.addAll(visibleColumns);
+        return tmp.stream().map(QueryColumn::getName).toArray(String[]::new);
+    }
+
+    private void setAggregation() {
+        AggregationSet aggregationSet = new AggregationSet();
+        createOrderByAggregation(aggregationSet);
+        createAggregationFunctions(aggregationSet);
+        if(!aggregationSet.isEmpty()) {
+            queryTemplatePacket.setAggregationSet(aggregationSet);
+        }
+    }
+
+    private void createOrderByAggregation(AggregationSet aggregationSet) {
+        if(hasOrderColumns()){
             OrderByAggregator orderByAggregator = new OrderByAggregator();
             for (OrderColumn column : getOrderColumns()) {
                 orderByAggregator.orderBy(column.getName(), column.isAsc() ? OrderBy.ASC : OrderBy.DESC, column.isNullsLast());
             }
-            queryTemplatePacket.setAggregationSet(new AggregationSet().orderBy(orderByAggregator));
+            aggregationSet.orderBy(orderByAggregator);
+        }
+    }
+
+    private void createAggregationFunctions(AggregationSet aggregationSet) {
+        if(!hasAggregationFunctions()) {
+            return;
+        }
+        for (AggregationColumn aggregationColumn : getAggregationFunctionColumns()) {
+            switch (aggregationColumn.getType()) {
+                case COUNT:
+                    if (aggregationColumn.isAllColumns()) {
+                        aggregationSet.count();
+                    } else {
+                        aggregationSet.count(aggregationColumn.getColumnName());
+                    }
+                    break;
+                case MAX:
+                    aggregationSet.maxValue(aggregationColumn.getColumnName());
+                    break;
+                case MIN:
+                    aggregationSet.minValue(aggregationColumn.getColumnName());
+                    break;
+                case AVG:
+                    aggregationSet.average(aggregationColumn.getColumnName());
+                    break;
+                case SUM:
+                    aggregationSet.sum(aggregationColumn.getColumnName());
+                    break;
+            }
         }
     }
 
     @Override
-    public QueryColumn addQueryColumn(String columnName, String alias, boolean visible) {
+    public QueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnIndex) {
         if (!columnName.equalsIgnoreCase(QueryColumn.UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(columnName) == -1) {
             throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]");
         }
 
         try {
-            QueryColumn qc = new QueryColumn(columnName, SQLUtil.getPropertyType(typeDesc, columnName), alias, visible, this);
-            this.visibleColumns.add(qc);
+            QueryColumn qc = new QueryColumn(columnName, SQLUtil.getPropertyType(typeDesc, columnName), alias,
+                    visible, this, columnIndex);
+            if (visible) {
+                this.visibleColumns.add(qc);
+            } else {
+                this.invisibleColumns.add(qc);
+            }
             return qc;
         } catch (SQLException e) {
             throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]", e);
@@ -128,6 +181,11 @@ public class ConcreteTableContainer extends TableContainer {
 
     public List<QueryColumn> getVisibleColumns() {
         return visibleColumns;
+    }
+
+    @Override
+    public Set<QueryColumn> getInvisibleColumns() {
+        return this.invisibleColumns;
     }
 
     @Override
@@ -218,5 +276,4 @@ public class ConcreteTableContainer extends TableContainer {
             return true;
         return joinInfo.checkJoinCondition();
     }
-
 }

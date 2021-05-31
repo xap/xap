@@ -20,7 +20,9 @@ package com.gigaspaces.query.aggregators;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.serialization.SmartExternalizable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -132,6 +134,10 @@ public class AggregationSet implements SmartExternalizable {
 
     List<SpaceEntriesAggregator> getAggregators() {
         return aggregators;
+    }
+
+    public boolean isEmpty() {
+        return this.aggregators.isEmpty();
     }
 
     @Override
