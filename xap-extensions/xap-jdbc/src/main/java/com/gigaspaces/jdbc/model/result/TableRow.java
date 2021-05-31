@@ -12,7 +12,7 @@ public class TableRow {
     private QueryColumn[] columns;
     private Object[] values;
 
-    public TableRow(QueryColumn[] columns, Object[] values) {
+    public TableRow(QueryColumn[] columns, Object... values) {
         this.columns = columns;
         this.values = values;
     }

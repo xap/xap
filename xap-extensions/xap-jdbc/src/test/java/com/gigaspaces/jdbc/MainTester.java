@@ -36,10 +36,10 @@ public class MainTester {
 //            DumpUtils.dump(rs);
 
             Statement statement = connection.createStatement();
-            execute(statement, String.format("SELECT name FROM \"%s\"", MyPojo.class.getName()));
-            execute(statement, String.format("SELECT tablename FROM pg_tables"));
-            execute(statement, String.format("SELECT tablename FROM pg_catalog.pg_tables"));
-            execute(statement, String.format("SELECT tablename FROM pg_catalog.pg_tables where tablename='aa1'"));
+//            execute(statement, String.format("SELECT name FROM \"%s\"", MyPojo.class.getName()));
+            execute(statement, String.format("SELECT * FROM pg_attribute"));
+//            execute(statement, String.format("SELECT tablename, hasindexes FROM pg_catalog.pg_tables"));
+//            execute(statement, String.format("SELECT tablename, hasindexes FROM pg_catalog.pg_tables where tablename='aa1'"));
 //            execute(statement, String.format("SELECT tablename FROM \"pg_catalog.pg_tables\" where tablename='aa1'", MyPojo.class.getName()));
 //            execute(statement, String.format("EXPLAIN SELECT A.id, B.name FROM %s A INNER JOIN %s B ON A.name=B.name", MyPojo.class.getName(), MyPojo.class.getName()));
 //            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id, name FROM %s)", MyPojo.class.getName()));
