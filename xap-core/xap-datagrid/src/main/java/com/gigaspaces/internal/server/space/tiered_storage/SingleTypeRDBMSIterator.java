@@ -42,4 +42,16 @@ public class SingleTypeRDBMSIterator implements ISAdapterIterator<IEntryHolder> 
             throw new SAException("failed to close result set for type " + typeName, e);
         }
     }
+
+    public RDBMSResult getResult() {
+        return result;
+    }
+
+    public String getTypeName() {
+        return typeName;
+    }
+
+    public SpaceTypeManager getTypeManager() {
+        return typeManager;
+    }
 }

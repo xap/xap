@@ -1,11 +1,15 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
+import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.metrics.MetricManager;
 import com.j_spaces.core.cache.context.TemplateMatchTier;
 import com.j_spaces.core.cache.context.TieredState;
+import com.j_spaces.core.sadapter.SAException;
+
+import java.rmi.RemoteException;
 
 public interface TieredStorageManager {
 
@@ -32,6 +36,11 @@ public interface TieredStorageManager {
     void initTieredStorageMetrics(SpaceImpl _spaceImpl, MetricManager metricManager);
 
     void close();
+
+    void initialize(SpaceEngine engine) throws SAException, RemoteException;
+
+    boolean RDBMSContainsData();
+
     // For the future when we would want to support warm layer
     //    CachePredicate getCacheRule(String typeName, String tier);
     //    Map<String,CachePredicate> getCacheRulesForTiers(String typeName);

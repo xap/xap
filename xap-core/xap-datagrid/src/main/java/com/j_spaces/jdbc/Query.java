@@ -17,6 +17,7 @@
 package com.j_spaces.jdbc;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.security.service.SecurityInterceptor;
 
 import net.jini.core.transaction.Transaction;
@@ -61,4 +62,7 @@ public interface Query {
      */
     public boolean containsSubQueries();
 
+    default void validateQuery(SpaceTypeManager typeManager) throws SQLException{
+
+    }
 }

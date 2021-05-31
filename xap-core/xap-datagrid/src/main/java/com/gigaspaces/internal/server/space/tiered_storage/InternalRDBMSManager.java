@@ -1,10 +1,12 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.metrics.LongCounter;
+import com.j_spaces.core.cache.InitialLoadInfo;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
@@ -28,9 +30,9 @@ public class InternalRDBMSManager {
     }
 
 
-    public void initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager) throws SAException{
-        internalRDBMS.initialize(spaceName, fullMemberName, typeManager);
+    public boolean initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager, boolean isBackup) throws SAException{
         totalCounterMap.put("java.lang.Object",new LongCounter());
+        return internalRDBMS.initialize(spaceName, fullMemberName, typeManager, isBackup);
     }
 
     public long getDiskSize() throws SAException, IOException{
@@ -168,6 +170,21 @@ public class InternalRDBMSManager {
 
     public Map<String,Integer> getRamCounterMap() {
         return ramCounterMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (int) e.getValue().getCount()));
+    }
+    public void deleteData() throws SAException {
+        internalRDBMS.deleteData();
+    }
+
+    public void persistType(ITypeDesc typeDesc) throws SAException {
+        internalRDBMS.persistType(typeDesc);
+    }
+
+    public void initialLoad(Context context, SpaceEngine engine, InitialLoadInfo initialLoadInfo) throws SAException {
+        internalRDBMS.initialLoad(context, engine, initialLoadInfo);
+    }
+
+    public SpaceTypeManager getTypeManager() {
+        return internalRDBMS.getTypeManager();
     }
 }
 
