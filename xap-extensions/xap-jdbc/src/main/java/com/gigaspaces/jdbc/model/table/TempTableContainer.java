@@ -14,9 +14,7 @@ import com.j_spaces.jdbc.builder.range.Range;
 import com.j_spaces.jdbc.builder.range.SegmentRange;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TempTableContainer extends TableContainer {
@@ -25,9 +23,9 @@ public class TempTableContainer extends TableContainer {
     private TempTableQTP queryTemplatePacket;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
     private final List<QueryColumn> tableColumns = new ArrayList<>();
+    private final Set<QueryColumn> invisibleColumns = new HashSet<>();
     private final List<String> allColumnNamesSorted;
     private TableContainer joinedTable;
-
 
     public TempTableContainer(QueryResult tableResult, String alias) {
         this.tableResult = tableResult;
@@ -38,7 +36,7 @@ public class TempTableContainer extends TableContainer {
             tableColumns.addAll(tableResult.getQueryColumns());
         }
 
-        allColumnNamesSorted = tableColumns.stream().map(QueryColumn::getName).collect(Collectors.toList());
+        allColumnNamesSorted = tableColumns.stream().map(QueryColumn::getNameOrAlias).collect(Collectors.toList());
     }
 
     @Override
@@ -50,10 +48,13 @@ public class TempTableContainer extends TableContainer {
                     explainResult.getExplainPlanInfo(), getExprTree(), Collections.unmodifiableList(getOrderColumns()));
             return new ExplainPlanResult(visibleColumns, subquery, this);
         }
-        if (queryTemplatePacket != null)
+        if (queryTemplatePacket != null) {
             tableResult.filter(x -> queryTemplatePacket.eval(x));
+        }
 
-        QueryResult queryResult = new QueryResult(visibleColumns, tableResult, getOrderColumns());
+        validateAggregationFunction();
+
+        QueryResult queryResult = new QueryResult(this);
         if(!getOrderColumns().isEmpty()) {
             queryResult.sort(); //sort the results at the client
         }
@@ -61,18 +62,27 @@ public class TempTableContainer extends TableContainer {
     }
 
     @Override
-    public QueryColumn addQueryColumn(String columnName, String alias, boolean visible) {
+    public QueryColumn addQueryColumn(String columnName, String alias, boolean visible,  int columnIndex) {
         QueryColumn queryColumn = tableColumns.stream()
-                .filter(qc -> qc.getName().equalsIgnoreCase(columnName))
+                .filter(qc -> qc.getNameOrAlias().equalsIgnoreCase(columnName))
                 .findFirst()
                 .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
-        if (visible) visibleColumns.add(queryColumn);
+        if (visible) {
+            this.visibleColumns.add(queryColumn);
+        } else {
+            this.invisibleColumns.add(queryColumn);
+        }
         return queryColumn;
     }
 
     @Override
     public List<QueryColumn> getVisibleColumns() {
         return visibleColumns;
+    }
+
+    @Override
+    public Set<QueryColumn> getInvisibleColumns() {
+        return this.invisibleColumns;
     }
 
     @Override
@@ -107,7 +117,7 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public QueryTemplatePacket createQueryTemplatePacketWithRange(Range range) {
-        addQueryColumn(range.getPath(), null, false);
+        addQueryColumn(range.getPath(), null, false, 0);
         if (range instanceof EqualValueRange) {
             return new TempTableQTP((EqualValueRange) range);
         } else if (range instanceof SegmentRange) {
@@ -154,11 +164,11 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public void setJoinInfo(JoinInfo joinInfo) {
-
     }
 
     @Override
     public boolean checkJoinCondition() {
         return false;
     }
+
 }

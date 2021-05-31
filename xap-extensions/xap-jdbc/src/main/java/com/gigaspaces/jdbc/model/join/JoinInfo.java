@@ -4,6 +4,8 @@ import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.j_spaces.jdbc.builder.range.Range;
 import net.sf.jsqlparser.statement.select.Join;
 
+import java.util.Objects;
+
 public class JoinInfo {
 
     private final QueryColumn leftColumn;
@@ -18,12 +20,15 @@ public class JoinInfo {
     }
 
     public boolean checkJoinCondition(){
-        if(joinType.equals(JoinType.INNER))
-            return leftColumn.getCurrentValue().equals(rightColumn.getCurrentValue());
+        Object rightValue = rightColumn.getCurrentValue();
+        Object leftValue = leftColumn.getCurrentValue();
+        if(joinType.equals(JoinType.INNER)) {
+            return rightValue != null && leftValue != null && Objects.equals(leftValue, rightValue);
+        }
         if(range != null){
             if(range.getPath().equals(rightColumn.getName()))
-                return range.getPredicate().execute(rightColumn.getCurrentValue());
-            return range.getPredicate().execute(leftColumn.getCurrentValue());
+                return range.getPredicate().execute(rightValue);
+            return range.getPredicate().execute(leftValue);
         }
         return true;
     }

@@ -10,17 +10,34 @@ import net.sf.jsqlparser.expression.Expression;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public abstract class TableContainer {
 
-    private Expression exprTree;
     private final List<OrderColumn> orderColumns = new ArrayList<>();
+    private final List<AggregationColumn> aggregationColumns = new ArrayList<>();
+    private Expression exprTree;
 
     public abstract QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
 
-    public abstract QueryColumn addQueryColumn(String columnName, String alias, boolean visible);
+    public abstract QueryColumn addQueryColumn(String columnName, String alias, boolean visible,  int columnIndex);
 
     public abstract List<QueryColumn> getVisibleColumns();
+
+    public abstract Set<QueryColumn> getInvisibleColumns();
+
+    public List<QueryColumn> getAllQueryColumns() {
+        List<QueryColumn> results = new ArrayList<>(getVisibleColumns());
+        results.addAll(getInvisibleColumns());
+        return results;
+    }
+
+    public List<QueryColumn> getSelectedColumns() {
+        List<QueryColumn> result = new ArrayList<>(getVisibleColumns());
+        result.addAll(getAggregationFunctionColumns());
+        result.sort(null);
+        return result;
+    }
 
     public abstract List<String> getAllColumnNames();
 
@@ -40,9 +57,9 @@ public abstract class TableContainer {
 
     public abstract QueryResult getQueryResult();
 
-    public abstract void setJoined(boolean joined);
-
     public abstract boolean isJoined();
+
+    public abstract void setJoined(boolean joined);
 
     public abstract boolean hasColumn(String columnName);
 
@@ -60,7 +77,6 @@ public abstract class TableContainer {
         return exprTree;
     }
 
-
     public void addOrderColumns(OrderColumn orderColumn) {
         this.orderColumns.add(orderColumn);
     }
@@ -68,4 +84,34 @@ public abstract class TableContainer {
     public List<OrderColumn> getOrderColumns() {
         return orderColumns;
     }
+
+    public void addAggregationFunctionColumn(AggregationColumn aggregationColumn) {
+        this.aggregationColumns.add(aggregationColumn);
+    }
+
+    public List<AggregationColumn> getAggregationFunctionColumns() {
+        return aggregationColumns;
+    }
+
+    public boolean hasAggregationFunctions() {
+        return !this.aggregationColumns.isEmpty();
+    }
+
+    public boolean hasOrderColumns() {
+        return !this.orderColumns.isEmpty();
+    }
+
+    protected void validateAggregationFunction() {
+        //TODO: block until supports of group by implementation.
+        if(hasAggregationFunctions() && !getVisibleColumns().isEmpty()) {
+            throw new IllegalArgumentException("Column [" + getVisibleColumns().get(0) + "] must appear in the " +
+                    "GROUP BY clause or be used in an aggregate function");
+        }
+        //TODO: block operation not supported -- see AggregationsUtil.convertAggregationResult
+        if(hasAggregationFunctions() && hasOrderColumns()) {
+            throw new IllegalArgumentException("Column [" + getOrderColumns().get(0).getNameOrAlias() + "] must appear in the " +
+                    "GROUP BY clause or be used in an aggregate function");
+        }
+    }
+
 }

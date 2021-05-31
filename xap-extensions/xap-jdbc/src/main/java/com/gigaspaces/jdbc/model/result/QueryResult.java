@@ -2,9 +2,7 @@ package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
-import com.gigaspaces.jdbc.model.table.OrderColumn;
-import com.gigaspaces.jdbc.model.table.QueryColumn;
-import com.gigaspaces.jdbc.model.table.TableContainer;
+import com.gigaspaces.jdbc.model.table.*;
 import com.j_spaces.jdbc.ResultEntry;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 
@@ -14,18 +12,25 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class QueryResult {
+public class QueryResult { //TODO: @sagiv make different class for each cons
     private final List<QueryColumn> queryColumns;
-    private List<TableRow> rows;
     protected TableContainer tableContainer;
+    private List<TableRow> rows;
     private Cursor<TableRow> cursor;
 
-    public QueryResult(IQueryResultSet<IEntryPacket> res, List<QueryColumn> queryColumns,
-                       TableContainer tableContainer, List<OrderColumn> orderColumns) {
-        this.queryColumns = filterNonVisibleColumns(queryColumns);
+    public QueryResult(IQueryResultSet<IEntryPacket> res, ConcreteTableContainer tableContainer) {
         this.tableContainer = tableContainer;
-        this.rows = res.stream().map(x -> new TableRow(x, queryColumns, orderColumns)).collect(Collectors.toList());
+        this.queryColumns = tableContainer.getSelectedColumns();
+        this.rows = res.stream().map(x -> new TableRow(x, tableContainer)).collect(Collectors.toList());
     }
+
+    //TODO: @sagiv pass the JoinQueryExecutor
+    public QueryResult(List<QueryColumn> queryColumns, List<AggregationColumn> aggregationColumns) {
+        this.tableContainer = null; // TODO should be handled in subquery
+        this.queryColumns = order(queryColumns, aggregationColumns);
+        this.rows = new ArrayList<>();
+    }
+
 
     public QueryResult(List<QueryColumn> queryColumns) {
         this.tableContainer = null; // TODO should be handled in subquery
@@ -33,14 +38,30 @@ public class QueryResult {
         this.rows = new ArrayList<>();
     }
 
-    public QueryResult(List<QueryColumn> visibleColumns, QueryResult tableResult, List<OrderColumn> orderColumns) {
+    public QueryResult(TempTableContainer tempTableContainer) {
+        //TODO: @sagiv keep null? because otherwise .TempTableContainer.getJoinedTable throw
+        // UnsupportedOperationException - Not supported yet!
         this.tableContainer = null;
-        this.queryColumns = visibleColumns;
-        this.rows = tableResult.rows.stream().map(row -> new TableRow(row, visibleColumns, orderColumns)).collect(Collectors.toList());
+        this.queryColumns = tempTableContainer.getSelectedColumns();
+        List<TableRow> tableRows = tempTableContainer.getQueryResult().getRows();
+        if (tempTableContainer.hasAggregationFunctions()) {
+            List<TableRow> aggregateRows = new ArrayList<>();
+            aggregateRows.add(TableRow.aggregate(tableRows, tempTableContainer.getAggregationFunctionColumns()));
+            this.rows = aggregateRows;
+        } else { //TODO: @sagiv pass tempTable
+            this.rows = tableRows.stream().map(row -> new TableRow(row, this.queryColumns, tempTableContainer.getOrderColumns())).collect(Collectors.toList());
+        }
     }
 
-    private List<QueryColumn> filterNonVisibleColumns(List<QueryColumn> queryColumns){
+    private List<QueryColumn> filterNonVisibleColumns(List<QueryColumn> queryColumns) {
         return queryColumns.stream().filter(QueryColumn::isVisible).collect(Collectors.toList());
+    }
+
+    private List<QueryColumn> order(List<QueryColumn> queryColumns, List<AggregationColumn> aggregationColumns) {
+        List<QueryColumn> result = new ArrayList<>(queryColumns);
+        result.addAll(aggregationColumns);
+        result.sort(null);
+        return result;
     }
 
     public List<QueryColumn> getQueryColumns() {
@@ -56,19 +77,19 @@ public class QueryResult {
     }
 
     public boolean next() {
-        if(tableContainer == null || tableContainer.getJoinedTable() == null)
+        if (tableContainer == null || tableContainer.getJoinedTable() == null)
             return getCursor().next();
         QueryResult joinedResult = tableContainer.getJoinedTable().getQueryResult();
-        if(joinedResult == null){
+        if (joinedResult == null) {
             return getCursor().next();
         }
-        while (hasNext()){
-            if(joinedResult.next()){
+        while (hasNext()) {
+            if (joinedResult.next()) {
                 return true;
             }
-            if(getCursor().next()){
+            if (getCursor().next()) {
                 joinedResult.reset();
-            }else{
+            } else {
                 return false;
             }
         }
@@ -76,7 +97,7 @@ public class QueryResult {
     }
 
     private boolean hasNext() {
-        if(getCursor().isBeforeFirst())
+        if (getCursor().isBeforeFirst())
             return getCursor().next();
         return true;
     }
@@ -87,32 +108,32 @@ public class QueryResult {
 
     public void reset() {
         getCursor().reset();
-        if(tableContainer == null || tableContainer.getJoinedTable() == null) {
+        if (tableContainer == null || tableContainer.getJoinedTable() == null) {
             return;
         }
         QueryResult joinedResult = tableContainer.getJoinedTable().getQueryResult();
-        if(joinedResult != null) {
+        if (joinedResult != null) {
             joinedResult.reset();
         }
     }
 
     public Cursor<TableRow> getCursor() {
-        if(cursor == null) {
+        if (cursor == null) {
             cursor = getCursorType().equals(Cursor.Type.SCAN) ? new RowScanCursor(rows) : new HashedRowCursor(tableContainer.getJoinInfo(), rows);
         }
         return cursor;
     }
 
-    public Cursor.Type getCursorType(){
-        if(tableContainer != null && tableContainer.getJoinInfo() != null) {
+    public Cursor.Type getCursorType() {
+        if (tableContainer != null && tableContainer.getJoinInfo() != null) {
             return Cursor.Type.HASH;
-        }
-        else {
+        } else {
             return Cursor.Type.SCAN;
         }
     }
 
     public ResultEntry convertEntriesToResultArrays(QueryExecutionConfig config) {
+        //TODO: @sagiv make static/at father pass QueryResult
         QueryResult queryResult = this;
         // Column (field) names and labels (aliases)
         int columns = queryResult.getQueryColumns().size();
@@ -148,7 +169,14 @@ public class QueryResult {
         rows = rows.stream().filter(predicate).collect(Collectors.toList());
     }
 
-    public void sort(){
+    public void sort() {
         Collections.sort(rows);
+    }
+
+    public List<TableRow> getRows() {
+        return rows;
+    }
+    public void setRows(List<TableRow> rows) {
+        this.rows = rows;
     }
 }
