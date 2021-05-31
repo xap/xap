@@ -12,8 +12,10 @@ import java.math.BigDecimal;
 public class GSTable extends AbstractTable {
 
     private final ITypeDesc typeDesc;
+    private final String name;
 
-    public GSTable(ITypeDesc typeDesc) {
+    public GSTable(String name, ITypeDesc typeDesc) {
+        this.name = name;
         this.typeDesc = typeDesc;
     }
 
@@ -48,6 +50,7 @@ public class GSTable extends AbstractTable {
             return SqlTypeName.TIME;
         }
 
+
         throw new UnsupportedOperationException("Unsupported type: " + clazz);
     }
 
@@ -63,7 +66,7 @@ public class GSTable extends AbstractTable {
         return builder.build();
     }
 
-    public ITypeDesc getTypeDesc() {
-        return typeDesc;
+    public String getName() {
+        return name;
     }
 }
