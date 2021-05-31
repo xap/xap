@@ -57,9 +57,11 @@ public class RelNodePhysicalPlanHandler implements PhysicalPlanHandler<GSRelNode
                         expr.accept(rexHandler);
                     }
                     ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, rexHandler.getFields());
-                    program.getCondition().accept(conditionHandler);
-                    for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : conditionHandler.getQTPMap().entrySet()) {
-                        tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
+                    if (program.getCondition() != null) {
+                        program.getCondition().accept(conditionHandler);
+                        for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : conditionHandler.getQTPMap().entrySet()) {
+                            tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
+                        }
                     }
 
                 }
