@@ -11,10 +11,9 @@ public class GSSchemaTablesHolder {
     private static final Map<String, GSSchemaTable> schemaTables = new HashMap<>();
 
     static {
-        add(new GSSchemaTable("pg_tables",
-                SchemaProperty.of("schemaname", SqlTypeName.VARCHAR),
-                SchemaProperty.of("tablename", SqlTypeName.VARCHAR),
-                SchemaProperty.of("tableowner", SqlTypeName.VARCHAR)));
+        for (PGSystemTable pgSystemTable : PGSystemTable.values()) {
+            add(new GSSchemaTable(pgSystemTable));
+        }
     }
 
     private static void add(GSSchemaTable gsSchemaTable) {

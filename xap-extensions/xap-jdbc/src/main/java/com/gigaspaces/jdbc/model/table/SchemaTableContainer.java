@@ -7,6 +7,7 @@ import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.result.TableRow;
 import com.gigaspaces.jdbc.model.result.TempTableQTP;
+import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.EqualValueRange;
 import com.j_spaces.jdbc.builder.range.Range;
@@ -20,26 +21,26 @@ import java.util.stream.Collectors;
 
 public class SchemaTableContainer extends TableContainer {
     private final GSSchemaTable table;
+    private final IJSpace space;
     private TableContainer joinedTable;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
     private final List<QueryColumn> tableColumns;
     private TempTableQTP queryTemplatePacket;
 
-    public SchemaTableContainer(GSSchemaTable table) {
+    public SchemaTableContainer(GSSchemaTable table, IJSpace space) {
         this.table = table;
         this.tableColumns = Arrays.stream(table.getSchemas()).map(x -> new QueryColumn(x.getPropertyName(), null, true, this)).collect(Collectors.toList());
+        this.space = space;
     }
 
     @Override
-    public QueryResult executeRead(QueryExecutionConfig config) {
+    public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
         List<QueryColumn> queryColumns = getVisibleColumns();
-        QueryResult queryResult = new QueryResult(queryColumns);
-        QueryColumn[] arr = queryColumns.toArray(new QueryColumn[0]);
-        queryResult.add(new TableRow(arr, new Object[]{"aa1", "bb1", "cc1"}));
-        queryResult.add(new TableRow(arr, new Object[]{"aa2", "bb2", "cc2"}));
-
-        if (queryTemplatePacket != null)
+        QueryResult queryResult = table.execute(space, tableColumns);
+        if (queryTemplatePacket != null) {
             queryResult.filter(x -> queryTemplatePacket.eval(x));
+        }
+        queryResult = new QueryResult(visibleColumns, queryResult);
         return queryResult;
     }
 
