@@ -285,6 +285,7 @@ public class SpaceTypeManager {
                         validateTieredStorage(serverTypeDesc.getTypeDesc());
                         if(!tieredStorageManager.isTransient(typeDesc.getTypeName())){
                             try {
+                                tieredStorageManager.getInternalStorage().persistType(typeDesc);
                                 tieredStorageManager.getInternalStorage().createTable(typeDesc);
                             } catch (SAException e) {
                                 throw new RuntimeException(e);

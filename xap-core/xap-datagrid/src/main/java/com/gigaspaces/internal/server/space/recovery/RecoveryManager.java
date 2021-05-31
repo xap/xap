@@ -18,12 +18,7 @@ package com.gigaspaces.internal.server.space.recovery;
 
 import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.server.space.SpaceImpl;
-import com.gigaspaces.internal.server.space.recovery.strategy.AllInCacheCentralDBBackupSpaceRecovery;
-import com.gigaspaces.internal.server.space.recovery.strategy.LRUCentralDBBackupSpaceRecovery;
-import com.gigaspaces.internal.server.space.recovery.strategy.NonCentralDBBackupSpaceRecovery;
-import com.gigaspaces.internal.server.space.recovery.strategy.NonPrimaryBackupSpaceRecovery;
-import com.gigaspaces.internal.server.space.recovery.strategy.PrimarySpaceRecovery;
-import com.gigaspaces.internal.server.space.recovery.strategy.SpaceRecoverStrategy;
+import com.gigaspaces.internal.server.space.recovery.strategy.*;
 import com.j_spaces.core.SpaceRecoveryException;
 
 import static com.j_spaces.core.Constants.CacheManager.CACHE_POLICY_ALL_IN_CACHE;
@@ -79,16 +74,20 @@ public class RecoveryManager {
      */
     public SpaceRecoverStrategy getRecoveryStrategy(SpaceMode spaceMode)
             throws SpaceRecoveryException {
-        switch (spaceMode) {
-            case PRIMARY: {
-                return new PrimarySpaceRecovery(_space);
-            }
-            case BACKUP: {
-                return getBackupSpaceRecovery();
+        if(_space.getEngine().isTieredStorage()){
+            return spaceMode.equals(SpaceMode.BACKUP) ? getBackupSpaceRecovery() : new TieredStoragePrimarySpaceRecovery(_space);
+        } else {
+            switch (spaceMode) {
+                case PRIMARY: {
+                    return new PrimarySpaceRecovery(_space);
+                }
+                case BACKUP: {
+                    return getBackupSpaceRecovery();
 
-            }
-            default: {
-                return new NonPrimaryBackupSpaceRecovery(_space);
+                }
+                default: {
+                    return new NonPrimaryBackupSpaceRecovery(_space);
+                }
             }
         }
     }
