@@ -8,7 +8,9 @@ public interface CachePredicate {
 
     boolean evaluate(IEntryData entryData); // check if  entry fits rule - for evicting
 
-    boolean isTransient();
+    default boolean isTransient(){
+        return false;
+    }
 
     TemplateMatchTier evaluate(ITemplateHolder template);
 

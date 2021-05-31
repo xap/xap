@@ -607,6 +607,11 @@ public class CacheManager extends AbstractCacheManager
             _replicationNode.getDirectPesistencySyncHandler().afterInitializedBlobStoreIO(new DirectPersistencyBlobStoreIO(this, _logger, _replicationNode.getDirectPesistencySyncHandler().getCurrentGenerationId()));
         }
 
+
+        if(isTieredStorage()){
+            loadDataFromDB = _engine.getSpaceImpl().isPrimary() &&  (_engine.getTieredStorageManager().RDBMSContainsData() || getStorageAdapter() != null);
+        }
+
         if (loadDataFromDB) {
             Context context = null;
             try {
@@ -927,6 +932,18 @@ public class CacheManager extends AbstractCacheManager
         context.setInitialLoadInfo(initialLoadInfo);
         // if cache policy is ALL_IN_CACHE- load all entries to cache from SA
         if (isResidentEntriesCachePolicy()) {
+            //if RDBMS is not empty init from RDBMS else if has mirror initial load from mirror
+            if(isTieredStorage() && _engine.getTieredStorageManager().RDBMSContainsData()) {
+                _engine.getTieredStorageManager().getInternalStorage().initialLoad(context, _engine, initialLoadInfo);
+                if (_logger.isInfoEnabled()) {
+                    _logger.info("Data source recovery:\n " +
+                            "\tEntries found in warm tier: " + initialLoadInfo.getFoundInDatabase() + ".\n" +
+                            "\tEntries inserted to hot tier: " + initialLoadInfo.getInsertedToCache() + ".\n" +
+                            "\tTotal Time: " + JSpaceUtilities.formatMillis(SystemTime.timeMillis() - initialLoadInfo.getRecoveryStartTime()) + ".");
+                }
+                return;
+            }
+
             //special first call to SA- SA will return all classes, not just fifo classes
             residentEntriesInitialLoad(context, configReader, initialLoadInfo);
             if (isBlobStoreCachePolicy() && _persistentBlobStore && _engine.getSpaceImpl().isPrimary() && _entries.isEmpty()) {
@@ -1390,7 +1407,7 @@ public class CacheManager extends AbstractCacheManager
             if(context.getEntryTieredState() == null){
                 throw new IllegalStateException("trying to write entry in tiered mode but context.getEntryTieredState() == null, uid = "+entryHolder.getUID());
             }
-            _engine.getTieredStorageManager().getInternalStorage().insertEntry(context, entryHolder);
+            _engine.getTieredStorageManager().getInternalStorage().insertEntry(context, entryHolder, initialLoadOrigin);
         }
 
         if((isTieredStorage() && context.isRAMEntry()) || !isTieredStorage()) {
@@ -3543,7 +3560,7 @@ public class CacheManager extends AbstractCacheManager
      * INITIALLOAD INFO.
      */
     public static enum InitialLoadOrigin {
-        NON, FROM_NON_BLOBSTORE, FROM_BLOBSTORE
+        NON, FROM_NON_BLOBSTORE, FROM_BLOBSTORE, FROM_TIERED_STORAGE;
     }
 
     private void validateEntryCanBeWrittenToCache(IEntryHolder entryHolder) {
@@ -5971,8 +5988,8 @@ public class CacheManager extends AbstractCacheManager
         boolean memoryOnlyIter;
 
         if(isTieredStorage()){
-            entriesInfo = _engine.getTieredStorageManager().getInternalStorage().getCounterMap();
-            ramEntriesInfo = _engine.getTieredStorageManager().getInternalStorage().getRamCounterMap();
+            entriesInfo = _engine.getTieredStorageManager().getInternalStorage().getMetaData().getCounterMap();
+            ramEntriesInfo = _engine.getTieredStorageManager().getInternalStorage().getMetaData().getRamCounterMap();
         }else {
             ramEntriesInfo = new HashMap<>();
 //             APP-833 (Guy K): 18.12.2006 in order to avoid

@@ -19,6 +19,7 @@ import com.j_spaces.jdbc.builder.range.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.*;
+import java.sql.Date;
 import java.time.*;
 import java.util.*;
 
@@ -31,11 +32,22 @@ public class SqliteUtils {
     private static final Map<String, ExtractFunction> sqlExtractorsMap = initSqlExtractorsMap();
     private static final Map<String, InjectFunction> sqlInjectorsMap = initSqlInjectorsMap();
     private static final Map<String, RangeToStringFunction> rangeToStringFunctionMap = initRangeToStringFunctionMap();
+    private static Map<String, InstantToDateTypeFunction> instantToDateTypeFunctionMap = initInstantToDateTypeMap();
 
     private static Map<String, TypeEqualsFunction> initSpecialTypeEqualsFunctionMapMap() {
         Map<String, TypeEqualsFunction> map = new HashMap<>();
         map.put(byte[].class.getName(), (v1, v2) -> Arrays.equals(((byte[]) v1), ((byte[]) v2)));
         map.put(Byte[].class.getName(), (v1, v2) -> Arrays.equals(((Byte[]) v1), ((Byte[]) v2)));
+        return map;
+    }
+
+    private static Map<String, InstantToDateTypeFunction> initInstantToDateTypeMap() {
+        Map<String, InstantToDateTypeFunction> map = new HashMap<>();
+        map.put(Timestamp.class.getName(), (instant)-> new Timestamp(instant.toEpochMilli()));
+        map.put(Long.class.getName(), Instant::toEpochMilli);
+        map.put(long.class.getName(), Instant::toEpochMilli);
+        map.put(java.util.Date.class.getName(),(instant)-> new java.util.Date(instant.toEpochMilli()));
+        map.put(LocalDateTime.class.getName(), (instant)-> LocalDateTime.ofInstant(instant, ZoneId.of("UTC")));
         return map;
     }
 
@@ -288,7 +300,7 @@ public class SqliteUtils {
         }
     }
 
-    private static void appendRangeString(Range range, StringBuilder queryBuilder, QueryParameters queryParams) {
+    public static void appendRangeString(Range range, StringBuilder queryBuilder, QueryParameters queryParams) {
         if(!rangeToStringFunctionMap.containsKey(range.getClass().getName())){
             throw new IllegalStateException("SQL query of type" + range.getClass().getName() + " is unsupported");
         }
@@ -624,6 +636,10 @@ public class SqliteUtils {
         return false;
     }
 
+    public static Comparable convertInstantToDateType(Instant instant, String dateTypeName){
+        return instantToDateTypeFunctionMap.get(dateTypeName).toDateType(instant);
+    }
+
     @FunctionalInterface
     interface ExtractFunction {
         Object extract(ResultSet resultSet, int index) throws SQLException;
@@ -643,4 +659,16 @@ public class SqliteUtils {
         boolean equals(Object val1, Object val2) ;
     }
 
+    @FunctionalInterface
+    interface InstantToDateTypeFunction {
+        Comparable toDateType(Instant instant) ;
+    }
+
+    public static void main(String[] args) {
+        final String s = "2021-05-27T15:30:26.846Z";
+        final Instant instant = Instant.parse(s);
+        final long gsTime = toGSTime(instant);
+        System.out.println(gsTime);
+        System.out.println(fromGsTime(gsTime));
+    }
 }
