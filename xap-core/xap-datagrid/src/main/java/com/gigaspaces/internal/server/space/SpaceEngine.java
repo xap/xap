@@ -320,7 +320,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             final TypeDescFactory typeDescFactory = new TypeDescFactory(_directProxy);
             _typeManager = new SpaceTypeManager(typeDescFactory, _configReader, tieredStorageManager);
             if (isTieredStorage()) {
-                tieredStorageManager.getInternalStorage().initialize(_spaceName, _fullSpaceName, _typeManager);
+                tieredStorageManager.initialize(_spaceName, _fullSpaceName, _typeManager);
             }
         } catch (SAException e) {
             throw new CreateException("Failed to initialize InternalRDBMS", e);
@@ -6876,7 +6876,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             ITypeDesc iTypeDesc = severTTE.getTypeDesc();
             if( asVirtualType && iTypeDesc instanceof TypeDesc ) {
                 TypeDesc typeDesc = ( TypeDesc )iTypeDesc;
-                return typeDesc.cloneWithoutObjectClass( typeDesc, EntryType.DOCUMENT_JAVA );
+                return typeDesc.cloneWithoutObjectClass(EntryType.DOCUMENT_JAVA );
             }
             return iTypeDesc;
         }
