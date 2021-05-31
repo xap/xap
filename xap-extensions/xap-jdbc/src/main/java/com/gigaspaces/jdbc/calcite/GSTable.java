@@ -10,8 +10,10 @@ import org.apache.calcite.sql.type.SqlTypeName;
 public class GSTable extends AbstractTable {
 
     private final ITypeDesc typeDesc;
+    private final String name;
 
-    public GSTable(ITypeDesc typeDesc) {
+    public GSTable(String name, ITypeDesc typeDesc) {
+        this.name = name;
         this.typeDesc = typeDesc;
     }
 
@@ -46,7 +48,7 @@ public class GSTable extends AbstractTable {
         throw new UnsupportedOperationException("Unsupported type: " + clazz);
     }
 
-    public ITypeDesc getTypeDesc() {
-        return typeDesc;
+    public String getName() {
+        return name;
     }
 }

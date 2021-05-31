@@ -36,13 +36,17 @@ public class MainTester {
 //            DumpUtils.dump(rs);
 
             Statement statement = connection.createStatement();
-            execute(statement, String.format("EXPLAIN SELECT * FROM %s WHERE name='A'", MyPojo.class.getName()));
-            execute(statement, String.format("EXPLAIN SELECT A.id, B.name FROM %s A INNER JOIN %s B ON A.name=B.name", MyPojo.class.getName(), MyPojo.class.getName()));
-            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id, name FROM %s)", MyPojo.class.getName()));
-            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id,name FROM (SELECT * FROM %s))", MyPojo.class.getName()));
-            execute(statement, String.format("EXPLAIN SELECT A.id, B.name, C.name FROM %s A INNER JOIN %s B ON A.name=B.name INNER JOIN %s C ON B.name=C.name", MyPojo.class.getName(), MyPojo.class.getName(), MyPojo.class.getName()));
-            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT E.id, B.age, E.name FROM %s as E INNER JOIN %s as B ON E.name = B.name)", MyPojo.class.getName(), MyPojo.class.getName()));
-
+            execute(statement, String.format("SELECT name FROM \"%s\"", MyPojo.class.getName()));
+            execute(statement, String.format("SELECT tablename FROM pg_tables"));
+            execute(statement, String.format("SELECT tablename FROM pg_catalog.pg_tables"));
+            execute(statement, String.format("SELECT tablename FROM pg_catalog.pg_tables where tablename='aa1'"));
+//            execute(statement, String.format("SELECT tablename FROM \"pg_catalog.pg_tables\" where tablename='aa1'", MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT A.id, B.name FROM %s A INNER JOIN %s B ON A.name=B.name", MyPojo.class.getName(), MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id, name FROM %s)", MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id,name FROM (SELECT * FROM %s))", MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT A.id, B.name, C.name FROM %s A INNER JOIN %s B ON A.name=B.name INNER JOIN %s C ON B.name=C.name", MyPojo.class.getName(), MyPojo.class.getName(), MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT E.id, B.age, E.name FROM %s as E INNER JOIN %s as B ON E.name = B.name)", MyPojo.class.getName(), MyPojo.class.getName()));
+//
 //            execute(statement, String.format("EXPLAIN SELECT * FROM %s WHERE name='A'", MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT id, name FROM (SELECT A.id, B.name FROM %s A INNER JOIN %s B ON A.name=B.name)", MyPojo.class.getName(), MyPojo.class.getName()));
 //            execute(statement, String.format("EXPLAIN SELECT id, name FROM (SELECT A.id, B.name FROM %s A INNER JOIN %s B ON A.name=B.name)", MyPojo.class.getName(), MyPojo.class.getName()));
@@ -53,8 +57,8 @@ public class MainTester {
              *         "(last_name = 'Jefferson' AND first_name = 'Daniel') OR " +
              *         "((last_name = 'Avihu') or (email = 'mishel.ericsson@outlook.com') or (age=27))";
              */
-            execute(statement, String.format("SELECT first_name FROM (SELECT id, age, email, first_name, last_name FROM %s) where (last_name = 'Bb' AND first_name = 'Adam') OR ((last_name = 'Cc') or (email = 'Adler@msn.com') or (age>=40))", MyPojo.class.getName()));
-            execute(statement, String.format("EXPLAIN SELECT first_name FROM (SELECT id, age, email, first_name, last_name FROM %s where (last_name = 'Bb' AND first_name = 'Adam') OR ((last_name = 'Cc') or (email = 'Adler@msn.com') or (age>=40))) where (last_name = 'Bb' AND first_name = 'Adam') OR ((last_name = 'Cc') or (email = 'Adler@msn.com') or (age>=40))", MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT first_name FROM (SELECT id, age, email, first_name, last_name FROM %s) where (last_name = 'Bb' AND first_name = 'Adam') OR ((last_name = 'Cc') or (email = 'Adler@msn.com') or (age>=40))", MyPojo.class.getName()));
+//            execute(statement, String.format("EXPLAIN SELECT first_name FROM (SELECT id, age, email, first_name, last_name FROM %s where (last_name = 'Bb' AND first_name = 'Adam') OR ((last_name = 'Cc') or (email = 'Adler@msn.com') or (age>=40))) where (last_name = 'Bb' AND first_name = 'Adam') OR ((last_name = 'Cc') or (email = 'Adler@msn.com') or (age>=40))", MyPojo.class.getName()));
 //            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id, age, name FROM %s) where (name='Adler' or name = 'Eve') OR (age > 30 )", MyPojo.class.getName()));
 //            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT id,name FROM (SELECT * FROM %s)) where name='Adler'", MyPojo.class.getName()));
 //            execute(statement, String.format("EXPLAIN SELECT name FROM (SELECT A.id, B.name, C.name FROM %s A INNER JOIN %s B ON A.name=B.name INNER JOIN %s C ON B.name=C.name) where name='Adler'", MyPojo.class.getName(), MyPojo.class.getName(), MyPojo.class.getName()));

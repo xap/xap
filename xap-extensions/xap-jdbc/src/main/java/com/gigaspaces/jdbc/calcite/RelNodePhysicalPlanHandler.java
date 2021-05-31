@@ -2,9 +2,12 @@ package com.gigaspaces.jdbc.calcite;
 
 import com.gigaspaces.jdbc.PhysicalPlanHandler;
 import com.gigaspaces.jdbc.QueryExecutor;
+import com.gigaspaces.jdbc.calcite.schema.GSSchemaTable;
 import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
+import com.gigaspaces.jdbc.model.table.SchemaTableContainer;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
@@ -31,21 +34,31 @@ public class RelNodePhysicalPlanHandler implements PhysicalPlanHandler<GSRelNode
             public RelNode visit(TableScan scan) {
                 System.out.println(">>> SCAN " + scan);
                 // TODO: Extract type and column info, put to stack.
-                GSTable table = scan.getTable().unwrap(GSTable.class);
+                RelOptTable relOptTable = scan.getTable();
+                Object table = relOptTable.unwrap(GSTable.class);
+                if (table == null) table = relOptTable.unwrap(GSSchemaTable.class);
                 stack.push(table);
                 return scan;
             }
+
             @Override
             public RelNode visit(RelNode other) {
                 RelNode res = super.visit(other);
                 System.out.println(">>> OTHER " + other);
                 if (other instanceof GSCalc) {
                     GSCalc calc = (GSCalc) other;
-                    GSTable table = (GSTable) stack.pop();
-                    TableContainer tableContainer = new ConcreteTableContainer(table.getTypeDesc().getTypeName(), null, queryExecutor.getSpace());
+                    Object pop = stack.pop();
+                    TableContainer tableContainer;
+                    if (pop instanceof GSSchemaTable) {
+                        tableContainer = new SchemaTableContainer(((GSSchemaTable) pop));
+                    } else if (pop instanceof GSTable) {
+                        tableContainer = new ConcreteTableContainer(((GSTable) pop).getName(), null, queryExecutor.getSpace());
+                    } else {
+                        throw new UnsupportedOperationException("Got unsupported table type: " + pop);
+                    }
                     queryExecutor.getTables().add(tableContainer);
                     RexProgram program = calc.getProgram();
-                    List<String> inputFields  =  program.getInputRowType().getFieldNames();
+                    List<String> inputFields = program.getInputRowType().getFieldNames();
                     List<String> outputFields = program.getOutputRowType().getFieldNames();
                     for (int i = 0; i < outputFields.size(); i++) {
                         String alias = outputFields.get(i);
