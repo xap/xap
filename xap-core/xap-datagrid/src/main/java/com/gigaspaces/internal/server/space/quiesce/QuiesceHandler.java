@@ -91,6 +91,12 @@ public class QuiesceHandler {
         return hasGuard(currGuard, Status.QUIESCED) && currGuard.getMessage().contains("SCALE");
     }
 
+    public boolean isUndeploy() {
+        // Concurrency: snapshot volatile _guard into local variable
+        final Guard currGuard = _guard;
+        return hasGuard(currGuard, Status.QUIESCED) && currGuard.getMessage().contains("UNDEPLOYING");
+    }
+
     //disable any non-admin op if q mode on
     public void checkAllowedOp(QuiesceToken operationToken) {
         if (_supported) {

@@ -17,6 +17,7 @@
 package com.j_spaces.core.client.sql;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.gigaspaces.logger.Constants;
 import com.j_spaces.core.client.SQLQuery;
@@ -72,6 +73,54 @@ public abstract class SqlQueryParser {
                 query.setTableName(sqlQuery.getTypeName());
 
                 query.validateQuery(space);
+
+                if (!query.isPrepared() && !query.containsSubQueries())
+                    query.build();
+
+                addQueryToCache(getUniqueKey(sqlQuery), query);
+
+                if (!query.isPrepared())
+                    return query;
+            }
+            // Clone the query  to avoid concurrency issues
+            query = query.clone();
+
+            return query;
+        } catch (SQLException sqlEx) {
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Error executing statement ["
+                        + sqlQuery.getQuery() + "]", sqlEx);
+            }
+            throw sqlEx;
+        } catch (Throwable t) {
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("Couldn't parse given statement ["
+                        + sqlQuery.getQuery() + "]", t);
+            }
+            // now should throw an SQLException back to the JDBC driver.
+            SQLException sqlEx = new SQLException("Error in statement [" + sqlQuery.getQuery() + "]; Cause: " + t,
+                    "GSP", -201);
+            sqlEx.initCause(t);
+            throw sqlEx;
+        }
+    }
+
+    public AbstractDMLQuery parseSqlQuery(SQLQuery sqlQuery, SpaceTypeManager typeManager) throws SQLException {
+        // first, try to get it from the cache.
+        AbstractDMLQuery query = (AbstractDMLQuery) getQueryFromCache(getUniqueKey(sqlQuery));
+        try {
+            if (query == null) {
+                if (_logger.isDebugEnabled()) {
+                    _logger.debug("Query wasn't in cache, will be parsed");
+                }
+
+                // query was not in the cache to build a parser to parse it.
+                SqlParser parser = initParser(sqlQuery.getQuery());
+
+                query = parse(parser);
+                query.setTableName(sqlQuery.getTypeName());
+
+                query.validateQuery(typeManager);
 
                 if (!query.isPrepared() && !query.containsSubQueries())
                     query.build();
