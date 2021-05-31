@@ -33,6 +33,9 @@ public class QueryExecutor {
     }
 
     public QueryResult execute() throws SQLException {
+        if (tables.size() == 0) {
+            throw new SQLException("No tables has been detected");
+        }
         if (tables.size() == 1) { //Simple Query
             return tables.get(0).executeRead(config);
         }
