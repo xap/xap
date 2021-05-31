@@ -20,11 +20,12 @@ public class QueryResult {
     protected TableContainer tableContainer;
     private Cursor<TableRow> cursor;
 
-    public QueryResult(IQueryResultSet<IEntryPacket> res, List<QueryColumn> queryColumns,
-                       TableContainer tableContainer, List<OrderColumn> orderColumns) {
+    public QueryResult(IQueryResultSet<IEntryPacket> res, List<QueryColumn> queryColumns, TableContainer tableContainer) {
         this.queryColumns = filterNonVisibleColumns(queryColumns);
         this.tableContainer = tableContainer;
-        this.rows = res.stream().map(x -> new TableRow(x, queryColumns, orderColumns)).collect(Collectors.toList());
+        this.rows =
+                res.stream().map(x -> new TableRow(x, this.queryColumns, tableContainer.getOrderColumns(),
+                        tableContainer.getAggregationFunctions())).collect(Collectors.toList());
     }
 
     public QueryResult(List<QueryColumn> queryColumns) {

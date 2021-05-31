@@ -13,12 +13,14 @@ import java.util.List;
 
 public abstract class TableContainer {
 
-    private Expression exprTree;
     private final List<OrderColumn> orderColumns = new ArrayList<>();
+    private Expression exprTree;
 
     public abstract QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
 
     public abstract QueryColumn addQueryColumn(String columnName, String alias, boolean visible);
+
+    public abstract QueryColumn addQueryColumn(AggregationFunction aggregationFunction);
 
     public abstract List<QueryColumn> getVisibleColumns();
 
@@ -40,9 +42,9 @@ public abstract class TableContainer {
 
     public abstract QueryResult getQueryResult();
 
-    public abstract void setJoined(boolean joined);
-
     public abstract boolean isJoined();
+
+    public abstract void setJoined(boolean joined);
 
     public abstract boolean hasColumn(String columnName);
 
@@ -60,7 +62,6 @@ public abstract class TableContainer {
         return exprTree;
     }
 
-
     public void addOrderColumns(OrderColumn orderColumn) {
         this.orderColumns.add(orderColumn);
     }
@@ -68,4 +69,8 @@ public abstract class TableContainer {
     public List<OrderColumn> getOrderColumns() {
         return orderColumns;
     }
+
+    public abstract void addAggregationFunction(AggregationFunction aggregationFunction);
+
+    public abstract List<AggregationFunction> getAggregationFunctions();
 }

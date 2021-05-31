@@ -148,4 +148,19 @@ public class TempTableContainer extends TableContainer {
     public boolean checkJoinCondition() {
         return false;
     }
+
+    @Override
+    public void addAggregationFunction(AggregationFunction aggregationFunction) {
+         //TODO:complete
+    }
+
+    @Override
+    public List<AggregationFunction> getAggregationFunctions() {
+        return null;         //TODO:complete
+    }
+
+    @Override
+    public QueryColumn addQueryColumn(AggregationFunction aggregationFunction) {
+        return null;   //TODO:complete
+    }
 }

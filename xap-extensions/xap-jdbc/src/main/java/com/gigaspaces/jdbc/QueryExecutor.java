@@ -87,8 +87,9 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     }
 
     private void prepareQueryColumns(PlainSelect plainSelect) {
-        QueryColumnHandler visitor = new QueryColumnHandler(this);
-        plainSelect.getSelectItems().forEach(selectItem -> selectItem.accept(visitor));
+        QueryColumnHandler queryColumnHandler = new QueryColumnHandler(this);
+        plainSelect.getSelectItems().forEach(selectItem -> selectItem.accept(queryColumnHandler));
+//        plainSelect.getSelectItems().forEach(selectItem -> selectItem.accept(new QueryFunctionHandler(this)));
     }
 
     private void prepareWhereClause(PlainSelect plainSelect) {

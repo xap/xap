@@ -1,12 +1,12 @@
 package com.gigaspaces.jdbc.model.table;
 
 public class QueryColumn {
+    public static final String UUID_COLUMN = "UID";
+    protected final TableContainer tableContainer;
     private final String name;
     private final String alias;
     private final boolean isVisible;
     private final boolean isUUID;
-    public static final String UUID_COLUMN = "UID";
-    protected final TableContainer tableContainer;
 
     public QueryColumn(String name, String alias, boolean isVisible, TableContainer tableContainer) {
         this.name = name;
@@ -36,19 +36,19 @@ public class QueryColumn {
         return tableContainer;
     }
 
-    public Object getCurrentValue(){
-        if(tableContainer.getQueryResult().getCurrent() == null)
+    public Object getCurrentValue() {
+        if (tableContainer.getQueryResult().getCurrent() == null)
             return null;
         return tableContainer.getQueryResult().getCurrent().getPropertyValue(this);
     }
 
     @Override
     public String toString() {
-        return tableContainer.getTableNameOrAlias() + "." + getNameOrAlias() ;
+        return tableContainer.getTableNameOrAlias() + "." + getNameOrAlias();
     }
 
-    private String getNameOrAlias() {
-        if(alias != null)
+    public String getNameOrAlias() {
+        if (alias != null)
             return alias;
         return name;
     }

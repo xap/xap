@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
+import com.gigaspaces.jdbc.model.table.AggregationFunction;
 import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 
@@ -19,19 +20,34 @@ public class TableRow implements Comparable<TableRow>{
         this.orderValues = new Object[0];
     }
 
-    public TableRow(IEntryPacket x, List<QueryColumn> queryColumns, List<OrderColumn> orderColumns) {
-        this.columns = queryColumns.toArray(new QueryColumn[0]);
-        values = new Object[columns.length];
-        for (int i = 0; i < queryColumns.size(); i++) {
-            QueryColumn queryColumn = queryColumns.get(i);
-            if (queryColumn.isUUID()) {
-                values[i] = x.getUID();
-            } else if (x.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(queryColumn.getName())) {
-                values[i] = x.getID();
-            } else {
-                values[i] = x.getPropertyValue(queryColumn.getName());
+    public TableRow(IEntryPacket x, List<QueryColumn> queryColumns, List<OrderColumn> orderColumns,
+                    List<AggregationFunction> aggregationFunctions) {
+        //TODO boolean field instead.
+        boolean hasAggregationFunctions = queryColumns.stream().anyMatch(queryColumn -> queryColumn instanceof AggregationFunction);
+        if (hasAggregationFunctions) {
+            int columnsSize = queryColumns.size();
+            this.columns = new QueryColumn[columnsSize];
+            this.values = new Object[columnsSize];
+            for (int i = 0; i < columnsSize; i++) {
+                this.columns[i] = queryColumns.get(i);
+                //TODO: what if we use group by, and therefore we have more values??
+                this.values[i] = x.getFieldValue(i);
+            }
+        } else {
+            this.columns = queryColumns.toArray(new QueryColumn[0]);//TODO x TypeDescriptor is null! why?
+            values = new Object[columns.length];
+            for (int i = 0; i < queryColumns.size(); i++) {
+                QueryColumn queryColumn = queryColumns.get(i);
+                if (queryColumn.isUUID()) {
+                    values[i] = x.getUID();
+                } else if (x.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(queryColumn.getName())) {
+                    values[i] = x.getID();
+                } else {
+                    values[i] = x.getPropertyValue(queryColumn.getName());
+                }
             }
         }
+
 
         this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
         orderValues = new Object[this.orderColumns.length];

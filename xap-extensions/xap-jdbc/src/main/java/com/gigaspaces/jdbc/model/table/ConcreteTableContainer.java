@@ -14,6 +14,7 @@ import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.query.aggregators.AggregationSet;
 import com.gigaspaces.query.aggregators.OrderBy;
 import com.gigaspaces.query.aggregators.OrderByAggregator;
+import com.gigaspaces.query.aggregators.SingleValueAggregator;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
@@ -33,6 +34,7 @@ public class ConcreteTableContainer extends TableContainer {
     private final ITypeDesc typeDesc;
     private final List<String> allColumnNamesSorted;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
+    private final List<AggregationFunction> aggregationFunctions = new ArrayList<>();
     private final String name;
     private final String alias;
     private Integer limit = Integer.MAX_VALUE;
@@ -59,6 +61,7 @@ public class ConcreteTableContainer extends TableContainer {
     public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
         if (queryResult != null)
             return queryResult;
+        //TODO: at old JDBC projectionC contains Aggregation column too.
         String[] projectionC = visibleColumns.stream().map(QueryColumn::getName).toArray(String[]::new);
 
         try {
@@ -84,7 +87,7 @@ public class ConcreteTableContainer extends TableContainer {
             }
             // When we use join, we sort the results on the client side instead of on the server.
             if(!config.isJoinUsed()) {
-                setOrderByAggregation();
+                setAggregation();
             }
             queryTemplatePacket.prepareForSpace(typeDesc);
 
@@ -92,7 +95,7 @@ public class ConcreteTableContainer extends TableContainer {
             if (explainPlanImpl != null) {
                 queryResult = new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
             } else {
-                queryResult = new QueryResult(res, visibleColumns, this, getOrderColumns());
+                queryResult = new QueryResult(res, visibleColumns, this);
             }
             return queryResult;
         } catch (Exception e) {
@@ -100,14 +103,60 @@ public class ConcreteTableContainer extends TableContainer {
         }
     }
 
-    private void setOrderByAggregation() {
-        //orderBy in server
+    private void setAggregation() {
+        AggregationSet aggregationSet = new AggregationSet();
+        createOrderByAggregation(aggregationSet);
+        createAggregationFunctions(aggregationSet);
+        queryTemplatePacket.setAggregationSet(aggregationSet);
+    }
+
+    private void createOrderByAggregation(AggregationSet aggregationSet) {
         if(!getOrderColumns().isEmpty()){
             OrderByAggregator orderByAggregator = new OrderByAggregator();
             for (OrderColumn column : getOrderColumns()) {
                 orderByAggregator.orderBy(column.getName(), column.isAsc() ? OrderBy.ASC : OrderBy.DESC, column.isNullsLast());
             }
-            queryTemplatePacket.setAggregationSet(new AggregationSet().orderBy(orderByAggregator));
+            aggregationSet.orderBy(orderByAggregator);
+        }
+    }
+
+    private void createAggregationFunctions(AggregationSet aggregationSet) {
+        //TODO boolean field instead.
+        boolean hasAggregationFunctions = visibleColumns.stream().anyMatch(queryColumn -> queryColumn instanceof AggregationFunction);
+        if(!hasAggregationFunctions) {
+            return;
+        }
+        for (QueryColumn visibleColumn : visibleColumns) {
+            if (visibleColumn instanceof  AggregationFunction) {
+                AggregationFunction aggregationFunction = (AggregationFunction) visibleColumn;
+                //TODO: use getNameOrAlias?
+                if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.COUNT) {
+                    if (aggregationFunction.isAllColumns()) {
+                        aggregationSet.count();
+                    } else {
+                        aggregationSet.count(aggregationFunction.getColumnName());
+                    }
+                }
+                if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.MAX) {
+                    aggregationSet.maxValue(aggregationFunction.getColumnName()); //TODO: value or entry?
+                }
+                if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.MIN) {
+                    aggregationSet.minValue(aggregationFunction.getColumnName()); //TODO: value or entry?
+                }
+                if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.AVG) {
+                    aggregationSet.average(aggregationFunction.getColumnName());
+                }
+                if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.SUM) {
+                    aggregationSet.sum(aggregationFunction.getColumnName());
+                }
+            } else {
+//                    if (funcColumn.getFunctionName() == null)
+//                        aggregationSet = aggregationSet.add(new SingleValueAggregator().setPath(funcColumn.getName()));
+//                    else if (funcColumn instanceof FunctionCallColumn){
+//                        aggregationSet = aggregationSet.add(new SingleValueFunctionAggregator((FunctionCallColumn) funcColumn).setPath(funcColumn.getName()));
+//                    }
+                aggregationSet.add(new SingleValueAggregator().setPath(visibleColumn.getNameOrAlias()));
+            }
         }
     }
 
@@ -214,4 +263,19 @@ public class ConcreteTableContainer extends TableContainer {
         return joinInfo.checkJoinCondition();
     }
 
+    @Override
+    public void addAggregationFunction(AggregationFunction aggregationFunction) {
+        this.aggregationFunctions.add(aggregationFunction);
+    }
+
+    @Override
+    public List<AggregationFunction> getAggregationFunctions() {
+        return this.aggregationFunctions;
+    }
+
+    @Override
+    public QueryColumn addQueryColumn(AggregationFunction aggregationFunction) { ;
+        this.visibleColumns.add(aggregationFunction);
+        return aggregationFunction;
+    }
 }
