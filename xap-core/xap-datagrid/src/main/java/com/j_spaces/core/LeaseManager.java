@@ -564,15 +564,11 @@ public class LeaseManager {
             }
             if (cacheRule != null && cacheRule.isTimeRule()){
                 TimePredicate timePredicate = (TimePredicate) cacheRule;
-                return getTimedBasedExpirationTime(timePredicate, entry.getPropertyValue(timePredicate.getTimeColumn()));
+                return timePredicate.getExpirationTime(entry.getPropertyValue(timePredicate.getTimeColumn()), getTieredStorageEvictionGracePeriod());
             }
         }
         //cases of:1. no tiered storage  2.tiered- transient with/without lease  3. tiered-cache criteria without lease
         return toAbsoluteTime(lease, startTime);
-    }
-
-    public long getTimedBasedExpirationTime(TimePredicate timePredicate, Object propertyValue) {
-        return timePredicate.getExpirationTime(propertyValue, getTieredStorageEvictionGracePeriod());
     }
 
     public long getExpirationOnUpdateByLeaseOrByTimeRule(long lease, long startTime, IEntryPacket entry, boolean fromReplication) {
@@ -587,7 +583,7 @@ public class LeaseManager {
             }
             if (cacheRule != null && cacheRule.isTimeRule()){
                 TimePredicate timePredicate = (TimePredicate) cacheRule;
-                return getTimedBasedExpirationTime(timePredicate, entry.getPropertyValue(timePredicate.getTimeColumn()));
+                return timePredicate.getExpirationTime(entry.getPropertyValue(timePredicate.getTimeColumn()), getTieredStorageEvictionGracePeriod());
             }
         }
 
