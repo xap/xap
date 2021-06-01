@@ -36,13 +36,11 @@ import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.space.tiered_storage.CachePredicate;
 import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageManager;
 import com.gigaspaces.internal.server.space.tiered_storage.TimePredicate;
-import com.gigaspaces.internal.server.space.tiered_storage.error.TieredStorageMetadataException;
 import com.gigaspaces.internal.server.space.tiered_storage.error.TieredStorageOperationException;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.internal.server.storage.NotifyTemplateHolder;
-import com.gigaspaces.internal.transport.EntryPacket;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ITemplatePacket;
 import com.gigaspaces.internal.transport.TemplatePacket;
@@ -566,11 +564,15 @@ public class LeaseManager {
             }
             if (cacheRule != null && cacheRule.isTimeRule()){
                 TimePredicate timePredicate = (TimePredicate) cacheRule;
-                return timePredicate.getExpirationTime(entry.getPropertyValue(timePredicate.getTimeColumn()), getTieredStorageEvictionGracePeriod());
+                return getTimedBasedExpirationTime(timePredicate, entry.getPropertyValue(timePredicate.getTimeColumn()));
             }
         }
         //cases of:1. no tiered storage  2.tiered- transient with/without lease  3. tiered-cache criteria without lease
         return toAbsoluteTime(lease, startTime);
+    }
+
+    public long getTimedBasedExpirationTime(TimePredicate timePredicate, Object propertyValue) {
+        return timePredicate.getExpirationTime(propertyValue, getTieredStorageEvictionGracePeriod());
     }
 
     public long getExpirationOnUpdateByLeaseOrByTimeRule(long lease, long startTime, IEntryPacket entry, boolean fromReplication) {
@@ -585,7 +587,7 @@ public class LeaseManager {
             }
             if (cacheRule != null && cacheRule.isTimeRule()){
                 TimePredicate timePredicate = (TimePredicate) cacheRule;
-                return timePredicate.getExpirationTime(entry.getPropertyValue(timePredicate.getTimeColumn()), getTieredStorageEvictionGracePeriod());
+                return getTimedBasedExpirationTime(timePredicate, entry.getPropertyValue(timePredicate.getTimeColumn()));
             }
         }
 

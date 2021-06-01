@@ -7,6 +7,7 @@ import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.SpaceUidFactory;
 import com.gigaspaces.internal.server.storage.*;
+import com.j_spaces.core.LeaseManager;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.TemplateMatchTier;
 import com.j_spaces.core.cache.context.TieredState;
@@ -168,6 +169,29 @@ public class TieredStorageUtils {
             values[i] = getPropertyValue(resultSet, properties[i].getType(), properties[i].getOriginalIndex() + 1);
         }
         FlatEntryData data = new FlatEntryData(values, null, typeDesc.getEntryTypeDesc(EntryType.DOCUMENT_JAVA), 0, Lease.FOREVER, null);
+        String uid;
+        if (typeDesc.isAutoGenerateId()) {
+            uid = (String) data.getFixedPropertyValue(((PropertyInfo) typeDesc.getFixedProperty(typeDesc.getIdPropertyName())).getOriginalIndex());
+        } else {
+            Object idFromEntry = data.getFixedPropertyValue(((PropertyInfo) typeDesc.getFixedProperty(typeDesc.getIdPropertyName())).getOriginalIndex());
+            uid = SpaceUidFactory.createUidFromTypeAndId(typeDesc, idFromEntry);
+        }
+        return new EntryHolder(serverTypeDesc, uid, 0, false, data);
+    }
+
+    public static IEntryHolder getEntryHolderFromRow(IServerTypeDesc serverTypeDesc, ResultSet resultSet, TimePredicate predicate, LeaseManager leaseManager) throws SQLException {
+        ITypeDesc typeDesc = serverTypeDesc.getTypeDesc();
+        PropertyInfo[] properties = typeDesc.getProperties();
+        Object[] values = new Object[properties.length];
+        Object timeValue = null;
+        for (int i = 0; i < properties.length; i++) {
+            values[i] = getPropertyValue(resultSet, properties[i].getType(), properties[i].getOriginalIndex() + 1);
+            if(properties[i].getName().equals(predicate.getTimeColumn())){
+                timeValue = values[i];
+            }
+        }
+        final long expirationTime = leaseManager.getTimedBasedExpirationTime(predicate, timeValue);
+        FlatEntryData data = new FlatEntryData(values, null, typeDesc.getEntryTypeDesc(EntryType.DOCUMENT_JAVA), 0, expirationTime, null);
         String uid;
         if (typeDesc.isAutoGenerateId()) {
             uid = (String) data.getFixedPropertyValue(((PropertyInfo) typeDesc.getFixedProperty(typeDesc.getIdPropertyName())).getOriginalIndex());
