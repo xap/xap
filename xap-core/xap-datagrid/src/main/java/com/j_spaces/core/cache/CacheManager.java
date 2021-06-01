@@ -609,7 +609,7 @@ public class CacheManager extends AbstractCacheManager
 
 
         if(isTieredStorage()){
-            loadDataFromDB = _engine.getTieredStorageManager().isWarmStart() || _engine.isMirrorService();
+            loadDataFromDB = _engine.getTieredStorageManager().isWarmStart() || getStorageAdapter() != null;
         }
 
         if (loadDataFromDB) {
@@ -935,6 +935,11 @@ public class CacheManager extends AbstractCacheManager
             //if RDBMS is not empty init from RDBMS else if has mirror initial load from mirror
             if(isTieredStorage() && _engine.getTieredStorageManager().isWarmStart()) {
                 _engine.getTieredStorageManager().getInternalStorage().initialLoad(context, _engine, initialLoadInfo);
+                if (_logger.isInfoEnabled()) {
+                    _logger.info("Data source recovery:\n " +
+                            "\tEntries inserted to hot tier: " + initialLoadInfo.getInsertedToCache() + ".\n" +
+                            "\tTotal Time: " + JSpaceUtilities.formatMillis(SystemTime.timeMillis() - initialLoadInfo.getRecoveryStartTime()) + ".");
+                }
                 return;
             }
 
