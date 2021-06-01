@@ -34,7 +34,6 @@ public class ConcreteTableContainer extends TableContainer {
     private final ITypeDesc typeDesc;
     private final List<String> allColumnNamesSorted;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
-    private final List<AggregationFunction> aggregationFunctions = new ArrayList<>();
     private final String name;
     private final String alias;
     private Integer limit = Integer.MAX_VALUE;
@@ -107,7 +106,9 @@ public class ConcreteTableContainer extends TableContainer {
         AggregationSet aggregationSet = new AggregationSet();
         createOrderByAggregation(aggregationSet);
         createAggregationFunctions(aggregationSet);
-        queryTemplatePacket.setAggregationSet(aggregationSet);
+        if(!aggregationSet.isEmpty()) {
+            queryTemplatePacket.setAggregationSet(aggregationSet);
+        }
     }
 
     private void createOrderByAggregation(AggregationSet aggregationSet) {
@@ -261,16 +262,6 @@ public class ConcreteTableContainer extends TableContainer {
         if (joinInfo == null)
             return true;
         return joinInfo.checkJoinCondition();
-    }
-
-    @Override
-    public void addAggregationFunction(AggregationFunction aggregationFunction) {
-        this.aggregationFunctions.add(aggregationFunction);
-    }
-
-    @Override
-    public List<AggregationFunction> getAggregationFunctions() {
-        return this.aggregationFunctions;
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.gigaspaces.jdbc.model.table;
 
+import java.util.Objects;
+
 public class QueryColumn {
     public static final String UUID_COLUMN = "UID";
     protected final TableContainer tableContainer;
@@ -51,5 +53,18 @@ public class QueryColumn {
         if (alias != null)
             return alias;
         return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof QueryColumn)) return false;
+        QueryColumn that = (QueryColumn) o;
+        return isVisible() == that.isVisible() && isUUID() == that.isUUID() && Objects.equals(getTableContainer(), that.getTableContainer()) && Objects.equals(getName(), that.getName()) && Objects.equals(getAlias(), that.getAlias());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getTableContainer(), getName(), getAlias(), isVisible(), isUUID());
     }
 }

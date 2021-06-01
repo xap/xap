@@ -127,15 +127,16 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                     queryColumns.add(queryColumn);
                 } else {
                     //TODO: in case its * which table? all?
-                    queryExecutor.getTables().forEach(tableContainer -> tableContainer.addAggregationFunction(aggregationFunction));
+                    queryExecutor.getTables().forEach(tableContainer -> tableContainer.addQueryColumn(aggregationFunction));
+                    queryColumns.add(aggregationFunction);
                 }
             }
 
             private String getColumnName(boolean isAllColumn) {
                 if(!this.columns.isEmpty()) {
-                    return isAllColumn ? "*" : this.columns.get(0).getColumnName();
+                    return this.columns.get(0).getColumnName();
                 }
-                return null;
+                return isAllColumn ? "*" : null;
             }
 
             private String getColumnAlias() {

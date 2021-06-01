@@ -79,7 +79,7 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
     }
 
     @Override
-    public void aggregate(SpaceEntriesAggregatorContext context) { //at each partition (server)
+    public void aggregate(SpaceEntriesAggregatorContext context) {
         this.context = context;
 
         if (list == null) {
@@ -113,7 +113,7 @@ public class OrderByAggregator<T> extends SpaceEntriesAggregator<OrderByAggregat
 
 
     @Override
-    public void aggregateIntermediateResult(OrderByScanResult partitionResult) { //at the client
+    public void aggregateIntermediateResult(OrderByScanResult partitionResult) {
         // Initialize if first time:
         if (list == null) {
             list = new ArrayList<>();

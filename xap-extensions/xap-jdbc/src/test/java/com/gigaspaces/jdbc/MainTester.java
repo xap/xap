@@ -28,17 +28,21 @@ public class MainTester {
         try (Connection connection = DriverManager.getConnection(newDriver ? "jdbc:gigaspaces:v3://localhost:4174/" + space.getSpaceName() : "jdbc:gigaspaces:url:jini://*/*/" + space.getSpaceName(), properties)) {
 
             Statement statement = connection.createStatement();
-//            execute(statement, String.format("SELECT MAX(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(*) FROM %s",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT MAX(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MIN(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT SUM(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT AVG(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(age), AVG(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT max(age, birthLong) FROM %s",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT max(age), birthLong FROM %s",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT birthLong, max(age) FROM %s",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT max(age) FROM (SELECT * FROM %s)",MyPojo.class.getName()));
 
-            execute(statement, String.format("SELECT max(age), birthLong FROM %s",MyPojo.class.getName()));
-            execute(statement, String.format("SELECT birthLong, max(age) FROM %s",MyPojo.class.getName()));
+            //TODO: fix!
+            execute(statement, String.format("SELECT * FROM (SELECT COUNT(age) FROM %s) ",MyPojo.class.getName()));
+
 
             teardown(space, true);
         }

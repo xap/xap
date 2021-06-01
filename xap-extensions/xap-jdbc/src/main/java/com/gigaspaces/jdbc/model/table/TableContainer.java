@@ -69,8 +69,4 @@ public abstract class TableContainer {
     public List<OrderColumn> getOrderColumns() {
         return orderColumns;
     }
-
-    public abstract void addAggregationFunction(AggregationFunction aggregationFunction);
-
-    public abstract List<AggregationFunction> getAggregationFunctions();
 }

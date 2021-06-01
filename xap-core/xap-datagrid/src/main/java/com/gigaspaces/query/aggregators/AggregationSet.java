@@ -19,7 +19,10 @@ package com.gigaspaces.query.aggregators;
 
 import com.gigaspaces.internal.io.IOUtils;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -131,6 +134,10 @@ public class AggregationSet implements Externalizable {
 
     List<SpaceEntriesAggregator> getAggregators() {
         return aggregators;
+    }
+
+    public boolean isEmpty() {
+        return this.aggregators.isEmpty();
     }
 
     @Override

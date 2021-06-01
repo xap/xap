@@ -20,8 +20,7 @@ public class TableRow implements Comparable<TableRow>{
         this.orderValues = new Object[0];
     }
 
-    public TableRow(IEntryPacket x, List<QueryColumn> queryColumns, List<OrderColumn> orderColumns,
-                    List<AggregationFunction> aggregationFunctions) {
+    public TableRow(IEntryPacket x, List<QueryColumn> queryColumns, List<OrderColumn> orderColumns) {
         //TODO boolean field instead.
         boolean hasAggregationFunctions = queryColumns.stream().anyMatch(queryColumn -> queryColumn instanceof AggregationFunction);
         if (hasAggregationFunctions) {
@@ -47,7 +46,6 @@ public class TableRow implements Comparable<TableRow>{
                 }
             }
         }
-
 
         this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
         orderValues = new Object[this.orderColumns.length];
@@ -83,7 +81,11 @@ public class TableRow implements Comparable<TableRow>{
         values = new Object[columns.length];
         for (int i = 0; i < queryColumns.size(); i++) {
             QueryColumn queryColumn = queryColumns.get(i);
-            values[i] = row.getPropertyValue(queryColumn);
+            if(queryColumn instanceof AggregationFunction) {
+                values[i] = row.getPropertyValue(((AggregationFunction) queryColumn).getColumnName());
+            } else {
+                values[i] = row.getPropertyValue(queryColumn);
+            }
         }
 
         this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
