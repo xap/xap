@@ -8,7 +8,7 @@ public class TransientPredicate implements CachePredicate {
 
     @Override
     public boolean evaluate(IEntryData entryData) {
-        return false;
+        return true;
     }
 
     @Override
