@@ -17,7 +17,7 @@
 		<encoding>UTF-8</encoding>
 		<scalaVersion>2.11.6</scalaVersion>
 		<scalaBinaryVersion>2.11</scalaBinaryVersion>
-		<junitVersion>4.12</junitVersion>
+		<junitVersion>4.13.1</junitVersion>
 		<skipTests>false</skipTests>
 	</properties>
 
