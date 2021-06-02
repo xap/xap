@@ -56,7 +56,7 @@ public class QueryColumn {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(Object o) { //TODO: delete?
         if (this == o) return true;
         if (!(o instanceof QueryColumn)) return false;
         QueryColumn that = (QueryColumn) o;
@@ -64,7 +64,7 @@ public class QueryColumn {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode() { //TODO: delete?
         return Objects.hash(getTableContainer(), getName(), getAlias(), isVisible(), isUUID());
     }
 }

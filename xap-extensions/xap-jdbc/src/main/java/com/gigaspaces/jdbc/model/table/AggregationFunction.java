@@ -37,7 +37,8 @@ public class AggregationFunction extends QueryColumn {
     }
 
     public String getColumnName() {
-        return super.getName();
+//        return super.getName(); //TODO: what better?
+        return super.getNameOrAlias();
     }
 
     public boolean isVisible() {
@@ -53,7 +54,7 @@ public class AggregationFunction extends QueryColumn {
     }
 
     public String getName() {
-        return String.format("%s(%s)", getFunctionName(), getColumnName());
+        return getAlias() == null ? toString() : getAlias();
     }
 
     @Override
@@ -65,5 +66,7 @@ public class AggregationFunction extends QueryColumn {
         COUNT, MAX, MIN, AVG, SUM;
 
     }
+
+
 
 }

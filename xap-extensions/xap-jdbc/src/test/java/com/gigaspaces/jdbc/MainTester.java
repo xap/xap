@@ -29,6 +29,7 @@ public class MainTester {
 
             Statement statement = connection.createStatement();
 //            execute(statement, String.format("SELECT COUNT(*) FROM %s",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT COUNT(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MAX(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MIN(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT SUM(age) FROM %s",MyPojo.class.getName()));
@@ -42,12 +43,21 @@ public class MainTester {
 
 //            execute(statement, String.format("SELECT * FROM (SELECT MAX(age) FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MAX(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
-//            execute(statement, String.format("SELECT * FROM (SELECT COUNT(age) FROM %s) ",MyPojo.class.getName()));
-//            execute(statement, String.format("SELECT COUNT(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT * FROM (SELECT SUM(age) FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT SUM(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT * FROM (SELECT COUNT(age), MAX(age) FROM %s) ", MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT * FROM (SELECT COUNT(*), MAX(age) FROM %s) ", MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(age), MAX(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT COUNT(*), MAX(age) FROM (SELECT * FROM %s) ", MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT MIN(age) FROM (SELECT * FROM %s)", MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT MAX(max) FROM (SELECT MAX(age) as max FROM %s)", MyPojo.class.getName()));
+
+//            execute(statement, String.format("SELECT * FROM (SELECT COUNT(age) FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT COUNT(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT * FROM (SELECT COUNT(*) FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT COUNT(*) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT COUNT(*) FROM (SELECT COUNT(age) FROM %s)", MyPojo.class.getName()));
+
 
 
             teardown(space, true);
@@ -95,6 +105,8 @@ public class MainTester {
             gigaSpace.write(new MyPojo("Eve Cc", 35, "UK", date3, new Time(date3.getTime()), new Timestamp(date3.getTime())));
             gigaSpace.write(new MyPojo("NoCountry Dd", 40, null, date4, new Time(date4.getTime()), new Timestamp(date4.getTime())));
             gigaSpace.write(new MyPojo("Adam Bb", 30, "Israel", date2, new Time(date2.getTime()), new Timestamp(date2.getTime())));
+            gigaSpace.write(new MyPojo("nullAge Bb", null, "Israel", date2, new Time(date2.getTime()),
+                    new Timestamp(date2.getTime())));
         }
         return gigaSpace;
     }

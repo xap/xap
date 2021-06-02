@@ -37,13 +37,14 @@ public class QueryResult {
     public QueryResult(List<QueryColumn> visibleColumns, QueryResult tableResult, List<OrderColumn> orderColumns) {
         this.tableContainer = null;
         this.queryColumns = visibleColumns;
-        this.rows = tableResult.rows.stream().map(row -> new TableRow(row, visibleColumns, orderColumns)).collect(Collectors.toList());
         boolean hasAggregationFunctions =
                 visibleColumns.stream().anyMatch(queryColumn -> queryColumn instanceof AggregationFunction);
         if (hasAggregationFunctions) {
             List<TableRow> aggregateRows = new ArrayList<>();
-            aggregateRows.add(TableRow.aggregate(this.rows));
+            aggregateRows.add(TableRow.aggregate(tableResult.rows, queryColumns));
             this.rows = aggregateRows;
+        } else {
+            this.rows = tableResult.rows.stream().map(row -> new TableRow(row, visibleColumns, orderColumns)).collect(Collectors.toList());
         }
     }
 

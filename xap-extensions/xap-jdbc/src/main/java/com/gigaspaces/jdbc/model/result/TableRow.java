@@ -4,7 +4,6 @@ import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.model.table.AggregationFunction;
 import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
-import com.gigaspaces.jdbc.model.table.TempTableContainer;
 
 import java.util.Comparator;
 import java.util.List;
@@ -91,11 +90,7 @@ public class TableRow implements Comparable<TableRow> {
         values = new Object[columns.length];
         for (int i = 0; i < queryColumns.size(); i++) {
             QueryColumn queryColumn = queryColumns.get(i);
-            if (queryColumn instanceof AggregationFunction && queryColumn.getTableContainer() instanceof TempTableContainer) {
-                values[i] = row.getPropertyValue(((AggregationFunction) queryColumn).getColumnName());
-            } else {
-                values[i] = row.getPropertyValue(queryColumn);
-            }
+            values[i] = row.getPropertyValue(queryColumn);
         }
 
         this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
@@ -106,85 +101,61 @@ public class TableRow implements Comparable<TableRow> {
         }
     }
 
-    public static TableRow aggregate(List<TableRow> tableRows) {
+    public static TableRow aggregate(List<TableRow> tableRows, List<QueryColumn> queryColumns) {
         if (tableRows.isEmpty()) {
             return new TableRow((QueryColumn[]) null, null);
         }
-        QueryColumn[] rowsColumns = tableRows.get(0).columns;
-        Object[] firstRowValues = tableRows.get(0).values;
+        QueryColumn[] rowsColumns = queryColumns.toArray(new QueryColumn[0]);
         OrderColumn[] firstRowOrderColumns = tableRows.get(0).orderColumns; //TODO: validate!
         Object[] firstRowOrderValues = tableRows.get(0).orderValues; //TODO: validate! if from first or use aggregateValues!
 
         Object[] aggregateValues = new Object[rowsColumns.length];
         int index = 0;
-        for (QueryColumn queryColumn : rowsColumns) {
-            boolean isFromTempTable = queryColumn.getTableContainer() instanceof TempTableContainer;
+        for (QueryColumn queryColumn : queryColumns) {
             Object value;
-            Comparator<Object> valueComparator = new Comparator<Object>() {
-                @Override
-                public int compare(Object o1, Object o2) {
-                    Comparable first = (Comparable) o1; //TODO: use castToComparable from WhereHandler?
-                    Comparable second = (Comparable) o2;
-                    if (first == second) {
-                        return 0;
-                    }
-                    if (first == null) {
-                        return -1;
-                    }
-                    if (second == null) {
-                        return 1;
-                    }
-                    return first.compareTo(second);
-                }
-            };
+            Comparator<Object> valueComparator = getObjectComparator();
             if (queryColumn instanceof AggregationFunction) {
+                String columnName = ((AggregationFunction) queryColumn).getColumnName();
+                boolean isAllColumn = ((AggregationFunction) queryColumn).isAllColumns();
                 AggregationFunction.AggregationFunctionType type = ((AggregationFunction) queryColumn).getType();
-                if (type == AggregationFunction.AggregationFunctionType.MAX) {
-                    value = tableRows.stream().map(tr -> tr.getPropertyValue(queryColumn)).max(valueComparator).orElseGet(() -> null);
+                if(tableRows.get(0).hasColumn(queryColumn)) { // if this column already exists.
+                    value = tableRows.get(0).getPropertyValue(queryColumn);
+                }else if (type == AggregationFunction.AggregationFunctionType.MAX) {
+                    value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).max(valueComparator).orElse(null);
                 } else if (type == AggregationFunction.AggregationFunctionType.MIN) {
-                    value = tableRows.stream().map(tr -> tr.getPropertyValue(queryColumn)).min(valueComparator).orElseGet(() -> null);
+                    value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).min(valueComparator).orElse(null);
                 } else if (type == AggregationFunction.AggregationFunctionType.AVG) {
                     //TODO: supported types? need to be implement.
-                    if(isFromTempTable) {
-//                        value = tableRows.stream().mapToDouble(tr -> (double) tr.getPropertyValue(queryColumn)).average().orElse(0d);
-                        value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(queryColumn)).reduce(0d,
-                                (a,b) -> a.doubleValue() + b.doubleValue()).doubleValue() / tableRows.size();
-                    } else {
-//                        value = tableRows.stream().mapToDouble(tr -> (double) tr.getPropertyValue(queryColumn)).findAny().orElse(0d);
-                        value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(queryColumn)).findAny().orElse(0d).doubleValue();
-                    }
+                    value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName)).filter(Objects::nonNull).reduce(0d,
+                            (a,b) -> a.doubleValue() + b.doubleValue()).doubleValue() / tableRows.size();
                 } else if (type == AggregationFunction.AggregationFunctionType.SUM) {
                     //TODO: supported types? need to be implement.
-                    if(isFromTempTable) {
-//                        value = tableRows.stream().mapToDouble(tr -> (double) tr.getPropertyValue(queryColumn)).sum();
-                        value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(queryColumn)).reduce(0d,
-                                (a,b) -> a.doubleValue() + b.doubleValue()).doubleValue();
-                    } else {
-//                        value = tableRows.stream().mapToDouble(tr -> (double) tr.getPropertyValue(queryColumn)).findAny().orElse(0d);
-                        value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(queryColumn)).findAny().orElse(0d).doubleValue();
-                    }
+                    value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName)).filter(Objects::nonNull).reduce(0d,
+                            (a,b) -> a.doubleValue() + b.doubleValue()).doubleValue();
                 } else { // (type == AggregationFunction.AggregationFunctionType.COUNT)
-                    if(isFromTempTable) {
-                        value = tableRows.stream().map(tr -> tr.getPropertyValue(queryColumn)).filter(Objects::nonNull).count();
+                    if(isAllColumn) {
+                        value = tableRows.size();
                     } else {
-                        value = tableRows.stream().map(tr -> tr.getPropertyValue(queryColumn)).filter(Objects::nonNull).findAny().orElse(null);
+                        value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).count();
                     }
                 }
             } else {
-                value = tableRows.stream().map(tr -> tr.getPropertyValue(queryColumn)).findAny().orElse(null);
+                value = tableRows.stream().map(tr -> tr.getPropertyValue(queryColumn)).filter(Objects::nonNull).findAny().orElse(null);
             }
             aggregateValues[index++] = value;
         }
         return new TableRow(rowsColumns, aggregateValues, firstRowOrderColumns, firstRowOrderValues);
     }
 
-    public boolean containsColumn(String columnName) {
-        for (QueryColumn column : columns) {
-            if (column.getName().equals(columnName)) {
-                return true;
+    private static Comparator<Object> getObjectComparator() {
+        return (o1, o2) -> {
+            Comparable first = (Comparable) o1; //TODO: use castToComparable from WhereHandler?
+            Comparable second = (Comparable) o2;
+            if (first == second) {
+                return 0;
             }
-        }
-        return false;
+            return first.compareTo(second);
+        };
     }
 
     public Object getPropertyValue(int index) {
@@ -211,11 +182,20 @@ public class TableRow implements Comparable<TableRow> {
 
     public Object getPropertyValue(String name) {
         for (int i = 0; i < columns.length; i++) {
-            if (columns[i].getName().equals(name)) {
+            if (columns[i].getName().equals(name)) { //TODO: if its aggregationFunction? use column name?
                 return values[i];
             }
         }
         return null;
+    }
+
+    private boolean hasColumn(QueryColumn queryColumn) {
+        for (QueryColumn column : columns) {
+            if (column.equals(queryColumn)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

@@ -150,7 +150,8 @@ public class ConcreteTableContainer extends TableContainer {
                 if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.SUM) {
                     aggregationSet.sum(aggregationFunction.getColumnName());
                 }
-            } else {
+            } else { //TODO: expression not in aggregate or GROUP BY columns, how to handle this?.
+                      //non aggregated fields are not supported yet
 //                    if (funcColumn.getFunctionName() == null)
 //                        aggregationSet = aggregationSet.add(new SingleValueAggregator().setPath(funcColumn.getName()));
 //                    else if (funcColumn instanceof FunctionCallColumn){
