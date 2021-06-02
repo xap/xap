@@ -1,5 +1,7 @@
 package com.gigaspaces.jdbc.handlers;
 
+import com.gigaspaces.jdbc.SqlErrorCodes;
+import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.schema.Column;
@@ -42,10 +44,10 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
     public void visit(StringValue stringValue) {
         try {
             this.value = getTable().getColumnValue(getColumn().getColumnName(), stringValue.getValue());
-            if (this.value.getClass().equals(java.util.Date.class)) {
-                throw new UnsupportedOperationException("java.util.Date is not supported");
-            }
         } catch (SQLException e) {
+            if (e.getErrorCode() == SqlErrorCodes._378){
+                throw new SQLExceptionWrapper(e);
+            }
             this.value = stringValue.getValue();
         }
     }

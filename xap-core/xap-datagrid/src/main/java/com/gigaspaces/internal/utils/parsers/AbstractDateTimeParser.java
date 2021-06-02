@@ -48,8 +48,7 @@ public abstract class AbstractDateTimeParser extends AbstractParser {
         final SimpleDateFormat format = new SimpleDateFormat(_pattern);
         final java.util.Date date = format.parse(s, new ParsePosition(0));
         if (date == null)
-            throw new SQLException("Wrong " + _desc + " format, expected format=[" + _pattern + "], provided=[" + s + "]", "GSP", -132);
-
+            throw new SQLException("Wrong " + _desc + " format, expected format=[" + _pattern + "], provided=[" + s + "]", "GSP", -378);
         return date;
     }
 }
