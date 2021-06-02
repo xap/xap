@@ -1,11 +1,12 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.metrics.LongCounter;
-import com.gigaspaces.metrics.MetricRegistrator;
+import com.j_spaces.core.cache.InitialLoadInfo;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
@@ -104,6 +105,18 @@ public class InternalRDBMSManager {
 
     public LongCounter getWriteDisk() {
         return writeDisk;
+    }
+
+    public void deleteData() throws SAException {
+        internalRDBMS.deleteData();
+    }
+
+    public void persistType(ITypeDesc typeDesc) throws SAException {
+        internalRDBMS.persistType(typeDesc);
+    }
+
+    public void initialLoad(Context context, SpaceEngine engine, InitialLoadInfo initialLoadInfo) throws SAException {
+        internalRDBMS.initialLoad(context, engine, initialLoadInfo);
     }
 
 }
