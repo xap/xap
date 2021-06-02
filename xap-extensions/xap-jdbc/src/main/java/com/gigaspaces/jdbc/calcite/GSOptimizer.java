@@ -14,6 +14,7 @@ import org.apache.calcite.plan.volcano.VolcanoPlanner;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
@@ -76,6 +77,14 @@ public class GSOptimizer {
 
     public SqlNode validate(SqlNode ast) {
         return validator.validate(ast);
+    }
+
+    public RelDataType extractParameterType(SqlNode validatedAst) {
+        return validator.getParameterRowType(validatedAst);
+    }
+
+    public RelDataType extractRowType(SqlNode validatedAst) {
+        return validator.getValidatedNodeType(validatedAst);
     }
 
     public RelNode createLogicalPlan(SqlNode validatedAst) {
