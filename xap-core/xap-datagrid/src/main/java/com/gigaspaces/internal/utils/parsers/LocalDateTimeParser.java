@@ -39,7 +39,7 @@ public class LocalDateTimeParser extends AbstractDateTimeParser {
     public Object parse(String s) throws SQLException {
         LocalDateTime date = LocalDateTime.parse(s, formatter);
         if (date == null)
-            throw new SQLException("Wrong " + _desc + " format, expected format=[" + _pattern + "], provided=[" + s + "]", "GSP", -132);
+            throw new SQLException("Wrong " + _desc + " format, expected format=[" + _pattern + "], provided=[" + s + "]", "GSP", -378);
 
         return date;
     }
