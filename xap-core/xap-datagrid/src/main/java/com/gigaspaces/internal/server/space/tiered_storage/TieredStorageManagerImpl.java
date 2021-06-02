@@ -29,7 +29,6 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     private ConcurrentHashMap<String, TimePredicate> retentionRules = new ConcurrentHashMap<>(); //TODO - tiered storage - lazy init retention rules
     private ConcurrentHashMap<String, CachePredicate> hotCacheRules = new ConcurrentHashMap<>();
 
-    private InternalRDBMS internalDiskStorage;
     private InternalRDBMSManager internalDiskStorage;
 
     public TieredStorageManagerImpl(TieredStorageConfig storageConfig, InternalRDBMSManager internalDiskStorage, IDirectSpaceProxy proxy, String fullSpaceName) {

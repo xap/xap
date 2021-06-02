@@ -23,8 +23,8 @@ public class InternalRDBMSManager {
     }
 
 
-    public void initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager) throws SAException{
-        internalRDBMS.initialize(spaceName, fullMemberName, typeManager);
+    public boolean initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager) throws SAException{
+        return internalRDBMS.initialize(spaceName, fullMemberName, typeManager);
     }
 
     public long getDiskSize() throws SAException, IOException{
