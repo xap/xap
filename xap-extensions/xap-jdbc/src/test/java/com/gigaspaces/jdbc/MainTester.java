@@ -40,8 +40,14 @@ public class MainTester {
 //            execute(statement, String.format("SELECT birthLong, max(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT max(age) FROM (SELECT * FROM %s)",MyPojo.class.getName()));
 
-            //TODO: fix!
-            execute(statement, String.format("SELECT * FROM (SELECT COUNT(age) FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT * FROM (SELECT MAX(age) FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT MAX(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT * FROM (SELECT COUNT(age) FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT COUNT(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT * FROM (SELECT SUM(age) FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT SUM(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT * FROM (SELECT COUNT(age), MAX(age) FROM %s) ", MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT COUNT(age), MAX(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
 
 
             teardown(space, true);
