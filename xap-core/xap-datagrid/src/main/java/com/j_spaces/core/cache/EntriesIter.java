@@ -96,11 +96,11 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
             if(context.getTemplateTieredState() == null){
                 context.setTemplateTieredState(_cacheManager.getEngine().getTieredStorageManager().guessTemplateTier(template));
             }
-            boolean isTimeBased = template.isServerIterator() && template.getServerIteratorInfo().isTimeBased();
-             if( (!isTimeBased && context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT) || memoryOnly || template.isMemoryOnlySearch()){
+            boolean isTieredByTimeRule = template.isServerIterator() && template.getServerIteratorInfo().isTieredByTimeRule();
+             if( (!isTieredByTimeRule && context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT) || memoryOnly || template.isMemoryOnlySearch()){
                 _memoryOnly = true;
             } else {
-                if (isTimeBased){
+                if (isTieredByTimeRule){
                     _memoryOnly = false;
                 } else{
                     _memoryOnly = memoryOnly;
@@ -109,7 +109,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
                     _doneWithCache = true;
                 }
 
-                if(isTimeBased || context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
+                if(isTieredByTimeRule || context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
                     _entriesReturned = new HashSet<>();
                 }
             }
@@ -268,7 +268,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
             if (_currentEntryCacheInfo == null) {
                 // finished with cache, starting with SA
                 _doneWithCache = true;
-                if (_templateHolder.isServerIterator() && _templateHolder.getServerIteratorInfo().isTimeBased()){
+                if (_templateHolder.isServerIterator() && _templateHolder.getServerIteratorInfo().isTieredByTimeRule()){
                     TemplateMatchTier updatedTieredState = _cacheManager.getEngine().getTieredStorageManager().guessTemplateTier(_templateHolder);
                     if (updatedTieredState != _templateHolder.getServerIteratorInfo().getTemplateMatchTier()){
                         _context.setTemplateTieredState(updatedTieredState);

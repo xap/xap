@@ -4106,7 +4106,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         if(isTieredStorage()){
             if (isServerIterator){
                 if (serverIteratorInfo.getTemplateMatchTier() != null){
-                    if (context.getTemplateTieredState() == null){ //todo- when context is not null?
+                    if (context.getTemplateTieredState() == null){ 
                         context.setTemplateTieredState(serverIteratorInfo.getTemplateMatchTier());
                     }
                 } else {
@@ -4114,7 +4114,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                     serverIteratorInfo.setTemplateMatchTier(templateMatchTier);
                     CachePredicate cachePredicate = getTieredStorageManager().getCacheRule(template.getClassName());
                     if (cachePredicate != null && cachePredicate.isTimeRule()){
-                        serverIteratorInfo.setTimeBased(true);
+                        serverIteratorInfo.setTieredByTimeRule(true);
                     }
                     if (context.getTemplateTieredState() == null){
                         context.setTemplateTieredState(templateMatchTier);
@@ -4170,7 +4170,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
 
         if ((getCacheManager().isEvictableCachePolicy() && !_cacheManager.isMemorySpace()) ||
                 (isTieredStorage() && (context.getTemplateTieredState() != TemplateMatchTier.MATCH_HOT ||
-                        (isServerIterator && template.getServerIteratorInfo().isTimeBased() && !template.isMemoryOnlySearch())))){
+                        (isServerIterator && template.getServerIteratorInfo().isTieredByTimeRule() && !template.isMemoryOnlySearch())))){
             IScanListIterator<IEntryCacheInfo> toScan;
             if (isServerIterator && serverIteratorInfo.getScanEntriesIter() != null){
                 toScan = serverIteratorInfo.getScanEntriesIter();

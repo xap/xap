@@ -18,7 +18,7 @@ public class ServerIteratorInfo {
     final private int batchSize;
     final private long maxInactiveDuration;
     private volatile IScanListIterator<IEntryCacheInfo> scanEntriesIter;
-    private volatile boolean isTimeBased;
+    private volatile boolean isTieredByTimeRule;
     private volatile TemplateMatchTier templateMatchTier;
     private volatile IEntryPacket[] storedEntryPacketsBatch;
     private volatile int storedBatchNumber;
@@ -69,12 +69,12 @@ public class ServerIteratorInfo {
         return this;
     }
 
-    public boolean isTimeBased() {
-        return isTimeBased;
+    public boolean isTieredByTimeRule() {
+        return isTieredByTimeRule;
     }
 
-    public void setTimeBased(boolean timeBased) {
-        this.isTimeBased = timeBased;
+    public void setTieredByTimeRule(boolean tieredByTimeRule) {
+        this.isTieredByTimeRule = tieredByTimeRule;
     }
 
     public long getExpirationTime() {
