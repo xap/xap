@@ -18,6 +18,7 @@ import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.logical.LogicalProject;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexProgram;
@@ -85,6 +86,14 @@ public class GSOptimizer {
 
     public SqlNode validate(SqlNode ast) {
         return validator.validate(ast);
+    }
+
+    public RelDataType extractParameterType(SqlNode validatedAst) {
+        return validator.getParameterRowType(validatedAst);
+    }
+
+    public RelDataType extractRowType(SqlNode validatedAst) {
+        return validator.getValidatedNodeType(validatedAst);
     }
 
     public RelRoot createLogicalPlan(SqlNode validatedAst) {
