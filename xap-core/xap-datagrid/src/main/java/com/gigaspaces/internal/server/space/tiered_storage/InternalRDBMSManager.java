@@ -71,7 +71,6 @@ public class InternalRDBMSManager {
     public IEntryHolder getEntryById(Context context, String typeName, Object id, ITemplateHolder templateHolder) throws SAException{
         if (templateHolder != null && templateHolder.isReadOperation()){
             readDisk.inc();
-            System.out.println("makeEntriesIter readDisk "+ readDisk.getCount());
         }
 
         return internalRDBMS.getEntryById(context, typeName, id);
@@ -80,7 +79,6 @@ public class InternalRDBMSManager {
     public IEntryHolder getEntryByUID(Context context, String typeName, String uid, ITemplateHolder templateHolder) throws SAException{
         if (templateHolder != null && templateHolder.isReadOperation()){
             readDisk.inc();
-            System.out.println("makeEntriesIter readDisk "+ readDisk.getCount());
         }
         return internalRDBMS.getEntryByUID(context, typeName, uid);
     }
@@ -88,7 +86,6 @@ public class InternalRDBMSManager {
     public ISAdapterIterator<IEntryHolder> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder) throws SAException{
         if (templateHolder != null && templateHolder.isReadOperation() && !context.isDisableTieredStorageMetric()){
             readDisk.inc();
-            System.out.println("makeEntriesIter readDisk "+ readDisk.getCount());
         }
 
         return internalRDBMS.makeEntriesIter(context, typeName, templateHolder);

@@ -248,8 +248,6 @@ public class Context {
     private TieredState entryTieredState;
     private TemplateMatchTier templateTieredState;
     private Object suppliedEntryIdForColdTier;
-
-
     private boolean disableTieredStorageMetric;
 
     public Context() {

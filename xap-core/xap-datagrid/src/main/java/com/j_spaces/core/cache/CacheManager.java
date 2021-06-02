@@ -6028,10 +6028,8 @@ public class CacheManager extends AbstractCacheManager
             if (getEngine().isTieredStorage()) {
                 diskSize = getEngine().getTieredStorageManager().getInternalStorage().getDiskSize();
             }
-        } catch (SAException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (SAException | IOException e) {
+            _logger.warn("failed to get tiered storage disk size with exception: " , e);
         }
         long freeSpace = 0;
 
@@ -6040,7 +6038,7 @@ public class CacheManager extends AbstractCacheManager
                 freeSpace = getEngine().getTieredStorageManager().getInternalStorage().getFreeSpaceSize();
             }
         } catch (SAException | IOException e) {
-            e.printStackTrace();
+            _logger.warn("failed to get tiered storage free space size with exception: " , e);
         }
 
         return new SpaceRuntimeInfo(classes, entries, templates,ramOnlyEntries, diskSize, freeSpace);

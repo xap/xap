@@ -517,9 +517,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         trieredStorageMetrics();
     }
 
-
-
-
     private void trieredStorageMetrics (){
         if (!this.isTieredStorage()) {
             return;
@@ -554,26 +551,17 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         registratorForPrimary.register( ("tiered-storage-read-tp"), tieredStorageManager.getInternalStorage().getReadDisk());
         registratorForPrimary.register("tiered-storage-write-tp", tieredStorageManager.getInternalStorage().getWriteDisk());
 
-        long diskSize = 0;
-        try {
-            diskSize = this.getTieredStorageManager().getInternalStorage().getDiskSize();
-        } catch (SAException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        registratorForAll.register("disk-size", createDiskSizeInBytesGauge(diskSize));
-
-    }
-
-    public Gauge<Long> createDiskSizeInBytesGauge(Long diskSize) {
-        return new Gauge<Long>() {
+        registratorForAll.register("disk-size",  new Gauge<Long>() {
             @Override
-            public Long getValue() {
-                return diskSize;
+            public Long getValue()  {
+                try {
+                    return tieredStorageManager.getInternalStorage().getDiskSize();
+                }  catch (SAException | IOException e) {
+                    _logger.warn("failed to get disk size metric with exception: ", e);
+                    return null;
+                }
             }
-        };
+        });
     }
 
     private IDuplicateOperationFilter createDuplicateOperationIDFilter() {
