@@ -5,6 +5,7 @@ import com.gigaspaces.jdbc.model.table.AggregationFunction;
 import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -190,12 +191,14 @@ public class TableRow implements Comparable<TableRow> {
     }
 
     private boolean hasColumn(QueryColumn queryColumn) {
-        for (QueryColumn column : columns) {
-            if (column.equals(queryColumn)) {
-                return true;
-            }
-        }
-        return false;
+        //by reference:
+        return Arrays.stream(columns).anyMatch(qc -> qc == queryColumn);   //TODO: validate!
+//        for (QueryColumn column : columns) {
+//            if (column.equals(queryColumn)) {
+//                return true;
+//            }
+//        }
+//        return false;
     }
 
     @Override

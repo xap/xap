@@ -58,6 +58,11 @@ public class MainTester {
 //            execute(statement, String.format("SELECT COUNT(*) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(*) FROM (SELECT COUNT(age) FROM %s)", MyPojo.class.getName()));
 
+//            execute(statement, String.format("SELECT COUNT(age) FROM (SELECT COUNT(age) FROM %s) ",MyPojo.class.getName()));
+            execute(statement, String.format("SELECT * FROM (SELECT COUNT(*) FROM %s) ", MyPojo.class.getName()));
+            execute(statement, String.format("SELECT COUNT(*) FROM (SELECT COUNT(*) FROM %s) ", MyPojo.class.getName()));
+
+
 
 
             teardown(space, true);

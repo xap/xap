@@ -64,9 +64,5 @@ public class AggregationFunction extends QueryColumn {
 
     public enum AggregationFunctionType {
         COUNT, MAX, MIN, AVG, SUM;
-
     }
-
-
-
 }
