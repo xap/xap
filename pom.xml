@@ -71,6 +71,7 @@
         <module>xap-extensions/xap-reporter</module>
         <module>xap-extensions/xap-kafka</module>
         <module>xap-extensions/xap-jdbc</module>
+        <module>xap-extensions/xap-aggregator-node</module>
     </modules>
 
     <dependencies>
@@ -303,6 +304,12 @@
                 <artifactId>xap-aggregator-node</artifactId>
                 <version>${project.version}</version>
                 <scope>${xap.dep.scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.gigaspaces</groupId>
+                <artifactId>xap-aggregator-node</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
