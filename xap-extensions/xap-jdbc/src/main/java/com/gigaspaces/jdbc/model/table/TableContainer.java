@@ -14,6 +14,7 @@ import java.util.List;
 public abstract class TableContainer {
 
     private final List<OrderColumn> orderColumns = new ArrayList<>();
+    private boolean hasAggregationFunctions = false;
     private Expression exprTree;
 
     public abstract QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
@@ -68,5 +69,13 @@ public abstract class TableContainer {
 
     public List<OrderColumn> getOrderColumns() {
         return orderColumns;
+    }
+
+    public boolean hasAggregationFunctions() {
+        return this.hasAggregationFunctions;
+    }
+
+    public void setHasAggregationFunctions(boolean hasAggregationFunctions) {
+        this.hasAggregationFunctions = hasAggregationFunctions;
     }
 }

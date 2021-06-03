@@ -84,7 +84,7 @@ public class ConcreteTableContainer extends TableContainer {
                 modifiers = Modifiers.add(modifiers, Modifiers.EXPLAIN_PLAN);
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
-            // When we use join, we sort the results on the client side instead of on the server.
+            // When we use join, we aggregate the results on the client side instead of on the server.
             if(!config.isJoinUsed()) {
                 setAggregation();
             }
@@ -122,9 +122,8 @@ public class ConcreteTableContainer extends TableContainer {
     }
 
     private void createAggregationFunctions(AggregationSet aggregationSet) {
-        //TODO boolean field instead.
-        boolean hasAggregationFunctions = visibleColumns.stream().anyMatch(queryColumn -> queryColumn instanceof AggregationFunction);
-        if(!hasAggregationFunctions) {
+        setHasAggregationFunctions(visibleColumns.stream().anyMatch(queryColumn -> queryColumn instanceof AggregationFunction));
+        if(!hasAggregationFunctions()) {
             return;
         }
         for (QueryColumn visibleColumn : visibleColumns) {

@@ -44,10 +44,13 @@ public class TempTableContainer extends TableContainer {
                     explainResult.getExplainPlanInfo(), getExprTree(), Collections.unmodifiableList(getOrderColumns()));
             return new ExplainPlanResult(visibleColumns, subquery, this);
         }
-        if (queryTemplatePacket != null)
+        if (queryTemplatePacket != null) {
             tableResult.filter(x -> queryTemplatePacket.eval(x));
+        }
 
-        QueryResult queryResult = new QueryResult(visibleColumns, tableResult, getOrderColumns());
+        setHasAggregationFunctions(visibleColumns.stream().anyMatch(queryColumn -> queryColumn instanceof AggregationFunction));
+
+        QueryResult queryResult = new QueryResult(this);
         if(!getOrderColumns().isEmpty()) {
             queryResult.sort(); //sort the results at the client
         }

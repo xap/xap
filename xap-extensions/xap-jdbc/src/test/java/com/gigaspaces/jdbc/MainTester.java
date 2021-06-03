@@ -57,10 +57,13 @@ public class MainTester {
 //            execute(statement, String.format("SELECT * FROM (SELECT COUNT(*) FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(*) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(*) FROM (SELECT COUNT(age) FROM %s)", MyPojo.class.getName()));
-
+//
 //            execute(statement, String.format("SELECT COUNT(age) FROM (SELECT COUNT(age) FROM %s) ",MyPojo.class.getName()));
-            execute(statement, String.format("SELECT * FROM (SELECT COUNT(*) FROM %s) ", MyPojo.class.getName()));
-            execute(statement, String.format("SELECT COUNT(*) FROM (SELECT COUNT(*) FROM %s) ", MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT * FROM (SELECT COUNT(*) FROM %s) ", MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT COUNT(*) FROM (SELECT COUNT(*) FROM %s) ", MyPojo.class.getName()));
+
+            execute(statement, String.format("SELECT COUNT(*) FROM %s AS P1 INNER JOIN %s AS P2 ON P1.age = P2.age",
+                    MyPojo.class.getName(), MyPojo.class.getName()));
 
 
 

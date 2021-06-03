@@ -4,11 +4,10 @@ import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.model.table.AggregationFunction;
 import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
+import com.gigaspaces.jdbc.model.table.TableContainer;
+import com.j_spaces.jdbc.builder.QueryEntryPacket;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class TableRow implements Comparable<TableRow> {
     private final QueryColumn[] columns;
@@ -30,17 +29,21 @@ public class TableRow implements Comparable<TableRow> {
         this.orderValues = orderValues;
     }
 
-    public TableRow(IEntryPacket x, List<QueryColumn> queryColumns, List<OrderColumn> orderColumns) {
-        //TODO boolean field instead.
-        boolean hasAggregationFunctions = queryColumns.stream().anyMatch(queryColumn -> queryColumn instanceof AggregationFunction);
-        if (hasAggregationFunctions) {
+    public TableRow(IEntryPacket x, List<QueryColumn> queryColumns, TableContainer tableContainer) {
+        final List<OrderColumn> orderColumns = tableContainer.getOrderColumns();
+        if (tableContainer.hasAggregationFunctions()) {
+            Map<String, Object> fieldNameValueMap = new HashMap<>();
+            QueryEntryPacket queryEntryPacket = ((QueryEntryPacket) x);
+            for(int i=0; i < x.getFieldValues().length ; i ++) {
+                fieldNameValueMap.put(queryEntryPacket.getFieldNames()[i], queryEntryPacket.getFieldValues()[i]);
+            }
             int columnsSize = queryColumns.size();
             this.columns = new QueryColumn[columnsSize];
             this.values = new Object[columnsSize];
             for (int i = 0; i < columnsSize; i++) {
                 this.columns[i] = queryColumns.get(i);
                 //TODO: what if we use group by, and therefore we have more values??
-                this.values[i] = x.getFieldValue(i);
+                this.values[i] = fieldNameValueMap.get(this.columns[i].getName().toLowerCase(Locale.ROOT));
             }
         } else {
             this.columns = queryColumns.toArray(new QueryColumn[0]);//TODO x TypeDescriptor is null! why?

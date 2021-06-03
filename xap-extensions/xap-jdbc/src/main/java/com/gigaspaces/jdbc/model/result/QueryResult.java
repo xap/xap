@@ -2,10 +2,9 @@ package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
-import com.gigaspaces.jdbc.model.table.AggregationFunction;
-import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
+import com.gigaspaces.jdbc.model.table.TempTableContainer;
 import com.j_spaces.jdbc.ResultEntry;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 
@@ -25,7 +24,7 @@ public class QueryResult {
         this.queryColumns = filterNonVisibleColumns(queryColumns);
         this.tableContainer = tableContainer;
         this.rows =
-                res.stream().map(x -> new TableRow(x, this.queryColumns, tableContainer.getOrderColumns())).collect(Collectors.toList());
+                res.stream().map(x -> new TableRow(x, this.queryColumns, tableContainer)).collect(Collectors.toList());
     }
 
     public QueryResult(List<QueryColumn> queryColumns) {
@@ -34,17 +33,17 @@ public class QueryResult {
         this.rows = new ArrayList<>();
     }
 
-    public QueryResult(List<QueryColumn> visibleColumns, QueryResult tableResult, List<OrderColumn> orderColumns) {
+    public QueryResult(TempTableContainer tempTableContainer) {
+        //TODO: keep null? because .TempTableContainer.getJoinedTable throw UnsupportedOperationException: Not supported yet!
         this.tableContainer = null;
-        this.queryColumns = visibleColumns;
-        boolean hasAggregationFunctions =
-                visibleColumns.stream().anyMatch(queryColumn -> queryColumn instanceof AggregationFunction);
-        if (hasAggregationFunctions) {
+        this.queryColumns = tempTableContainer.getVisibleColumns();
+        List<TableRow> tableRows = tempTableContainer.getQueryResult().getRows();
+        if (tempTableContainer.hasAggregationFunctions()) {
             List<TableRow> aggregateRows = new ArrayList<>();
-            aggregateRows.add(TableRow.aggregate(tableResult.rows, queryColumns));
+            aggregateRows.add(TableRow.aggregate(tableRows, this.queryColumns));
             this.rows = aggregateRows;
         } else {
-            this.rows = tableResult.rows.stream().map(row -> new TableRow(row, visibleColumns, orderColumns)).collect(Collectors.toList());
+            this.rows = tableRows.stream().map(row -> new TableRow(row, this.queryColumns, tempTableContainer.getOrderColumns())).collect(Collectors.toList());
         }
     }
 
@@ -158,5 +157,9 @@ public class QueryResult {
 
     public void sort() {
         Collections.sort(rows);
+    }
+
+    public List<TableRow> getRows() {
+        return rows;
     }
 }
