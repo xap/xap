@@ -1,22 +1,28 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
+import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.gigaspaces.metrics.*;
 import com.j_spaces.core.Constants;
 import com.j_spaces.core.cache.context.TemplateMatchTier;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.client.SQLQuery;
 import com.j_spaces.core.client.sql.ReadQueryParser;
+import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TieredStorageManagerImpl implements TieredStorageManager {
@@ -27,7 +33,8 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     private ConcurrentHashMap<String, CachePredicate> hotCacheRules = new ConcurrentHashMap<>();
 
     private InternalRDBMSManager internalDiskStorage;
-
+    private InternalMetricRegistrator diskSizeRegistrator;
+    private InternalMetricRegistrator operationRegistrator;
     public TieredStorageManagerImpl() {
 
     }
@@ -39,6 +46,7 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
         this.storageConfig = storageConfig;
         this.spaceProxy = proxy;
     }
+
 
     @Override
     public boolean hasCacheRule(String typeName) {
@@ -118,6 +126,63 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
         }
     }
 
+    public void initMetrics (SpaceImpl _spaceImpl, MetricManager metricManager){
+    operationRegistratorInit(_spaceImpl, metricManager);
+    diskSizeRegistratorInit(_spaceImpl, metricManager);
+    }
+
+
+    private void operationRegistratorInit(SpaceImpl _spaceImpl, MetricManager metricManager){
+        Map<String, DynamicMetricTag> dynamicTags = new HashMap<>();
+        dynamicTags.put("space_active", new DynamicMetricTag() {
+            @Override
+            public Object getValue() {
+                boolean active;
+                try {
+                    active = _spaceImpl.isActive();
+                } catch (RemoteException e) {
+                    active = false;
+                }
+                return active;
+            }
+        });
+
+        InternalMetricRegistrator registratorForPrimary = (InternalMetricRegistrator) metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, createTags(_spaceImpl), dynamicTags);
+
+        registratorForPrimary.register( ("tiered-storage-read-tp"), getInternalStorage().getReadDisk());
+        registratorForPrimary.register("tiered-storage-write-tp", getInternalStorage().getWriteDisk());
+        this.operationRegistrator=registratorForPrimary;
+    }
+    private void diskSizeRegistratorInit(SpaceImpl _spaceImpl, MetricManager metricManager){
+        InternalMetricRegistrator registratorForAll = (InternalMetricRegistrator) metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, createTags(_spaceImpl));
+        registratorForAll.register("disk-size",  new Gauge<Long>() {
+            @Override
+            public Long getValue()  {
+                try {
+                    return getInternalStorage().getDiskSize();
+                }  catch (SAException | IOException e) {
+                    logger.warn("failed to get disk size metric with exception: ", e);
+                    return null;
+                }
+            }
+        });
+        this.operationRegistrator=registratorForAll;
+    }
+
+
+    private Map<String, String>  createTags(SpaceImpl _spaceImpl){
+        final String prefix = "metrics.";
+        final Map<String, String> tags = new HashMap<>();
+        for (Map.Entry<Object, Object> property : _spaceImpl.getCustomProperties().entrySet()) {
+            String name = (String) property.getKey();
+            if (name.startsWith(prefix))
+                tags.put(name.substring(prefix.length()), (String) property.getValue());
+        }
+        tags.put("space_name", _spaceImpl.getName());
+        tags.put("space_instance_id", _spaceImpl.getInstanceId());
+        return tags;
+    }
+
     @Override
     public TemplateMatchTier guessTemplateTier(ITemplateHolder templateHolder) { // TODO - tiered storage - return TemplateMatchTier, hot and cold
         String typeName = templateHolder.getServerTypeDesc().getTypeName();
@@ -143,6 +208,17 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
                 return templateMatchTier;
             }
         }
+    }
+
+    @Override
+    public void close() {
+        if (diskSizeRegistrator != null) {
+            diskSizeRegistrator.clear();
+        }
+        if(operationRegistrator !=null) {
+            operationRegistrator.clear();
+        }
+        internalDiskStorage.shutDown();
     }
 
 
