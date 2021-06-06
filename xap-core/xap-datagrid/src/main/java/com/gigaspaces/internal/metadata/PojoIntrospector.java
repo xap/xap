@@ -33,7 +33,6 @@ import net.jini.core.lease.Lease;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -51,6 +50,7 @@ public class PojoIntrospector<T> extends AbstractTypeIntrospector<T> {
 
     private SpaceTypeInfo _typeInfo;
     private transient IConstructor<T> _constructor;
+    private transient IParamsConstructor<T> _paramsConstructor;
     private transient SpacePropertyInfo _idProperty;
     private transient SpacePropertyInfo _versionProperty;
     private transient SpacePropertyInfo _timeToLiveProperty;
@@ -83,7 +83,9 @@ public class PojoIntrospector<T> extends AbstractTypeIntrospector<T> {
 
     @Override
     public T[] newArray(int length) {
-        return _constructor.newArray(length);
+        return _constructor != null
+                ? _constructor.newArray(length)
+                : _paramsConstructor.newArray(length);
     }
 
     @Override
@@ -334,8 +336,8 @@ public class PojoIntrospector<T> extends AbstractTypeIntrospector<T> {
 
         if (typeInfo.hasConstructorProperties()) {
             // validation only, the instantiation logic exists in typeInfo
-            IParamsConstructor<?> paramsConstructor = typeInfo.getParamsConstructor();
-            if (paramsConstructor == null)
+            this._paramsConstructor = (IParamsConstructor<T>) typeInfo.getParamsConstructor();
+            if (_paramsConstructor == null)
                 throw new SpaceMetadataValidationException(_pojoClass, "Missing expected constructor");
         } else {
             this._constructor = (IConstructor<T>) typeInfo.getDefaultConstructor();

@@ -28,4 +28,6 @@ import java.io.Serializable;
 public interface IParamsConstructor<T> extends Serializable {
 
     T newInstance(Object... args);
+
+    T[] newArray(int length);
 }
