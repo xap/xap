@@ -25,6 +25,8 @@ public class CustomMirrorConfig extends EmbeddedSpaceBeansConfig {
 	private String hibernateDialect;
 	@Value("${space.name}")
 	private String spaceName;
+	@Value("${ha}")
+	private boolean ha;
 
     @Override
     protected void configure(EmbeddedSpaceFactoryBean factoryBean) {
@@ -38,6 +40,7 @@ public class CustomMirrorConfig extends EmbeddedSpaceBeansConfig {
 
 		Properties properties = new Properties();
         properties.setProperty("space-config.mirror-service.cluster.name", spaceName);
+		properties.setProperty("space-config.mirror-service.cluster.backups-per-partition", ha ? "1" : "0");
         properties.setProperty("space-config.mirror-service.operation-grouping", "group-by-replication-bulk");
         factoryBean.setProperties(properties);
     }

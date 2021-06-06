@@ -16,6 +16,9 @@
         <dependencySet>
             <useTransitiveDependencies>true</useTransitiveDependencies>
             <useTransitiveFiltering>true</useTransitiveFiltering>
+            <excludes>
+                <exclude>org.hsqldb:hsqldb</exclude>
+            </excludes>
             <includes>
                 <include>org.hibernate:hibernate-core</include>
                 <include>${db.driver.groupId}:${db.driver.artifactId}</include>
