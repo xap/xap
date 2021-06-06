@@ -30,7 +30,7 @@ public class MainTester {
             Statement statement = connection.createStatement();
 
 //            execute(statement, String.format("SELECT COUNT(*) FROM %s",MyPojo.class.getName()));
-            execute(statement, String.format("SELECT COUNT(age), MAX(last_name) FROM %s",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT MAX(age), MAX(last_name) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MAX(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MIN(age) FROM %s",MyPojo.class.getName()));
