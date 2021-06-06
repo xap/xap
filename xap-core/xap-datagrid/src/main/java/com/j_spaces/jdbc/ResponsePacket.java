@@ -19,7 +19,6 @@ package com.j_spaces.jdbc;
 import com.gigaspaces.internal.transport.IEntryPacket;
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -109,7 +108,7 @@ public class ResponsePacket implements Serializable, Iterable<IEntryPacket> {
         if (resultArray != null)
             return resultArray;
 
-        IEntryPacket[] result = (IEntryPacket[]) Array.newInstance(IEntryPacket.class, resultSet.size());
+        IEntryPacket[] result = new IEntryPacket[resultSet.size()];
 
         return resultSet.toArray(result);
 

@@ -70,10 +70,12 @@ public class ASMConstructorFactory {
                     interfaces);
 
             createConstructor(cw);
-            if (params)
+            if (params) {
                 createNewInstanceVarArgsMethod(cw, declaringClass, originalCtor);
-            else
+            } else {
                 createNewInstanceMethod(cw, declaringClass);
+                createNewArrayMethod(cw, declaringClass);
+            }
 
             cw.visitEnd();
 
@@ -116,6 +118,14 @@ public class ASMConstructorFactory {
             mv.unboxIfNeeded(parameterTypes[i]);
         }
         mv.invokeConstructor(Type.getInternalName(clz), Type.getConstructorDescriptor(constructor));
+        mv.returnObject();
+    }
+
+    private static void createNewArrayMethod(ClassWriter cw, Class<?> clz) {
+        // Note: because of reflection erasure the method return signature is Object[] instead of T[]
+        MethodGenerator mv = MethodGenerator.newMethod(cw, "newArray", "(I)[Ljava/lang/Object;");
+        mv.start();
+        mv.newArrayByVar(Type.getInternalName(clz),1);
         mv.returnObject();
     }
 }

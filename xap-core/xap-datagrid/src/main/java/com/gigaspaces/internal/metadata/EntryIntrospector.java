@@ -137,6 +137,11 @@ public class EntryIntrospector<T extends Entry> extends AbstractTypeIntrospector
     }
 
     @Override
+    public T[] newArray(int length) {
+        return _ctor.newArray(length);
+    }
+
+    @Override
     protected Object[] processDocumentObjectInterop(Object[] values, EntryType entryType, boolean cloneOnChange) {
         return entryType.isVirtual() ? fromDocumentIfNeeded(values, cloneOnChange) : values;
     }

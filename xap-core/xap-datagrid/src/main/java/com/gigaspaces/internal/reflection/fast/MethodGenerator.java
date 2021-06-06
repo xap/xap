@@ -289,6 +289,11 @@ public class MethodGenerator {
         mv.visitTypeInsn(Opcodes.NEW, className);
     }
 
+    public void newArrayByVar(String className, int varIndex) {
+        loadVariableInt(varIndex);
+        mv.visitTypeInsn(Opcodes.ANEWARRAY, className);
+    }
+
     public void newArray(String className, int length) {
         loadConstant(length);
         mv.visitTypeInsn(Opcodes.ANEWARRAY, className);

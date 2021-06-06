@@ -45,7 +45,7 @@ public class ExternalEntryIntrospector<T extends ExternalEntry> extends Abstract
     private static final long serialVersionUID = 1L;
     public static final byte EXTERNALIZABLE_CODE = 4;
 
-    private static final IConstructor<ExternalEntry> DEFAULT_CTOR = ExternalEntry::new;
+    private static final IConstructor<ExternalEntry> DEFAULT_CTOR = new ExternalEntryFactory();
 
     private Class<T> _implClass;
     private IConstructor<T> _constructor;
@@ -127,6 +127,11 @@ public class ExternalEntryIntrospector<T extends ExternalEntry> extends Abstract
     @Override
     public T newInstance() {
         return _constructor.newInstance();
+    }
+
+    @Override
+    public T[] newArray(int length) {
+        return _constructor.newArray(length);
     }
 
     @Override
@@ -281,5 +286,18 @@ public class ExternalEntryIntrospector<T extends ExternalEntry> extends Abstract
         out.writeInt(length);
         for (int i = 0; i < length; i++)
             IOUtils.writeObject(out, _properties[i]);
+    }
+
+    private static class ExternalEntryFactory implements IConstructor<ExternalEntry> {
+
+        @Override
+        public ExternalEntry newInstance() {
+            return new ExternalEntry();
+        }
+
+        @Override
+        public ExternalEntry[] newArray(int length) {
+            return new ExternalEntry[length];
+        }
     }
 }
