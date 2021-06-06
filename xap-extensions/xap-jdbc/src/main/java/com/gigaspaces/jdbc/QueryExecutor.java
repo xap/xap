@@ -7,10 +7,7 @@ import com.gigaspaces.jdbc.handlers.WhereHandler;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.QueryResult;
-import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
-import com.gigaspaces.jdbc.model.table.QueryColumn;
-import com.gigaspaces.jdbc.model.table.TableContainer;
-import com.gigaspaces.jdbc.model.table.TempTableContainer;
+import com.gigaspaces.jdbc.model.table.*;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import net.sf.jsqlparser.expression.Expression;
@@ -27,6 +24,7 @@ import java.util.Map;
 public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisitor {
     private final List<TableContainer> tables = new ArrayList<>();
     private final List<QueryColumn> queryColumns = new ArrayList<>();
+    private final List<AggregationFunction> aggregationFunctionColumns = new ArrayList<>();
     private final IJSpace space;
     private final QueryExecutionConfig config;
     private final Object[] preparedValues;
@@ -190,5 +188,9 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
 
     public void setAllColumnsSelected(boolean isAllColumnsSelected) {
         this.isAllColumnsSelected = isAllColumnsSelected;
+    }
+
+    public List<AggregationFunction> getAggregationFunctionColumns() {
+        return aggregationFunctionColumns;
     }
 }

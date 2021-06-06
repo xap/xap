@@ -14,7 +14,6 @@ import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.query.aggregators.AggregationSet;
 import com.gigaspaces.query.aggregators.OrderBy;
 import com.gigaspaces.query.aggregators.OrderByAggregator;
-import com.gigaspaces.query.aggregators.SingleValueAggregator;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
@@ -33,7 +32,7 @@ public class ConcreteTableContainer extends TableContainer {
     private QueryTemplatePacket queryTemplatePacket;
     private final ITypeDesc typeDesc;
     private final List<String> allColumnNamesSorted;
-    private final List<QueryColumn> visibleColumns = new ArrayList<>();
+    private final List<QueryColumn> visibleColumns = new ArrayList<>(); //TODO: rename! not only visible!
     private final String name;
     private final String alias;
     private Integer limit = Integer.MAX_VALUE;
@@ -84,6 +83,14 @@ public class ConcreteTableContainer extends TableContainer {
                 modifiers = Modifiers.add(modifiers, Modifiers.EXPLAIN_PLAN);
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
+
+            //TODO move to function!
+            List<QueryColumn> trulyVisibleColumns = this.visibleColumns.stream().filter(QueryColumn::isVisible).collect(Collectors.toList());
+            if(hasAggregationFunctions() && !trulyVisibleColumns.isEmpty()) { //TODO: wait for group by implementation.
+                throw new IllegalArgumentException("Column [" + trulyVisibleColumns.get(0) + "] must appear in the " +
+                        "GROUP BY clause or be used in an aggregate function");
+            }
+
             // When we use join, we aggregate the results on the client side instead of on the server.
             if(!config.isJoinUsed()) {
                 setAggregation();
@@ -94,7 +101,7 @@ public class ConcreteTableContainer extends TableContainer {
             if (explainPlanImpl != null) {
                 queryResult = new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
             } else {
-                queryResult = new QueryResult(res, visibleColumns, this);
+                queryResult = new QueryResult(res, this);
             }
             return queryResult;
         } catch (Exception e) {
@@ -122,41 +129,29 @@ public class ConcreteTableContainer extends TableContainer {
     }
 
     private void createAggregationFunctions(AggregationSet aggregationSet) {
-        setHasAggregationFunctions(visibleColumns.stream().anyMatch(queryColumn -> queryColumn instanceof AggregationFunction));
         if(!hasAggregationFunctions()) {
             return;
         }
-        for (QueryColumn visibleColumn : visibleColumns) {
-            if (visibleColumn instanceof  AggregationFunction) {
-                AggregationFunction aggregationFunction = (AggregationFunction) visibleColumn;
-                //TODO: use getNameOrAlias?
-                if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.COUNT) {
-                    if (aggregationFunction.isAllColumns()) {
-                        aggregationSet.count();
-                    } else {
-                        aggregationSet.count(aggregationFunction.getColumnName());
-                    }
+        for (AggregationFunction aggregationFunction : getAggregationFunctionColumns()) {
+            //TODO: use getNameOrAlias?
+            if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.COUNT) {
+                if (aggregationFunction.isAllColumns()) {
+                    aggregationSet.count();
+                } else {
+                    aggregationSet.count(aggregationFunction.getColumnName());
                 }
-                if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.MAX) {
-                    aggregationSet.maxValue(aggregationFunction.getColumnName()); //TODO: value or entry?
-                }
-                if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.MIN) {
-                    aggregationSet.minValue(aggregationFunction.getColumnName()); //TODO: value or entry?
-                }
-                if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.AVG) {
-                    aggregationSet.average(aggregationFunction.getColumnName());
-                }
-                if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.SUM) {
-                    aggregationSet.sum(aggregationFunction.getColumnName());
-                }
-            } else { //TODO: expression not in aggregate or GROUP BY columns, how to handle this?.
-                      //non aggregated fields are not supported yet
-//                    if (funcColumn.getFunctionName() == null)
-//                        aggregationSet = aggregationSet.add(new SingleValueAggregator().setPath(funcColumn.getName()));
-//                    else if (funcColumn instanceof FunctionCallColumn){
-//                        aggregationSet = aggregationSet.add(new SingleValueFunctionAggregator((FunctionCallColumn) funcColumn).setPath(funcColumn.getName()));
-//                    }
-                aggregationSet.add(new SingleValueAggregator().setPath(visibleColumn.getNameOrAlias()));
+            }
+            if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.MAX) {
+                aggregationSet.maxValue(aggregationFunction.getColumnName()); //TODO: value or entry?
+            }
+            if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.MIN) {
+                aggregationSet.minValue(aggregationFunction.getColumnName()); //TODO: value or entry?
+            }
+            if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.AVG) {
+                aggregationSet.average(aggregationFunction.getColumnName());
+            }
+            if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.SUM) {
+                aggregationSet.sum(aggregationFunction.getColumnName());
             }
         }
     }
@@ -167,6 +162,7 @@ public class ConcreteTableContainer extends TableContainer {
             throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]");
         }
         QueryColumn qc = new QueryColumn(columnName, alias, visible, this);
+//        if (visible) this.visibleColumns.add(qc); //TODO: validate!. with it, join fail!
         this.visibleColumns.add(qc);
         return qc;
     }

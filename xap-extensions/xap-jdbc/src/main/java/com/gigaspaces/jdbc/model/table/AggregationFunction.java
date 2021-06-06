@@ -1,18 +1,21 @@
 package com.gigaspaces.jdbc.model.table;
 
+import java.util.List;
+
 public class AggregationFunction extends QueryColumn {
 
     private final AggregationFunctionType type;
     private final String functionName;
-    private final String alias;
+    private final String functionAlias;
     private final boolean allColumns;
+    private List<TableContainer> tableContainers;
 
     public AggregationFunction(AggregationFunctionType type, String functionName, String alias, String columnName,
                                String columnAlias, TableContainer tableContainer, boolean visible, boolean allColumns) {
         super(columnName, columnAlias, visible, tableContainer);
         this.type = type;
         this.functionName = functionName;
-        this.alias = alias;
+        this.functionAlias = alias;
         this.allColumns = allColumns;
     }
 
@@ -24,8 +27,8 @@ public class AggregationFunction extends QueryColumn {
         return this.functionName;
     }
 
-    public String getAlias() {
-        return this.alias;
+    public String getFunctionAlias() {
+        return this.functionAlias;
     }
 
     public TableContainer getTableContainer() {
@@ -54,7 +57,15 @@ public class AggregationFunction extends QueryColumn {
     }
 
     public String getName() {
-        return getAlias() == null ? toString() : getAlias();
+        return getFunctionAlias() == null ? toString() : getFunctionAlias();
+    }
+
+    public List<TableContainer> getTableContainers() {
+        return tableContainers;
+    }
+
+    public void setTableContainers(List<TableContainer> tableContainers) {
+        this.tableContainers = tableContainers;
     }
 
     @Override

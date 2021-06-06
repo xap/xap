@@ -20,11 +20,14 @@ public class QueryResult {
     private List<TableRow> rows;
     private Cursor<TableRow> cursor;
 
-    public QueryResult(IQueryResultSet<IEntryPacket> res, List<QueryColumn> queryColumns, TableContainer tableContainer) {
-        this.queryColumns = filterNonVisibleColumns(queryColumns);
+    public QueryResult(IQueryResultSet<IEntryPacket> res, TableContainer tableContainer) {
+        List<QueryColumn> queryColumns = tableContainer.getVisibleColumns();
+        this.queryColumns = filterNonVisibleColumns(queryColumns); //TODO: should contains already only visibleColumn?
+        this.queryColumns.addAll(tableContainer.getAggregationFunctionColumns()); //TODO: think of other way. used for convertEntriesToResultArrays
         this.tableContainer = tableContainer;
-        this.rows =
-                res.stream().map(x -> new TableRow(x, this.queryColumns, tableContainer)).collect(Collectors.toList());
+        //TODO: 'this.queryColumns' is with filters, and the join don't work properly, because it contains invisible
+        // column. queryColumns is with invisible!
+        this.rows = res.stream().map(x -> new TableRow(x, tableContainer)).collect(Collectors.toList());
     }
 
     public QueryResult(List<QueryColumn> queryColumns) {
@@ -34,9 +37,11 @@ public class QueryResult {
     }
 
     public QueryResult(TempTableContainer tempTableContainer) {
-        //TODO: keep null? because .TempTableContainer.getJoinedTable throw UnsupportedOperationException: Not supported yet!
+        //TODO: keep null? because otherwise .TempTableContainer.getJoinedTable throw UnsupportedOperationException:
+        // Not supported yet!
         this.tableContainer = null;
         this.queryColumns = tempTableContainer.getVisibleColumns();
+        this.queryColumns.addAll(tempTableContainer.getAggregationFunctionColumns()); //TODO: think of other way. used for convertEntriesToResultArrays
         List<TableRow> tableRows = tempTableContainer.getQueryResult().getRows();
         if (tempTableContainer.hasAggregationFunctions()) {
             List<TableRow> aggregateRows = new ArrayList<>();

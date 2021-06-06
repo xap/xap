@@ -85,19 +85,22 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
     public void visit(SelectExpressionItem selectExpressionItem) {
         final List<QueryColumn> queryColumns = this.queryExecutor.getQueryColumns();
         final List<TableContainer> tables = this.queryExecutor.getTables();
+        final List<AggregationFunction> aggregationFunctionColumns = this.queryExecutor.getAggregationFunctionColumns();
         selectExpressionItem.getExpression().accept(new ExpressionVisitorAdapter() {
             private String alias = getStringOrNull(selectExpressionItem.getAlias());
             private List<TableContainer> tableContainers = new ArrayList<>();
             private List<Column> columns = new ArrayList<>();
-            private boolean isFunction = false;
+            private boolean isFromFunction = false;
 
             @Override
             public void visit(Column column) {
-                if(isFunction) {
+                TableContainer table = getTableForColumn(column, tables);
+                if(isFromFunction) {
                     this.columns.add(column);
-                    this.tableContainers.add(getTableForColumn(column, tables));
+                    this.tableContainers.add(table);
+                    QueryColumn qc = table.addQueryColumn(column.getColumnName(),null , false); //TODO: validate null!
+                    queryColumns.add(qc);
                 } else {
-                    TableContainer table = getTableForColumn(column, tables);
                     QueryColumn qc = table.addQueryColumn(column.getColumnName(), getStringOrNull(selectExpressionItem.getAlias()), true);
                     queryColumns.add(qc);
                 }
@@ -105,7 +108,7 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
 
             @Override
             public void visit(Function function) {
-                this.isFunction = true;
+                this.isFromFunction = true;
                 super.visit(function);
                 AggregationFunction.AggregationFunctionType aggregationFunctionType = AggregationFunction.AggregationFunctionType.valueOf(function.getName().toUpperCase());
                 queryExecutor.setAllColumnsSelected(function.isAllColumns());
@@ -119,16 +122,17 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                             + function.getName() + "()], expected 1 column but was '*'");
                 }
                 AggregationFunction aggregationFunction = new AggregationFunction(aggregationFunctionType, function.getName(),
-                        this.alias, getColumnName(function.isAllColumns()), getColumnAlias(), getTableContainer(), true,
-                        function.isAllColumns());
+                        this.alias, getColumnName(function.isAllColumns()), getColumnAlias(), getTableContainer(),
+                        true, function.isAllColumns());
                 if (getTableContainer() != null) {
-//                    getTableContainer().addAggregationFunction(aggregationFunction);
-                    QueryColumn queryColumn = getTableContainer().addQueryColumn(aggregationFunction);
-                    queryColumns.add(queryColumn);
+                    getTableContainer().addAggregationFunctionColumn(aggregationFunction);
+                    aggregationFunctionColumns.add(aggregationFunction);
                 } else {
                     //TODO: in case its * which table? all?
-                    queryExecutor.getTables().forEach(tableContainer -> tableContainer.addQueryColumn(aggregationFunction));
-                    queryColumns.add(aggregationFunction);
+                    queryExecutor.getTables().forEach(tableContainer -> tableContainer.addAggregationFunctionColumn(aggregationFunction));
+                    aggregationFunction.setTableContainers(queryExecutor.getTables()); //TODO: need this?
+                    aggregationFunctionColumns.add(aggregationFunction);
+                    queryExecutor.getTables().forEach(this::addAllTableColumn);
                 }
             }
 
@@ -150,8 +154,16 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                 return null;
             }
 
-            private TableContainer getTableContainer() {
+            private TableContainer getTableContainer() { //TODO: should be all tables? and not just the first one?
                 return this.tableContainers.isEmpty() ? null : this.tableContainers.get(0);
+            }
+
+            private void addAllTableColumn(TableContainer table) {
+                final List<QueryColumn> queryColumns = queryExecutor.getQueryColumns();
+                table.getAllColumnNames().forEach(columnName -> {
+                    QueryColumn qc = table.addQueryColumn(columnName, null, false);
+                    queryColumns.add(qc);
+                });
             }
         });
     }

@@ -48,7 +48,12 @@ public class TempTableContainer extends TableContainer {
             tableResult.filter(x -> queryTemplatePacket.eval(x));
         }
 
-        setHasAggregationFunctions(visibleColumns.stream().anyMatch(queryColumn -> queryColumn instanceof AggregationFunction));
+        //TODO move to function!
+        List<QueryColumn> trulyVisibleColumns = this.visibleColumns.stream().filter(QueryColumn::isVisible).collect(Collectors.toList());
+        if(hasAggregationFunctions() && !trulyVisibleColumns.isEmpty()) { //TODO: wait for group by implementation.
+            throw new IllegalArgumentException("Column [" + trulyVisibleColumns.get(0) + "] must appear in the " +
+                    "GROUP BY clause or be used in an aggregate function");
+        }
 
         QueryResult queryResult = new QueryResult(this);
         if(!getOrderColumns().isEmpty()) {

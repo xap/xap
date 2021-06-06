@@ -29,27 +29,29 @@ public class TableRow implements Comparable<TableRow> {
         this.orderValues = orderValues;
     }
 
-    public TableRow(IEntryPacket x, List<QueryColumn> queryColumns, TableContainer tableContainer) {
+    public TableRow(IEntryPacket x, TableContainer tableContainer) {
         final List<OrderColumn> orderColumns = tableContainer.getOrderColumns();
+        final List<QueryColumn> queryColumns = tableContainer.getVisibleColumns();
+        final List<AggregationFunction> aggregationFunctionColumns = tableContainer.getAggregationFunctionColumns();
         if (tableContainer.hasAggregationFunctions()) {
             Map<String, Object> fieldNameValueMap = new HashMap<>();
-            QueryEntryPacket queryEntryPacket = ((QueryEntryPacket) x);
+            QueryEntryPacket queryEntryPacket = ((QueryEntryPacket) x); //TODO x TypeDescriptor is null! why?
             for(int i=0; i < x.getFieldValues().length ; i ++) {
                 fieldNameValueMap.put(queryEntryPacket.getFieldNames()[i], queryEntryPacket.getFieldValues()[i]);
             }
-            int columnsSize = queryColumns.size();
+            int columnsSize = aggregationFunctionColumns.size();
             this.columns = new QueryColumn[columnsSize];
             this.values = new Object[columnsSize];
             for (int i = 0; i < columnsSize; i++) {
-                this.columns[i] = queryColumns.get(i);
+                this.columns[i] = aggregationFunctionColumns.get(i);
                 //TODO: what if we use group by, and therefore we have more values??
-                this.values[i] = fieldNameValueMap.get(this.columns[i].getName().toLowerCase(Locale.ROOT));
+                this.values[i] = fieldNameValueMap.get(this.columns[i].toString().toLowerCase(Locale.ROOT));
             }
         } else {
-            this.columns = queryColumns.toArray(new QueryColumn[0]);//TODO x TypeDescriptor is null! why?
-            values = new Object[columns.length];
-            for (int i = 0; i < queryColumns.size(); i++) {
-                QueryColumn queryColumn = queryColumns.get(i);
+            this.columns = queryColumns.toArray(new QueryColumn[0]);
+            this.values = new Object[this.columns.length];
+            for (int i = 0; i < this.columns.length; i++) {
+                QueryColumn queryColumn = this.columns[i];
                 if (queryColumn.isUUID()) {
                     values[i] = x.getUID();
                 } else if (x.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(queryColumn.getName())) {
@@ -122,7 +124,7 @@ public class TableRow implements Comparable<TableRow> {
                 String columnName = ((AggregationFunction) queryColumn).getColumnName();
                 boolean isAllColumn = ((AggregationFunction) queryColumn).isAllColumns();
                 AggregationFunction.AggregationFunctionType type = ((AggregationFunction) queryColumn).getType();
-                if(tableRows.get(0).hasColumn(queryColumn)) { // if this column already exists.
+                if(tableRows.get(0).hasColumn(queryColumn)) { // if this column already exists. //TODO:validate!
                     value = tableRows.get(0).getPropertyValue(queryColumn);
                 }else if (type == AggregationFunction.AggregationFunctionType.MAX) {
                     value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).max(valueComparator).orElse(null);

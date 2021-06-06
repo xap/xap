@@ -14,7 +14,7 @@ import java.util.List;
 public abstract class TableContainer {
 
     private final List<OrderColumn> orderColumns = new ArrayList<>();
-    private boolean hasAggregationFunctions = false;
+    private final List<AggregationFunction> aggregationFunctionColumns = new ArrayList<>();
     private Expression exprTree;
 
     public abstract QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
@@ -23,7 +23,7 @@ public abstract class TableContainer {
 
     public abstract QueryColumn addQueryColumn(AggregationFunction aggregationFunction);
 
-    public abstract List<QueryColumn> getVisibleColumns();
+    public abstract List<QueryColumn> getVisibleColumns(); //TODO create one for "getQueryColumn"?!?!
 
     public abstract List<String> getAllColumnNames();
 
@@ -71,11 +71,16 @@ public abstract class TableContainer {
         return orderColumns;
     }
 
-    public boolean hasAggregationFunctions() {
-        return this.hasAggregationFunctions;
+    public void addAggregationFunctionColumn(AggregationFunction aggregationFunction) {
+        this.aggregationFunctionColumns.add(aggregationFunction);
     }
 
-    public void setHasAggregationFunctions(boolean hasAggregationFunctions) {
-        this.hasAggregationFunctions = hasAggregationFunctions;
+    public List<AggregationFunction> getAggregationFunctionColumns() {
+        return aggregationFunctionColumns;
     }
+
+    public boolean hasAggregationFunctions() {
+        return !this.aggregationFunctionColumns.isEmpty();
+    }
+
 }

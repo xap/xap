@@ -28,21 +28,35 @@ public class MainTester {
         try (Connection connection = DriverManager.getConnection(newDriver ? "jdbc:gigaspaces:v3://localhost:4174/" + space.getSpaceName() : "jdbc:gigaspaces:url:jini://*/*/" + space.getSpaceName(), properties)) {
 
             Statement statement = connection.createStatement();
+
 //            execute(statement, String.format("SELECT COUNT(*) FROM %s",MyPojo.class.getName()));
+            execute(statement, String.format("SELECT COUNT(age), MAX(last_name) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MAX(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MIN(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT SUM(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT AVG(age) FROM %s",MyPojo.class.getName()));
-//            execute(statement, String.format("SELECT COUNT(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(age), AVG(age) FROM %s",MyPojo.class.getName()));
-//            execute(statement, String.format("SELECT max(age, birthLong) FROM %s",MyPojo.class.getName()));
-//            execute(statement, String.format("SELECT max(age), birthLong FROM %s",MyPojo.class.getName()));
-//            execute(statement, String.format("SELECT birthLong, max(age) FROM %s",MyPojo.class.getName()));
-//            execute(statement, String.format("SELECT max(age) FROM (SELECT * FROM %s)",MyPojo.class.getName()));
+//            try{
+//                execute(statement, String.format("SELECT max(age, birthLong) FROM %s",MyPojo.class.getName()));
+//            } catch (Exception e) {
+//                System.out.println(e.getMessage());
+//            }
+//            try{
+//                execute(statement, String.format("SELECT max(age), birthLong FROM %s",MyPojo.class.getName()));
+//            } catch (Exception e) {
+//                System.out.println(e.getMessage());
+//                e.printStackTrace();
+//            }
+//            try{
+//                execute(statement, String.format("SELECT birthLong, max(age) FROM %s",MyPojo.class.getName()));
+//            } catch (Exception e) {
+//                System.out.println(e.getMessage());
+//            }
 
-//            execute(statement, String.format("SELECT * FROM (SELECT MAX(age) FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT max(age) FROM (SELECT * FROM %s)",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MAX(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT * FROM (SELECT MAX(age) FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT * FROM (SELECT SUM(age) FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT SUM(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT * FROM (SELECT COUNT(age), MAX(age) FROM %s) ", MyPojo.class.getName()));
@@ -51,19 +65,23 @@ public class MainTester {
 //            execute(statement, String.format("SELECT COUNT(*), MAX(age) FROM (SELECT * FROM %s) ", MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MIN(age) FROM (SELECT * FROM %s)", MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MAX(max) FROM (SELECT MAX(age) as max FROM %s)", MyPojo.class.getName()));
-
 //            execute(statement, String.format("SELECT * FROM (SELECT COUNT(age) FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT * FROM (SELECT COUNT(*) FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(*) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(*) FROM (SELECT COUNT(age) FROM %s)", MyPojo.class.getName()));
-//
-//            execute(statement, String.format("SELECT COUNT(age) FROM (SELECT COUNT(age) FROM %s) ",MyPojo.class.getName()));
-//            execute(statement, String.format("SELECT * FROM (SELECT COUNT(*) FROM %s) ", MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(*) FROM (SELECT COUNT(*) FROM %s) ", MyPojo.class.getName()));
+//            try {
+//                execute(statement, String.format("SELECT COUNT(age) FROM (SELECT COUNT(age) FROM %s) ",MyPojo.class.getName()));
+//            } catch (Exception e) {
+//                System.out.println(e.getMessage());
+//            }
 
-            execute(statement, String.format("SELECT COUNT(*) FROM %s AS P1 INNER JOIN %s AS P2 ON P1.age = P2.age",
-                    MyPojo.class.getName(), MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT P1.name FROM %s AS P1 INNER JOIN %s AS P2 ON P1.age = P2.age",
+//                    MyPojo.class.getName(), MyPojo.class.getName()));
+//
+//            execute(statement, String.format("SELECT COUNT(*) FROM %s AS P1 INNER JOIN %s AS P2 ON P1.age = P2.age",
+//                    MyPojo.class.getName(), MyPojo.class.getName()));
 
 
 
@@ -113,8 +131,9 @@ public class MainTester {
             gigaSpace.write(new MyPojo("Eve Cc", 35, "UK", date3, new Time(date3.getTime()), new Timestamp(date3.getTime())));
             gigaSpace.write(new MyPojo("NoCountry Dd", 40, null, date4, new Time(date4.getTime()), new Timestamp(date4.getTime())));
             gigaSpace.write(new MyPojo("Adam Bb", 30, "Israel", date2, new Time(date2.getTime()), new Timestamp(date2.getTime())));
-            gigaSpace.write(new MyPojo("nullAge Bb", null, "Israel", date2, new Time(date2.getTime()),
+            gigaSpace.write(new MyPojo("nullAge Ee", null, "Israel", date2, new Time(date2.getTime()),
                     new Timestamp(date2.getTime())));
+            gigaSpace.write(new MyPojo());
         }
         return gigaSpace;
     }
