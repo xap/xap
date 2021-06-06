@@ -73,7 +73,7 @@ public interface ISpaceProxyTypeManager {
 
     Object[] convertQueryResults(IEntryPacket[] results, ITemplatePacket query, boolean returnEntryPacket, AbstractProjectionTemplate projectionTemplate);
 
-    Class<?> getResultClass(ITemplatePacket templatePacket);
+    Object[] createResultArray(ITemplatePacket templatePacket, int length);
 
     // Other methods
     Object getLockObject();

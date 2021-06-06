@@ -106,6 +106,8 @@ public interface ITypeIntrospector<T> extends SmartExternalizable {
 
     T toObject(IGSEntry entry, ITypeDesc typeDesc);
 
+    T[] newArray(int length);
+
     boolean supportsNestedOperations();
 
     Class<?> getPathType(String path);

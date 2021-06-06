@@ -27,4 +27,6 @@ import java.io.Serializable;
 public interface IConstructor<T> extends Serializable {
 
     T newInstance();
+
+    T[] newArray(int length);
 }

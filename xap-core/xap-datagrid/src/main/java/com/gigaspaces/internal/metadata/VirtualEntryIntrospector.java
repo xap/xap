@@ -41,7 +41,7 @@ import java.util.Map.Entry;
 public class VirtualEntryIntrospector<T extends VirtualEntry> extends AbstractTypeIntrospector<T> {
     private static final long serialVersionUID = 1L;
 
-    private static final IConstructor<VirtualEntry> DEFAULT_CTOR = SpaceDocument::new;
+    private static final IConstructor<VirtualEntry> DEFAULT_CTOR = new SpaceDocumentFactory();
     private final Class<T> _implClass;
     private final IConstructor<T> _constructor;
 
@@ -182,6 +182,11 @@ public class VirtualEntryIntrospector<T extends VirtualEntry> extends AbstractTy
     }
 
     @Override
+    public T[] newArray(int length) {
+        return _constructor.newArray(length);
+    }
+
+    @Override
     protected Object[] processDocumentObjectInterop(Object[] values, EntryType entryType, boolean cloneOnChange) {
         return entryType.isConcrete() ? toDocumentIfNeeded(values, cloneOnChange) : values;
     }
@@ -256,5 +261,18 @@ public class VirtualEntryIntrospector<T extends VirtualEntry> extends AbstractTy
     public void writeExternal(ObjectOutput out, PlatformLogicalVersion version)
             throws IOException {
         throw new IOException("This class does not support serialization.");
+    }
+
+    private static class SpaceDocumentFactory implements IConstructor<VirtualEntry> {
+
+        @Override
+        public SpaceDocument newInstance() {
+            return new SpaceDocument();
+        }
+
+        @Override
+        public SpaceDocument[] newArray(int length) {
+            return new SpaceDocument[length];
+        }
     }
 }

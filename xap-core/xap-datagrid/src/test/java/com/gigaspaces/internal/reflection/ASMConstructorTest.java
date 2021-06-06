@@ -76,12 +76,19 @@ public class ASMConstructorTest {
 
     private <T> void testClass(Class<T> clazz, boolean expectedStandard) {
         IConstructor<T> iCtor = ReflectionUtil.createCtor(clazz);
-        Object obj = iCtor.newInstance();
+        T obj = iCtor.newInstance();
         Assert.assertNotNull(obj);
         if (expectedStandard)
             Assert.assertSame(StandardConstructor.class, iCtor.getClass());
         else
             Assert.assertNotSame(StandardConstructor.class, iCtor.getClass());
+
+        // Test array factory:
+        int length = 3;
+        T[] array = iCtor.newArray(length);
+        Assert.assertEquals(length, array.length);
+        Assert.assertNull(array[0]);
+        array[0] = obj;
     }
 
     public static class PublicClass {

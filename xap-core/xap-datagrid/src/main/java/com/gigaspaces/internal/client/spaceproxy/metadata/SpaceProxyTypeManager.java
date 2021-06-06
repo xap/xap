@@ -59,7 +59,6 @@ import com.j_spaces.kernel.SystemProperties;
 
 import net.jini.core.entry.UnusableEntryException;
 
-import java.lang.reflect.Array;
 import java.util.Map;
 
 /**
@@ -243,13 +242,7 @@ public class SpaceProxyTypeManager implements ISpaceProxyTypeManager {
         if (resultPackets == null)
             return null;
 
-        Object[] results;
-        if (returnEntryPacket)
-            results = resultPackets;
-        else {
-            final Class<?> resultClass = getResultClass(query);
-            results = (Object[]) Array.newInstance(resultClass, resultPackets.length);
-        }
+        Object[] results = returnEntryPacket ? resultPackets : createResultArray(query, resultPackets.length);
 
         for (int i = 0; i < resultPackets.length; i++)
             results[i] = convertQueryResult(resultPackets[i], query, returnEntryPacket, projectionTemplate);
@@ -257,13 +250,14 @@ public class SpaceProxyTypeManager implements ISpaceProxyTypeManager {
         return results;
     }
 
-    public Class<?> getResultClass(ITemplatePacket templatePacket) {
-        Class<?> type = null;
+    @Override
+    public Object[] createResultArray(ITemplatePacket templatePacket, int length) {
         ITypeDesc typeDesc = templatePacket.getTypeDescriptor();
-        if (typeDesc != null)
-            type = typeDesc.getIntrospector(templatePacket.getQueryResultType().getEntryType()).getType();
-
-        return type != null ? type : Object.class;
+        if (typeDesc != null) {
+            return typeDesc.getIntrospector(templatePacket.getQueryResultType().getEntryType()).newArray(length);
+        } else {
+            return new Object[length];
+        }
     }
 
     public Object getObjectFromIGSEntry(IGSEntry entry)

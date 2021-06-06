@@ -82,6 +82,11 @@ public class PojoIntrospector<T> extends AbstractTypeIntrospector<T> {
     }
 
     @Override
+    public T[] newArray(int length) {
+        return _constructor.newArray(length);
+    }
+
+    @Override
     public T toObject(IGSEntry entry, ITypeDesc typeDesc) {
         if (!_typeInfo.hasConstructorProperties())
             return super.toObject(entry, typeDesc);
