@@ -159,7 +159,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.Xid;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -321,6 +320,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             _typeManager = new SpaceTypeManager(typeDescFactory, _configReader, tieredStorageManager);
             if (isTieredStorage()) {
                 tieredStorageManager.getInternalStorage().initialize(_spaceName, _fullSpaceName, _typeManager);
+                tieredStorageManager.initTieredStorageMetrics(_spaceImpl, _metricManager);
             }
         } catch (SAException e) {
             throw new CreateException("Failed to initialize InternalRDBMS", e);
@@ -513,54 +513,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             @Override
             public Integer getValue() throws Exception {
                 return countTransactions(TransactionInfo.Types.ALL, TransactionConstants.ACTIVE);
-            }
-        });
-        trieredStorageMetrics();
-    }
-
-    private void trieredStorageMetrics (){
-        if (!this.isTieredStorage()) {
-            return;
-        }
-        final String prefix = "metrics.";
-        final Map<String, String> tags = new HashMap<>();
-        for (Map.Entry<Object, Object> property : _spaceImpl.getCustomProperties().entrySet()) {
-            String name = (String) property.getKey();
-            if (name.startsWith(prefix))
-                tags.put(name.substring(prefix.length()), (String) property.getValue());
-        }
-        tags.put("space_name", _spaceImpl.getName());
-        tags.put("space_instance_id", _spaceImpl.getInstanceId());
-        Map<String, DynamicMetricTag> dynamicTags = new HashMap<>();
-
-        dynamicTags.put("space_active", new DynamicMetricTag() {
-            @Override
-            public Object getValue() {
-                boolean active;
-                try {
-                    active = _spaceImpl.isActive();
-                } catch (RemoteException e) {
-                    active = false;
-                }
-                return active;
-            }
-        });
-
-        InternalMetricRegistrator registratorForPrimary = (InternalMetricRegistrator) _metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, tags, dynamicTags);
-        InternalMetricRegistrator registratorForAll = (InternalMetricRegistrator) _metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, tags);
-
-        registratorForPrimary.register( ("tiered-storage-read-tp"), tieredStorageManager.getInternalStorage().getReadDisk());
-        registratorForPrimary.register("tiered-storage-write-tp", tieredStorageManager.getInternalStorage().getWriteDisk());
-
-        registratorForAll.register("disk-size",  new Gauge<Long>() {
-            @Override
-            public Long getValue()  {
-                try {
-                    return tieredStorageManager.getInternalStorage().getDiskSize();
-                }  catch (SAException | IOException e) {
-                    _logger.warn("failed to get disk size metric with exception: ", e);
-                    return null;
-                }
             }
         });
     }
@@ -3712,7 +3664,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         _dataTypesMetricRegistrators.clear();
 
         if(isTieredStorage()){
-            tieredStorageManager.getInternalStorage().shutDown();
+            tieredStorageManager.close();
         }
     }
 
