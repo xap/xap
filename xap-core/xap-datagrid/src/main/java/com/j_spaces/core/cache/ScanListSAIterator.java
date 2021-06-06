@@ -75,7 +75,7 @@ public class ScanListSAIterator
 
     }
 
-    public ISAdapterIterator<IEntryHolder> get_SAiter() {
+    public ISAdapterIterator<IEntryHolder> getSAiter() {
         return _SAiter;
     }
 

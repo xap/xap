@@ -2153,7 +2153,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             if (tHolder.isServerIterator() && tHolder.getServerIteratorInfo().getScanEntriesIter() != null){
                 IScanListIterator scanListIterator = tHolder.getServerIteratorInfo().getScanEntriesIter();
                 if (scanListIterator instanceof ScanListSAIterator){
-                    ((EntriesIter)((ScanListSAIterator)scanListIterator).get_SAiter()).afterAlternatingThreadBatch();
+                    ((EntriesIter)((ScanListSAIterator)scanListIterator).getSAiter()).afterAlternatingThreadBatch();
                 }
             }
             context = _cacheManager.freeCacheContext(context);
@@ -4174,7 +4174,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             IScanListIterator<IEntryCacheInfo> toScan;
             if (isServerIterator && serverIteratorInfo.getScanEntriesIter() != null){
                 toScan = serverIteratorInfo.getScanEntriesIter();
-                ((EntriesIter)(((ScanListSAIterator)toScan).get_SAiter())).beforeAlternatingThreadBatch(context);
+                ((EntriesIter)(((ScanListSAIterator)toScan).getSAiter())).beforeAlternatingThreadBatch(context);
             } else {
                 toScan = _cacheManager.makeScanableEntriesIter(context, template, serverTypeDesc,
                         0 /*scnFilter*/, leaseFilter /*leaseFilter*/,

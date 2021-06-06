@@ -10,6 +10,7 @@ import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.list.IScanListIterator;
 import com.j_spaces.kernel.list.CircularNumerator;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 public class ServerIteratorInfo {
@@ -183,6 +184,8 @@ public class ServerIteratorInfo {
                 ", batchSize=" + batchSize +
                 ", active=" + active +
                 ", scanEntriesIter=" + scanEntriesIter +
+                ", isTieredByTimeRule=" + isTieredByTimeRule +
+                ", templateMatchTier=" + templateMatchTier +
                 ", storedEntryPacketsBatch=" + (storedEntryPacketsBatch!=null ? storedEntryPacketsBatch.length : null) +
                 ", storedBatchNumber=" + storedBatchNumber +
                 ", expirationTime=" + expirationTime +

@@ -96,11 +96,12 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
             if(context.getTemplateTieredState() == null){
                 context.setTemplateTieredState(_cacheManager.getEngine().getTieredStorageManager().guessTemplateTier(template));
             }
-            boolean isTieredByTimeRule = template.isServerIterator() && template.getServerIteratorInfo().isTieredByTimeRule();
-             if( (!isTieredByTimeRule && context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT) || memoryOnly || template.isMemoryOnlySearch()){
+            boolean isServerIteratorAndTieredByTimeRule = template.isServerIterator() && template.getServerIteratorInfo().isTieredByTimeRule();
+             if( (!isServerIteratorAndTieredByTimeRule && context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT)
+                     || memoryOnly || template.isMemoryOnlySearch()){
                 _memoryOnly = true;
             } else {
-                if (isTieredByTimeRule){
+                if (isServerIteratorAndTieredByTimeRule){
                     _memoryOnly = false;
                 } else{
                     _memoryOnly = memoryOnly;
@@ -109,7 +110,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
                     _doneWithCache = true;
                 }
 
-                if(isTieredByTimeRule || context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
+                if(isServerIteratorAndTieredByTimeRule || context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
                     _entriesReturned = new HashSet<>();
                 }
             }
@@ -220,23 +221,20 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
 
     }
 
-    private Context get_context() {
-        return _context;
-    }
 
     public void beforeAlternatingThreadBatch(Context context){
         if (alternatingThreadBarrier == 0){
             throw new RuntimeException("internal error alternating thread");
         }
-        set_context(context);
+        setContext(context);
     }
 
     public void afterAlternatingThreadBatch(){
         alternatingThreadBarrier++;
-        set_context(null);
+        setContext(null);
     }
 
-    private void set_context(Context _context) {
+    private void setContext(Context _context) {
         this._context = _context;
     }
 
