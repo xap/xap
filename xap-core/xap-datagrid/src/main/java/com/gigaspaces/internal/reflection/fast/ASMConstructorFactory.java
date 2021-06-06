@@ -70,13 +70,11 @@ public class ASMConstructorFactory {
                     interfaces);
 
             createConstructor(cw);
-            if (params) {
+            if (params)
                 createNewInstanceVarArgsMethod(cw, declaringClass, originalCtor);
-            } else {
+            else
                 createNewInstanceMethod(cw, declaringClass);
-                createNewArrayMethod(cw, declaringClass);
-            }
-
+            createNewArrayMethod(cw, declaringClass);
             cw.visitEnd();
 
             byte[] b = cw.toByteArray();
