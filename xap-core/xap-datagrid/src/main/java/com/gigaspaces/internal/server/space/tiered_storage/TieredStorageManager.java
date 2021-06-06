@@ -28,7 +28,9 @@ public interface TieredStorageManager {
     TieredState guessEntryTieredState(String typeName);
 
     TemplateMatchTier guessTemplateTier(ITemplateHolder templateHolder);
-    void initMetrics (SpaceImpl _spaceImpl, MetricManager metricManager);
+
+    void initTieredStorageMetrics(SpaceImpl _spaceImpl, MetricManager metricManager);
+
     void close();
     // For the future when we would want to support warm layer
     //    CachePredicate getCacheRule(String typeName, String tier);

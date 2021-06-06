@@ -159,7 +159,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.Xid;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -321,7 +320,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             _typeManager = new SpaceTypeManager(typeDescFactory, _configReader, tieredStorageManager);
             if (isTieredStorage()) {
                 tieredStorageManager.getInternalStorage().initialize(_spaceName, _fullSpaceName, _typeManager);
-                tieredStorageManager.initMetrics(_spaceImpl, _metricManager);
+                tieredStorageManager.initTieredStorageMetrics(_spaceImpl, _metricManager);
             }
         } catch (SAException e) {
             throw new CreateException("Failed to initialize InternalRDBMS", e);

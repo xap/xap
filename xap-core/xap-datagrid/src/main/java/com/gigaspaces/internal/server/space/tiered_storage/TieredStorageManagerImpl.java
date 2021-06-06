@@ -34,7 +34,8 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
 
     private InternalRDBMSManager internalDiskStorage;
     private InternalMetricRegistrator diskSizeRegistrator;
-    private InternalMetricRegistrator operationRegistrator;
+    private InternalMetricRegistrator operationsRegistrator;
+
     public TieredStorageManagerImpl() {
 
     }
@@ -126,7 +127,7 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
         }
     }
 
-    public void initMetrics (SpaceImpl _spaceImpl, MetricManager metricManager){
+    public void initTieredStorageMetrics(SpaceImpl _spaceImpl, MetricManager metricManager){
     operationRegistratorInit(_spaceImpl, metricManager);
     diskSizeRegistratorInit(_spaceImpl, metricManager);
     }
@@ -134,25 +135,24 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
 
     private void operationRegistratorInit(SpaceImpl _spaceImpl, MetricManager metricManager){
         Map<String, DynamicMetricTag> dynamicTags = new HashMap<>();
-        dynamicTags.put("space_active", new DynamicMetricTag() {
-            @Override
-            public Object getValue() {
-                boolean active;
-                try {
-                    active = _spaceImpl.isActive();
-                } catch (RemoteException e) {
-                    active = false;
-                }
-                return active;
+        dynamicTags.put("space_active", () -> {
+            boolean active;
+            try {
+                active = _spaceImpl.isActive();
+            } catch (RemoteException e) {
+                active = false;
             }
+            return active;
         });
 
         InternalMetricRegistrator registratorForPrimary = (InternalMetricRegistrator) metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, createTags(_spaceImpl), dynamicTags);
 
         registratorForPrimary.register( ("tiered-storage-read-tp"), getInternalStorage().getReadDisk());
         registratorForPrimary.register("tiered-storage-write-tp", getInternalStorage().getWriteDisk());
-        this.operationRegistrator=registratorForPrimary;
+        this.operationsRegistrator = registratorForPrimary;
     }
+
+
     private void diskSizeRegistratorInit(SpaceImpl _spaceImpl, MetricManager metricManager){
         InternalMetricRegistrator registratorForAll = (InternalMetricRegistrator) metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, createTags(_spaceImpl));
         registratorForAll.register("disk-size",  new Gauge<Long>() {
@@ -166,7 +166,7 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
                 }
             }
         });
-        this.operationRegistrator=registratorForAll;
+        this.operationsRegistrator = registratorForAll;
     }
 
 
@@ -215,8 +215,8 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
         if (diskSizeRegistrator != null) {
             diskSizeRegistrator.clear();
         }
-        if(operationRegistrator !=null) {
-            operationRegistrator.clear();
+        if(operationsRegistrator != null) {
+            operationsRegistrator.clear();
         }
         internalDiskStorage.shutDown();
     }
