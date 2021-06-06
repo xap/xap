@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 
+import static com.gigaspaces.internal.server.space.tiered_storage.SqliteUtils.checkEquals;
 import static com.gigaspaces.internal.server.space.tiered_storage.SqliteUtils.getPropertyValue;
 
 public class TieredStorageUtils {
@@ -127,20 +128,22 @@ public class TieredStorageUtils {
         for (int i = 0; i < hotEntry.getNumOfFixedProperties(); ++i) {
             Object hotValue;
             Object coldValue;
+            PropertyInfo property;
             if (typeDesc.isAutoGenerateId() && ((PropertyInfo) typeDesc.getFixedProperty(typeDesc.getIdPropertyName())).getOriginalIndex() == i) {
+                property = (PropertyInfo) typeDesc.getFixedProperty(typeDesc.getIdPropertyName());
                 hotValue = hotEntryHolder.getUID();
                 coldValue = coldEntryHolder.getUID();
             } else {
+                property = typeDesc.getFixedProperty(i);
                 hotValue = hotEntry.getFixedPropertiesValues()[i];
                 coldValue = coldEntry.getFixedPropertiesValues()[i];
             }
-            if (hotValue == null || coldValue == null) {
-                return hotValue == coldValue;
+            if ((hotValue == null || coldValue == null) && hotValue != coldValue) {
+                return false;
             }
-            if (!hotValue.equals(coldValue)) {
+            if (!checkEquals(property.getType(),hotValue,coldValue)) {
                 logger.warn("Failed to have consistency between hot and cold tier for id: " +
                         hotEntry.getEntryDataType().name() + " Hot: " + hotValue + " Cold: " + coldValue);
-
                 return false;
             }
         }
