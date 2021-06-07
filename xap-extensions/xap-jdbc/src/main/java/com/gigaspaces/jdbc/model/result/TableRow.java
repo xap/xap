@@ -8,6 +8,7 @@ import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.jdbc.builder.QueryEntryPacket;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TableRow implements Comparable<TableRow> {
     private final QueryColumn[] columns;
@@ -124,7 +125,8 @@ public class TableRow implements Comparable<TableRow> {
             String columnName = aggregationFunction.getColumnName();
             boolean isAllColumn = aggregationFunction.isAllColumns();
             AggregationFunction.AggregationFunctionType type = aggregationFunction.getType();
-            if(tableRows.get(0).hasColumn(aggregationFunction)) { // if this column already exists. //TODO:validate!
+            if(tableRows.get(0).hasColumn(aggregationFunction)) { // if this column already exists by reference.
+                // TODO:validate!
                 value = tableRows.get(0).getPropertyValue(aggregationFunction);
             }else if (type == AggregationFunction.AggregationFunctionType.MAX) {
                 value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).max(valueComparator).orElse(null);
@@ -132,8 +134,8 @@ public class TableRow implements Comparable<TableRow> {
                 value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).min(valueComparator).orElse(null);
             } else if (type == AggregationFunction.AggregationFunctionType.AVG) {
                 //TODO: supported types? need to be implement.
-                value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName)).filter(Objects::nonNull).reduce(0d,
-                        (a,b) -> a.doubleValue() + b.doubleValue()).doubleValue() / tableRows.size();
+                List<Number> collect = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName)).filter(Objects::nonNull).collect(Collectors.toList());
+                value = collect.stream().reduce(0d, (a,b) -> a.doubleValue() + b.doubleValue()).doubleValue() / collect.size();
             } else if (type == AggregationFunction.AggregationFunctionType.SUM) {
                 //TODO: supported types? need to be implement.
                 value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName)).filter(Objects::nonNull).reduce(0d,
