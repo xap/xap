@@ -84,12 +84,7 @@ public class ConcreteTableContainer extends TableContainer {
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
 
-            //TODO move to function!
-            List<QueryColumn> trulyVisibleColumns = this.visibleColumns.stream().filter(QueryColumn::isVisible).collect(Collectors.toList());
-            if(hasAggregationFunctions() && !trulyVisibleColumns.isEmpty()) { //TODO: wait for group by implementation.
-                throw new IllegalArgumentException("Column [" + trulyVisibleColumns.get(0) + "] must appear in the " +
-                        "GROUP BY clause or be used in an aggregate function");
-            }
+            validateAggregationFunction();
 
             // When we use join, we aggregate the results on the client side instead of on the server.
             if(!config.isJoinUsed()) {

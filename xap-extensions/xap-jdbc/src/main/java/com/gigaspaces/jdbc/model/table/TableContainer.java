@@ -10,6 +10,7 @@ import net.sf.jsqlparser.expression.Expression;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class TableContainer {
 
@@ -81,6 +82,26 @@ public abstract class TableContainer {
 
     public boolean hasAggregationFunctions() {
         return !this.aggregationFunctionColumns.isEmpty();
+    }
+
+    public boolean hasOrderColumns() {
+        return !this.orderColumns.isEmpty();
+    }
+
+
+    protected void validateAggregationFunction() {
+        List<QueryColumn> trulyVisibleColumns =
+                getVisibleColumns().stream().filter(QueryColumn::isVisible).collect(Collectors.toList());
+        //TODO: block until supports of group by implementation.
+        if(hasAggregationFunctions() && !trulyVisibleColumns.isEmpty()) {
+            throw new IllegalArgumentException("Column [" + trulyVisibleColumns.get(0) + "] must appear in the " +
+                    "GROUP BY clause or be used in an aggregate function");
+        }
+        //TODO: block operation not supported -- see AggregationsUtil.convertAggregationResult
+        if(hasAggregationFunctions() && hasOrderColumns()) {
+            throw new IllegalArgumentException("Column [" + getOrderColumns().get(0).getNameOrAlias() + "] must appear in the " +
+                    "GROUP BY clause or be used in an aggregate function");
+        }
     }
 
 }
