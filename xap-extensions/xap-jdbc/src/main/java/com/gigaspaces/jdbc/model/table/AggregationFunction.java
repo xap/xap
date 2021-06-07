@@ -1,6 +1,6 @@
 package com.gigaspaces.jdbc.model.table;
 
-import java.util.List;
+import java.util.Locale;
 
 public class AggregationFunction extends QueryColumn {
 
@@ -8,7 +8,6 @@ public class AggregationFunction extends QueryColumn {
     private final String functionName;
     private final String functionAlias;
     private final boolean allColumns;
-    private List<TableContainer> tableContainers;
 
     public AggregationFunction(AggregationFunctionType type, String functionName, String alias, String columnName,
                                String columnAlias, TableContainer tableContainer, boolean visible, boolean allColumns) {
@@ -55,32 +54,23 @@ public class AggregationFunction extends QueryColumn {
         return allColumns;
     }
 
-    public QueryColumn getQueryColumn() {
-        return this;
-    }
-
     public String getName() {
         return String.format("%s(%s)", getFunctionName(), getColumnName());
     }
 
+    public String getNameWithLowerCase() {
+        return String.format("%s(%s)", getFunctionName().toLowerCase(Locale.ROOT), getColumnName());
+    }
+
     @Override
     public String getNameOrAlias() {
-        return getFunctionAlias() == null ? String.format("%s(%s)", getFunctionName(), getColumnName()) :
-                getFunctionAlias();
-    }
-
-    public List<TableContainer> getTableContainers() {
-        return tableContainers;
-    }
-
-    public void setTableContainers(List<TableContainer> tableContainers) {
-        this.tableContainers = tableContainers;
+        return getFunctionAlias() == null ? getName() : getFunctionAlias();
     }
 
     @Override
     public String toString() {
-        if(this.tableContainer != null) {
-            return String.format("%s(%s)", getFunctionName(), super.toString());
+        if(getTableContainer() != null) {
+            return String.format("%s(%s)", getFunctionName(), getTableContainer().getTableNameOrAlias() + "." + getColumnName());
         }
         return String.format("%s(%s)", getFunctionName(), getColumnName());
     }

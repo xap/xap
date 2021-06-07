@@ -131,7 +131,6 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                 } else {
                     //TODO: in case its * which table? all?
                     queryExecutor.getTables().forEach(tableContainer -> tableContainer.addAggregationFunctionColumn(aggregationFunction));
-                    aggregationFunction.setTableContainers(queryExecutor.getTables()); //TODO: need this?
                     aggregationFunctionColumns.add(aggregationFunction);
                     queryExecutor.getTables().forEach(this::addAllTableColumn);
                 }

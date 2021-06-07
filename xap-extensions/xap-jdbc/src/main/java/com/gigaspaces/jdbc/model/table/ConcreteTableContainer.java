@@ -32,6 +32,8 @@ public class ConcreteTableContainer extends TableContainer {
     private QueryTemplatePacket queryTemplatePacket;
     private final ITypeDesc typeDesc;
     private final List<String> allColumnNamesSorted;
+    //TODO: or instead create a queryColumnsSet for this propose and in visibleColumns keep only ordered (from the
+    // query) and visible columns!
     private final List<QueryColumn> visibleColumns = new ArrayList<>(); //TODO: rename! not only visible!
     private final String name;
     private final String alias;

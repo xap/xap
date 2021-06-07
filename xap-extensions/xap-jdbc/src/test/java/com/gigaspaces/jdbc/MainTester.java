@@ -90,7 +90,8 @@ public class MainTester {
 //                    MyPojo.class.getName(), MyPojo.class.getName()));
 
 
-            execute(statement, String.format("SELECT max(age) FROM %s ORDER BY age", MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT max(age) FROM %s ORDER BY age", MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT max(age) FROM %s ORDER BY max(age)", MyPojo.class.getName()));
 
 
 

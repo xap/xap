@@ -46,7 +46,7 @@ public class TableRow implements Comparable<TableRow> {
             for (int i = 0; i < columnsSize; i++) {
                 this.columns[i] = aggregationFunctionColumns.get(i);
                 //TODO: what if we use group by, and therefore we have more values??
-                this.values[i] = fieldNameValueMap.get(this.columns[i].getName().toLowerCase(Locale.ROOT));
+                this.values[i] = fieldNameValueMap.get(aggregationFunctionColumns.get(i).getNameWithLowerCase());
             }
         } else {
             this.columns = queryColumns.toArray(new QueryColumn[0]);
