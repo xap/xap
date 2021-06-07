@@ -161,7 +161,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         if (tables.size() == 1) { //Simple Query
             return tables.get(0).executeRead(config);
         }
-        JoinQueryExecutor joinE = new JoinQueryExecutor(tables, space, queryColumns, config);
+        JoinQueryExecutor joinE = new JoinQueryExecutor(tables, space, queryColumns, aggregationFunctionColumns, config);
         return joinE.execute();
     }
 

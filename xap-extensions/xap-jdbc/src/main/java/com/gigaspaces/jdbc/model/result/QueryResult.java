@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.table.AggregationFunction;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.gigaspaces.jdbc.model.table.TempTableContainer;
@@ -30,7 +31,15 @@ public class QueryResult {
         this.rows = res.stream().map(x -> new TableRow(x, tableContainer)).collect(Collectors.toList());
     }
 
-    public QueryResult(List<QueryColumn> queryColumns) {
+    //TODO: for the join, marge with the explain plan one?
+    public QueryResult(List<QueryColumn> queryColumns, List<AggregationFunction> aggregationFunctionColumns) {
+        this.tableContainer = null; // TODO should be handled in subquery
+        this.queryColumns = filterNonVisibleColumns(queryColumns);
+        this.queryColumns.addAll(aggregationFunctionColumns); //TODO: think of other way. used for convertEntriesToResultArrays
+        this.rows = new ArrayList<>();
+    }
+
+    public QueryResult(List<QueryColumn> queryColumns) { //TODO: for the explain plan, marge with the join one?
         this.tableContainer = null; // TODO should be handled in subquery
         this.queryColumns = filterNonVisibleColumns(queryColumns);
         this.rows = new ArrayList<>();
@@ -45,7 +54,7 @@ public class QueryResult {
         List<TableRow> tableRows = tempTableContainer.getQueryResult().getRows();
         if (tempTableContainer.hasAggregationFunctions()) {
             List<TableRow> aggregateRows = new ArrayList<>();
-            aggregateRows.add(TableRow.aggregate(tableRows, this.queryColumns));
+            aggregateRows.add(TableRow.aggregate(tableRows, tempTableContainer.getAggregationFunctionColumns()));
             this.rows = aggregateRows;
         } else {
             this.rows = tableRows.stream().map(row -> new TableRow(row, this.queryColumns, tempTableContainer.getOrderColumns())).collect(Collectors.toList());
@@ -166,5 +175,8 @@ public class QueryResult {
 
     public List<TableRow> getRows() {
         return rows;
+    }
+    public void setRows(List<TableRow> rows) {
+        this.rows = rows;
     }
 }

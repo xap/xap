@@ -31,6 +31,7 @@ public class MainTester {
 
 //            execute(statement, String.format("SELECT COUNT(*) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MAX(age), MAX(last_name) FROM %s",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT MAX(age), MIN(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT COUNT(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MAX(age) FROM %s",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MIN(age) FROM %s",MyPojo.class.getName()));
@@ -56,6 +57,7 @@ public class MainTester {
 
 //            execute(statement, String.format("SELECT max(age) FROM (SELECT * FROM %s)",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT MAX(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT COUNT(*) AS count FROM %s", MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT * FROM (SELECT MAX(age) FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT * FROM (SELECT SUM(age) FROM %s) ",MyPojo.class.getName()));
 //            execute(statement, String.format("SELECT SUM(age) FROM (SELECT * FROM %s) ",MyPojo.class.getName()));
@@ -77,11 +79,16 @@ public class MainTester {
 //                System.out.println(e.getMessage());
 //            }
 
+
+
 //            execute(statement, String.format("SELECT P1.name FROM %s AS P1 INNER JOIN %s AS P2 ON P1.age = P2.age",
 //                    MyPojo.class.getName(), MyPojo.class.getName()));
-//
+
 //            execute(statement, String.format("SELECT COUNT(*) FROM %s AS P1 INNER JOIN %s AS P2 ON P1.age = P2.age",
 //                    MyPojo.class.getName(), MyPojo.class.getName()));
+//            execute(statement, String.format("SELECT MAX(P1.age) FROM %s AS P1 INNER JOIN %s AS P2 ON P1.age = P2.age",
+//                    MyPojo.class.getName(), MyPojo.class.getName()));
+
 
 
 

@@ -33,7 +33,8 @@ public class TableRow implements Comparable<TableRow> {
         final List<OrderColumn> orderColumns = tableContainer.getOrderColumns();
         final List<QueryColumn> queryColumns = tableContainer.getVisibleColumns();
         final List<AggregationFunction> aggregationFunctionColumns = tableContainer.getAggregationFunctionColumns();
-        if (tableContainer.hasAggregationFunctions()) {
+        //TODO x instanceof QueryEntryPacket to not enter here when use join!. validate!
+        if (tableContainer.hasAggregationFunctions() && x instanceof QueryEntryPacket) {
             Map<String, Object> fieldNameValueMap = new HashMap<>();
             QueryEntryPacket queryEntryPacket = ((QueryEntryPacket) x); //TODO x TypeDescriptor is null! why?
             for(int i=0; i < x.getFieldValues().length ; i ++) {
@@ -45,7 +46,7 @@ public class TableRow implements Comparable<TableRow> {
             for (int i = 0; i < columnsSize; i++) {
                 this.columns[i] = aggregationFunctionColumns.get(i);
                 //TODO: what if we use group by, and therefore we have more values??
-                this.values[i] = fieldNameValueMap.get(this.columns[i].toString().toLowerCase(Locale.ROOT));
+                this.values[i] = fieldNameValueMap.get(this.columns[i].getName().toLowerCase(Locale.ROOT));
             }
         } else {
             this.columns = queryColumns.toArray(new QueryColumn[0]);
@@ -107,46 +108,42 @@ public class TableRow implements Comparable<TableRow> {
         }
     }
 
-    public static TableRow aggregate(List<TableRow> tableRows, List<QueryColumn> queryColumns) {
+    public static TableRow aggregate(List<TableRow> tableRows, List<AggregationFunction> aggregationFunctionColumns) {
         if (tableRows.isEmpty()) {
             return new TableRow((QueryColumn[]) null, null);
         }
-        QueryColumn[] rowsColumns = queryColumns.toArray(new QueryColumn[0]);
+        QueryColumn[] rowsColumns = aggregationFunctionColumns.toArray(new QueryColumn[0]);
         OrderColumn[] firstRowOrderColumns = tableRows.get(0).orderColumns; //TODO: validate!
         Object[] firstRowOrderValues = tableRows.get(0).orderValues; //TODO: validate! if from first or use aggregateValues!
 
         Object[] aggregateValues = new Object[rowsColumns.length];
         int index = 0;
-        for (QueryColumn queryColumn : queryColumns) {
+        for (AggregationFunction aggregationFunction : aggregationFunctionColumns) {
             Object value;
             Comparator<Object> valueComparator = getObjectComparator();
-            if (queryColumn instanceof AggregationFunction) {
-                String columnName = ((AggregationFunction) queryColumn).getColumnName();
-                boolean isAllColumn = ((AggregationFunction) queryColumn).isAllColumns();
-                AggregationFunction.AggregationFunctionType type = ((AggregationFunction) queryColumn).getType();
-                if(tableRows.get(0).hasColumn(queryColumn)) { // if this column already exists. //TODO:validate!
-                    value = tableRows.get(0).getPropertyValue(queryColumn);
-                }else if (type == AggregationFunction.AggregationFunctionType.MAX) {
-                    value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).max(valueComparator).orElse(null);
-                } else if (type == AggregationFunction.AggregationFunctionType.MIN) {
-                    value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).min(valueComparator).orElse(null);
-                } else if (type == AggregationFunction.AggregationFunctionType.AVG) {
-                    //TODO: supported types? need to be implement.
-                    value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName)).filter(Objects::nonNull).reduce(0d,
-                            (a,b) -> a.doubleValue() + b.doubleValue()).doubleValue() / tableRows.size();
-                } else if (type == AggregationFunction.AggregationFunctionType.SUM) {
-                    //TODO: supported types? need to be implement.
-                    value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName)).filter(Objects::nonNull).reduce(0d,
-                            (a,b) -> a.doubleValue() + b.doubleValue()).doubleValue();
-                } else { // (type == AggregationFunction.AggregationFunctionType.COUNT)
-                    if(isAllColumn) {
-                        value = tableRows.size();
-                    } else {
-                        value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).count();
-                    }
+            String columnName = aggregationFunction.getColumnName();
+            boolean isAllColumn = aggregationFunction.isAllColumns();
+            AggregationFunction.AggregationFunctionType type = aggregationFunction.getType();
+            if(tableRows.get(0).hasColumn(aggregationFunction)) { // if this column already exists. //TODO:validate!
+                value = tableRows.get(0).getPropertyValue(aggregationFunction);
+            }else if (type == AggregationFunction.AggregationFunctionType.MAX) {
+                value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).max(valueComparator).orElse(null);
+            } else if (type == AggregationFunction.AggregationFunctionType.MIN) {
+                value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).min(valueComparator).orElse(null);
+            } else if (type == AggregationFunction.AggregationFunctionType.AVG) {
+                //TODO: supported types? need to be implement.
+                value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName)).filter(Objects::nonNull).reduce(0d,
+                        (a,b) -> a.doubleValue() + b.doubleValue()).doubleValue() / tableRows.size();
+            } else if (type == AggregationFunction.AggregationFunctionType.SUM) {
+                //TODO: supported types? need to be implement.
+                value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName)).filter(Objects::nonNull).reduce(0d,
+                        (a,b) -> a.doubleValue() + b.doubleValue()).doubleValue();
+            } else { // (type == AggregationFunction.AggregationFunctionType.COUNT)
+                if(isAllColumn) {
+                    value = tableRows.size();
+                } else {
+                    value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).count();
                 }
-            } else {
-                value = tableRows.stream().map(tr -> tr.getPropertyValue(queryColumn)).filter(Objects::nonNull).findAny().orElse(null);
             }
             aggregateValues[index++] = value;
         }
@@ -188,7 +185,7 @@ public class TableRow implements Comparable<TableRow> {
 
     public Object getPropertyValue(String name) {
         for (int i = 0; i < columns.length; i++) {
-            if (columns[i].getName().equals(name)) { //TODO: if its aggregationFunction? use column name?
+            if (columns[i].getNameOrAlias().equals(name)) { //TODO: if its aggregationFunction? use column name?
                 return values[i];
             }
         }
@@ -197,7 +194,8 @@ public class TableRow implements Comparable<TableRow> {
 
     private boolean hasColumn(QueryColumn queryColumn) {
         //by reference:
-        return Arrays.stream(columns).anyMatch(qc -> qc == queryColumn);   //TODO: validate!
+//        return Arrays.stream(columns).anyMatch(qc -> qc.equals(queryColumn));   //TODO: validate!
+        return Arrays.stream(columns).anyMatch(qc -> qc == queryColumn);   //TODO: validate by reference!!
 //        for (QueryColumn column : columns) {
 //            if (column.equals(queryColumn)) {
 //                return true;

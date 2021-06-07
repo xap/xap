@@ -29,6 +29,9 @@ public class AggregationFunction extends QueryColumn {
 
     public String getFunctionAlias() {
         return this.functionAlias;
+    } //TODO: remove?
+
+    public String getAlias() { return this.functionAlias;
     }
 
     public TableContainer getTableContainer() {
@@ -57,7 +60,13 @@ public class AggregationFunction extends QueryColumn {
     }
 
     public String getName() {
-        return getFunctionAlias() == null ? toString() : getFunctionAlias();
+        return String.format("%s(%s)", getFunctionName(), getColumnName());
+    }
+
+    @Override
+    public String getNameOrAlias() {
+        return getFunctionAlias() == null ? String.format("%s(%s)", getFunctionName(), getColumnName()) :
+                getFunctionAlias();
     }
 
     public List<TableContainer> getTableContainers() {
@@ -70,6 +79,9 @@ public class AggregationFunction extends QueryColumn {
 
     @Override
     public String toString() {
+        if(this.tableContainer != null) {
+            return String.format("%s(%s)", getFunctionName(), super.toString());
+        }
         return String.format("%s(%s)", getFunctionName(), getColumnName());
     }
 

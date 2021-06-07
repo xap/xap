@@ -64,7 +64,7 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public QueryColumn addQueryColumn(String columnName, String alias, boolean visible) {
-        QueryColumn queryColumn = tableColumns.stream().filter(qc -> qc.getName().equalsIgnoreCase(columnName)).findFirst().orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
+        QueryColumn queryColumn = tableColumns.stream().filter(qc -> qc.getNameOrAlias().equalsIgnoreCase(columnName)).findFirst().orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
         if (visible) visibleColumns.add(queryColumn);
         return queryColumn;
     }
@@ -76,7 +76,7 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public List<String> getAllColumnNames() {
-        return tableColumns.stream().map(QueryColumn::getName).collect(Collectors.toList());
+        return tableColumns.stream().map(QueryColumn::getNameOrAlias).collect(Collectors.toList());
     }
 
     @Override

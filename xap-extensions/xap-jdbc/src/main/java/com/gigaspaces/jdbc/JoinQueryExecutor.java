@@ -6,6 +6,7 @@ import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.JoinTablesIterator;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.result.TableRow;
+import com.gigaspaces.jdbc.model.table.AggregationFunction;
 import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
@@ -22,12 +23,16 @@ public class JoinQueryExecutor {
     private final List<TableContainer> tables;
     private final List<QueryColumn> queryColumns;
     private final QueryExecutionConfig config;
+    private final List<AggregationFunction> aggregationFunctionColumns;
 
-    public JoinQueryExecutor(List<TableContainer> tables, IJSpace space, List<QueryColumn> queryColumns, QueryExecutionConfig config) {
+    public JoinQueryExecutor(List<TableContainer> tables, IJSpace space, List<QueryColumn> queryColumns,
+                             List<AggregationFunction> aggregationFunctionColumns, QueryExecutionConfig config) {
         this.tables = tables;
         this.space = space;
         this.queryColumns = queryColumns;
         this.config = config;
+        //TODO: can be obtained from the tables?, just like the OrderColumns at 'execute()'?
+        this.aggregationFunctionColumns = aggregationFunctionColumns;
         this.config.setJoinUsed(true);
     }
 
@@ -46,10 +51,15 @@ public class JoinQueryExecutor {
         if(config.isExplainPlan()) {
             return explain(joinTablesIterator, orderColumns);
         }
-        QueryResult res = new QueryResult(this.queryColumns);
+        QueryResult res = new QueryResult(this.queryColumns, this.aggregationFunctionColumns);
         while (joinTablesIterator.hasNext()) {
             if(tables.stream().allMatch(TableContainer::checkJoinCondition))
                 res.add(new TableRow(this.queryColumns, orderColumns));
+        }
+        if(!this.aggregationFunctionColumns.isEmpty()) {
+            List<TableRow> aggregateRows = new ArrayList<>();
+            aggregateRows.add(TableRow.aggregate(res.getRows(), this.aggregationFunctionColumns));
+            res.setRows(aggregateRows);
         }
         if(!orderColumns.isEmpty()) {
             res.sort(); //sort the results at the client

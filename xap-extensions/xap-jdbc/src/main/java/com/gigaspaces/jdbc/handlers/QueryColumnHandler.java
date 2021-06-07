@@ -16,6 +16,7 @@ import net.sf.jsqlparser.statement.select.SelectItemVisitorAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class QueryColumnHandler extends SelectItemVisitorAdapter {
     //TODO: consider not to pass queryExecutor but its relevant fields, when we need to serialize this object.
@@ -146,6 +147,9 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
             private String getColumnAlias() {
                 if(!this.columns.isEmpty()) {
                     String fullName = this.columns.get(0).getName(true);
+                    //for example max(P1.name), P1 is not alias.
+                    if(Objects.equals(fullName, this.columns.get(0).getName(false))) return null;
+//                    if(Objects.equals(fullName, this.columns.get(0).getName(false))) return fullName;
                     int lastIndex = fullName.lastIndexOf(".");
                     if (lastIndex != -1) {
                         return fullName.substring(0, lastIndex);

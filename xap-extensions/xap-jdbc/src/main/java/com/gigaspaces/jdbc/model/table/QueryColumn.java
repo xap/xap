@@ -50,9 +50,7 @@ public class QueryColumn {
     }
 
     public String getNameOrAlias() {
-        if (alias != null)
-            return alias;
-        return name;
+        return alias != null ? alias : name;
     }
 
     @Override
