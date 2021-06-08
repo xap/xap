@@ -83,7 +83,11 @@ public class SingleConditionHandler extends UnsupportedExpressionVisitor {
 
     @Override
     public void visit(DoubleValue doubleValue) {
-        this.value = doubleValue.getValue();
+        try {
+            this.value = getTable().getColumnValue(column.getColumnName(), doubleValue.getValue());
+        } catch (SQLException e) {
+            this.value = doubleValue.getValue();
+        }
     }
 
     @Override
