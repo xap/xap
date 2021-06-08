@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
+import com.gigaspaces.jdbc.handlers.GroupByHandler;
 import com.gigaspaces.jdbc.handlers.OrderByHandler;
 import com.gigaspaces.jdbc.handlers.QueryColumnHandler;
 import com.gigaspaces.jdbc.handlers.WhereHandler;
@@ -49,6 +50,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         prepareQueryColumns(plainSelect);
         prepareWhereClause(plainSelect);
         prepareOrderByClause(plainSelect);
+        prepareGroupByClause(plainSelect);
     }
 
     private void handleJoin(Join join){
@@ -106,6 +108,13 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         if (plainSelect.getOrderByElements() != null) {
             OrderByHandler orderByVisitor = new OrderByHandler(this);
             plainSelect.getOrderByElements().forEach(orderByElement -> orderByElement.accept(orderByVisitor));
+        }
+    }
+
+    private void prepareGroupByClause(PlainSelect plainSelect) {
+        if (plainSelect.getGroupBy() != null) {
+            GroupByHandler groupByVisitor = new GroupByHandler(this);
+            plainSelect.getGroupBy().accept( groupByVisitor );
         }
     }
 
