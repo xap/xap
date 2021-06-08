@@ -10,8 +10,9 @@ public class AggregationFunction extends QueryColumn {
     private final boolean allColumns;
 
     public AggregationFunction(AggregationFunctionType type, String functionName, String alias, String columnName,
-                               String columnAlias, TableContainer tableContainer, boolean visible, boolean allColumns) {
-        super(columnName, columnAlias, visible, tableContainer);
+                               String columnAlias, TableContainer tableContainer, boolean visible,
+                               boolean allColumns, int columnIndex) {
+        super(columnName, columnAlias, visible, tableContainer, columnIndex);
         this.type = type;
         this.functionName = functionName;
         this.functionAlias = alias;

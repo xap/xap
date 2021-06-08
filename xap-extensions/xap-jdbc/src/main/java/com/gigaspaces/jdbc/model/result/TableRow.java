@@ -32,12 +32,11 @@ public class TableRow implements Comparable<TableRow> {
 
     public TableRow(IEntryPacket x, TableContainer tableContainer) {
         final List<OrderColumn> orderColumns = tableContainer.getOrderColumns();
-        final List<QueryColumn> queryColumns = tableContainer.getVisibleColumns();
-        final List<AggregationFunction> aggregationFunctionColumns = tableContainer.getAggregationFunctionColumns();
         //TODO x instanceof QueryEntryPacket to not enter here when use join!. validate!
         if (tableContainer.hasAggregationFunctions() && x instanceof QueryEntryPacket) {
+            final List<AggregationFunction> aggregationFunctionColumns = tableContainer.getAggregationFunctionColumns();
             Map<String, Object> fieldNameValueMap = new HashMap<>();
-            QueryEntryPacket queryEntryPacket = ((QueryEntryPacket) x); //TODO x TypeDescriptor is null! why?
+            QueryEntryPacket queryEntryPacket = ((QueryEntryPacket) x);
             for(int i=0; i < x.getFieldValues().length ; i ++) {
                 fieldNameValueMap.put(queryEntryPacket.getFieldNames()[i], queryEntryPacket.getFieldValues()[i]);
             }
@@ -46,10 +45,12 @@ public class TableRow implements Comparable<TableRow> {
             this.values = new Object[columnsSize];
             for (int i = 0; i < columnsSize; i++) {
                 this.columns[i] = aggregationFunctionColumns.get(i);
-                //TODO: what if we use group by, and therefore we have more values??
                 this.values[i] = fieldNameValueMap.get(aggregationFunctionColumns.get(i).getNameWithLowerCase());
             }
         } else {
+            //for the join also contains the invisible column
+            final List<QueryColumn> queryColumns = tableContainer.getAllQueryColumns();
+
             this.columns = queryColumns.toArray(new QueryColumn[0]);
             this.values = new Object[this.columns.length];
             for (int i = 0; i < this.columns.length; i++) {
@@ -114,7 +115,7 @@ public class TableRow implements Comparable<TableRow> {
             return new TableRow((QueryColumn[]) null, null);
         }
         QueryColumn[] rowsColumns = aggregationFunctionColumns.toArray(new QueryColumn[0]);
-        OrderColumn[] firstRowOrderColumns = tableRows.get(0).orderColumns; //TODO: validate!
+        OrderColumn[] firstRowOrderColumns = tableRows.get(0).orderColumns; //TODO: validate! if from first or use aggregateValues!
         Object[] firstRowOrderValues = tableRows.get(0).orderValues; //TODO: validate! if from first or use aggregateValues!
 
         Object[] aggregateValues = new Object[rowsColumns.length];
@@ -187,7 +188,7 @@ public class TableRow implements Comparable<TableRow> {
 
     public Object getPropertyValue(String name) {
         for (int i = 0; i < columns.length; i++) {
-            if (columns[i].getNameOrAlias().equals(name)) { //TODO: if its aggregationFunction? use column name?
+            if (columns[i].getNameOrAlias().equals(name)) {
                 return values[i];
             }
         }
@@ -196,14 +197,8 @@ public class TableRow implements Comparable<TableRow> {
 
     private boolean hasColumn(QueryColumn queryColumn) {
         //by reference:
-//        return Arrays.stream(columns).anyMatch(qc -> qc.equals(queryColumn));   //TODO: validate!
-        return Arrays.stream(columns).anyMatch(qc -> qc == queryColumn);   //TODO: validate by reference!!
-//        for (QueryColumn column : columns) {
-//            if (column.equals(queryColumn)) {
-//                return true;
-//            }
-//        }
-//        return false;
+//        return Arrays.stream(columns).anyMatch(qc -> qc.equals(queryColumn));
+        return Arrays.stream(columns).anyMatch(qc -> qc == queryColumn);   //TODO: validate by reference?
     }
 
     @Override

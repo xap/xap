@@ -11,12 +11,12 @@ import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.OrderByVisitor;
 
 import java.util.List;
-import java.util.Optional;
 
 public class OrderByHandler extends UnsupportedExpressionVisitor implements OrderByVisitor {
     //TODO: consider not to pass queryExecutor but its relevant fields, when we need to serialize this object.
     private final QueryExecutor queryExecutor;
     private Column column;
+    private int columnCounter = 0;
 
     public OrderByHandler(QueryExecutor queryExecutor) {
         this.queryExecutor = queryExecutor;
@@ -27,17 +27,14 @@ public class OrderByHandler extends UnsupportedExpressionVisitor implements Orde
         orderByElement.getExpression().accept(this);
         TableContainer table = getTable();
         String columnName = getColumn().getColumnName();
-        OrderColumn orderColumn = new OrderColumn(columnName, isVisibleColumn(columnName), table)
+        OrderColumn orderColumn = new OrderColumn(columnName, isVisibleColumn(columnName), table, columnCounter++)
                 .withAsc(orderByElement.isAsc())
                 .withNullsLast(orderByElement.getNullOrdering() == OrderByElement.NullOrdering.NULLS_LAST);
         table.addOrderColumns(orderColumn);
     }
 
     private boolean isVisibleColumn(String columnName) {
-        Optional<QueryColumn> fistOptional = this.queryExecutor.getQueryColumns().stream()
-                .filter(e -> e.getName().equals(columnName))
-                .findFirst();
-        return fistOptional.isPresent();
+        return this.queryExecutor.getVisibleColumns().stream().anyMatch(queryColumn -> queryColumn.getNameOrAlias().equals(columnName));
     }
 
     @Override
@@ -47,7 +44,7 @@ public class OrderByHandler extends UnsupportedExpressionVisitor implements Orde
 
     @Override
     public void visit(LongValue longValue) {
-        final List<QueryColumn> queryColumns = this.queryExecutor.getQueryColumns();
+        final List<QueryColumn> queryColumns = this.queryExecutor.getVisibleColumns();
         int colIndex = (int) longValue.getValue();
         //validate range
         if(colIndex > queryColumns.size() || colIndex < 1) { //TODO: fix msg later

@@ -21,6 +21,7 @@ import java.util.Objects;
 public class QueryColumnHandler extends SelectItemVisitorAdapter {
     //TODO: consider not to pass queryExecutor but its relevant fields, when we need to serialize this object.
     private final QueryExecutor queryExecutor;
+    private int columnCounter = 0;
 
     public QueryColumnHandler(QueryExecutor queryExecutor) {
         this.queryExecutor = queryExecutor;
@@ -75,18 +76,15 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
     }
 
     private void fillQueryColumns(TableContainer table) {
-        final List<QueryColumn> queryColumns = this.queryExecutor.getQueryColumns();
         table.getAllColumnNames().forEach(columnName -> {
-            QueryColumn qc = table.addQueryColumn(columnName, null, true);
-            queryColumns.add(qc);
+            QueryColumn qc = table.addQueryColumn(columnName, null, true, columnCounter++);
+            this.queryExecutor.addColumn(qc);
         });
     }
 
     @Override
     public void visit(SelectExpressionItem selectExpressionItem) {
-        final List<QueryColumn> queryColumns = this.queryExecutor.getQueryColumns();
         final List<TableContainer> tables = this.queryExecutor.getTables();
-        final List<AggregationFunction> aggregationFunctionColumns = this.queryExecutor.getAggregationFunctionColumns();
         selectExpressionItem.getExpression().accept(new ExpressionVisitorAdapter() {
             private String alias = getStringOrNull(selectExpressionItem.getAlias());
             private List<TableContainer> tableContainers = new ArrayList<>();
@@ -99,11 +97,12 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                 if(isFromFunction) {
                     this.columns.add(column);
                     this.tableContainers.add(table);
-                    QueryColumn qc = table.addQueryColumn(column.getColumnName(),null , false); //TODO: validate null!
-                    queryColumns.add(qc);
+                    //TODO: validate alias = null!
+                    QueryColumn qc = table.addQueryColumn(column.getColumnName(),null , false, columnCounter++);
+                    queryExecutor.addColumn(qc);
                 } else {
-                    QueryColumn qc = table.addQueryColumn(column.getColumnName(), getStringOrNull(selectExpressionItem.getAlias()), true);
-                    queryColumns.add(qc);
+                    QueryColumn qc = table.addQueryColumn(column.getColumnName(), this.alias, true, columnCounter++);
+                    queryExecutor.addColumn(qc);
                 }
             }
 
@@ -113,7 +112,7 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                 super.visit(function);
                 AggregationFunction.AggregationFunctionType aggregationFunctionType = AggregationFunction.AggregationFunctionType.valueOf(function.getName().toUpperCase());
                 queryExecutor.setAllColumnsSelected(function.isAllColumns());
-                if(this.columns.size() > 1) { //TODO: but need to supports max(age, 10) for example.
+                if(this.columns.size() > 1) { //TODO: later need to supports max(age, 10) for example.
                     throw new IllegalArgumentException("Wrong number of arguments to aggregation function ["
                             + function.getName() + "()], expected 1 column but was " + this.columns.size());
                 }
@@ -124,16 +123,15 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                 }
                 AggregationFunction aggregationFunction = new AggregationFunction(aggregationFunctionType, function.getName(),
                         this.alias, getColumnName(function.isAllColumns()), getColumnAlias(), getTableContainer(),
-                        true, function.isAllColumns());
+                        true, function.isAllColumns(), columnCounter++);
                 if (getTableContainer() != null) {
                     getTableContainer().addAggregationFunctionColumn(aggregationFunction);
-                    aggregationFunctionColumns.add(aggregationFunction);
                 } else {
                     //TODO: in case its * which table? all?
                     queryExecutor.getTables().forEach(tableContainer -> tableContainer.addAggregationFunctionColumn(aggregationFunction));
-                    aggregationFunctionColumns.add(aggregationFunction);
                     queryExecutor.getTables().forEach(this::addAllTableColumn);
                 }
+                queryExecutor.addAggregationFunction(aggregationFunction);
             }
 
             private String getColumnName(boolean isAllColumn) {
@@ -162,10 +160,9 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
             }
 
             private void addAllTableColumn(TableContainer table) {
-                final List<QueryColumn> queryColumns = queryExecutor.getQueryColumns();
                 table.getAllColumnNames().forEach(columnName -> {
-                    QueryColumn qc = table.addQueryColumn(columnName, null, false);
-                    queryColumns.add(qc);
+                    QueryColumn qc = table.addQueryColumn(columnName, null, false, columnCounter++);
+                    queryExecutor.addColumn(qc);
                 });
             }
         });

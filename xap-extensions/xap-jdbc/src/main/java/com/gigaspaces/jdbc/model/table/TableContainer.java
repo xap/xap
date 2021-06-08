@@ -10,7 +10,7 @@ import net.sf.jsqlparser.expression.Expression;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 public abstract class TableContainer {
 
@@ -20,11 +20,24 @@ public abstract class TableContainer {
 
     public abstract QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
 
-    public abstract QueryColumn addQueryColumn(String columnName, String alias, boolean visible);
+    public abstract QueryColumn addQueryColumn(String columnName, String alias, boolean visible,  int columnIndex);
 
-    public abstract QueryColumn addQueryColumn(AggregationFunction aggregationFunction);
+    public abstract List<QueryColumn> getVisibleColumns();
 
-    public abstract List<QueryColumn> getVisibleColumns(); //TODO create one for "getQueryColumn"?!?!
+    public abstract Set<QueryColumn> getInvisibleColumns();
+
+    public List<QueryColumn> getAllQueryColumns() {
+        List<QueryColumn> results = new ArrayList<>(getVisibleColumns());
+        results.addAll(getInvisibleColumns());
+        return results;
+    }
+
+    public List<QueryColumn> getSelectedColumns() {
+        List<QueryColumn> result = new ArrayList<>(getVisibleColumns());
+        result.addAll(getAggregationFunctionColumns());
+        result.sort(null);
+        return result;
+    }
 
     public abstract List<String> getAllColumnNames();
 
@@ -88,13 +101,10 @@ public abstract class TableContainer {
         return !this.orderColumns.isEmpty();
     }
 
-
     protected void validateAggregationFunction() {
-        List<QueryColumn> trulyVisibleColumns =
-                getVisibleColumns().stream().filter(QueryColumn::isVisible).collect(Collectors.toList());
         //TODO: block until supports of group by implementation.
-        if(hasAggregationFunctions() && !trulyVisibleColumns.isEmpty()) {
-            throw new IllegalArgumentException("Column [" + trulyVisibleColumns.get(0) + "] must appear in the " +
+        if(hasAggregationFunctions() && !getVisibleColumns().isEmpty()) {
+            throw new IllegalArgumentException("Column [" + getVisibleColumns().get(0) + "] must appear in the " +
                     "GROUP BY clause or be used in an aggregate function");
         }
         //TODO: block operation not supported -- see AggregationsUtil.convertAggregationResult

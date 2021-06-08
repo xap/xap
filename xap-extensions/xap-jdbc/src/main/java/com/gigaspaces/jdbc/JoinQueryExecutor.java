@@ -10,30 +10,32 @@ import com.gigaspaces.jdbc.model.table.AggregationFunction;
 import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
-import com.j_spaces.core.IJSpace;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class JoinQueryExecutor {
-    private final IJSpace space;
     private final List<TableContainer> tables;
-    private final List<QueryColumn> queryColumns;
+    private final Set<QueryColumn> invisibleColumns;
+    private final List<QueryColumn> visibleColumns;
     private final QueryExecutionConfig config;
     private final List<AggregationFunction> aggregationFunctionColumns;
+    private final ArrayList<QueryColumn> allQueryColumn;
 
-    public JoinQueryExecutor(List<TableContainer> tables, IJSpace space, List<QueryColumn> queryColumns,
-                             List<AggregationFunction> aggregationFunctionColumns, QueryExecutionConfig config) {
-        this.tables = tables;
-        this.space = space;
-        this.queryColumns = queryColumns;
-        this.config = config;
-        //TODO: can be obtained from the tables?, just like the OrderColumns at 'execute()'?
-        this.aggregationFunctionColumns = aggregationFunctionColumns;
+    public JoinQueryExecutor(QueryExecutor queryExecutor) {
+        this.tables = queryExecutor.getTables();
+        this.invisibleColumns = queryExecutor.getInvisibleColumns();
+        this.visibleColumns = queryExecutor.getVisibleColumns();
+        this.config = queryExecutor.getConfig();
         this.config.setJoinUsed(true);
+        //TODO: can be obtained from the tables?, just like the OrderColumns at 'execute()'?
+        this.aggregationFunctionColumns = queryExecutor.getAggregationFunctionColumns();
+        this.allQueryColumn = new ArrayList<>(visibleColumns);
+        this.allQueryColumn.addAll(invisibleColumns);
     }
 
     public QueryResult execute() {
@@ -51,10 +53,10 @@ public class JoinQueryExecutor {
         if(config.isExplainPlan()) {
             return explain(joinTablesIterator, orderColumns);
         }
-        QueryResult res = new QueryResult(this.queryColumns, this.aggregationFunctionColumns);
+        QueryResult res = new QueryResult(this.visibleColumns, this.aggregationFunctionColumns);
         while (joinTablesIterator.hasNext()) {
             if(tables.stream().allMatch(TableContainer::checkJoinCondition))
-                res.add(new TableRow(this.queryColumns, orderColumns));
+                res.add(new TableRow(this.allQueryColumn, orderColumns));
         }
         if(!this.aggregationFunctionColumns.isEmpty()) {
             List<TableRow> aggregateRows = new ArrayList<>();
@@ -84,8 +86,8 @@ public class JoinQueryExecutor {
             joinExplainPlan = new JoinExplainPlan(last.getJoinInfo(), joinExplainPlan, ((ExplainPlanResult) curr.getQueryResult()).getExplainPlanInfo());
             last = curr;
         }
-        joinExplainPlan.setSelectColumns(queryColumns.stream().map(QueryColumn::toString).collect(Collectors.toList()));
+        joinExplainPlan.setSelectColumns(visibleColumns.stream().map(QueryColumn::toString).collect(Collectors.toList()));
         joinExplainPlan.setOrderColumns(orderColumns);
-        return new ExplainPlanResult(queryColumns, joinExplainPlan, null);
+        return new ExplainPlanResult(visibleColumns, joinExplainPlan, null);
     }
 }

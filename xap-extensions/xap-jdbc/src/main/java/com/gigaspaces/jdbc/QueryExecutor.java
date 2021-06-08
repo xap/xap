@@ -17,13 +17,12 @@ import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.*;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisitor {
     private final List<TableContainer> tables = new ArrayList<>();
-    private final List<QueryColumn> queryColumns = new ArrayList<>();
+    private final Set<QueryColumn> invisibleColumns = new HashSet<>();
+    private final List<QueryColumn> visibleColumns = new ArrayList<>();
     private final List<AggregationFunction> aggregationFunctionColumns = new ArrayList<>();
     private final IJSpace space;
     private final QueryExecutionConfig config;
@@ -69,8 +68,8 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
             }
             TableContainer rightTable = QueryColumnHandler.getTableForColumn(rColumn, tables);
             TableContainer leftTable = QueryColumnHandler.getTableForColumn(lColumn, tables);
-            QueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false);
-            QueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false);
+            QueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false, 0);
+            QueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false, 0);
             rightTable.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinInfo.JoinType.getType(join)));
             if (leftTable.getJoinedTable() == null) { // TODO set right table every time and align it to recursive form in JoinTablesIterator
                 if (!rightTable.isJoined()) {
@@ -161,7 +160,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         if (tables.size() == 1) { //Simple Query
             return tables.get(0).executeRead(config);
         }
-        JoinQueryExecutor joinE = new JoinQueryExecutor(tables, space, queryColumns, aggregationFunctionColumns, config);
+        JoinQueryExecutor joinE = new JoinQueryExecutor(this);
         return joinE.execute();
     }
 
@@ -174,8 +173,12 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         return tables;
     }
 
-    public List<QueryColumn> getQueryColumns() {
-        return queryColumns;
+    public Set<QueryColumn> getInvisibleColumns() {
+        return invisibleColumns;
+    }
+
+    public List<QueryColumn> getVisibleColumns() {
+        return visibleColumns;
     }
 
     public Object[] getPreparedValues() {
@@ -192,5 +195,25 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
 
     public List<AggregationFunction> getAggregationFunctionColumns() {
         return aggregationFunctionColumns;
+    }
+
+    public IJSpace getSpace() {
+        return space;
+    }
+
+    public QueryExecutionConfig getConfig() {
+        return config;
+    }
+
+    public void addColumn(QueryColumn queryColumn) {
+        if (queryColumn.isVisible()) {
+            visibleColumns.add(queryColumn);
+        } else {
+            invisibleColumns.add(queryColumn);
+        }
+    }
+
+    public void addAggregationFunction(AggregationFunction aggregationFunction) {
+        this.aggregationFunctionColumns.add(aggregationFunction);
     }
 }

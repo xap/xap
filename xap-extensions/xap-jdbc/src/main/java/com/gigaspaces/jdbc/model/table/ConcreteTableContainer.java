@@ -32,9 +32,8 @@ public class ConcreteTableContainer extends TableContainer {
     private QueryTemplatePacket queryTemplatePacket;
     private final ITypeDesc typeDesc;
     private final List<String> allColumnNamesSorted;
-    //TODO: or instead create a queryColumnsSet for this propose and in visibleColumns keep only ordered (from the
-    // query) and visible columns!
-    private final List<QueryColumn> visibleColumns = new ArrayList<>(); //TODO: rename! not only visible!
+    private final List<QueryColumn> visibleColumns = new ArrayList<>();
+    private final Set<QueryColumn> invisibleColumns = new HashSet<>();
     private final String name;
     private final String alias;
     private Integer limit = Integer.MAX_VALUE;
@@ -61,8 +60,8 @@ public class ConcreteTableContainer extends TableContainer {
     public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
         if (queryResult != null)
             return queryResult;
-        //TODO: at old JDBC projectionC contains Aggregation column too.
-        String[] projectionC = visibleColumns.stream().map(QueryColumn::getName).toArray(String[]::new);
+        //TODO: at old JDBC, projectionC contains Aggregation column too. do the same here?
+        String[] projectionC = createProjectionTable();
 
         try {
             ProjectionTemplate _projectionTemplate = ProjectionTemplate.create(projectionC, typeDesc);
@@ -106,6 +105,12 @@ public class ConcreteTableContainer extends TableContainer {
         }
     }
 
+    private String[] createProjectionTable() {
+        Set<QueryColumn> tmp = new HashSet<>(invisibleColumns);
+        tmp.addAll(visibleColumns);
+        return tmp.stream().map(QueryColumn::getName).toArray(String[]::new);
+    }
+
     private void setAggregation() {
         AggregationSet aggregationSet = new AggregationSet();
         createOrderByAggregation(aggregationSet);
@@ -130,7 +135,6 @@ public class ConcreteTableContainer extends TableContainer {
             return;
         }
         for (AggregationFunction aggregationFunction : getAggregationFunctionColumns()) {
-            //TODO: use getNameOrAlias?
             if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.COUNT) {
                 if (aggregationFunction.isAllColumns()) {
                     aggregationSet.count();
@@ -154,18 +158,26 @@ public class ConcreteTableContainer extends TableContainer {
     }
 
     @Override
-    public QueryColumn addQueryColumn(String columnName, String alias, boolean visible) {
+    public QueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnIndex) {
         if (!columnName.equalsIgnoreCase(QueryColumn.UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(columnName) == -1) {
             throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]");
         }
-        QueryColumn qc = new QueryColumn(columnName, alias, visible, this);
-//        if (visible) this.visibleColumns.add(qc); //TODO: validate!. with it, join fail!
-        this.visibleColumns.add(qc);
+        QueryColumn qc = new QueryColumn(columnName, alias, visible, this, columnIndex);
+        if (visible) {
+            this.visibleColumns.add(qc);
+        } else {
+            this.invisibleColumns.add(qc);
+        }
         return qc;
     }
 
     public List<QueryColumn> getVisibleColumns() {
         return visibleColumns;
+    }
+
+    @Override
+    public Set<QueryColumn> getInvisibleColumns() {
+        return this.invisibleColumns;
     }
 
     @Override
@@ -255,11 +267,5 @@ public class ConcreteTableContainer extends TableContainer {
         if (joinInfo == null)
             return true;
         return joinInfo.checkJoinCondition();
-    }
-
-    @Override
-    public QueryColumn addQueryColumn(AggregationFunction aggregationFunction) { ;
-        this.visibleColumns.add(aggregationFunction);
-        return aggregationFunction;
     }
 }

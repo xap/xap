@@ -12,9 +12,7 @@ import com.j_spaces.jdbc.builder.range.EqualValueRange;
 import com.j_spaces.jdbc.builder.range.Range;
 import com.j_spaces.jdbc.builder.range.SegmentRange;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TempTableContainer extends TableContainer {
@@ -23,6 +21,7 @@ public class TempTableContainer extends TableContainer {
     private TableContainer joinedTable;
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
     private final List<QueryColumn> tableColumns = new ArrayList<>();
+    private final Set<QueryColumn> invisibleColumns = new HashSet<>();
     private TempTableQTP queryTemplatePacket;
 
     public TempTableContainer(QueryResult tableResult, String alias) {
@@ -58,15 +57,24 @@ public class TempTableContainer extends TableContainer {
     }
 
     @Override
-    public QueryColumn addQueryColumn(String columnName, String alias, boolean visible) {
+    public QueryColumn addQueryColumn(String columnName, String alias, boolean visible,  int columnIndex) {
         QueryColumn queryColumn = tableColumns.stream().filter(qc -> qc.getNameOrAlias().equalsIgnoreCase(columnName)).findFirst().orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
-        if (visible) visibleColumns.add(queryColumn);
+        if (visible) {
+            this.visibleColumns.add(queryColumn);
+        } else {
+            this.invisibleColumns.add(queryColumn);
+        }
         return queryColumn;
     }
 
     @Override
     public List<QueryColumn> getVisibleColumns() {
         return visibleColumns;
+    }
+
+    @Override
+    public Set<QueryColumn> getInvisibleColumns() {
+        return this.invisibleColumns;
     }
 
     @Override
@@ -101,7 +109,7 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public QueryTemplatePacket createQueryTemplatePacketWithRange(Range range) {
-        addQueryColumn(range.getPath(), null, false);
+        addQueryColumn(range.getPath(), null, false, 0);
         if (range instanceof EqualValueRange) {
             return new TempTableQTP((EqualValueRange) range);
         } else if (range instanceof SegmentRange) {
@@ -144,7 +152,6 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public void setJoinInfo(JoinInfo joinInfo) {
-
     }
 
     @Override
@@ -152,9 +159,4 @@ public class TempTableContainer extends TableContainer {
         return false;
     }
 
-    @Override
-    public QueryColumn addQueryColumn(AggregationFunction aggregationFunction) {
-        this.visibleColumns.add(aggregationFunction);
-        return aggregationFunction;
-    }
 }

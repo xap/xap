@@ -22,22 +22,19 @@ public class QueryResult {
     private Cursor<TableRow> cursor;
 
     public QueryResult(IQueryResultSet<IEntryPacket> res, TableContainer tableContainer) {
-        List<QueryColumn> queryColumns = tableContainer.getVisibleColumns();
-        this.queryColumns = filterNonVisibleColumns(queryColumns); //TODO: should contains already only visibleColumn?
-        this.queryColumns.addAll(tableContainer.getAggregationFunctionColumns()); //TODO: think of other way. used for convertEntriesToResultArrays
         this.tableContainer = tableContainer;
-        //TODO: 'this.queryColumns' is with filters, and the join don't work properly, because it contains invisible
-        // column. queryColumns is with invisible!
+        this.queryColumns = tableContainer.getSelectedColumns();
         this.rows = res.stream().map(x -> new TableRow(x, tableContainer)).collect(Collectors.toList());
     }
 
     //TODO: for the join, marge with the explain plan one?
+    //TODO: pass the JoinQueryExecutor?
     public QueryResult(List<QueryColumn> queryColumns, List<AggregationFunction> aggregationFunctionColumns) {
         this.tableContainer = null; // TODO should be handled in subquery
-        this.queryColumns = filterNonVisibleColumns(queryColumns);
-        this.queryColumns.addAll(aggregationFunctionColumns); //TODO: think of other way. used for convertEntriesToResultArrays
+        this.queryColumns = order(queryColumns, aggregationFunctionColumns);
         this.rows = new ArrayList<>();
     }
+
 
     public QueryResult(List<QueryColumn> queryColumns) { //TODO: for the explain plan, marge with the join one?
         this.tableContainer = null; // TODO should be handled in subquery
@@ -49,8 +46,7 @@ public class QueryResult {
         //TODO: keep null? because otherwise .TempTableContainer.getJoinedTable throw UnsupportedOperationException:
         // Not supported yet!
         this.tableContainer = null;
-        this.queryColumns = tempTableContainer.getVisibleColumns();
-        this.queryColumns.addAll(tempTableContainer.getAggregationFunctionColumns()); //TODO: think of other way. used for convertEntriesToResultArrays
+        this.queryColumns = tempTableContainer.getSelectedColumns();
         List<TableRow> tableRows = tempTableContainer.getQueryResult().getRows();
         if (tempTableContainer.hasAggregationFunctions()) {
             List<TableRow> aggregateRows = new ArrayList<>();
@@ -63,6 +59,13 @@ public class QueryResult {
 
     private List<QueryColumn> filterNonVisibleColumns(List<QueryColumn> queryColumns) {
         return queryColumns.stream().filter(QueryColumn::isVisible).collect(Collectors.toList());
+    }
+
+    private List<QueryColumn> order(List<QueryColumn> queryColumns, List<AggregationFunction> aggregationFunctionColumns) {
+        List<QueryColumn> result = new ArrayList<>(queryColumns);
+        result.addAll(aggregationFunctionColumns);
+        result.sort(null);
+        return result;
     }
 
     public List<QueryColumn> getQueryColumns() {

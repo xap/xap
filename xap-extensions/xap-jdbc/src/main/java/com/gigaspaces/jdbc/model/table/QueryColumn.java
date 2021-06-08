@@ -2,20 +2,26 @@ package com.gigaspaces.jdbc.model.table;
 
 import java.util.Objects;
 
-public class QueryColumn {
+public class QueryColumn implements Comparable<QueryColumn>{
     public static final String UUID_COLUMN = "UID";
     protected final TableContainer tableContainer;
     private final String name;
     private final String alias;
     private final boolean isVisible;
     private final boolean isUUID;
+    private final int columnIndex;
 
-    public QueryColumn(String name, String alias, boolean isVisible, TableContainer tableContainer) {
+    public QueryColumn(String name, String alias, boolean isVisible, TableContainer tableContainer, int columnIndex) {
         this.name = name;
         this.alias = alias;
         this.isVisible = isVisible;
         this.isUUID = name.equalsIgnoreCase(UUID_COLUMN);
         this.tableContainer = tableContainer;
+        this.columnIndex = columnIndex;
+    }
+
+    public int getColumnIndex() {
+        return columnIndex;
     }
 
     public String getName() {
@@ -54,7 +60,7 @@ public class QueryColumn {
     }
 
     @Override
-    public boolean equals(Object o) { //TODO: delete?
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof QueryColumn)) return false;
         QueryColumn that = (QueryColumn) o;
@@ -62,7 +68,15 @@ public class QueryColumn {
     }
 
     @Override
-    public int hashCode() { //TODO: delete?
+    public int hashCode() {
         return Objects.hash(getTableContainer(), getName(), getAlias(), isVisible(), isUUID());
+    }
+
+    @Override
+    public int compareTo(QueryColumn other) {
+//        int firstIndex = this.getColumnIndex();
+//        int secondIndex = other.getColumnIndex();
+//        return firstIndex > secondIndex ? 1 : firstIndex < secondIndex ? -1 : 0;
+        return Integer.compare(this.getColumnIndex(), other.getColumnIndex());
     }
 }
