@@ -7469,6 +7469,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         return _dataTypesMetricRegistrators.computeIfAbsent(key, k -> {
             Map<String, String> extraTags = new HashMap<>(2);
             extraTags.put("data_type_name", typeName);
+            extraTags.put("data_type_short_name", typeName.substring(typeName.lastIndexOf('.') + 1));
             if (indexName != null)
                 extraTags.put("index", indexName);
             return extendSpaceMetricRegistrator("data", extraTags, Collections.emptyMap());
