@@ -7,28 +7,37 @@ import com.j_spaces.jdbc.builder.QueryEntryPacket;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class TableRow implements Comparable<TableRow> {
+public class TableRow implements Comparable<TableRow>{
     private final QueryColumn[] columns;
     private final Object[] values;
     private final OrderColumn[] orderColumns;
     private final Object[] orderValues;
+    private final QueryColumn[] groupByColumns;
+
+    private final Object[] groupByValues;
 
     public TableRow(QueryColumn[] columns, Object[] values) {
         this.columns = columns;
         this.values = values;
         this.orderColumns = new OrderColumn[0];
         this.orderValues = new Object[0];
+        this.groupByColumns = new QueryColumn[0];
+        this.groupByValues = new Object[0];
     }
 
-    public TableRow(QueryColumn[] columns, Object[] values, OrderColumn[] orderColumns, Object[] orderValues) {
+    public TableRow(QueryColumn[] columns, Object[] values, OrderColumn[] orderColumns, Object[] orderValues,
+             QueryColumn[] groupByColumns, Object[] groupByValues) {
         this.columns = columns;
         this.values = values;
         this.orderColumns = orderColumns;
         this.orderValues = orderValues;
+        this.groupByColumns = groupByColumns;
+        this.groupByValues = groupByValues;
     }
 
     public TableRow(IEntryPacket x, ConcreteTableContainer tableContainer) {
         final List<OrderColumn> orderColumns = tableContainer.getOrderColumns();
+        final List<QueryColumn> groupByColumns = tableContainer.getGroupByColumns();
         if (tableContainer.hasAggregationFunctions() && x instanceof QueryEntryPacket) {
             final List<AggregationColumn> aggregationColumns = tableContainer.getAggregationFunctionColumns();
             Map<String, Object> fieldNameValueMap = new HashMap<>();
@@ -50,37 +59,28 @@ public class TableRow implements Comparable<TableRow> {
             this.columns = queryColumns.toArray(new QueryColumn[0]);
             this.values = new Object[this.columns.length];
             for (int i = 0; i < this.columns.length; i++) {
-                QueryColumn queryColumn = this.columns[i];
-                if (queryColumn.isUUID()) {
-                    values[i] = x.getUID();
-                } else if (x.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(queryColumn.getName())) {
-                    values[i] = x.getID();
-                } else {
-                    values[i] = x.getPropertyValue(queryColumn.getName());
-                }
+                values[i] = getEntryPacketValue( x, queryColumns.get(i) );
             }
         }
 
         this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
         orderValues = new Object[this.orderColumns.length];
         for (int i = 0; i < orderColumns.size(); i++) {
-            OrderColumn orderColumn = orderColumns.get(i);
-            if (orderColumn.isUUID()) {
-                orderValues[i] = x.getUID();
-            } else if (x.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(orderColumn.getName())) {
-                orderValues[i] = x.getID();
-            } else {
-                orderValues[i] = x.getPropertyValue(orderColumn.getName());
-            }
+            orderValues[i] = getEntryPacketValue( x, orderColumns.get(i) );
+        }
+
+        this.groupByColumns = groupByColumns.toArray(new QueryColumn[0]);
+        groupByValues = new Object[this.groupByColumns.length];
+        for (int i = 0; i < groupByColumns.size(); i++) {
+            groupByValues[i] = getEntryPacketValue( x, groupByColumns.get(i) );
         }
     }
 
-    public TableRow(List<QueryColumn> queryColumns, List<OrderColumn> orderColumns) {
+    public TableRow(List<QueryColumn> queryColumns, List<OrderColumn> orderColumns, List<QueryColumn> groupByColumns) {
         this.columns = queryColumns.toArray(new QueryColumn[0]);
         values = new Object[columns.length];
         for (int i = 0; i < queryColumns.size(); i++) {
-            Object value = queryColumns.get(i).getCurrentValue();
-            values[i] = value;
+            values[i] = queryColumns.get(i).getCurrentValue();
         }
 
         this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
@@ -88,21 +88,31 @@ public class TableRow implements Comparable<TableRow> {
         for (int i = 0; i < orderColumns.size(); i++) {
             orderValues[i] = orderColumns.get(i).getCurrentValue();
         }
+
+        this.groupByColumns = groupByColumns.toArray(new QueryColumn[0]);
+        groupByValues = new Object[this.groupByColumns.length];
+        for (int i = 0; i < groupByColumns.size(); i++) {
+            groupByValues[i] = groupByColumns.get(i).getCurrentValue();
+        }
     }
 
-    public TableRow(TableRow row, List<QueryColumn> queryColumns, List<OrderColumn> orderColumns) {
+    public TableRow(TableRow row, List<QueryColumn> queryColumns, List<OrderColumn> orderColumns, List<QueryColumn> groupByColumns) {
         this.columns = queryColumns.toArray(new QueryColumn[0]);
         values = new Object[columns.length];
         for (int i = 0; i < queryColumns.size(); i++) {
-            QueryColumn queryColumn = queryColumns.get(i);
-            values[i] = row.getPropertyValue(queryColumn);
+            values[i] = row.getPropertyValue(queryColumns.get(i));
         }
 
         this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
         orderValues = new Object[this.orderColumns.length];
         for (int i = 0; i < orderColumns.size(); i++) {
-            OrderColumn orderColumn = orderColumns.get(i);
-            orderValues[i] = row.getPropertyValue(orderColumn.getName());
+            orderValues[i] = row.getPropertyValue(orderColumns.get(i).getName());
+        }
+
+        this.groupByColumns = groupByColumns.toArray(new QueryColumn[0]);
+        groupByValues = new Object[this.groupByColumns.length];
+        for (int i = 0; i < groupByColumns.size(); i++) {
+            groupByValues[i] = row.getPropertyValue(groupByColumns.get(i).getName());
         }
     }
 
@@ -114,6 +124,8 @@ public class TableRow implements Comparable<TableRow> {
         //TODO: @sagiv validate! if from first or use aggregateValues
         OrderColumn[] firstRowOrderColumns = tableRows.get(0).orderColumns;
         Object[] firstRowOrderValues = tableRows.get(0).orderValues;
+        QueryColumn[] firstRowGroupByColumns = tableRows.get(0).groupByColumns;
+        Object[] firstRowGroupByValues = tableRows.get(0).groupByValues;
 
         Object[] aggregateValues = new Object[rowsColumns.length];
         int index = 0;
@@ -158,7 +170,8 @@ public class TableRow implements Comparable<TableRow> {
             }
             aggregateValues[index++] = value;
         }
-        return new TableRow(rowsColumns, aggregateValues, firstRowOrderColumns, firstRowOrderValues);
+        return new TableRow(rowsColumns, aggregateValues, firstRowOrderColumns,
+                firstRowOrderValues, firstRowGroupByColumns, firstRowGroupByValues);
     }
 
     private static Comparator<Object> getObjectComparator() {
@@ -227,5 +240,23 @@ public class TableRow implements Comparable<TableRow> {
             }
         }
         return results;
+    }
+
+    public Object[] getGroupByValues() {
+        return groupByValues;
+    }
+
+    private Object getEntryPacketValue( IEntryPacket entryPacket, QueryColumn queryColumn ){
+
+        Object value;
+        if (queryColumn.isUUID()) {
+            value = entryPacket.getUID();
+        } else if (entryPacket.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(queryColumn.getName())) {
+            value = entryPacket.getID();
+        } else {
+            value = entryPacket.getPropertyValue(queryColumn.getName());
+        }
+
+        return value;
     }
 }

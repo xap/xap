@@ -6,9 +6,7 @@ import com.gigaspaces.jdbc.model.table.*;
 import com.j_spaces.jdbc.ResultEntry;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -171,6 +169,27 @@ public class QueryResult { //TODO: @sagiv make different class for each cons
 
     public void sort() {
         Collections.sort(rows);
+    }
+
+    public void groupBy(){
+
+        Map<Object,TableRow> tableRows = new HashMap<>();
+        for( TableRow tableRow : rows ){
+            Object[] groupByValues = tableRow.getGroupByValues();
+            if( groupByValues.length > 0 ){
+                if(groupByValues.length == 1){
+                    //in the case of single value in groupByValues array use this value as a key in order to prevent list creation
+                    tableRows.put(groupByValues[0], tableRow);
+                }
+                else {
+                    //create key based on array of values
+                    tableRows.put(Arrays.asList(groupByValues), tableRow);
+                }
+            }
+        }
+        if( !tableRows.isEmpty() ) {
+            rows = new ArrayList<>(tableRows.values());
+        }
     }
 
     public List<TableRow> getRows() {

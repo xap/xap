@@ -11,9 +11,7 @@ import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
-import com.gigaspaces.query.aggregators.AggregationSet;
-import com.gigaspaces.query.aggregators.OrderBy;
-import com.gigaspaces.query.aggregators.OrderByAggregator;
+import com.gigaspaces.query.aggregators.*;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
@@ -113,10 +111,33 @@ public class ConcreteTableContainer extends TableContainer {
 
     private void setAggregation() {
         AggregationSet aggregationSet = new AggregationSet();
+        //TODO stop passing parameter to following functions, handle them like setGroupByAggregation as well
         createOrderByAggregation(aggregationSet);
         createAggregationFunctions(aggregationSet);
+        setGroupByAggregation();
         if(!aggregationSet.isEmpty()) {
             queryTemplatePacket.setAggregationSet(aggregationSet);
+        }
+    }
+
+    private void setGroupByAggregation() {
+        //groupBy in server
+        List<QueryColumn> groupByColumns = getGroupByColumns();
+        if(!groupByColumns.isEmpty()){
+            int groupByColumnsCount = groupByColumns.size();
+            String[] groupByColumnsArray = new String[ groupByColumnsCount ];
+            for ( int i=0; i < groupByColumnsCount; i++) {
+                groupByColumnsArray[ i ] = groupByColumns.get( i ).getName();
+            }
+
+            DistinctAggregator distinctAggregator = new DistinctAggregator().distinct(limit, groupByColumnsArray);
+            if( queryTemplatePacket.getAggregationSet() == null ) {
+                AggregationSet aggregationSet = new AggregationSet().distinct( distinctAggregator );
+                queryTemplatePacket.setAggregationSet(aggregationSet);
+            }
+            else{
+                queryTemplatePacket.getAggregationSet().add(distinctAggregator);
+            }
         }
     }
 

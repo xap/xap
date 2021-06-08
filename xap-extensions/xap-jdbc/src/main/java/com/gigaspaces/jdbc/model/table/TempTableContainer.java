@@ -58,6 +58,9 @@ public class TempTableContainer extends TableContainer {
         if(!getOrderColumns().isEmpty()) {
             queryResult.sort(); //sort the results at the client
         }
+        if(!getGroupByColumns().isEmpty()){
+            queryResult.groupBy(); //group the results at the client
+        }
         return queryResult;
     }
 
@@ -170,5 +173,4 @@ public class TempTableContainer extends TableContainer {
     public boolean checkJoinCondition() {
         return false;
     }
-
 }

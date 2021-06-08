@@ -16,6 +16,7 @@ public abstract class TableContainer {
 
     private final List<OrderColumn> orderColumns = new ArrayList<>();
     private final List<AggregationColumn> aggregationColumns = new ArrayList<>();
+    private final List<QueryColumn> groupByColumns = new ArrayList<>();
     private Expression exprTree;
 
     public abstract QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
@@ -57,9 +58,9 @@ public abstract class TableContainer {
 
     public abstract QueryResult getQueryResult();
 
-    public abstract boolean isJoined();
-
     public abstract void setJoined(boolean joined);
+
+    public abstract boolean isJoined();
 
     public abstract boolean hasColumn(String columnName);
 
@@ -81,6 +82,14 @@ public abstract class TableContainer {
         this.orderColumns.add(orderColumn);
     }
 
+    public void addGroupByColumns(QueryColumn groupByColumn) {
+        this.groupByColumns.add(groupByColumn);
+    }
+
+    public List<QueryColumn> getGroupByColumns() {
+        return groupByColumns;
+    }
+
     public List<OrderColumn> getOrderColumns() {
         return orderColumns;
     }
@@ -91,6 +100,10 @@ public abstract class TableContainer {
 
     public List<AggregationColumn> getAggregationFunctionColumns() {
         return aggregationColumns;
+    }
+
+    public boolean hasGroupByColumns() {
+        return !this.groupByColumns.isEmpty();
     }
 
     public boolean hasAggregationFunctions() {
