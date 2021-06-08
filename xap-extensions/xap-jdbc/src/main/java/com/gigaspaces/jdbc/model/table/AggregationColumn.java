@@ -2,16 +2,17 @@ package com.gigaspaces.jdbc.model.table;
 
 import java.util.Locale;
 
-public class AggregationFunction extends QueryColumn {
+//TODO: @sagiv create interface IQueryColumn
+public class AggregationColumn extends QueryColumn {
 
     private final AggregationFunctionType type;
     private final String functionName;
     private final String functionAlias;
     private final boolean allColumns;
 
-    public AggregationFunction(AggregationFunctionType type, String functionName, String alias, String columnName,
-                               String columnAlias, TableContainer tableContainer, boolean visible,
-                               boolean allColumns, int columnIndex) {
+    public AggregationColumn(AggregationFunctionType type, String functionName, String alias, String columnName,
+                             String columnAlias, TableContainer tableContainer, boolean visible,
+                             boolean allColumns, int columnIndex) {
         super(columnName, columnAlias, visible, tableContainer, columnIndex);
         this.type = type;
         this.functionName = functionName;
@@ -24,12 +25,8 @@ public class AggregationFunction extends QueryColumn {
     }
 
     public String getFunctionName() {
-        return this.functionName;
+        return this.type.name().toLowerCase(Locale.ROOT);
     }
-
-    public String getFunctionAlias() {
-        return this.functionAlias;
-    } //TODO: remove?
 
     public String getAlias() { return this.functionAlias;
     }
@@ -43,8 +40,7 @@ public class AggregationFunction extends QueryColumn {
     }
 
     public String getColumnName() {
-//        return super.getName(); //TODO: what better?
-        return super.getNameOrAlias();
+        return super.getNameOrAlias(); //TODO: @sagiv use getName instead?
     }
 
     public boolean isVisible() {
@@ -65,7 +61,7 @@ public class AggregationFunction extends QueryColumn {
 
     @Override
     public String getNameOrAlias() {
-        return getFunctionAlias() == null ? getName() : getFunctionAlias();
+        return getAlias() == null ? getName() : getAlias();
     }
 
     @Override
@@ -74,9 +70,5 @@ public class AggregationFunction extends QueryColumn {
             return String.format("%s(%s)", getFunctionName(), getTableContainer().getTableNameOrAlias() + "." + getColumnName());
         }
         return String.format("%s(%s)", getFunctionName(), getColumnName());
-    }
-
-    public enum AggregationFunctionType {
-        COUNT, MAX, MIN, AVG, SUM;
     }
 }

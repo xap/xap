@@ -6,7 +6,7 @@ import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
 import com.gigaspaces.jdbc.model.result.JoinTablesIterator;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.result.TableRow;
-import com.gigaspaces.jdbc.model.table.AggregationFunction;
+import com.gigaspaces.jdbc.model.table.AggregationColumn;
 import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
@@ -23,7 +23,7 @@ public class JoinQueryExecutor {
     private final Set<QueryColumn> invisibleColumns;
     private final List<QueryColumn> visibleColumns;
     private final QueryExecutionConfig config;
-    private final List<AggregationFunction> aggregationFunctionColumns;
+    private final List<AggregationColumn> aggregationColumns;
     private final ArrayList<QueryColumn> allQueryColumn;
 
     public JoinQueryExecutor(QueryExecutor queryExecutor) {
@@ -32,8 +32,8 @@ public class JoinQueryExecutor {
         this.visibleColumns = queryExecutor.getVisibleColumns();
         this.config = queryExecutor.getConfig();
         this.config.setJoinUsed(true);
-        //TODO: can be obtained from the tables?, just like the OrderColumns at 'execute()'?
-        this.aggregationFunctionColumns = queryExecutor.getAggregationFunctionColumns();
+        //TODO: @sagiv can be obtained from the tables?, just like the OrderColumns at 'execute()'?
+        this.aggregationColumns = queryExecutor.getAggregationFunctionColumns();
         this.allQueryColumn = new ArrayList<>(visibleColumns);
         this.allQueryColumn.addAll(invisibleColumns);
     }
@@ -53,14 +53,14 @@ public class JoinQueryExecutor {
         if(config.isExplainPlan()) {
             return explain(joinTablesIterator, orderColumns);
         }
-        QueryResult res = new QueryResult(this.visibleColumns, this.aggregationFunctionColumns);
+        QueryResult res = new QueryResult(this.visibleColumns, this.aggregationColumns);
         while (joinTablesIterator.hasNext()) {
             if(tables.stream().allMatch(TableContainer::checkJoinCondition))
                 res.add(new TableRow(this.allQueryColumn, orderColumns));
         }
-        if(!this.aggregationFunctionColumns.isEmpty()) {
+        if(!this.aggregationColumns.isEmpty()) {
             List<TableRow> aggregateRows = new ArrayList<>();
-            aggregateRows.add(TableRow.aggregate(res.getRows(), this.aggregationFunctionColumns));
+            aggregateRows.add(TableRow.aggregate(res.getRows(), this.aggregationColumns));
             res.setRows(aggregateRows);
         }
         if(!orderColumns.isEmpty()) {

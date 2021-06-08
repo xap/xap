@@ -60,7 +60,7 @@ public class ConcreteTableContainer extends TableContainer {
     public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
         if (queryResult != null)
             return queryResult;
-        //TODO: at old JDBC, projectionC contains Aggregation column too. do the same here?
+        //TODO: @sagiv at old JDBC, projectionC contains Aggregation column too. do the same here?
         String[] projectionC = createProjectionTable();
 
         try {
@@ -121,7 +121,7 @@ public class ConcreteTableContainer extends TableContainer {
     }
 
     private void createOrderByAggregation(AggregationSet aggregationSet) {
-        if(!getOrderColumns().isEmpty()){
+        if(hasOrderColumns()){
             OrderByAggregator orderByAggregator = new OrderByAggregator();
             for (OrderColumn column : getOrderColumns()) {
                 orderByAggregator.orderBy(column.getName(), column.isAsc() ? OrderBy.ASC : OrderBy.DESC, column.isNullsLast());
@@ -134,25 +134,27 @@ public class ConcreteTableContainer extends TableContainer {
         if(!hasAggregationFunctions()) {
             return;
         }
-        for (AggregationFunction aggregationFunction : getAggregationFunctionColumns()) {
-            if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.COUNT) {
-                if (aggregationFunction.isAllColumns()) {
-                    aggregationSet.count();
-                } else {
-                    aggregationSet.count(aggregationFunction.getColumnName());
-                }
-            }
-            if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.MAX) {
-                aggregationSet.maxValue(aggregationFunction.getColumnName()); //TODO: value or entry?
-            }
-            if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.MIN) {
-                aggregationSet.minValue(aggregationFunction.getColumnName()); //TODO: value or entry?
-            }
-            if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.AVG) {
-                aggregationSet.average(aggregationFunction.getColumnName());
-            }
-            if (aggregationFunction.getType() == AggregationFunction.AggregationFunctionType.SUM) {
-                aggregationSet.sum(aggregationFunction.getColumnName());
+        for (AggregationColumn aggregationColumn : getAggregationFunctionColumns()) {
+            switch (aggregationColumn.getType()) {
+                case COUNT:
+                    if (aggregationColumn.isAllColumns()) {
+                        aggregationSet.count();
+                    } else {
+                        aggregationSet.count(aggregationColumn.getColumnName());
+                    }
+                    break;
+                case MAX:
+                    aggregationSet.maxValue(aggregationColumn.getColumnName());
+                    break;
+                case MIN:
+                    aggregationSet.minValue(aggregationColumn.getColumnName());
+                    break;
+                case AVG:
+                    aggregationSet.average(aggregationColumn.getColumnName());
+                    break;
+                case SUM:
+                    aggregationSet.sum(aggregationColumn.getColumnName());
+                    break;
             }
         }
     }

@@ -2,7 +2,8 @@ package com.gigaspaces.jdbc.handlers;
 
 import com.gigaspaces.jdbc.QueryExecutor;
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
-import com.gigaspaces.jdbc.model.table.AggregationFunction;
+import com.gigaspaces.jdbc.model.table.AggregationColumn;
+import com.gigaspaces.jdbc.model.table.AggregationFunctionType;
 import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import net.sf.jsqlparser.expression.Alias;
@@ -97,9 +98,6 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                 if(isFromFunction) {
                     this.columns.add(column);
                     this.tableContainers.add(table);
-                    //TODO: validate alias = null!
-                    QueryColumn qc = table.addQueryColumn(column.getColumnName(),null , false, columnCounter++);
-                    queryExecutor.addColumn(qc);
                 } else {
                     QueryColumn qc = table.addQueryColumn(column.getColumnName(), this.alias, true, columnCounter++);
                     queryExecutor.addColumn(qc);
@@ -110,28 +108,29 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
             public void visit(Function function) {
                 this.isFromFunction = true;
                 super.visit(function);
-                AggregationFunction.AggregationFunctionType aggregationFunctionType = AggregationFunction.AggregationFunctionType.valueOf(function.getName().toUpperCase());
+                AggregationFunctionType aggregationFunctionType = AggregationFunctionType.valueOf(function.getName().toUpperCase());
                 queryExecutor.setAllColumnsSelected(function.isAllColumns());
-                if(this.columns.size() > 1) { //TODO: later need to supports max(age, 10) for example.
+                if(this.columns.size() > 1) { //TODO @sagiv: later need to supports max(age, 10) for example.
                     throw new IllegalArgumentException("Wrong number of arguments to aggregation function ["
                             + function.getName() + "()], expected 1 column but was " + this.columns.size());
                 }
                 if(function.isAllColumns()
-                        && aggregationFunctionType != AggregationFunction.AggregationFunctionType.COUNT) {
+                        && aggregationFunctionType != AggregationFunctionType.COUNT) {
                     throw new IllegalArgumentException("Wrong number of arguments to aggregation function ["
                             + function.getName() + "()], expected 1 column but was '*'");
                 }
-                AggregationFunction aggregationFunction = new AggregationFunction(aggregationFunctionType, function.getName(),
+                AggregationColumn aggregationColumn = new AggregationColumn(aggregationFunctionType, function.getName(),
                         this.alias, getColumnName(function.isAllColumns()), getColumnAlias(), getTableContainer(),
                         true, function.isAllColumns(), columnCounter++);
-                if (getTableContainer() != null) {
-                    getTableContainer().addAggregationFunctionColumn(aggregationFunction);
-                } else {
-                    //TODO: in case its * which table? all?
-                    queryExecutor.getTables().forEach(tableContainer -> tableContainer.addAggregationFunctionColumn(aggregationFunction));
+                if (getTableContainer() != null) {  // assume we have only one table because of the checks above.
+                    getTableContainer().addAggregationFunctionColumn(aggregationColumn);
+                    QueryColumn qc = getTableContainer().addQueryColumn(getColumnName(function.isAllColumns()), getColumnAlias(), false, columnCounter++);
+                    queryExecutor.addColumn(qc);
+                } else { // for example select COUNT(*) FROM table1 INNER JOIN table2...
+                    queryExecutor.getTables().forEach(tableContainer -> tableContainer.addAggregationFunctionColumn(aggregationColumn));
                     queryExecutor.getTables().forEach(this::addAllTableColumn);
                 }
-                queryExecutor.addAggregationFunction(aggregationFunction);
+                queryExecutor.addAggregationFunction(aggregationColumn);
             }
 
             private String getColumnName(boolean isAllColumn) {
@@ -144,18 +143,14 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
             private String getColumnAlias() {
                 if(!this.columns.isEmpty()) {
                     String fullName = this.columns.get(0).getName(true);
-                    //for example max(P1.name), P1 is not alias.
-                    if(Objects.equals(fullName, this.columns.get(0).getName(false))) return null;
-//                    if(Objects.equals(fullName, this.columns.get(0).getName(false))) return fullName;
-                    int lastIndex = fullName.lastIndexOf(".");
-                    if (lastIndex != -1) {
-                        return fullName.substring(0, lastIndex);
-                    }
+                    //for example max(P1.name), P1 is the table alias return P1.name.
+                    if(Objects.equals(fullName, this.columns.get(0).getColumnName())) return null;
+                    return fullName;
                 }
                 return null;
             }
 
-            private TableContainer getTableContainer() { //TODO: should be all tables? and not just the first one?
+            private TableContainer getTableContainer() {
                 return this.tableContainers.isEmpty() ? null : this.tableContainers.get(0);
             }
 

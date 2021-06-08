@@ -2,10 +2,7 @@ package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
-import com.gigaspaces.jdbc.model.table.AggregationFunction;
-import com.gigaspaces.jdbc.model.table.QueryColumn;
-import com.gigaspaces.jdbc.model.table.TableContainer;
-import com.gigaspaces.jdbc.model.table.TempTableContainer;
+import com.gigaspaces.jdbc.model.table.*;
 import com.j_spaces.jdbc.ResultEntry;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 
@@ -15,36 +12,35 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class QueryResult {
+public class QueryResult { //TODO: @sagiv make different class for each cons
     private final List<QueryColumn> queryColumns;
     protected TableContainer tableContainer;
     private List<TableRow> rows;
     private Cursor<TableRow> cursor;
 
-    public QueryResult(IQueryResultSet<IEntryPacket> res, TableContainer tableContainer) {
+    public QueryResult(IQueryResultSet<IEntryPacket> res, ConcreteTableContainer tableContainer) {
         this.tableContainer = tableContainer;
         this.queryColumns = tableContainer.getSelectedColumns();
         this.rows = res.stream().map(x -> new TableRow(x, tableContainer)).collect(Collectors.toList());
     }
 
-    //TODO: for the join, marge with the explain plan one?
-    //TODO: pass the JoinQueryExecutor?
-    public QueryResult(List<QueryColumn> queryColumns, List<AggregationFunction> aggregationFunctionColumns) {
+    //TODO: @sagiv pass the JoinQueryExecutor
+    public QueryResult(List<QueryColumn> queryColumns, List<AggregationColumn> aggregationColumns) {
         this.tableContainer = null; // TODO should be handled in subquery
-        this.queryColumns = order(queryColumns, aggregationFunctionColumns);
+        this.queryColumns = order(queryColumns, aggregationColumns);
         this.rows = new ArrayList<>();
     }
 
 
-    public QueryResult(List<QueryColumn> queryColumns) { //TODO: for the explain plan, marge with the join one?
+    public QueryResult(List<QueryColumn> queryColumns) {
         this.tableContainer = null; // TODO should be handled in subquery
         this.queryColumns = filterNonVisibleColumns(queryColumns);
         this.rows = new ArrayList<>();
     }
 
     public QueryResult(TempTableContainer tempTableContainer) {
-        //TODO: keep null? because otherwise .TempTableContainer.getJoinedTable throw UnsupportedOperationException:
-        // Not supported yet!
+        //TODO: @sagiv keep null? because otherwise .TempTableContainer.getJoinedTable throw
+        // UnsupportedOperationException - Not supported yet!
         this.tableContainer = null;
         this.queryColumns = tempTableContainer.getSelectedColumns();
         List<TableRow> tableRows = tempTableContainer.getQueryResult().getRows();
@@ -52,7 +48,7 @@ public class QueryResult {
             List<TableRow> aggregateRows = new ArrayList<>();
             aggregateRows.add(TableRow.aggregate(tableRows, tempTableContainer.getAggregationFunctionColumns()));
             this.rows = aggregateRows;
-        } else {
+        } else { //TODO: @sagiv pass tempTable
             this.rows = tableRows.stream().map(row -> new TableRow(row, this.queryColumns, tempTableContainer.getOrderColumns())).collect(Collectors.toList());
         }
     }
@@ -61,9 +57,9 @@ public class QueryResult {
         return queryColumns.stream().filter(QueryColumn::isVisible).collect(Collectors.toList());
     }
 
-    private List<QueryColumn> order(List<QueryColumn> queryColumns, List<AggregationFunction> aggregationFunctionColumns) {
+    private List<QueryColumn> order(List<QueryColumn> queryColumns, List<AggregationColumn> aggregationColumns) {
         List<QueryColumn> result = new ArrayList<>(queryColumns);
-        result.addAll(aggregationFunctionColumns);
+        result.addAll(aggregationColumns);
         result.sort(null);
         return result;
     }
@@ -137,6 +133,7 @@ public class QueryResult {
     }
 
     public ResultEntry convertEntriesToResultArrays(QueryExecutionConfig config) {
+        //TODO: @sagiv make static/at father pass QueryResult
         QueryResult queryResult = this;
         // Column (field) names and labels (aliases)
         int columns = queryResult.getQueryColumns().size();

@@ -1,10 +1,7 @@
 package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
-import com.gigaspaces.jdbc.model.table.AggregationFunction;
-import com.gigaspaces.jdbc.model.table.OrderColumn;
-import com.gigaspaces.jdbc.model.table.QueryColumn;
-import com.gigaspaces.jdbc.model.table.TableContainer;
+import com.gigaspaces.jdbc.model.table.*;
 import com.j_spaces.jdbc.builder.QueryEntryPacket;
 
 import java.util.*;
@@ -30,25 +27,24 @@ public class TableRow implements Comparable<TableRow> {
         this.orderValues = orderValues;
     }
 
-    public TableRow(IEntryPacket x, TableContainer tableContainer) {
+    public TableRow(IEntryPacket x, ConcreteTableContainer tableContainer) {
         final List<OrderColumn> orderColumns = tableContainer.getOrderColumns();
-        //TODO x instanceof QueryEntryPacket to not enter here when use join!. validate!
         if (tableContainer.hasAggregationFunctions() && x instanceof QueryEntryPacket) {
-            final List<AggregationFunction> aggregationFunctionColumns = tableContainer.getAggregationFunctionColumns();
+            final List<AggregationColumn> aggregationColumns = tableContainer.getAggregationFunctionColumns();
             Map<String, Object> fieldNameValueMap = new HashMap<>();
             QueryEntryPacket queryEntryPacket = ((QueryEntryPacket) x);
             for(int i=0; i < x.getFieldValues().length ; i ++) {
                 fieldNameValueMap.put(queryEntryPacket.getFieldNames()[i], queryEntryPacket.getFieldValues()[i]);
             }
-            int columnsSize = aggregationFunctionColumns.size();
+            int columnsSize = aggregationColumns.size();
             this.columns = new QueryColumn[columnsSize];
             this.values = new Object[columnsSize];
             for (int i = 0; i < columnsSize; i++) {
-                this.columns[i] = aggregationFunctionColumns.get(i);
-                this.values[i] = fieldNameValueMap.get(aggregationFunctionColumns.get(i).getNameWithLowerCase());
+                this.columns[i] = aggregationColumns.get(i);
+                this.values[i] = fieldNameValueMap.get(aggregationColumns.get(i).getNameWithLowerCase());
             }
         } else {
-            //for the join also contains the invisible column
+            //for the join/where contains both visible and invisible columns
             final List<QueryColumn> queryColumns = tableContainer.getAllQueryColumns();
 
             this.columns = queryColumns.toArray(new QueryColumn[0]);
@@ -110,42 +106,54 @@ public class TableRow implements Comparable<TableRow> {
         }
     }
 
-    public static TableRow aggregate(List<TableRow> tableRows, List<AggregationFunction> aggregationFunctionColumns) {
+    public static TableRow aggregate(List<TableRow> tableRows, List<AggregationColumn> aggregationColumns) {
         if (tableRows.isEmpty()) {
             return new TableRow((QueryColumn[]) null, null);
         }
-        QueryColumn[] rowsColumns = aggregationFunctionColumns.toArray(new QueryColumn[0]);
-        OrderColumn[] firstRowOrderColumns = tableRows.get(0).orderColumns; //TODO: validate! if from first or use aggregateValues!
-        Object[] firstRowOrderValues = tableRows.get(0).orderValues; //TODO: validate! if from first or use aggregateValues!
+        QueryColumn[] rowsColumns = aggregationColumns.toArray(new QueryColumn[0]);
+        //TODO: @sagiv validate! if from first or use aggregateValues
+        OrderColumn[] firstRowOrderColumns = tableRows.get(0).orderColumns;
+        Object[] firstRowOrderValues = tableRows.get(0).orderValues;
 
         Object[] aggregateValues = new Object[rowsColumns.length];
         int index = 0;
-        for (AggregationFunction aggregationFunction : aggregationFunctionColumns) {
-            Object value;
-            Comparator<Object> valueComparator = getObjectComparator();
-            String columnName = aggregationFunction.getColumnName();
-            boolean isAllColumn = aggregationFunction.isAllColumns();
-            AggregationFunction.AggregationFunctionType type = aggregationFunction.getType();
-            if(tableRows.get(0).hasColumn(aggregationFunction)) { // if this column already exists by reference.
-                // TODO:validate!
-                value = tableRows.get(0).getPropertyValue(aggregationFunction);
-            }else if (type == AggregationFunction.AggregationFunctionType.MAX) {
-                value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).max(valueComparator).orElse(null);
-            } else if (type == AggregationFunction.AggregationFunctionType.MIN) {
-                value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).min(valueComparator).orElse(null);
-            } else if (type == AggregationFunction.AggregationFunctionType.AVG) {
-                //TODO: supported types? need to be implement.
-                List<Number> collect = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName)).filter(Objects::nonNull).collect(Collectors.toList());
-                value = collect.stream().reduce(0d, (a,b) -> a.doubleValue() + b.doubleValue()).doubleValue() / collect.size();
-            } else if (type == AggregationFunction.AggregationFunctionType.SUM) {
-                //TODO: supported types? need to be implement.
-                value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName)).filter(Objects::nonNull).reduce(0d,
-                        (a,b) -> a.doubleValue() + b.doubleValue()).doubleValue();
-            } else { // (type == AggregationFunction.AggregationFunctionType.COUNT)
-                if(isAllColumn) {
-                    value = tableRows.size();
-                } else {
-                    value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName)).filter(Objects::nonNull).count();
+        for (AggregationColumn aggregationColumn : aggregationColumns) {
+            Object value = null;
+            if(tableRows.get(0).hasColumn(aggregationColumn)) { // if this column already exists by reference.
+                value = tableRows.get(0).getPropertyValue(aggregationColumn);
+            } else {
+                AggregationFunctionType type = aggregationColumn.getType();
+                String columnName = aggregationColumn.getColumnName();
+                switch (type) {
+                    case COUNT:
+                        boolean isAllColumn = aggregationColumn.isAllColumns();
+                        if (isAllColumn) {
+                            value = tableRows.size();
+                        } else {
+                            value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName))
+                                    .filter(Objects::nonNull).count();
+                        }
+                        break;
+                    case MAX:
+                        value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName))
+                                .filter(Objects::nonNull).max(getObjectComparator()).orElse(null);
+                        break;
+                    case MIN:
+                        value = tableRows.stream().map(tr -> tr.getPropertyValue(columnName))
+                                .filter(Objects::nonNull).min(getObjectComparator()).orElse(null);
+                        break;
+                    case AVG:
+                        //TODO: for now supported only Number.
+                        List<Number> collect = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName))
+                                .filter(Objects::nonNull).collect(Collectors.toList());
+                        value = collect.stream()
+                                .reduce(0d, (a, b) -> a.doubleValue() + b.doubleValue()).doubleValue() / collect.size();
+                        break;
+                    case SUM:
+                        //TODO: for now supported only Number.
+                        value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName))
+                                .filter(Objects::nonNull).reduce(0d, (a, b) -> a.doubleValue() + b.doubleValue()).doubleValue();
+                        break;
                 }
             }
             aggregateValues[index++] = value;
@@ -154,12 +162,9 @@ public class TableRow implements Comparable<TableRow> {
     }
 
     private static Comparator<Object> getObjectComparator() {
-        return (o1, o2) -> {
-            Comparable first = (Comparable) o1; //TODO: use castToComparable from WhereHandler?
+        return (o1, o2) -> { //TODO: @sagiv add try catch block. like in use castToComparable from WhereHandler.
+            Comparable first = (Comparable) o1;
             Comparable second = (Comparable) o2;
-            if (first == second) {
-                return 0;
-            }
             return first.compareTo(second);
         };
     }
@@ -197,14 +202,13 @@ public class TableRow implements Comparable<TableRow> {
 
     private boolean hasColumn(QueryColumn queryColumn) {
         //by reference:
-//        return Arrays.stream(columns).anyMatch(qc -> qc.equals(queryColumn));
-        return Arrays.stream(columns).anyMatch(qc -> qc == queryColumn);   //TODO: validate by reference?
+        return Arrays.stream(columns).anyMatch(qc -> qc == queryColumn);
     }
 
     @Override
     public int compareTo(TableRow other) {
         int results = 0;
-        for (OrderColumn orderCol : this.orderColumns) { //TODO: use castToComparable from WhereHandler?
+        for (OrderColumn orderCol : this.orderColumns) { //TODO: @sagiv add try catch block. like in use castToComparable from WhereHandler.
             Comparable first = (Comparable) this.getPropertyValue(orderCol);
             Comparable second = (Comparable) other.getPropertyValue(orderCol);
 

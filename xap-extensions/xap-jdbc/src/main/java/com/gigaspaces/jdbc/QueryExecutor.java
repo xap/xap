@@ -23,7 +23,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
     private final List<TableContainer> tables = new ArrayList<>();
     private final Set<QueryColumn> invisibleColumns = new HashSet<>();
     private final List<QueryColumn> visibleColumns = new ArrayList<>();
-    private final List<AggregationFunction> aggregationFunctionColumns = new ArrayList<>();
+    private final List<AggregationColumn> aggregationColumns = new ArrayList<>();
     private final IJSpace space;
     private final QueryExecutionConfig config;
     private final Object[] preparedValues;
@@ -193,8 +193,8 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         this.isAllColumnsSelected = isAllColumnsSelected;
     }
 
-    public List<AggregationFunction> getAggregationFunctionColumns() {
-        return aggregationFunctionColumns;
+    public List<AggregationColumn> getAggregationFunctionColumns() {
+        return aggregationColumns;
     }
 
     public IJSpace getSpace() {
@@ -213,7 +213,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         }
     }
 
-    public void addAggregationFunction(AggregationFunction aggregationFunction) {
-        this.aggregationFunctionColumns.add(aggregationFunction);
+    public void addAggregationFunction(AggregationColumn aggregationColumn) {
+        this.aggregationColumns.add(aggregationColumn);
     }
 }

@@ -44,9 +44,9 @@ public class DumpUtils {
         int Cs=1;
         for (int i = 1; i <= columnCount; i++) {
             String label = metaData.getColumnLabel(i);
-//            if (label.endsWith(")")) { //replace aggr column without alias to CX //TODO:why?
-//                label = "C"+(Cs++);
-//            }
+            if (label.endsWith(")")) { //replace aggr column without alias to CX
+                label = "C"+(Cs++);
+            }
             result[i-1] = label;
         }
         return result;

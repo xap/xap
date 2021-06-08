@@ -15,7 +15,7 @@ import java.util.Set;
 public abstract class TableContainer {
 
     private final List<OrderColumn> orderColumns = new ArrayList<>();
-    private final List<AggregationFunction> aggregationFunctionColumns = new ArrayList<>();
+    private final List<AggregationColumn> aggregationColumns = new ArrayList<>();
     private Expression exprTree;
 
     public abstract QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
@@ -85,16 +85,16 @@ public abstract class TableContainer {
         return orderColumns;
     }
 
-    public void addAggregationFunctionColumn(AggregationFunction aggregationFunction) {
-        this.aggregationFunctionColumns.add(aggregationFunction);
+    public void addAggregationFunctionColumn(AggregationColumn aggregationColumn) {
+        this.aggregationColumns.add(aggregationColumn);
     }
 
-    public List<AggregationFunction> getAggregationFunctionColumns() {
-        return aggregationFunctionColumns;
+    public List<AggregationColumn> getAggregationFunctionColumns() {
+        return aggregationColumns;
     }
 
     public boolean hasAggregationFunctions() {
-        return !this.aggregationFunctionColumns.isEmpty();
+        return !this.aggregationColumns.isEmpty();
     }
 
     public boolean hasOrderColumns() {

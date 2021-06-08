@@ -5,15 +5,15 @@ import java.util.Objects;
 public class QueryColumn implements Comparable<QueryColumn>{
     public static final String UUID_COLUMN = "UID";
     protected final TableContainer tableContainer;
-    private final String name;
-    private final String alias;
+    private final String columnName;
+    private final String columnAlias;
     private final boolean isVisible;
     private final boolean isUUID;
     private final int columnIndex;
 
     public QueryColumn(String name, String alias, boolean isVisible, TableContainer tableContainer, int columnIndex) {
-        this.name = name;
-        this.alias = alias;
+        this.columnName = name;
+        this.columnAlias = alias;
         this.isVisible = isVisible;
         this.isUUID = name.equalsIgnoreCase(UUID_COLUMN);
         this.tableContainer = tableContainer;
@@ -25,11 +25,11 @@ public class QueryColumn implements Comparable<QueryColumn>{
     }
 
     public String getName() {
-        return name;
+        return columnName;
     }
 
     public String getAlias() {
-        return alias;
+        return columnAlias;
     }
 
     public boolean isVisible() {
@@ -56,7 +56,7 @@ public class QueryColumn implements Comparable<QueryColumn>{
     }
 
     public String getNameOrAlias() {
-        return alias != null ? alias : name;
+        return columnAlias != null ? columnAlias : columnName;
     }
 
     @Override
@@ -74,9 +74,6 @@ public class QueryColumn implements Comparable<QueryColumn>{
 
     @Override
     public int compareTo(QueryColumn other) {
-//        int firstIndex = this.getColumnIndex();
-//        int secondIndex = other.getColumnIndex();
-//        return firstIndex > secondIndex ? 1 : firstIndex < secondIndex ? -1 : 0;
         return Integer.compare(this.getColumnIndex(), other.getColumnIndex());
     }
 }
