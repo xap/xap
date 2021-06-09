@@ -49,6 +49,18 @@ public class JoinQueryExecutor {
                 throw new IllegalArgumentException(e);
             }
         }
+
+        final List<QueryColumn> groupByColumns = new ArrayList<>();
+        for (TableContainer table : tables) {
+            try {
+                table.executeRead(config);
+                groupByColumns.addAll(table.getGroupByColumns());
+            } catch (SQLException e) {
+                e.printStackTrace();
+                throw new IllegalArgumentException(e);
+            }
+        }
+
         JoinTablesIterator joinTablesIterator = new JoinTablesIterator(tables);
         if(config.isExplainPlan()) {
             return explain(joinTablesIterator, orderColumns);
@@ -56,7 +68,7 @@ public class JoinQueryExecutor {
         QueryResult res = new QueryResult(this.visibleColumns, this.aggregationColumns);
         while (joinTablesIterator.hasNext()) {
             if(tables.stream().allMatch(TableContainer::checkJoinCondition))
-                res.add(new TableRow(this.allQueryColumn, orderColumns));
+                res.add(new TableRow(this.allQueryColumn, orderColumns, groupByColumns));
         }
         if(!this.aggregationColumns.isEmpty()) {
             List<TableRow> aggregateRows = new ArrayList<>();
