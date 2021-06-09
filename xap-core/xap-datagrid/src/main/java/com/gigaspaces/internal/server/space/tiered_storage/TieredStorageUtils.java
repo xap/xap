@@ -138,9 +138,15 @@ public class TieredStorageUtils {
                 hotValue = hotEntry.getFixedPropertiesValues()[i];
                 coldValue = coldEntry.getFixedPropertiesValues()[i];
             }
-            if ((hotValue == null || coldValue == null) && hotValue != coldValue) {
-                return false;
+
+            if (hotValue == null || coldValue == null) {
+                if(hotValue != coldValue){
+                    return false;
+                }else {
+                    continue;
+                }
             }
+
             if (!checkEquals(property.getType(),hotValue,coldValue)) {
                 logger.warn("Failed to have consistency between hot and cold tier for id: " +
                         hotEntry.getEntryDataType().name() + " Hot: " + hotValue + " Cold: " + coldValue);

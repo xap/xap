@@ -26,41 +26,16 @@ import java.util.*;
 public class SqliteUtils {
     private static final long NANOS_PER_SEC = 1_000_000_000;
     private static final long OFFSET = 0;
-    private static Map<String, String> sqlTypesMap = initSqlTypesMap();
-    private static Map<String, ExtractFunction> sqlExtractorsMap = initSqlExtractorsMap();
-    private static Map<String, InjectFunction> sqlInjectorsMap = initSqlInjectorsMap();
-    private static Map<String, RangeToStringFunction> rangeToStringFunctionMap = initRangeToStringFunctionMap();
-    private static final Map<String, TypeEqualsFunction> typeEqualsFunctionMap = initTypeEqualsFunctionMapMap();
+    private static final Map<String, TypeEqualsFunction> typeEqualsFunctionMap = initSpecialTypeEqualsFunctionMapMap();
+    private static final Map<String, String> sqlTypesMap = initSqlTypesMap();
+    private static final Map<String, ExtractFunction> sqlExtractorsMap = initSqlExtractorsMap();
+    private static final Map<String, InjectFunction> sqlInjectorsMap = initSqlInjectorsMap();
+    private static final Map<String, RangeToStringFunction> rangeToStringFunctionMap = initRangeToStringFunctionMap();
 
-    private static Map<String, TypeEqualsFunction> initTypeEqualsFunctionMapMap() {
+    private static Map<String, TypeEqualsFunction> initSpecialTypeEqualsFunctionMapMap() {
         Map<String, TypeEqualsFunction> map = new HashMap<>();
-        map.put(String.class.getName(), Object::equals);
-        map.put(boolean.class.getName(), Object::equals);
-        map.put(Boolean.class.getName(), Object::equals);
-        map.put(byte.class.getName(), Object::equals);
-        map.put(Byte.class.getName(), Object::equals);
-        map.put(short.class.getName(), Object::equals);
-        map.put(Short.class.getName(), Object::equals);
-        map.put(int.class.getName(), Object::equals);
-        map.put(Integer.class.getName(), Object::equals);
-        map.put(long.class.getName(), Object::equals);
-        map.put(Long.class.getName(), Object::equals);
-        map.put(BigInteger.class.getName(), Object::equals);
-        map.put(BigDecimal.class.getName(), Object::equals);
-        map.put(float.class.getName(),Object::equals);
-        map.put(Float.class.getName(), Object::equals);
-        map.put(double.class.getName(), Object::equals);
-        map.put(Double.class.getName(),Object::equals);
-        map.put(byte[].class.getName(), (v1,v2) -> Arrays.equals(((byte[]) v1), ((byte[]) v2)));
-        map.put(Byte[].class.getName(), (v1,v2) -> Arrays.equals(((Byte[]) v1), ((Byte[]) v2)));
-        map.put(Instant.class.getName(), Object::equals);
-        map.put(Timestamp.class.getName(), Object::equals);
-        map.put(java.util.Date.class.getName(), Object::equals);
-        map.put(java.sql.Date.class.getName(), Object::equals);
-        map.put(java.sql.Time.class.getName(), Object::equals);
-        map.put(LocalDate.class.getName(), Object::equals);
-        map.put(LocalTime.class.getName(), Object::equals);
-        map.put(LocalDateTime.class.getName(), Object::equals);
+        map.put(byte[].class.getName(), (v1, v2) -> Arrays.equals(((byte[]) v1), ((byte[]) v2)));
+        map.put(Byte[].class.getName(), (v1, v2) -> Arrays.equals(((Byte[]) v1), ((Byte[]) v2)));
         return map;
     }
 
@@ -241,8 +216,8 @@ public class SqliteUtils {
         if (!sqlInjectorsMap.containsKey(propertyType.getName())) {
             throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
         }
-        if(value == null){
-            if(isUpdate){
+        if (value == null) {
+            if (isUpdate) {
                 statement.setObject(index, value);
             } else {
                 statement.setString(index, "Null");
@@ -320,11 +295,13 @@ public class SqliteUtils {
         rangeToStringFunctionMap.get(range.getClass().getName()).toString(range, queryBuilder, queryParams);
 
     }
-    public static boolean checkEquals(Class<?> type,Object val1, Object val2){
-        if(!typeEqualsFunctionMap.containsKey(type.getName())){
-            throw new IllegalStateException("Equals of type " + type.getName() + " is unsupported");
+
+    static boolean checkEquals(Class<?> type, Object val1, Object val2) {
+        if (typeEqualsFunctionMap.containsKey(type.getName())) {
+            return typeEqualsFunctionMap.get(type.getName()).equals(val1, val2);
+        } else {
+            return val1.equals(val2);
         }
-        return typeEqualsFunctionMap.get(type.getName()).equals(val1,val2);
     }
 
     static TemplateMatchTier evaluateByMatchTier(ITemplateHolder template, TemplateMatchTier templateMatchTier) {
