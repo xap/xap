@@ -1,85 +1,57 @@
 package com.gigaspaces.jdbc.model.result;
 
-import com.gigaspaces.internal.transport.IEntryPacket;
-import com.gigaspaces.jdbc.model.QueryExecutionConfig;
-import com.gigaspaces.jdbc.model.table.*;
+import com.gigaspaces.jdbc.model.table.IQueryColumn;
+import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.jdbc.ResultEntry;
-import com.j_spaces.jdbc.query.IQueryResultSet;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class QueryResult { //TODO: @sagiv make different class for each cons
-    private final List<QueryColumn> queryColumns;
-    protected TableContainer tableContainer;
-    private List<TableRow> rows;
+public abstract class QueryResult {
+    private final List<IQueryColumn> selectedColumns;
     private Cursor<TableRow> cursor;
 
-    public QueryResult(IQueryResultSet<IEntryPacket> res, ConcreteTableContainer tableContainer) {
-        this.tableContainer = tableContainer;
-        this.queryColumns = tableContainer.getSelectedColumns();
-        this.rows = res.stream().map(x -> new TableRow(x, tableContainer)).collect(Collectors.toList());
+    public QueryResult(List<IQueryColumn> selectedColumns) {
+        this.selectedColumns = selectedColumns;
     }
 
-    //TODO: @sagiv pass the JoinQueryExecutor
-    public QueryResult(List<QueryColumn> queryColumns, List<AggregationColumn> aggregationColumns) {
-        this.tableContainer = null; // TODO should be handled in subquery
-        this.queryColumns = order(queryColumns, aggregationColumns);
-        this.rows = new ArrayList<>();
+    public List<IQueryColumn> getSelectedColumns() {
+        return selectedColumns;
     }
 
-
-    public QueryResult(List<QueryColumn> queryColumns) {
-        this.tableContainer = null; // TODO should be handled in subquery
-        this.queryColumns = filterNonVisibleColumns(queryColumns);
-        this.rows = new ArrayList<>();
-    }
-
-    public QueryResult(TempTableContainer tempTableContainer) {
-        //TODO: @sagiv keep null? because otherwise .TempTableContainer.getJoinedTable throw
-        // UnsupportedOperationException - Not supported yet!
-        this.tableContainer = null;
-        this.queryColumns = tempTableContainer.getSelectedColumns();
-        List<TableRow> tableRows = tempTableContainer.getQueryResult().getRows();
-        if (tempTableContainer.hasAggregationFunctions()) {
-            List<TableRow> aggregateRows = new ArrayList<>();
-            aggregateRows.add(TableRow.aggregate(tableRows, tempTableContainer.getAggregationFunctionColumns()));
-            this.rows = aggregateRows;
-        } else { //TODO: @sagiv pass tempTable
-            this.rows = tableRows.stream().map(row -> new TableRow(row, this.queryColumns, tempTableContainer.getOrderColumns())).collect(Collectors.toList());
-        }
-    }
-
-    private List<QueryColumn> filterNonVisibleColumns(List<QueryColumn> queryColumns) {
-        return queryColumns.stream().filter(QueryColumn::isVisible).collect(Collectors.toList());
-    }
-
-    private List<QueryColumn> order(List<QueryColumn> queryColumns, List<AggregationColumn> aggregationColumns) {
-        List<QueryColumn> result = new ArrayList<>(queryColumns);
-        result.addAll(aggregationColumns);
-        result.sort(null);
-        return result;
-    }
-
-    public List<QueryColumn> getQueryColumns() {
-        return queryColumns;
+    public TableContainer getTableContainer() {
+        return null;
     }
 
     public int size() {
-        return rows.size();
+        return 0;
     }
 
-    public void add(TableRow tableRow) {
-        this.rows.add(tableRow);
+    public void setRows(List<TableRow> rows) {
+    }
+
+    public void addRow(TableRow tableRow) {
+    }
+
+    public List<TableRow> getRows() {
+        return null;
+    }
+
+    public void filter(Predicate<TableRow> predicate) {
+        setRows(getRows().stream().filter(predicate).collect(Collectors.toList()));
+    }
+
+    public void sort() {
+        Collections.sort(getRows());
     }
 
     public boolean next() {
-        if (tableContainer == null || tableContainer.getJoinedTable() == null)
+        if (getTableContainer() == null || getTableContainer().getJoinedTable() == null) {
             return getCursor().next();
-        QueryResult joinedResult = tableContainer.getJoinedTable().getQueryResult();
+        }
+        QueryResult joinedResult = getTableContainer().getJoinedTable().getQueryResult();
         if (joinedResult == null) {
             return getCursor().next();
         }
@@ -108,10 +80,10 @@ public class QueryResult { //TODO: @sagiv make different class for each cons
 
     public void reset() {
         getCursor().reset();
-        if (tableContainer == null || tableContainer.getJoinedTable() == null) {
+        if (getTableContainer() == null || getTableContainer().getJoinedTable() == null) {
             return;
         }
-        QueryResult joinedResult = tableContainer.getJoinedTable().getQueryResult();
+        QueryResult joinedResult = getTableContainer().getJoinedTable().getQueryResult();
         if (joinedResult != null) {
             joinedResult.reset();
         }
@@ -119,36 +91,35 @@ public class QueryResult { //TODO: @sagiv make different class for each cons
 
     public Cursor<TableRow> getCursor() {
         if (cursor == null) {
-            cursor = getCursorType().equals(Cursor.Type.SCAN) ? new RowScanCursor(rows) : new HashedRowCursor(tableContainer.getJoinInfo(), rows);
+            cursor = getCursorType().equals(Cursor.Type.SCAN) ? new RowScanCursor(getRows()) :
+                    new HashedRowCursor(getTableContainer().getJoinInfo(), getRows());
         }
         return cursor;
     }
 
     public Cursor.Type getCursorType() {
-        if (tableContainer != null && tableContainer.getJoinInfo() != null) {
+        if (getTableContainer() != null && getTableContainer().getJoinInfo() != null) {
             return Cursor.Type.HASH;
         } else {
             return Cursor.Type.SCAN;
         }
     }
 
-    public ResultEntry convertEntriesToResultArrays(QueryExecutionConfig config) {
-        //TODO: @sagiv make static/at father pass QueryResult
-        QueryResult queryResult = this;
+    public ResultEntry convertEntriesToResultArrays() {
         // Column (field) names and labels (aliases)
-        int columns = queryResult.getQueryColumns().size();
+        int columns = getSelectedColumns().size();
 
-        String[] fieldNames = queryResult.getQueryColumns().stream().map(QueryColumn::getName).toArray(String[]::new);
-        String[] columnLabels = queryResult.getQueryColumns().stream().map(qC -> qC.getAlias() == null ? qC.getName() : qC.getAlias()).toArray(String[]::new);
+        String[] fieldNames = getSelectedColumns().stream().map(IQueryColumn::getName).toArray(String[]::new);
+        String[] columnLabels = getSelectedColumns().stream().map(qC -> qC.getAlias() == null ? qC.getName() : qC.getAlias()).toArray(String[]::new);
 
         //the field values for the result
-        Object[][] fieldValues = new Object[queryResult.size()][columns];
+        Object[][] fieldValues = new Object[size()][columns];
 
 
         int row = 0;
 
-        while (queryResult.next()) {
-            TableRow entry = queryResult.getCurrent();
+        while (next()) {
+            TableRow entry = getCurrent();
             int column = 0;
             for (int i = 0; i < columns; i++) {
                 fieldValues[row][column++] = entry.getPropertyValue(i);
@@ -157,26 +128,10 @@ public class QueryResult { //TODO: @sagiv make different class for each cons
             row++;
         }
 
-
         return new ResultEntry(
                 fieldNames,
                 columnLabels,
                 null, //TODO
                 fieldValues);
-    }
-
-    public void filter(Predicate<TableRow> predicate) {
-        rows = rows.stream().filter(predicate).collect(Collectors.toList());
-    }
-
-    public void sort() {
-        Collections.sort(rows);
-    }
-
-    public List<TableRow> getRows() {
-        return rows;
-    }
-    public void setRows(List<TableRow> rows) {
-        this.rows = rows;
     }
 }

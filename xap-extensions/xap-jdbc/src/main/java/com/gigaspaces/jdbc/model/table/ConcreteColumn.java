@@ -2,58 +2,65 @@ package com.gigaspaces.jdbc.model.table;
 
 import java.util.Objects;
 
-public class QueryColumn implements Comparable<QueryColumn>{
-    public static final String UUID_COLUMN = "UID";
+public class ConcreteColumn implements IQueryColumn {
     protected final TableContainer tableContainer;
     private final String columnName;
     private final String columnAlias;
     private final boolean isVisible;
     private final boolean isUUID;
-    private final Class<?> propertyType;
-    private final int columnIndex;
+    private final Class<?> returnType;
+    private final int columnOrdinal;
 
-    public QueryColumn(String name, Class<?> propertyType, String alias, boolean isVisible, TableContainer tableContainer, int columnIndex) {
+    public ConcreteColumn(String name, Class<?> returnType, String alias, boolean isVisible, TableContainer tableContainer, int columnOrdinal) {
         this.columnName = name;
         this.columnAlias = alias;
         this.isVisible = isVisible;
         this.isUUID = name.equalsIgnoreCase(UUID_COLUMN);
         this.tableContainer = tableContainer;
-        this.propertyType = propertyType;
-        this.columnIndex = columnIndex;
+        this.returnType = returnType;
+        this.columnOrdinal = columnOrdinal;
     }
 
-    public int getColumnIndex() {
-        return columnIndex;
+    @Override
+    public int getColumnOrdinal() {
+        return columnOrdinal;
     }
 
+    @Override
     public String getName() {
         return columnName;
     }
 
+    @Override
     public String getAlias() {
         return columnAlias;
     }
 
+    @Override
     public boolean isVisible() {
         return isVisible;
     }
 
+    @Override
     public boolean isUUID() {
         return isUUID;
     }
 
+    @Override
     public TableContainer getTableContainer() {
         return tableContainer;
     }
 
+    @Override
     public Object getCurrentValue() {
         if (tableContainer.getQueryResult().getCurrent() == null)
             return null;
         return tableContainer.getQueryResult().getCurrent().getPropertyValue(this);
     }
 
-    public Class<?> getPropertyType() {
-        return propertyType;
+    @Override
+    public Class<?> getReturnType() {
+        return returnType;
     }
 
     @Override
@@ -61,6 +68,7 @@ public class QueryColumn implements Comparable<QueryColumn>{
         return tableContainer.getTableNameOrAlias() + "." + getNameOrAlias();
     }
 
+    @Override
     public String getNameOrAlias() {
         return columnAlias != null ? columnAlias : columnName;
     }
@@ -68,9 +76,13 @@ public class QueryColumn implements Comparable<QueryColumn>{
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof QueryColumn)) return false;
-        QueryColumn that = (QueryColumn) o;
-        return isVisible() == that.isVisible() && isUUID() == that.isUUID() && Objects.equals(getTableContainer(), that.getTableContainer()) && Objects.equals(getName(), that.getName()) && Objects.equals(getAlias(), that.getAlias());
+        if (!(o instanceof ConcreteColumn)) return false;
+        IQueryColumn that = (IQueryColumn) o;
+        return isVisible() == that.isVisible()
+                && isUUID() == that.isUUID()
+                && Objects.equals(getTableContainer(), that.getTableContainer())
+                && Objects.equals(getName(), that.getName())
+                && Objects.equals(getAlias(), that.getAlias());
     }
 
     @Override
@@ -79,7 +91,7 @@ public class QueryColumn implements Comparable<QueryColumn>{
     }
 
     @Override
-    public int compareTo(QueryColumn other) {
-        return Integer.compare(this.getColumnIndex(), other.getColumnIndex());
+    public int compareTo(IQueryColumn other) {
+        return Integer.compare(this.getColumnOrdinal(), other.getColumnOrdinal());
     }
 }

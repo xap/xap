@@ -5,8 +5,9 @@ import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.explainplan.SubqueryExplainPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
-import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
+import com.gigaspaces.jdbc.model.result.ExplainPlanQueryResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
+import com.gigaspaces.jdbc.model.result.TempQueryResult;
 import com.gigaspaces.jdbc.model.result.TempTableQTP;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.EqualValueRange;
@@ -21,32 +22,32 @@ public class TempTableContainer extends TableContainer {
     private final String alias;
     private final QueryResult tableResult;
     private TempTableQTP queryTemplatePacket;
-    private final List<QueryColumn> visibleColumns = new ArrayList<>();
-    private final List<QueryColumn> tableColumns = new ArrayList<>();
-    private final Set<QueryColumn> invisibleColumns = new HashSet<>();
+    private final List<IQueryColumn> visibleColumns = new ArrayList<>();
+    private final List<IQueryColumn> tableColumns = new ArrayList<>();
+    private final Set<IQueryColumn> invisibleColumns = new HashSet<>();
     private final List<String> allColumnNamesSorted;
     private TableContainer joinedTable;
 
     public TempTableContainer(QueryResult tableResult, String alias) {
         this.tableResult = tableResult;
         this.alias = alias;
-        if (tableResult instanceof ExplainPlanResult) {
-            tableColumns.addAll(((ExplainPlanResult) tableResult).getVisibleColumns());
+        if (tableResult instanceof ExplainPlanQueryResult) {
+            tableColumns.addAll(((ExplainPlanQueryResult) tableResult).getVisibleColumns());
         } else {
-            tableColumns.addAll(tableResult.getQueryColumns());
+            tableColumns.addAll(tableResult.getSelectedColumns());
         }
 
-        allColumnNamesSorted = tableColumns.stream().map(QueryColumn::getNameOrAlias).collect(Collectors.toList());
+        allColumnNamesSorted = tableColumns.stream().map(IQueryColumn::getNameOrAlias).collect(Collectors.toList());
     }
 
     @Override
     public QueryResult executeRead(QueryExecutionConfig config) {
         if (config.isExplainPlan()) {
-            ExplainPlanResult explainResult = ((ExplainPlanResult) tableResult);
+            ExplainPlanQueryResult explainResult = ((ExplainPlanQueryResult) tableResult);
             SubqueryExplainPlan subquery = new SubqueryExplainPlan(visibleColumns,
                     (alias == null ? config.getTempTableNameGenerator().generate() : alias),
                     explainResult.getExplainPlanInfo(), getExprTree(), Collections.unmodifiableList(getOrderColumns()));
-            return new ExplainPlanResult(visibleColumns, subquery, this);
+            return new ExplainPlanQueryResult(visibleColumns, subquery, this);
         }
         if (queryTemplatePacket != null) {
             tableResult.filter(x -> queryTemplatePacket.eval(x));
@@ -54,7 +55,7 @@ public class TempTableContainer extends TableContainer {
 
         validateAggregationFunction();
 
-        QueryResult queryResult = new QueryResult(this);
+        QueryResult queryResult = new TempQueryResult(this);
         if(!getOrderColumns().isEmpty()) {
             queryResult.sort(); //sort the results at the client
         }
@@ -62,9 +63,9 @@ public class TempTableContainer extends TableContainer {
     }
 
     @Override
-    public QueryColumn addQueryColumn(String columnName, String alias, boolean visible,  int columnIndex) {
-        QueryColumn queryColumn = tableColumns.stream()
-                .filter(qc -> qc.getNameOrAlias().equalsIgnoreCase(columnName))
+    public IQueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnIndex) {
+        IQueryColumn queryColumn = tableColumns.stream()
+                .filter(qc -> qc.getNameOrAlias().equalsIgnoreCase(columnName)) //TODO: @sagiv equals on alias and  visible too?
                 .findFirst()
                 .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
         if (visible) {
@@ -76,12 +77,12 @@ public class TempTableContainer extends TableContainer {
     }
 
     @Override
-    public List<QueryColumn> getVisibleColumns() {
+    public List<IQueryColumn> getVisibleColumns() {
         return visibleColumns;
     }
 
     @Override
-    public Set<QueryColumn> getInvisibleColumns() {
+    public Set<IQueryColumn> getInvisibleColumns() {
         return this.invisibleColumns;
     }
 
@@ -149,12 +150,12 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public Object getColumnValue(String columnName, Object value) throws SQLException {
-        QueryColumn column = tableColumns.stream()
+        IQueryColumn column = tableColumns.stream()
                 .filter(queryColumn -> queryColumn.getName().equalsIgnoreCase(columnName))
                 .findFirst()
                 .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
 
-        return ObjectConverter.convert(value, column.getPropertyType());
+        return ObjectConverter.convert(value, column.getReturnType());
     }
 
     @Override

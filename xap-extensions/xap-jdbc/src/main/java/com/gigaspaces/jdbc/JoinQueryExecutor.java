@@ -2,13 +2,10 @@ package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.explainplan.JoinExplainPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
-import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
-import com.gigaspaces.jdbc.model.result.JoinTablesIterator;
-import com.gigaspaces.jdbc.model.result.QueryResult;
-import com.gigaspaces.jdbc.model.result.TableRow;
+import com.gigaspaces.jdbc.model.result.*;
 import com.gigaspaces.jdbc.model.table.AggregationColumn;
+import com.gigaspaces.jdbc.model.table.IQueryColumn;
 import com.gigaspaces.jdbc.model.table.OrderColumn;
-import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 
 import java.sql.SQLException;
@@ -17,14 +14,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class JoinQueryExecutor {
     private final List<TableContainer> tables;
-    private final Set<QueryColumn> invisibleColumns;
-    private final List<QueryColumn> visibleColumns;
+    private final Set<IQueryColumn> invisibleColumns;
+    private final List<IQueryColumn> visibleColumns;
     private final QueryExecutionConfig config;
     private final List<AggregationColumn> aggregationColumns;
-    private final ArrayList<QueryColumn> allQueryColumn;
+    private final List<IQueryColumn> allQueryColumns;
+    private final List<IQueryColumn> selectedQueryColumns;
 
     public JoinQueryExecutor(QueryExecutor queryExecutor) {
         this.tables = queryExecutor.getTables();
@@ -33,9 +32,9 @@ public class JoinQueryExecutor {
         this.config = queryExecutor.getConfig();
         this.config.setJoinUsed(true);
         //TODO: @sagiv can be obtained from the tables?, just like the OrderColumns at 'execute()'?
-        this.aggregationColumns = queryExecutor.getAggregationFunctionColumns();
-        this.allQueryColumn = new ArrayList<>(visibleColumns);
-        this.allQueryColumn.addAll(invisibleColumns);
+        this.aggregationColumns = queryExecutor.getAggregationColumns();
+        this.allQueryColumns = Stream.concat(visibleColumns.stream(), invisibleColumns.stream()).collect(Collectors.toList());
+        this.selectedQueryColumns = Stream.concat(this.visibleColumns.stream(), this.aggregationColumns.stream()).sorted().collect(Collectors.toList());
     }
 
     public QueryResult execute() {
@@ -53,14 +52,14 @@ public class JoinQueryExecutor {
         if(config.isExplainPlan()) {
             return explain(joinTablesIterator, orderColumns);
         }
-        QueryResult res = new QueryResult(this.visibleColumns, this.aggregationColumns);
+        QueryResult res = new JoinQueryResult(this.selectedQueryColumns);
         while (joinTablesIterator.hasNext()) {
             if(tables.stream().allMatch(TableContainer::checkJoinCondition))
-                res.add(new TableRow(this.allQueryColumn, orderColumns));
+                res.addRow(TableRowFactory.createTableRowFromSpecificColumns(this.allQueryColumns, orderColumns));
         }
         if(!this.aggregationColumns.isEmpty()) {
             List<TableRow> aggregateRows = new ArrayList<>();
-            aggregateRows.add(TableRow.aggregate(res.getRows(), this.aggregationColumns));
+            aggregateRows.add(TableRowUtils.aggregate(res.getRows(), this.aggregationColumns));
             res.setRows(aggregateRows);
         }
         if(!orderColumns.isEmpty()) {
@@ -79,15 +78,15 @@ public class JoinQueryExecutor {
         }
         TableContainer first = stack.pop();
         TableContainer second = stack.pop();
-        JoinExplainPlan joinExplainPlan = new JoinExplainPlan(first.getJoinInfo(), ((ExplainPlanResult) first.getQueryResult()).getExplainPlanInfo(), ((ExplainPlanResult) second.getQueryResult()).getExplainPlanInfo());
+        JoinExplainPlan joinExplainPlan = new JoinExplainPlan(first.getJoinInfo(), ((ExplainPlanQueryResult) first.getQueryResult()).getExplainPlanInfo(), ((ExplainPlanQueryResult) second.getQueryResult()).getExplainPlanInfo());
         TableContainer last = second;
         while (!stack.empty()) {
             TableContainer curr = stack.pop();
-            joinExplainPlan = new JoinExplainPlan(last.getJoinInfo(), joinExplainPlan, ((ExplainPlanResult) curr.getQueryResult()).getExplainPlanInfo());
+            joinExplainPlan = new JoinExplainPlan(last.getJoinInfo(), joinExplainPlan, ((ExplainPlanQueryResult) curr.getQueryResult()).getExplainPlanInfo());
             last = curr;
         }
-        joinExplainPlan.setSelectColumns(visibleColumns.stream().map(QueryColumn::toString).collect(Collectors.toList()));
+        joinExplainPlan.setSelectColumns(visibleColumns.stream().map(IQueryColumn::toString).collect(Collectors.toList()));
         joinExplainPlan.setOrderColumns(orderColumns);
-        return new ExplainPlanResult(visibleColumns, joinExplainPlan, null);
+        return new ExplainPlanQueryResult(visibleColumns, joinExplainPlan, null);
     }
 }
