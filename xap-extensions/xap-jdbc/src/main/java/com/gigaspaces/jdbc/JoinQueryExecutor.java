@@ -40,20 +40,11 @@ public class JoinQueryExecutor {
 
     public QueryResult execute() {
         final List<OrderColumn> orderColumns = new ArrayList<>();
-        for (TableContainer table : tables) {
-            try {
-                table.executeRead(config);
-                orderColumns.addAll(table.getOrderColumns());
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new IllegalArgumentException(e);
-            }
-        }
-
         final List<QueryColumn> groupByColumns = new ArrayList<>();
         for (TableContainer table : tables) {
             try {
                 table.executeRead(config);
+                orderColumns.addAll(table.getOrderColumns());
                 groupByColumns.addAll(table.getGroupByColumns());
             } catch (SQLException e) {
                 e.printStackTrace();
