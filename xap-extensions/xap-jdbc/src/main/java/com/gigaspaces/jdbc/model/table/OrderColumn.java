@@ -1,46 +1,84 @@
 package com.gigaspaces.jdbc.model.table;
 
-public class OrderColumn extends QueryColumn {
+public class OrderColumn implements IQueryColumn {
 
-    private boolean isAsc = true;
-    private boolean isNullsLast = false;
+    private final boolean isAsc;
+    private final boolean isNullsLast;
+    private final IQueryColumn queryColumn;
 
-    public OrderColumn(String name, boolean isVisible, TableContainer tableContainer, int columnIndex) {
-        super(name, null, null, isVisible, tableContainer, columnIndex);
+    public OrderColumn(IQueryColumn queryColumn, boolean isAsc, boolean isNullsLast) {
+        this.queryColumn = queryColumn;
+        this.isAsc = isAsc;
+        this.isNullsLast = isNullsLast;
     }
 
     public boolean isAsc() {
         return isAsc;
     }
-    public void setAsc(boolean isAsc) {
-        this.isAsc = isAsc;
-    }
-    public OrderColumn withAsc(boolean isAsc) {
-        this.isAsc = isAsc;
-        return this;
-    }
 
     public boolean isNullsLast() {
         return isNullsLast;
     }
-    public void setNullsLast(boolean isNullsLast) {
-        this.isNullsLast = isNullsLast;
+
+    @Override
+    public int getColumnOrdinal() {
+        return this.queryColumn.getColumnOrdinal();
     }
-    public OrderColumn withNullsLast(boolean isNullsLast) {
-        this.isNullsLast = isNullsLast;
-        return this;
+
+    @Override
+    public String getName() {
+        return this.queryColumn.getName();
+    }
+
+    @Override
+    public String getAlias() {
+        return null;
+    }
+
+    @Override
+    public boolean isVisible() {
+        return this.queryColumn.isVisible();
+    }
+
+    @Override
+    public boolean isUUID() {
+        return this.queryColumn.isUUID();
+    }
+
+    @Override
+    public TableContainer getTableContainer() {
+        return this.queryColumn.getTableContainer();
     }
 
     @Override
     public Object getCurrentValue() {
-        if(tableContainer.getQueryResult().getCurrent() == null) {
+        if(getTableContainer().getQueryResult().getCurrent() == null) {
             return null;
         }
-        return tableContainer.getQueryResult().getCurrent().getPropertyValue(this); // visit getPropertyValue(OrderColumn)
+        return getTableContainer().getQueryResult().getCurrent().getPropertyValue(this); // visit getPropertyValue(OrderColumn)
+    }
+
+    @Override
+    public Class<?> getReturnType() {
+        return null;
+    }
+
+    public IQueryColumn getQueryColumn() {
+        return queryColumn;
     }
 
     @Override
     public String toString() {
         return getNameOrAlias() + " " + (isAsc ? "ASC" : "DESC") + " " + (isNullsLast ? "NULLS LAST" : "NULLS FIRST");
+    }
+
+    @Override
+    public String getNameOrAlias() {
+        return this.queryColumn.getNameOrAlias();
+    }
+
+    @Override
+    public int compareTo(IQueryColumn other) {
+        return this.queryColumn.compareTo(other);
     }
 }

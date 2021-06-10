@@ -1,7 +1,7 @@
 package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.jdbc.model.join.JoinInfo;
-import com.gigaspaces.jdbc.model.table.QueryColumn;
+import com.gigaspaces.jdbc.model.table.IQueryColumn;
 
 import java.util.*;
 
@@ -18,7 +18,7 @@ public class HashedRowCursor implements Cursor<TableRow>{
     }
 
     private void init(List<TableRow> rows) {
-        QueryColumn joinColumn = joinInfo.getRightColumn();
+        IQueryColumn joinColumn = joinInfo.getRightColumn();
         for (TableRow row : rows) {
             List<TableRow> rowsWithSameIndex = hashMap.computeIfAbsent(row.getPropertyValue(joinColumn), k -> new LinkedList<>());
             rowsWithSameIndex.add(row);

@@ -1,6 +1,6 @@
 package com.gigaspaces.jdbc.model.join;
 
-import com.gigaspaces.jdbc.model.table.QueryColumn;
+import com.gigaspaces.jdbc.model.table.IQueryColumn;
 import com.j_spaces.jdbc.builder.range.Range;
 import net.sf.jsqlparser.statement.select.Join;
 
@@ -8,12 +8,12 @@ import java.util.Objects;
 
 public class JoinInfo {
 
-    private final QueryColumn leftColumn;
-    private final QueryColumn rightColumn;
+    private final IQueryColumn leftColumn;
+    private final IQueryColumn rightColumn;
     private final JoinType joinType;
     private Range range;
 
-    public JoinInfo(QueryColumn leftColumn, QueryColumn rightColumn, JoinType joinType) {
+    public JoinInfo(IQueryColumn leftColumn, IQueryColumn rightColumn, JoinType joinType) {
         this.leftColumn = leftColumn;
         this.rightColumn = rightColumn;
         this.joinType = joinType;
@@ -33,11 +33,11 @@ public class JoinInfo {
         return true;
     }
 
-    public QueryColumn getLeftColumn() {
+    public IQueryColumn getLeftColumn() {
         return leftColumn;
     }
 
-    public QueryColumn getRightColumn() {
+    public IQueryColumn getRightColumn() {
         return rightColumn;
     }
 

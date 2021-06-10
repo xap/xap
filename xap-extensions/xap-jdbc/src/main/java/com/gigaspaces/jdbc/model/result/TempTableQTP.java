@@ -1,11 +1,9 @@
 package com.gigaspaces.jdbc.model.result;
 
-import com.gigaspaces.jdbc.model.table.QueryColumn;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.EqualValueRange;
 import com.j_spaces.jdbc.builder.range.SegmentRange;
 
-import java.util.List;
 import java.util.function.Predicate;
 
 public class TempTableQTP extends QueryTemplatePacket {
@@ -40,10 +38,5 @@ public class TempTableQTP extends QueryTemplatePacket {
 
     public boolean eval(TableRow tableRow) {
         return predicate.test(tableRow);
-    }
-
-
-    public QueryColumn getQueryColumn(List<QueryColumn> list, String name) {
-        return list.stream().filter(x -> x.getName().equals(name)).findFirst().get();
     }
 }

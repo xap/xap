@@ -2,8 +2,8 @@ package com.gigaspaces.jdbc.explainplan;
 
 import com.gigaspaces.internal.query.explainplan.TextReportFormatter;
 import com.gigaspaces.internal.query.explainplan.model.JdbcExplainPlan;
+import com.gigaspaces.jdbc.model.table.IQueryColumn;
 import com.gigaspaces.jdbc.model.table.OrderColumn;
-import com.gigaspaces.jdbc.model.table.QueryColumn;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
 
@@ -11,16 +11,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SubqueryExplainPlan extends JdbcExplainPlan {
-    private final List<String> visibleColumns;
+    private final List<String> visibleColumnNames;
     private final JdbcExplainPlan plan;
     private final String tempViewName;
     private final Expression exprTree;
     private final List<OrderColumn> orderColumns;
 
-    public SubqueryExplainPlan(List<QueryColumn> visibleColumns, String name, JdbcExplainPlan explainPlanInfo,
+    public SubqueryExplainPlan(List<IQueryColumn> visibleColumns, String name, JdbcExplainPlan explainPlanInfo,
                                Expression exprTree, List<OrderColumn> orderColumns) {
         this.tempViewName = name;
-        this.visibleColumns = visibleColumns.stream().map(QueryColumn::getName).collect(Collectors.toList());
+        this.visibleColumnNames = visibleColumns.stream().map(IQueryColumn::getName).collect(Collectors.toList());
         this.plan = explainPlanInfo;
         this.exprTree = exprTree;
         this.orderColumns = orderColumns;
@@ -30,7 +30,7 @@ public class SubqueryExplainPlan extends JdbcExplainPlan {
     public void format(TextReportFormatter formatter, boolean verbose) {
         formatter.line("Subquery scan on " + tempViewName); ////
         formatter.indent(() -> {
-            formatter.line(String.format("Select: %s", String.join(", ", visibleColumns)));
+            formatter.line(String.format("Select: %s", String.join(", ", visibleColumnNames)));
 //            formatter.line("Filter: <placeholder>"); //TODO EP
             if (exprTree != null) {
                 ExpressionDeParser expressionDeParser = new ExpressionTreeDeParser();
