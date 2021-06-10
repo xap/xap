@@ -22,8 +22,8 @@ import java.util.*;
 
 public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisitor {
     private final List<TableContainer> tables = new ArrayList<>();
-    private final Set<QueryColumn> invisibleColumns = new HashSet<>();
-    private final List<QueryColumn> visibleColumns = new ArrayList<>();
+    private final Set<IQueryColumn> invisibleColumns = new HashSet<>();
+    private final List<IQueryColumn> visibleColumns = new ArrayList<>();
     private final List<AggregationColumn> aggregationColumns = new ArrayList<>();
     private final IJSpace space;
     private final QueryExecutionConfig config;
@@ -70,8 +70,8 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
             }
             TableContainer rightTable = QueryColumnHandler.getTableForColumn(rColumn, tables);
             TableContainer leftTable = QueryColumnHandler.getTableForColumn(lColumn, tables);
-            QueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false, 0);
-            QueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false, 0);
+            IQueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false, 0);
+            IQueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false, 0);
             rightTable.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinInfo.JoinType.getType(join)));
             if (leftTable.getJoinedTable() == null) { // TODO set right table every time and align it to recursive form in JoinTablesIterator
                 if (!rightTable.isJoined()) {
@@ -182,11 +182,11 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         return tables;
     }
 
-    public Set<QueryColumn> getInvisibleColumns() {
+    public Set<IQueryColumn> getInvisibleColumns() {
         return invisibleColumns;
     }
 
-    public List<QueryColumn> getVisibleColumns() {
+    public List<IQueryColumn> getVisibleColumns() {
         return visibleColumns;
     }
 
@@ -202,7 +202,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         this.isAllColumnsSelected = isAllColumnsSelected;
     }
 
-    public List<AggregationColumn> getAggregationFunctionColumns() {
+    public List<AggregationColumn> getAggregationColumns() {
         return aggregationColumns;
     }
 
@@ -214,15 +214,15 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         return config;
     }
 
-    public void addColumn(QueryColumn queryColumn) {
-        if (queryColumn.isVisible()) {
-            visibleColumns.add(queryColumn);
+    public void addColumn(IQueryColumn column) {
+        if (column.isVisible()) {
+            visibleColumns.add(column);
         } else {
-            invisibleColumns.add(queryColumn);
+            invisibleColumns.add(column);
         }
     }
 
-    public void addAggregationFunction(AggregationColumn aggregationColumn) {
+    public void addAggregationColumn(AggregationColumn aggregationColumn) {
         this.aggregationColumns.add(aggregationColumn);
     }
 }

@@ -1,63 +1,80 @@
 package com.gigaspaces.jdbc.model.table;
 
 import java.util.Locale;
+import java.util.Objects;
 
-//TODO: @sagiv create interface IQueryColumn
-public class AggregationColumn extends QueryColumn {
+public class AggregationColumn implements IQueryColumn {
 
     private final AggregationFunctionType type;
-    private final String functionName;
     private final String functionAlias;
+    private final boolean isVisible;
     private final boolean allColumns;
+    private final IQueryColumn queryColumn;
+    private final int columnOrdinal;
 
-    public AggregationColumn(AggregationFunctionType type, String functionName, String alias, String columnName,
-                             String columnAlias, TableContainer tableContainer, boolean visible,
-                             boolean allColumns, int columnIndex) {
-        //TODO: @sagiv propertyType, not needed after the refactor changes.
-        super(columnName, null, columnAlias, visible, tableContainer, columnIndex);
-        this.type = type;
-        this.functionName = functionName;
-        this.functionAlias = alias;
+    public AggregationColumn(AggregationFunctionType functionType, String functionAlias, IQueryColumn queryColumn,
+                             boolean isVisible, boolean allColumns, int columnOrdinal) {
+        this.queryColumn = queryColumn;
+        this.type = functionType;
+        this.functionAlias = functionAlias;
         this.allColumns = allColumns;
+        this.isVisible = isVisible;
+        this.columnOrdinal = columnOrdinal;
     }
 
     public AggregationFunctionType getType() {
         return this.type;
     }
 
-    public String getFunctionName() {
+    private String getFunctionName() {
         return this.type.name().toLowerCase(Locale.ROOT);
     }
 
-    public String getAlias() { return this.functionAlias;
+    public String getAlias() {
+        return this.functionAlias;
     }
 
     public TableContainer getTableContainer() {
-        return super.getTableContainer();
+        return this.queryColumn.getTableContainer();
     }
 
-    public String getColumnAlias() {
-        return super.getAlias();
+    @Override
+    public Object getCurrentValue() {
+        return null;
+    }
+
+    @Override
+    public Class<?> getReturnType() {
+        return null;
     }
 
     public String getColumnName() {
-        return super.getNameOrAlias(); //TODO: @sagiv use getName instead?
+        if (this.queryColumn == null) {
+            return isAllColumns() ? "*" : null;
+        }
+        return this.queryColumn.getNameOrAlias();  //TODO: @sagiv use getName instead?
     }
 
     public boolean isVisible() {
-        return super.isVisible();
+        return this.isVisible;
+    }
+
+    @Override
+    public boolean isUUID() {
+        return false;
     }
 
     public boolean isAllColumns() {
-        return allColumns;
+        return this.allColumns;
+    }
+
+    @Override
+    public int getColumnOrdinal() {
+        return this.columnOrdinal;
     }
 
     public String getName() {
         return String.format("%s(%s)", getFunctionName(), getColumnName());
-    }
-
-    public String getNameWithLowerCase() {
-        return String.format("%s(%s)", getFunctionName().toLowerCase(Locale.ROOT), getColumnName());
     }
 
     @Override
@@ -66,10 +83,37 @@ public class AggregationColumn extends QueryColumn {
     }
 
     @Override
+    public int compareTo(IQueryColumn other) {
+        return Integer.compare(this.getColumnOrdinal(), other.getColumnOrdinal());
+    }
+
+    public IQueryColumn getQueryColumn() {
+        return this.queryColumn;
+    }
+
+    @Override
     public String toString() {
-        if(getTableContainer() != null) {
+        if (getTableContainer() != null) {
             return String.format("%s(%s)", getFunctionName(), getTableContainer().getTableNameOrAlias() + "." + getColumnName());
         }
         return String.format("%s(%s)", getFunctionName(), getColumnName());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AggregationColumn)) return false;
+        AggregationColumn that = (AggregationColumn) o;
+        return isVisible() == that.isVisible()
+                && isAllColumns() == that.isAllColumns()
+                && getColumnOrdinal() == that.getColumnOrdinal()
+                && getType() == that.getType()
+                && Objects.equals(getAlias(), that.getAlias())
+                && Objects.equals(getQueryColumn(), that.getQueryColumn());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getType(), getAlias(), isVisible(), isAllColumns(), getQueryColumn(), getColumnOrdinal());
     }
 }

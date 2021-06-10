@@ -2,7 +2,7 @@ package com.gigaspaces.jdbc.handlers;
 
 
 import com.gigaspaces.jdbc.QueryExecutor;
-import com.gigaspaces.jdbc.model.table.QueryColumn;
+import com.gigaspaces.jdbc.model.table.ConcreteColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.schema.Column;
@@ -15,6 +15,7 @@ public class GroupByHandler extends UnsupportedExpressionVisitor implements Grou
     //TODO: consider not to pass queryExecutor but its relevant fields, when we need to serialize this object.
     private final QueryExecutor queryExecutor;
     private Column column;
+    private int columnCounter = 0;
 
     public GroupByHandler(QueryExecutor queryExecutor) {
         this.queryExecutor = queryExecutor;
@@ -24,12 +25,11 @@ public class GroupByHandler extends UnsupportedExpressionVisitor implements Grou
     public void visit(GroupByElement groupByElement) {
 
         List<Expression> groupByExpressions = groupByElement.getGroupByExpressions();
-        int columnIndex = 0;
         for( Expression expression : groupByExpressions ){
             expression.accept( this );
             String columnName = getColumn().getColumnName();
             TableContainer table = getTable();
-            QueryColumn groupByColumn = new QueryColumn(columnName, null, null,  isVisibleColumn( columnName ), table, columnIndex++);
+            ConcreteColumn groupByColumn = new ConcreteColumn(columnName, null, null,  isVisibleColumn( columnName ), table, columnCounter++);
             table.addGroupByColumns(groupByColumn);
         }
     }

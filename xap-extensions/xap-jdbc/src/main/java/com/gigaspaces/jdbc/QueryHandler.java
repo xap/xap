@@ -3,6 +3,7 @@ package com.gigaspaces.jdbc;
 import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.result.ExplainPlanQueryResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.ResponsePacket;
@@ -51,9 +52,9 @@ public class QueryHandler {
             public void visit(ExplainStatement explainStatement) {
                 QueryExecutionConfig config = new QueryExecutionConfig(true, explainStatement.getOption(ExplainStatement.OptionType.VERBOSE)!= null);
                 QueryExecutor qE = new QueryExecutor(space, config, preparedValues);
-                QueryResult res;
+                ExplainPlanQueryResult res;
                 try {
-                    res = qE.execute(explainStatement.getStatement().getSelectBody());
+                    res = (ExplainPlanQueryResult) qE.execute(explainStatement.getStatement().getSelectBody());
                     packet.setResultEntry(res.convertEntriesToResultArrays(config));
                 } catch (SQLException e) {
                     throw new SQLExceptionWrapper(e);
@@ -66,7 +67,7 @@ public class QueryHandler {
                 QueryResult res;
                 try {
                     res = qE.execute(select.getSelectBody());
-                    packet.setResultEntry(res.convertEntriesToResultArrays(null));
+                    packet.setResultEntry(res.convertEntriesToResultArrays());
                 } catch (SQLException e) {
                     throw new SQLExceptionWrapper(e);
                 }

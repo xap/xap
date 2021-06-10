@@ -9,9 +9,13 @@ import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.exceptions.TypeNotFoundException;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
-import com.gigaspaces.jdbc.model.result.ExplainPlanResult;
+import com.gigaspaces.jdbc.model.result.ConcreteQueryResult;
+import com.gigaspaces.jdbc.model.result.ExplainPlanQueryResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
-import com.gigaspaces.query.aggregators.*;
+import com.gigaspaces.query.aggregators.AggregationSet;
+import com.gigaspaces.query.aggregators.DistinctAggregator;
+import com.gigaspaces.query.aggregators.OrderBy;
+import com.gigaspaces.query.aggregators.OrderByAggregator;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
@@ -24,14 +28,15 @@ import com.j_spaces.jdbc.query.QueryTableData;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ConcreteTableContainer extends TableContainer {
     private final IJSpace space;
     private QueryTemplatePacket queryTemplatePacket;
     private final ITypeDesc typeDesc;
     private final List<String> allColumnNamesSorted;
-    private final List<QueryColumn> visibleColumns = new ArrayList<>();
-    private final Set<QueryColumn> invisibleColumns = new HashSet<>();
+    private final List<IQueryColumn> visibleColumns = new ArrayList<>();
+    private final Set<IQueryColumn> invisibleColumns = new HashSet<>();
     private final String name;
     private final String alias;
     private Integer limit = Integer.MAX_VALUE;
@@ -58,7 +63,7 @@ public class ConcreteTableContainer extends TableContainer {
     public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
         if (queryResult != null)
             return queryResult;
-        //TODO: @sagiv at old JDBC, projectionC contains Aggregation column too. do the same here?
+
         String[] projectionC = createProjectionTable();
 
         try {
@@ -73,8 +78,8 @@ public class ConcreteTableContainer extends TableContainer {
             ExplainPlanV3 explainPlanImpl = null;
             if (config.isExplainPlan()) {
                 // Using LinkedHashMap to keep insertion order from the ArrayList
-                final Map<String, String> visibleColumnsAndAliasMap = visibleColumns.stream().filter(QueryColumn::isVisible).collect(Collectors.toMap
-                        (QueryColumn::getName, queryColumn -> queryColumn.getAlias() == null ? "" : queryColumn.getAlias()
+                final Map<String, String> visibleColumnsAndAliasMap = visibleColumns.stream().filter(IQueryColumn::isVisible).collect(Collectors.toMap
+                        (IQueryColumn::getName, queryColumn -> queryColumn.getAlias() == null ? "" : queryColumn.getAlias()
                                 , (oldValue, newValue) -> newValue, LinkedHashMap::new));
 
                 explainPlanImpl = new ExplainPlanV3(name, alias, visibleColumnsAndAliasMap);
@@ -93,9 +98,9 @@ public class ConcreteTableContainer extends TableContainer {
 
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
             if (explainPlanImpl != null) {
-                queryResult = new ExplainPlanResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
+                queryResult = new ExplainPlanQueryResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
             } else {
-                queryResult = new QueryResult(res, this);
+                queryResult = new ConcreteQueryResult(res, this);
             }
             return queryResult;
         } catch (Exception e) {
@@ -104,9 +109,7 @@ public class ConcreteTableContainer extends TableContainer {
     }
 
     private String[] createProjectionTable() {
-        Set<QueryColumn> tmp = new HashSet<>(invisibleColumns);
-        tmp.addAll(visibleColumns);
-        return tmp.stream().map(QueryColumn::getName).toArray(String[]::new);
+        return Stream.concat(visibleColumns.stream(), invisibleColumns.stream()).map(IQueryColumn::getName).distinct().toArray(String[]::new);
     }
 
     private void setAggregations() {
@@ -117,7 +120,7 @@ public class ConcreteTableContainer extends TableContainer {
 
     private void setGroupByAggregation() {
         //groupBy in server
-        List<QueryColumn> groupByColumns = getGroupByColumns();
+        List<ConcreteColumn> groupByColumns = getGroupByColumns();
         if(!groupByColumns.isEmpty()){
             int groupByColumnsCount = groupByColumns.size();
             String[] groupByColumnsArray = new String[ groupByColumnsCount ];
@@ -168,56 +171,57 @@ public class ConcreteTableContainer extends TableContainer {
         }
 
         for (AggregationColumn aggregationColumn : getAggregationFunctionColumns()) {
+            String columnName = aggregationColumn.getColumnName();
             switch (aggregationColumn.getType()) {
                 case COUNT:
                     if (aggregationColumn.isAllColumns()) {
                         aggregationSet.count();
                     } else {
-                        aggregationSet.count(aggregationColumn.getColumnName());
+                        aggregationSet.count(columnName);
                     }
                     break;
                 case MAX:
-                    aggregationSet.maxValue(aggregationColumn.getColumnName());
+                    aggregationSet.maxValue(columnName);
                     break;
                 case MIN:
-                    aggregationSet.minValue(aggregationColumn.getColumnName());
+                    aggregationSet.minValue(columnName);
                     break;
                 case AVG:
-                    aggregationSet.average(aggregationColumn.getColumnName());
+                    aggregationSet.average(columnName);
                     break;
                 case SUM:
-                    aggregationSet.sum(aggregationColumn.getColumnName());
+                    aggregationSet.sum(columnName);
                     break;
             }
         }
     }
 
     @Override
-    public QueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnIndex) {
-        if (!columnName.equalsIgnoreCase(QueryColumn.UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(columnName) == -1) {
+    public IQueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnIndex) {
+        if (!columnName.equalsIgnoreCase(IQueryColumn.UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(columnName) == -1) {
             throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]");
         }
 
         try {
-            QueryColumn qc = new QueryColumn(columnName, SQLUtil.getPropertyType(typeDesc, columnName), alias,
+            ConcreteColumn concreteColumn = new ConcreteColumn(columnName, SQLUtil.getPropertyType(typeDesc, columnName), alias,
                     visible, this, columnIndex);
             if (visible) {
-                this.visibleColumns.add(qc);
+                this.visibleColumns.add(concreteColumn);
             } else {
-                this.invisibleColumns.add(qc);
+                this.invisibleColumns.add(concreteColumn);
             }
-            return qc;
+            return concreteColumn;
         } catch (SQLException e) {
             throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]", e);
         }
     }
 
-    public List<QueryColumn> getVisibleColumns() {
+    public List<IQueryColumn> getVisibleColumns() {
         return visibleColumns;
     }
 
     @Override
-    public Set<QueryColumn> getInvisibleColumns() {
+    public Set<IQueryColumn> getInvisibleColumns() {
         return this.invisibleColumns;
     }
 

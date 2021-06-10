@@ -11,33 +11,31 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class TableContainer {
 
     private final List<OrderColumn> orderColumns = new ArrayList<>();
     private final List<AggregationColumn> aggregationColumns = new ArrayList<>();
-    private final List<QueryColumn> groupByColumns = new ArrayList<>();
+    private final List<ConcreteColumn> groupByColumns = new ArrayList<>();
     private Expression exprTree;
 
     public abstract QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
 
-    public abstract QueryColumn addQueryColumn(String columnName, String alias, boolean visible,  int columnIndex);
+    public abstract IQueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnIndex);
 
-    public abstract List<QueryColumn> getVisibleColumns();
+    public abstract List<IQueryColumn> getVisibleColumns();
 
-    public abstract Set<QueryColumn> getInvisibleColumns();
+    public abstract Set<IQueryColumn> getInvisibleColumns();
 
-    public List<QueryColumn> getAllQueryColumns() {
-        List<QueryColumn> results = new ArrayList<>(getVisibleColumns());
-        results.addAll(getInvisibleColumns());
-        return results;
+    public List<IQueryColumn> getAllQueryColumns() {
+        return Stream.concat(getVisibleColumns().stream(), getInvisibleColumns().stream()).collect(Collectors.toList());
     }
 
-    public List<QueryColumn> getSelectedColumns() {
-        List<QueryColumn> result = new ArrayList<>(getVisibleColumns());
-        result.addAll(getAggregationFunctionColumns());
-        result.sort(null);
-        return result;
+    public List<IQueryColumn> getSelectedColumns() {
+        return Stream.concat(getVisibleColumns().stream(), getAggregationFunctionColumns().stream())
+                .sorted().collect(Collectors.toList());
     }
 
     public abstract List<String> getAllColumnNames();
@@ -82,11 +80,11 @@ public abstract class TableContainer {
         this.orderColumns.add(orderColumn);
     }
 
-    public void addGroupByColumns(QueryColumn groupByColumn) {
+    public void addGroupByColumns(ConcreteColumn groupByColumn) {
         this.groupByColumns.add(groupByColumn);
     }
 
-    public List<QueryColumn> getGroupByColumns() {
+    public List<ConcreteColumn> getGroupByColumns() {
         return groupByColumns;
     }
 
@@ -94,7 +92,7 @@ public abstract class TableContainer {
         return orderColumns;
     }
 
-    public void addAggregationFunctionColumn(AggregationColumn aggregationColumn) {
+    public void addAggregationColumn(AggregationColumn aggregationColumn) {
         this.aggregationColumns.add(aggregationColumn);
     }
 
@@ -116,12 +114,12 @@ public abstract class TableContainer {
 
     protected void validateAggregationFunction() {
         //TODO: block until supports of group by implementation.
-        if(hasAggregationFunctions() && !getVisibleColumns().isEmpty()) {
+        if (hasAggregationFunctions() && !getVisibleColumns().isEmpty()) {
             throw new IllegalArgumentException("Column [" + getVisibleColumns().get(0) + "] must appear in the " +
                     "GROUP BY clause or be used in an aggregate function");
         }
         //TODO: block operation not supported -- see AggregationsUtil.convertAggregationResult
-        if(hasAggregationFunctions() && hasOrderColumns()) {
+        if (hasAggregationFunctions() && hasOrderColumns()) {
             throw new IllegalArgumentException("Column [" + getOrderColumns().get(0).getNameOrAlias() + "] must appear in the " +
                     "GROUP BY clause or be used in an aggregate function");
         }
