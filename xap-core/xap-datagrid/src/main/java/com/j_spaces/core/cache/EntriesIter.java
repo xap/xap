@@ -96,24 +96,27 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
             if(context.getTemplateTieredState() == null){
                 context.setTemplateTieredState(_cacheManager.getEngine().getTieredStorageManager().guessTemplateTier(template));
             }
-            boolean isServerIteratorAndTieredByTimeRule = template.isServerIterator() && template.getServerIteratorInfo().isTieredByTimeRule();
-             if( (!isServerIteratorAndTieredByTimeRule && context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT)
-                     || memoryOnly || template.isMemoryOnlySearch()){
+            boolean isServerIteratorAndTieredByTimeRule = template.isServerIterator() &&
+                    template.getServerIteratorInfo().isTieredByTimeRule();
+
+            if (memoryOnly || template.isMemoryOnlySearch()){
                 _memoryOnly = true;
             } else {
-                if (isServerIteratorAndTieredByTimeRule){
+                if (context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT && (!template.isServerIterator()
+                        && !isServerIteratorAndTieredByTimeRule)){
+                    _memoryOnly = true;
+                } else {
                     _memoryOnly = false;
-                } else{
-                    _memoryOnly = memoryOnly;
-                }
-                if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_COLD){
-                    _doneWithCache = true;
-                }
-
-                if(isServerIteratorAndTieredByTimeRule || context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
-                    _entriesReturned = new HashSet<>();
                 }
             }
+            if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_COLD){
+                _doneWithCache = true;
+            }
+
+            if(isServerIteratorAndTieredByTimeRule || context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
+                _entriesReturned = new HashSet<>();
+            }
+
             _notRefreshCache = true;
 
         } else {
