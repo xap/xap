@@ -30,14 +30,14 @@ public class GSTable extends AbstractTable {
     }
 
     private static SqlTypeName mapToSqlType(Class<?> clazz) {
-        if (clazz == Integer.class) {
+        if (clazz == Short.class) {
+            return SqlTypeName.SMALLINT;
+        } else if (clazz == Integer.class) {
             return SqlTypeName.INTEGER;
         } else if (clazz == Long.class) {
             return SqlTypeName.BIGINT;
         } else if (clazz == Float.class) {
             return SqlTypeName.FLOAT;
-        } else if (clazz == Short.class) {
-            return SqlTypeName.SMALLINT;
         } else if (clazz == Double.class) {
             return SqlTypeName.DOUBLE;
         } else if (clazz == BigDecimal.class) {
@@ -46,9 +46,9 @@ public class GSTable extends AbstractTable {
             return SqlTypeName.BOOLEAN;
         } else if (clazz == String.class) {
             return SqlTypeName.VARCHAR;
-        }  else if (clazz == java.sql.Date.class) {
+        }  else if (clazz == java.util.Date.class) {
             return SqlTypeName.DATE;
-        } else if (clazz == java.util.Date.class) {
+        } else if (clazz == java.sql.Date.class) {
             return SqlTypeName.DATE;
         } else if (clazz == java.sql.Time.class) {
             return SqlTypeName.TIME;
