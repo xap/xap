@@ -168,7 +168,7 @@ public class SQLUtil {
     public static ITypeDesc checkTableExistence(String tableName, IJSpace space)
             throws SQLException {
         try {
-            return ((ISpaceProxy) space).getDirectProxy().getTypeManager().getTypeDescByName(tableName);
+            return space.getDirectProxy().getTypeManager().getTypeDescByName(tableName);
         } catch (SpaceMetadataException ex) {
             if (ex.getCause() instanceof UnknownTypeException)
                 throw new SQLException("Table [" + tableName + "] does not exist", "GSP", -105);
