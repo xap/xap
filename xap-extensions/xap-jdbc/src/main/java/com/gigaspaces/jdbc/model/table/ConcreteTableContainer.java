@@ -87,7 +87,7 @@ public class ConcreteTableContainer extends TableContainer {
 
             // When we use join, we aggregate the results on the client side instead of on the server.
             if(!config.isJoinUsed()) {
-                setAggregation();
+                setAggregations();
             }
             queryTemplatePacket.prepareForSpace(typeDesc);
 
@@ -109,15 +109,10 @@ public class ConcreteTableContainer extends TableContainer {
         return tmp.stream().map(QueryColumn::getName).toArray(String[]::new);
     }
 
-    private void setAggregation() {
-        AggregationSet aggregationSet = new AggregationSet();
-        //TODO stop passing parameter to following functions, handle them like setGroupByAggregation as well
-        createOrderByAggregation(aggregationSet);
-        createAggregationFunctions(aggregationSet);
+    private void setAggregations() {
+        setOrderByAggregation();
+        setAggregationFunctions();
         setGroupByAggregation();
-        if(!aggregationSet.isEmpty()) {
-            queryTemplatePacket.setAggregationSet(aggregationSet);
-        }
     }
 
     private void setGroupByAggregation() {
@@ -141,20 +136,37 @@ public class ConcreteTableContainer extends TableContainer {
         }
     }
 
-    private void createOrderByAggregation(AggregationSet aggregationSet) {
+    private void setOrderByAggregation() {
         if(hasOrderColumns()){
             OrderByAggregator orderByAggregator = new OrderByAggregator();
             for (OrderColumn column : getOrderColumns()) {
                 orderByAggregator.orderBy(column.getName(), column.isAsc() ? OrderBy.ASC : OrderBy.DESC, column.isNullsLast());
             }
-            aggregationSet.orderBy(orderByAggregator);
+
+            if( queryTemplatePacket.getAggregationSet() == null ) {
+                AggregationSet aggregationSet = new AggregationSet().orderBy( orderByAggregator );
+                queryTemplatePacket.setAggregationSet(aggregationSet);
+            }
+            else{
+                queryTemplatePacket.getAggregationSet().add(orderByAggregator);
+            }
         }
     }
 
-    private void createAggregationFunctions(AggregationSet aggregationSet) {
+    private void setAggregationFunctions() {
         if(!hasAggregationFunctions()) {
             return;
         }
+
+        AggregationSet aggregationSet;
+        if( queryTemplatePacket.getAggregationSet() == null ) {
+            aggregationSet = new AggregationSet();
+            queryTemplatePacket.setAggregationSet(aggregationSet);
+        }
+        else{
+            aggregationSet = queryTemplatePacket.getAggregationSet();
+        }
+
         for (AggregationColumn aggregationColumn : getAggregationFunctionColumns()) {
             switch (aggregationColumn.getType()) {
                 case COUNT:

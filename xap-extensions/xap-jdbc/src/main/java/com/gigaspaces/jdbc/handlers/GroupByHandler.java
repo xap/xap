@@ -10,12 +10,13 @@ import net.sf.jsqlparser.statement.select.GroupByElement;
 import net.sf.jsqlparser.statement.select.GroupByVisitor;
 
 import java.util.List;
-import java.util.Optional;
 
 public class GroupByHandler extends UnsupportedExpressionVisitor implements GroupByVisitor {
     //TODO: consider not to pass queryExecutor but its relevant fields, when we need to serialize this object.
     private final QueryExecutor queryExecutor;
     private Column column;
+
+    private int columnIndex;
 
     public GroupByHandler(QueryExecutor queryExecutor) {
         this.queryExecutor = queryExecutor;
@@ -29,16 +30,13 @@ public class GroupByHandler extends UnsupportedExpressionVisitor implements Grou
             expression.accept( this );
             String columnName = getColumn().getColumnName();
             TableContainer table = getTable();
-            QueryColumn groupByColumn = new QueryColumn(columnName, null, null,  isVisibleColumn( columnName ), table);
+            QueryColumn groupByColumn = new QueryColumn(columnName, null, null,  isVisibleColumn( columnName ), table, columnIndex++);
             table.addGroupByColumns(groupByColumn);
         }
     }
 
     private boolean isVisibleColumn(String columnName) {
-        Optional<QueryColumn> fistOptional = this.queryExecutor.getQueryColumns().stream()
-                .filter(e -> e.getName().equals(columnName))
-                .findFirst();
-        return fistOptional.isPresent();
+        return this.queryExecutor.getVisibleColumns().stream().anyMatch(queryColumn -> queryColumn.getNameOrAlias().equals(columnName));
     }
 
     @Override

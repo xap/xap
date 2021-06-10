@@ -47,7 +47,7 @@ public class QueryResult { //TODO: @sagiv make different class for each cons
             aggregateRows.add(TableRow.aggregate(tableRows, tempTableContainer.getAggregationFunctionColumns()));
             this.rows = aggregateRows;
         } else { //TODO: @sagiv pass tempTable
-            this.rows = tableRows.stream().map(row -> new TableRow(row, this.queryColumns, tempTableContainer.getOrderColumns())).collect(Collectors.toList());
+            this.rows = tableRows.stream().map(row -> new TableRow(row, this.queryColumns, tempTableContainer.getOrderColumns(), tempTableContainer.getGroupByColumns() )).collect(Collectors.toList());
         }
     }
 
