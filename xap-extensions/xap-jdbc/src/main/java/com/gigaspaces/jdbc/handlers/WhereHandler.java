@@ -6,6 +6,7 @@ import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.UnionTemplatePacket;
 import com.j_spaces.jdbc.builder.range.*;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.NotExpression;
 import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
@@ -275,6 +276,22 @@ public class WhereHandler extends UnsupportedExpressionVisitor {
             expTree.put(table, between);
         } else {
             throw new UnsupportedOperationException("NOT BETWEEN is not supported");
+        }
+    }
+
+    @Override
+    public void visit(NotExpression notExpression) {
+//        WhereHandler handler= new WhereHandler(tables, preparedValues);
+
+        NotConditionHandler notConditionHandler = new NotConditionHandler(tables, preparedValues);
+        notExpression.getExpression().accept(notConditionHandler);
+
+
+        for (Map.Entry<TableContainer, QueryTemplatePacket> table : notConditionHandler.getQTPMap().entrySet()) {
+            this.qtpMap.put(table.getKey(), table.getValue());
+        }
+        for (Map.Entry<TableContainer, Expression> table : notConditionHandler.getExpTree().entrySet()) {
+            this.expTree.put(table.getKey(), table.getValue());
         }
     }
 
