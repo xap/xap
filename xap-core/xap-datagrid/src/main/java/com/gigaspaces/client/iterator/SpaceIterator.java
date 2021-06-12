@@ -67,8 +67,6 @@ public class SpaceIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
             return true;
         if(spaceProxy.getCacheTypeName().equals("LocalView"))
             return true;
-        if(spaceProxy.getDirectProxy().getProxySettings().getSpaceAttributes().getCachePolicy().equals(CACHE_POLICY_LRU))
-            return true;
         return false;
     }
 
