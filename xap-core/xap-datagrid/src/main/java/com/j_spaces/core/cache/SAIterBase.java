@@ -31,7 +31,7 @@ import com.j_spaces.core.sadapter.SAException;
  * This is the base class of all cache iterators. It is responsible for:
  */
 public abstract class SAIterBase {
-    final protected Context _context;
+    protected Context _context;
     final protected CacheManager _cacheManager;
 
     protected SAIterBase(Context context, CacheManager cacheManager)

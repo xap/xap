@@ -5,10 +5,12 @@ import com.gigaspaces.internal.server.metadata.IServerTypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.j_spaces.core.GetBatchForIteratorException;
 import com.j_spaces.core.cache.IEntryCacheInfo;
+import com.j_spaces.core.cache.context.TemplateMatchTier;
 import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.list.IScanListIterator;
 import com.j_spaces.kernel.list.CircularNumerator;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 public class ServerIteratorInfo {
@@ -16,7 +18,9 @@ public class ServerIteratorInfo {
     final private UUID uuid;
     final private int batchSize;
     final private long maxInactiveDuration;
-    private volatile IScanListIterator<IEntryCacheInfo> scanListIterator;
+    private volatile IScanListIterator<IEntryCacheInfo> scanEntriesIter;
+    private volatile boolean isTieredByTimeRule;
+    private volatile TemplateMatchTier templateMatchTier;
     private volatile IEntryPacket[] storedEntryPacketsBatch;
     private volatile int storedBatchNumber;
     private volatile long expirationTime;
@@ -36,12 +40,12 @@ public class ServerIteratorInfo {
         return uuid;
     }
 
-    public IScanListIterator<IEntryCacheInfo> getScanListIterator() {
-        return scanListIterator;
+    public void setScanEntriesIter(IScanListIterator<IEntryCacheInfo> scanEntriesIter) {
+        this.scanEntriesIter = scanEntriesIter;
     }
 
-    public void setScanListIterator(IScanListIterator scanListIterator) {
-        this.scanListIterator = scanListIterator;
+    public IScanListIterator<IEntryCacheInfo> getScanEntriesIter() {
+        return scanEntriesIter;
     }
 
     public int getBatchSize() {
@@ -66,6 +70,14 @@ public class ServerIteratorInfo {
         return this;
     }
 
+    public boolean isTieredByTimeRule() {
+        return isTieredByTimeRule;
+    }
+
+    public void setTieredByTimeRule(boolean tieredByTimeRule) {
+        this.isTieredByTimeRule = tieredByTimeRule;
+    }
+
     public long getExpirationTime() {
         return expirationTime;
     }
@@ -75,16 +87,24 @@ public class ServerIteratorInfo {
         return this;
     }
 
+    public TemplateMatchTier getTemplateMatchTier() {
+        return templateMatchTier;
+    }
+
+    public void setTemplateMatchTier(TemplateMatchTier templateMatchTier) {
+        this.templateMatchTier = templateMatchTier;
+    }
+
     public boolean isActive() {
         return active;
     }
 
     private void deactivate() {
         this.active = false;
-        if(this.scanListIterator != null) {
+        if(this.scanEntriesIter != null) {
             try {
-                this.scanListIterator.releaseScan();
-                this.scanListIterator = null;
+                this.scanEntriesIter.releaseScan();
+                this.scanEntriesIter = null;
             } catch (SAException e) {
                 throw new SpaceRuntimeException("Failed to close scan list iterator ", e);
             }
@@ -163,8 +183,10 @@ public class ServerIteratorInfo {
                 "uuid=" + uuid +
                 ", batchSize=" + batchSize +
                 ", active=" + active +
-                ", scanListIterator=" + scanListIterator +
-                ", storedEntryPacketsBatch=" + + (storedEntryPacketsBatch!=null ? storedEntryPacketsBatch.length : null) +
+                ", scanEntriesIter=" + scanEntriesIter +
+                ", isTieredByTimeRule=" + isTieredByTimeRule +
+                ", templateMatchTier=" + templateMatchTier +
+                ", storedEntryPacketsBatch=" + (storedEntryPacketsBatch!=null ? storedEntryPacketsBatch.length : null) +
                 ", storedBatchNumber=" + storedBatchNumber +
                 ", expirationTime=" + expirationTime +
                 '}';

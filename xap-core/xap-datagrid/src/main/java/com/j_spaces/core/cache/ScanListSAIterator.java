@@ -75,6 +75,10 @@ public class ScanListSAIterator
 
     }
 
+    public ISAdapterIterator<IEntryHolder> getSAiter() {
+        return _SAiter;
+    }
+
     /**
      * release SLHolder for this scan
      */

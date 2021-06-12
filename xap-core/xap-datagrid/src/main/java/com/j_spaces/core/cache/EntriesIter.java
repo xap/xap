@@ -31,7 +31,6 @@ import com.j_spaces.core.XtnStatus;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.blobStore.IBlobStoreRefCacheInfo;
 import com.j_spaces.core.cache.context.TemplateMatchTier;
-import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 import com.j_spaces.kernel.IStoredList;
@@ -64,6 +63,7 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
     //NOTE-meaningless in FIFO. ignored
     final private boolean _memoryOnly;
     final private boolean _transientOnly;
+    volatile long alternatingThreadBarrier = 1;
 
 
     //FIFO-related +++++++++++++++++++++++++++++++++++++++++++
@@ -96,20 +96,25 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
             if(context.getTemplateTieredState() == null){
                 context.setTemplateTieredState(_cacheManager.getEngine().getTieredStorageManager().guessTemplateTier(template));
             }
+            boolean isServerIteratorAndTieredByTimeRule = template.isServerIterator() &&
+                    template.getServerIteratorInfo().isTieredByTimeRule();
 
-            if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT || memoryOnly || template.isMemoryOnlySearch()){
+            if (memoryOnly || template.isMemoryOnlySearch()){
                 _memoryOnly = true;
             } else {
-                _memoryOnly = memoryOnly;
-                if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_COLD){
-                    _doneWithCache = true;
+                if (context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT && (!template.isServerIterator()
+                        && !isServerIteratorAndTieredByTimeRule)){
+                    _memoryOnly = true;
+                } else {
+                    _memoryOnly = false;
                 }
+            }
+            if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_COLD){
+                _doneWithCache = true;
+            }
 
-
-                if(context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
-                    _entriesReturned = new HashSet<>();
-                }
-
+            if(isServerIteratorAndTieredByTimeRule || context.getTemplateTieredState() == TemplateMatchTier.MATCH_HOT_AND_COLD){
+                _entriesReturned = new HashSet<>();
             }
 
             _notRefreshCache = true;
@@ -220,6 +225,22 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
     }
 
 
+    public void beforeAlternatingThreadBatch(Context context){
+        if (alternatingThreadBarrier == 0){
+            throw new RuntimeException("internal error alternating thread");
+        }
+        setContext(context);
+    }
+
+    public void afterAlternatingThreadBatch(){
+        alternatingThreadBarrier++;
+        setContext(null);
+    }
+
+    private void setContext(Context _context) {
+        this._context = _context;
+    }
+
     private int getMathRandom(int size) {
         return randomGenerator.nextInt(size);
     }
@@ -248,6 +269,13 @@ public class EntriesIter extends SAIterBase implements ISAdapterIterator<IEntryH
             if (_currentEntryCacheInfo == null) {
                 // finished with cache, starting with SA
                 _doneWithCache = true;
+                if (_templateHolder.isServerIterator() && _templateHolder.getServerIteratorInfo().isTieredByTimeRule()){
+                    TemplateMatchTier updatedTieredState = _cacheManager.getEngine().getTieredStorageManager().guessTemplateTier(_templateHolder);
+                    if (updatedTieredState != _templateHolder.getServerIteratorInfo().getTemplateMatchTier()){
+                        _context.setTemplateTieredState(updatedTieredState);
+                        _templateHolder.getServerIteratorInfo().setTemplateMatchTier(updatedTieredState);
+                    }
+                }
                 if (_cacheManager.isEvictableCachePolicy() &&
                         !_cacheManager.isMemorySpace() && !_memoryOnly && !_transientOnly) {
 
