@@ -1390,11 +1390,7 @@ public class CacheManager extends AbstractCacheManager
             if(context.getEntryTieredState() == null){
                 throw new IllegalStateException("trying to write entry in tiered mode but context.getEntryTieredState() == null, uid = "+entryHolder.getUID());
             }
-            if(context.isColdEntry() && entryHolder.getXidOriginatedTransaction() == null) {
-                _engine.getTieredStorageManager().getInternalStorage().insertEntry(context, entryHolder);
-            }
-
-
+            _engine.getTieredStorageManager().getInternalStorage().insertEntry(context, entryHolder);
         }
 
         if((isTieredStorage() && context.isHotEntry()) || !isTieredStorage()) {
@@ -1510,7 +1506,7 @@ public class CacheManager extends AbstractCacheManager
                 if(!entry.isTransient()){
                     tieredStorageManager.getInternalStorage().updateEntry(context, cold_eh);
                 }
-
+                boolean isOriginalEntryHot = context.isHotEntry();
                 String typeName = newEntryData.getSpaceTypeDescriptor().getTypeName();
                 if(!tieredStorageManager.hasCacheRule(typeName)) {
                     context.setEntryTieredState(TieredState.TIERED_COLD);
@@ -1526,7 +1522,8 @@ public class CacheManager extends AbstractCacheManager
                         context.setEntryTieredState(TieredState.TIERED_COLD);
                     }
                 }
-
+                boolean isNewEntryHot = context.isHotEntry();
+                tieredStorageManager.getInternalStorage().updateRamCounterAfterUpdate(typeName,isNewEntryHot,isOriginalEntryHot);
 
                 if(pEntry != null){ //old is hot or transient
                     if(context.isHotEntry()){
@@ -2056,9 +2053,7 @@ public class CacheManager extends AbstractCacheManager
                             if(context.getEntryTieredState() == null ){
                                 throw new IllegalStateException("context.getEntryTieredState() == null in  remove entry ");
                             }
-                            if(context.getEntryTieredState() != TieredState.TIERED_HOT){
-                                _engine.getTieredStorageManager().getInternalStorage().removeEntry(context, entryHolder);
-                            }
+                            _engine.getTieredStorageManager().getInternalStorage().removeEntry(context, entryHolder);
                         }
                     } else {
                         _storageAdapter.removeEntry(context, entryHolder, origin, leaseExpiration, shouldReplicate);
@@ -2087,10 +2082,7 @@ public class CacheManager extends AbstractCacheManager
                                 if(context.getEntryTieredState() == null ){
                                     throw new IllegalStateException("context.getEntryTieredState() == null in  remove entry ");
                                 }
-
-                                if(context.getEntryTieredState() != TieredState.TIERED_HOT){
-                                    _engine.getTieredStorageManager().getInternalStorage().removeEntry(context, entryHolder);
-                                }
+                                _engine.getTieredStorageManager().getInternalStorage().removeEntry(context, entryHolder);
                             }
                         } else {
                             _storageAdapter.removeEntry(context, entryHolder, origin, leaseExpiration, actualUpdateRedoLog);
@@ -5979,8 +5971,8 @@ public class CacheManager extends AbstractCacheManager
         boolean memoryOnlyIter;
 
         if(isTieredStorage()){
-            entriesInfo = countEntries(serverTypeDesc, false , false);
-            ramEntriesInfo = countEntries(serverTypeDesc, false , true);
+            entriesInfo = _engine.getTieredStorageManager().getInternalStorage().getCounterMap();
+            ramEntriesInfo = _engine.getTieredStorageManager().getInternalStorage().getRamCounterMap();
         }else {
             ramEntriesInfo = new HashMap<>();
 //             APP-833 (Guy K): 18.12.2006 in order to avoid
