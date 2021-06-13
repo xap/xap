@@ -20,8 +20,11 @@ import net.sf.jsqlparser.util.validation.feature.FeaturesAllowed;
 import net.sf.jsqlparser.util.validation.validator.StatementValidator;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.externalize.RelWriterImpl;
+import org.apache.calcite.runtime.CalciteException;
 import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.parser.SqlParseException;
+import org.apache.calcite.sql.validate.SqlValidatorException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -109,18 +112,30 @@ public class QueryHandler {
         }
     }
 
-    private static GSRelNode optimizeWithCalcite(String query, IJSpace space) {
-        GSOptimizer optimizer = new GSOptimizer(space);
-        SqlNode ast = optimizer.parse(query);
-        SqlNode validatedAst = optimizer.validate(ast);
-        RelNode logicalPlan = optimizer.createLogicalPlan(validatedAst);
-        GSRelNode physicalPlan = optimizer.createPhysicalPlan(logicalPlan);
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        RelWriterImpl writer = new RelWriterImpl(pw, SqlExplainLevel.EXPPLAN_ATTRIBUTES, false);
-        physicalPlan.explain(writer);
-        System.out.println(sw);
+    private static GSRelNode optimizeWithCalcite(String query, IJSpace space) throws SQLException {
+        try {
+            GSOptimizer optimizer = new GSOptimizer(space);
+            SqlNode ast = optimizer.parse(query);
+            SqlNode validatedAst = optimizer.validate(ast);
+            RelNode logicalPlan = optimizer.createLogicalPlan(validatedAst);
+            GSRelNode physicalPlan = optimizer.createPhysicalPlan(logicalPlan);
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            RelWriterImpl writer = new RelWriterImpl(pw, SqlExplainLevel.EXPPLAN_ATTRIBUTES, false);
+            physicalPlan.explain(writer);
+            System.out.println(sw);
 
-        return physicalPlan;
+            return physicalPlan;
+        } catch (SqlParseException sqlParseException) {
+            throw new SQLException("Query parsing failed.", sqlParseException);
+        } catch (CalciteException calciteException) {
+            Throwable cause = calciteException.getCause();
+            if (cause != null) {
+                if (cause instanceof SqlValidatorException) {
+                    throw new SQLException("Query validation failed.", cause);
+                }
+            }
+            throw calciteException; //runtime
+        }
     }
 }
