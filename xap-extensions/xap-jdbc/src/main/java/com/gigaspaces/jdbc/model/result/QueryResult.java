@@ -136,14 +136,11 @@ public abstract class QueryResult {
 
     public void groupBy(){
 
-        Map<TableRowGroupByValues,TableRow> tableRows = new HashMap<>();
+        Map<TableRowGroupByKey,TableRow> tableRows = new HashMap<>();
         for( TableRow tableRow : getRows() ){
             Object[] groupByValues = tableRow.getGroupByValues();
             if( groupByValues.length > 0 ){
-                TableRowGroupByValues key = new TableRowGroupByValues( groupByValues );
-                if( !tableRows.containsKey( key ) ) {
-                    tableRows.put( key, tableRow );
-                }
+                tableRows.putIfAbsent( new TableRowGroupByKey( groupByValues ), tableRow );
             }
         }
         if( !tableRows.isEmpty() ) {

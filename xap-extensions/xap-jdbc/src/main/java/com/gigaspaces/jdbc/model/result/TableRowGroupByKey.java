@@ -2,11 +2,11 @@ package com.gigaspaces.jdbc.model.result;
 
 import java.util.Arrays;
 
-public class TableRowGroupByValues {
+public class TableRowGroupByKey {
 
     private final Object[] groupByValues;
 
-    public TableRowGroupByValues( Object[] groupByValues ){
+    public TableRowGroupByKey(Object[] groupByValues ){
         this.groupByValues = groupByValues;
     }
 
@@ -14,7 +14,7 @@ public class TableRowGroupByValues {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        TableRowGroupByValues that = (TableRowGroupByValues) o;
+        TableRowGroupByKey that = (TableRowGroupByKey) o;
         return Arrays.equals(groupByValues, that.groupByValues);
     }
 
