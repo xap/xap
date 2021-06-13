@@ -75,7 +75,7 @@ public class RecoveryManager {
     public SpaceRecoverStrategy getRecoveryStrategy(SpaceMode spaceMode)
             throws SpaceRecoveryException {
         if(_space.getEngine().isTieredStorage()){
-            return spaceMode.equals(SpaceMode.BACKUP) ? getBackupSpaceRecovery() : new TieredStoragePrimarySpaceRecovery(_space);
+            return spaceMode.equals(SpaceMode.BACKUP) ? getBackupSpaceRecovery() : new TieredStoragePrimarySpaceRecovery(_space, spaceMode);
         } else {
             switch (spaceMode) {
                 case PRIMARY: {

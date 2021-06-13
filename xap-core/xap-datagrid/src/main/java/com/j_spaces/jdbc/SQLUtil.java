@@ -21,6 +21,7 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.ITypeIntrospector;
 import com.gigaspaces.internal.metadata.PropertyInfo;
+import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.utils.ObjectConverter;
 import com.gigaspaces.metadata.SpaceMetadataException;
@@ -169,6 +170,18 @@ public class SQLUtil {
             throws SQLException {
         try {
             return ((ISpaceProxy) space).getDirectProxy().getTypeManager().getTypeDescByName(tableName);
+        } catch (SpaceMetadataException ex) {
+            if (ex.getCause() instanceof UnknownTypeException)
+                throw new SQLException("Table [" + tableName + "] does not exist", "GSP", -105);
+            else
+                throw ex;
+        }
+    }
+
+    public static ITypeDesc checkTableExistence(String tableName, SpaceTypeManager typeManager)
+            throws SQLException {
+        try {
+            return typeManager.getTypeDesc(tableName);
         } catch (SpaceMetadataException ex) {
             if (ex.getCause() instanceof UnknownTypeException)
                 throw new SQLException("Table [" + tableName + "] does not exist", "GSP", -105);

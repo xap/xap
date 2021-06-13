@@ -16,6 +16,7 @@
 
 package com.gigaspaces.internal.server.space.recovery.strategy;
 
+import com.gigaspaces.cluster.activeelection.SpaceMode;
 import com.gigaspaces.internal.cluster.node.replica.ISpaceSynchronizeReplicaState;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.space.recovery.group.CompositeRecoveryGroup;
@@ -38,7 +39,7 @@ public class TieredStoragePrimarySpaceRecovery
     private final SpaceImpl _space;
 
 
-    public TieredStoragePrimarySpaceRecovery(SpaceImpl space) {
+    public TieredStoragePrimarySpaceRecovery(SpaceImpl space, SpaceMode spaceMode) {
         _space = space;
 
         _recoveryGroup = new CompositeRecoveryGroup(_space);
@@ -47,8 +48,10 @@ public class TieredStoragePrimarySpaceRecovery
         if (clusterPolicy == null)
             return;
 
-        if (clusterPolicy.m_FailOverPolicy != null)
-            _recoveryGroup.add(new FailoverGroupRecovery(_space));
+        if(!spaceMode.equals(SpaceMode.PRIMARY)){
+            if (clusterPolicy.m_FailOverPolicy != null)
+                _recoveryGroup.add(new FailoverGroupRecovery(_space));
+        }
 
         if (clusterPolicy.m_ReplicationPolicy != null)
             _recoveryGroup.add(new ReplicationGroupRecovery(_space));

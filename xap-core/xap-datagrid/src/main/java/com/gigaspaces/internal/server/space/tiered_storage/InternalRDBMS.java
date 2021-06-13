@@ -24,7 +24,7 @@ public interface InternalRDBMS {
      * @throws SAException
      */
 
-    boolean initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager) throws SAException;
+    boolean initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager, boolean isBackup) throws SAException;
 
     long getDiskSize() throws SAException, IOException;
 
@@ -68,5 +68,7 @@ public interface InternalRDBMS {
     void persistType(ITypeDesc typeDesc) throws SAException;
 
     void initialLoad(Context context, SpaceEngine engine, InitialLoadInfo initialLoadInfo) throws SAException;
+
+    SpaceTypeManager getTypeManager();
 }
 

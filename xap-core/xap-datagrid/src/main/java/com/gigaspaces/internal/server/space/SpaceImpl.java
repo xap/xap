@@ -3259,6 +3259,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             _directPersistencyRecoveryHelper = initDirectPersistencyRecoveryHelper(_clusterPolicy);
             _leaderSelector = initLeaderSelectorHandler(isLookupServiceEnabled);
             initReplicationStateBasedOnActiveElection();
+            if (_engine.isTieredStorage()) {
+                _engine.getTieredStorageManager().initialize(_engine);
+                _engine.getTieredStorageManager().initTieredStorageMetrics(this, _engine.getMetricManager());
+            }
             recover();
             _qp = createQueryProcessor();
 

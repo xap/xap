@@ -609,7 +609,7 @@ public class CacheManager extends AbstractCacheManager
 
 
         if(isTieredStorage()){
-            loadDataFromDB = _engine.getTieredStorageManager().isWarmStart() || getStorageAdapter() != null;
+            loadDataFromDB = _engine.getSpaceImpl().isPrimary() &&  (_engine.getTieredStorageManager().RDBMSContainsData() || getStorageAdapter() != null);
         }
 
         if (loadDataFromDB) {
@@ -933,7 +933,7 @@ public class CacheManager extends AbstractCacheManager
         // if cache policy is ALL_IN_CACHE- load all entries to cache from SA
         if (isResidentEntriesCachePolicy()) {
             //if RDBMS is not empty init from RDBMS else if has mirror initial load from mirror
-            if(isTieredStorage() && _engine.getTieredStorageManager().isWarmStart()) {
+            if(isTieredStorage() && _engine.getTieredStorageManager().RDBMSContainsData()) {
                 _engine.getTieredStorageManager().getInternalStorage().initialLoad(context, _engine, initialLoadInfo);
                 if (_logger.isInfoEnabled()) {
                     _logger.info("Data source recovery:\n " +

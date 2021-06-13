@@ -318,12 +318,6 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             initTieredStorageManager(spaceImpl);
             final TypeDescFactory typeDescFactory = new TypeDescFactory(_directProxy);
             _typeManager = new SpaceTypeManager(typeDescFactory, _configReader, tieredStorageManager);
-            if (isTieredStorage()) {
-                tieredStorageManager.initialize(_spaceName, _fullSpaceName, _typeManager);
-                tieredStorageManager.initTieredStorageMetrics(_spaceImpl, _metricManager);
-            }
-        } catch (SAException e) {
-            throw new CreateException("Failed to initialize InternalRDBMS", e);
         } catch (IllegalAccessException | InstantiationException | ClassNotFoundException e) {
             throw new CreateException("Failed to instantiate InternalRDBMS class", e);
         }
@@ -396,7 +390,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             String className = System.getProperty(TIERED_STORAGE_INTERNAL_RDBMS_CLASS_PROP, TIERED_STORAGE_INTERNAL_RDBMS_CLASS_DEFAULT);
             InternalRDBMS rdbms = ClassLoaderHelper.newInstance(className);
             InternalRDBMSManager internalRDBMSManager = new InternalRDBMSManager(rdbms);
-            this.tieredStorageManager = new TieredStorageManagerImpl(storageConfig, internalRDBMSManager, space.getSpaceProxy().getDirectProxy(), _fullSpaceName);
+            this.tieredStorageManager = new TieredStorageManagerImpl(storageConfig, internalRDBMSManager, _fullSpaceName);
         }
     }
 
