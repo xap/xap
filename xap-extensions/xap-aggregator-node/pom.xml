@@ -47,6 +47,7 @@
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-jdbc</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
             <exclusions>
                 <exclusion>
                     <groupId>com.github.jsqlparser</groupId>
@@ -70,6 +71,7 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.26</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -83,12 +85,14 @@
             <groupId>org.apache.calcite</groupId>
             <artifactId>calcite-core</artifactId>
             <version>${calcite.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -103,19 +107,19 @@
     <build>
         <finalName>aggregator-node</finalName>
 
-<!--        <plugins>-->
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-shade-plugin</artifactId>-->
-<!--                <version>3.2.4</version>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <phase>package</phase>-->
-<!--                        <goals>-->
-<!--                            <goal>shade</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
 <!--                <configuration>-->
 <!--                    <createDependencyReducedPom>false</createDependencyReducedPom>-->
 <!--                    <relocations>-->
@@ -125,8 +129,8 @@
 <!--                        </relocation>-->
 <!--                    </relocations>-->
 <!--                </configuration>-->
-<!--            </plugin>-->
-<!--        </plugins>-->
+            </plugin>
+        </plugins>
 
     </build>
 

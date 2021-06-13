@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat;
 
 public class MainCalciteTester {
     public static void main(String[] args) throws SQLException, ParseException {
-//        GigaSpace space = createAndFillSpace(true, false);
+        GigaSpace space = createAndFillSpace(true, false);
 
         try {
             Class.forName("org.postgresql.Driver");
