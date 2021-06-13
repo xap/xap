@@ -26,6 +26,16 @@
             <artifactId>xap-datagrid</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.calcite</groupId>
+            <artifactId>calcite-core</artifactId>
+            <version>${calcite.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.gigaspaces</groupId>
             <artifactId>xap-openspaces</artifactId>
             <scope>test</scope>

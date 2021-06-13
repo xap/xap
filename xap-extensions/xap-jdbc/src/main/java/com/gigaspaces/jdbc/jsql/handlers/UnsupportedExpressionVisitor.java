@@ -1,4 +1,4 @@
-package com.gigaspaces.jdbc.handlers;
+package com.gigaspaces.jdbc.jsql.handlers;
 
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.operators.arithmetic.*;
