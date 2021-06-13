@@ -30,6 +30,7 @@
         <javax.transaction.version>1.2</javax.transaction.version>
         <calcite.version>1.25.0</calcite.version>
         <guava.version>23.0</guava.version>
+        <xap.dep.scope>compile</xap.dep.scope>
     </properties>
 
     <scm>
@@ -104,56 +105,56 @@
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-common</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-openspaces</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-trove</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-datagrid</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-asm</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-scala-core</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-jms</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-rest-spring</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-rest</artifactId>
                 <version>${project.version}</version>
                 <type>war</type>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <!--<dependency>-->
                 <!--<groupId>org.gigaspaces</groupId>-->
@@ -165,61 +166,61 @@
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-jetty</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-map</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-map-spring</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-hibernate-spring</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-jpa-spring</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-spatial</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-full-text-search</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-cli</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-blueprints</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-cassandra</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>
@@ -254,52 +255,55 @@
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-mongodb</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-kafka</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-mule</artifactId>
                 <version>${project.version}</version>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-groovy</artifactId>
                 <version>${project.version}</version>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-jruby</artifactId>
                 <version>${project.version}</version>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-metrics-influxdb</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-metrics-hsqldb</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-jdbc</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
                 <artifactId>xap-aggregator-node</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+                <scope>${xap.dep.scope}</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -401,6 +405,11 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>javacc-maven-plugin</artifactId>
                     <version>2.6</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.1.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
