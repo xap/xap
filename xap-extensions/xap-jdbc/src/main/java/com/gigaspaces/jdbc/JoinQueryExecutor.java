@@ -66,6 +66,10 @@ public class JoinQueryExecutor {
         if(!orderColumns.isEmpty()) {
             res.sort(); //sort the results at the client
         }
+        if(!groupByColumns.isEmpty()) {
+            res.groupBy(); //group by the results at the client
+        }
+
         return res;
     }
 
