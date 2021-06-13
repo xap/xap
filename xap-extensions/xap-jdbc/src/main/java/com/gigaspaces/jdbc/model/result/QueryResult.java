@@ -136,22 +136,18 @@ public abstract class QueryResult {
 
     public void groupBy(){
 
-        Map<Object,TableRow> tableRows = new HashMap<>();
+        Map<TableRowGroupByValues,TableRow> tableRows = new HashMap<>();
         for( TableRow tableRow : getRows() ){
             Object[] groupByValues = tableRow.getGroupByValues();
             if( groupByValues.length > 0 ){
-                if(groupByValues.length == 1){
-                    //in the case of single value in groupByValues array use this value as a key in order to prevent list creation
-                    tableRows.put(groupByValues[0], tableRow);
-                }
-                else {
-                    //create key based on array of values
-                    tableRows.put(Arrays.asList(groupByValues), tableRow);
+                TableRowGroupByValues key = new TableRowGroupByValues( groupByValues );
+                if( !tableRows.containsKey( key ) ) {
+                    tableRows.put( key, tableRow );
                 }
             }
         }
         if( !tableRows.isEmpty() ) {
-            setRows(new ArrayList<>(tableRows.values()));
+            setRows( new ArrayList<>(tableRows.values()) );
         }
     }
 }
