@@ -3,6 +3,7 @@ package com.gigaspaces.jdbc.model.join;
 import com.gigaspaces.jdbc.model.table.IQueryColumn;
 import com.j_spaces.jdbc.builder.range.Range;
 import net.sf.jsqlparser.statement.select.Join;
+import org.apache.calcite.rel.core.JoinRelType;
 
 import java.util.Objects;
 
@@ -66,6 +67,21 @@ public class JoinInfo {
             if (join.isOuter() || join.isFull())
                 return FULL;
             return INNER;
+        }
+
+        public static JoinType getType(JoinRelType joinRelType){
+            switch (joinRelType) {
+                case INNER:
+                    return INNER;
+                case LEFT:
+                    return LEFT;
+                case RIGHT:
+                    return RIGHT;
+                case FULL:
+                    return FULL;
+                default:
+                    throw new UnsupportedOperationException("Join of type " + joinRelType + " is not supported");
+            }
         }
 
         public static byte toCode(JoinType joinType) {
