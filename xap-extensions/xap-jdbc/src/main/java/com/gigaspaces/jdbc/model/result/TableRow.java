@@ -73,7 +73,7 @@ public class TableRow implements Comparable<TableRow> {
     }
 
     TableRow(List<IQueryColumn> columns, List<OrderColumn> orderColumns, List<ConcreteColumn> groupByColumns) {
-        this.columns = columns.toArray(new ConcreteColumn[0]);
+        this.columns = columns.toArray(new IQueryColumn[0]);
         values = new Object[this.columns.length];
         for (int i = 0; i < this.columns.length; i++) {
             values[i] = this.columns[i].getCurrentValue();
