@@ -3,6 +3,7 @@ package com.gigaspaces.sql.aggregatornode.netty.query;
 import com.fasterxml.jackson.databind.util.ArrayIterator;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.transport.ITransportPacket;
+import com.gigaspaces.jdbc.CalciteQueryHandler;
 import com.gigaspaces.jdbc.QueryHandler;
 import com.gigaspaces.sql.aggregatornode.netty.exception.BreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
@@ -30,14 +31,14 @@ public class QueryProviderImpl implements QueryProvider{
     private static final AtomicLong COUNTER = new AtomicLong();
 
     private final ISpaceProxy space;
-    private final QueryHandler handler;
+    private final CalciteQueryHandler handler;
 
     private Map<String, Statement> statements = new HashMap<>();
     private Map<String, Portal<?>> portals = new HashMap<>();
 
     public QueryProviderImpl(ISpaceProxy space) {
         this.space = space;
-        this.handler = new QueryHandler();
+        this.handler = new CalciteQueryHandler();
     }
 
     public void init() throws ProtocolException {
