@@ -103,7 +103,7 @@ public class QueryProviderImpl implements QueryProvider{
     @Override
     public StatementDescription describeS(String stmt) throws ProtocolException {
         if (!statements.containsKey(stmt))
-            throw new NonBreakingException("26000", "invalid statement name");
+            throw new NonBreakingException("26000", "invalid statement name ["+stmt+"]");
 
         return statements.get(stmt).getDescription();
     }
@@ -111,7 +111,7 @@ public class QueryProviderImpl implements QueryProvider{
     @Override
     public RowDescription describeP(String portal) throws ProtocolException {
         if (!portals.containsKey(portal))
-            throw new NonBreakingException("34000", "invalid cursor name");
+            throw new NonBreakingException("34000", "invalid cursor name ["+portal+"]");
 
         return portals.get(portal).getDescription();
     }
@@ -119,7 +119,7 @@ public class QueryProviderImpl implements QueryProvider{
     @Override
     public Portal<?> execute(String portal) throws ProtocolException {
         if (!portals.containsKey(portal))
-            throw new NonBreakingException("34000", "invalid cursor name");
+            throw new NonBreakingException("34000", "invalid cursor name ["+portal+"]");
 
         return portals.get(portal);
     }

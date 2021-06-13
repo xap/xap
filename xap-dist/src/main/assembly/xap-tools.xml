@@ -47,6 +47,11 @@
                 <include>*autocomplete</include>
             </includes>
         </fileSet>
+    <fileSets>
+        <fileSet>
+            <outputDirectory>product/tools/jdbc/lib</outputDirectory>
+            <directory>${project.basedir}/../xap-extensions/xap-aggregator-node/target/lib/jdbc</directory>
+        </fileSet>
     </fileSets>
 
 </assembly>
