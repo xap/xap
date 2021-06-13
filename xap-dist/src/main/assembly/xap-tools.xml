@@ -48,7 +48,7 @@
             </includes>
         </fileSet>
         <fileSet>
-            <outputDirectory>product/tools/jdbc/lib</outputDirectory>
+            <outputDirectory>product/tools/aggrnode/lib</outputDirectory>
             <directory>${project.basedir}/../xap-extensions/xap-aggregator-node/target/lib/jdbc</directory>
         </fileSet>
     </fileSets>
