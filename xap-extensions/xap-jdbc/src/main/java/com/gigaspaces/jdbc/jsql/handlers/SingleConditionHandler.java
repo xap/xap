@@ -1,4 +1,4 @@
-package com.gigaspaces.jdbc.handlers;
+package com.gigaspaces.jdbc.jsql.handlers;
 
 import com.gigaspaces.jdbc.SqlErrorCodes;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
