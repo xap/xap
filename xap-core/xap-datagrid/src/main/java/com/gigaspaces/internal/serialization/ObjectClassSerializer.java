@@ -16,9 +16,6 @@
 
 package com.gigaspaces.internal.serialization;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -31,7 +28,6 @@ import java.io.ObjectOutput;
  */
 @com.gigaspaces.api.InternalApi
 public class ObjectClassSerializer implements IClassSerializer<Object> {
-    private static final Logger logger = LoggerFactory.getLogger(ObjectClassSerializer.class);
 
     public static final ObjectClassSerializer instance = new ObjectClassSerializer();
 
@@ -49,8 +45,6 @@ public class ObjectClassSerializer implements IClassSerializer<Object> {
 
     public void write(ObjectOutput out, Object obj)
             throws IOException {
-        if (logger.isDebugEnabled())
-            logger.debug("serializing {}", obj.getClass());
         out.writeObject(obj);
     }
 }
