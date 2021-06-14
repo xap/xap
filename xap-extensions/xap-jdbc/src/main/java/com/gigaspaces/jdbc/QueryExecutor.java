@@ -72,8 +72,8 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
             }
             TableContainer rightTable = QueryColumnHandler.getTableForColumn(rColumn, tables);
             TableContainer leftTable = QueryColumnHandler.getTableForColumn(lColumn, tables);
-            IQueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false, 0);
-            IQueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false, 0);
+            IQueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false, -1);
+            IQueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false, -1);
             rightTable.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinInfo.JoinType.getType(join)));
             if (leftTable.getJoinedTable() == null) { // TODO set right table every time and align it to recursive form in JoinTablesIterator
                 if (!rightTable.isJoined()) {

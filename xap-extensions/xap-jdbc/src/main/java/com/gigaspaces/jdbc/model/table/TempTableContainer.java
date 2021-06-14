@@ -66,13 +66,14 @@ public class TempTableContainer extends TableContainer {
     }
 
     @Override
-    public IQueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnOrdinal) {
-        String columnNameOrAlias = alias == null ? columnName : alias;
-        IQueryColumn queryColumn = tableColumns.stream()
+    public IQueryColumn addQueryColumn(String columnName, String columnAlias, boolean isVisible, int columnOrdinal) {
+        String columnNameOrAlias = columnAlias == null ? columnName : columnAlias;
+        IQueryColumn queryColumn = tableColumns.stream() //TODO: @sagiv change to set?
                 .filter(qc -> qc.getAlias().equalsIgnoreCase(columnNameOrAlias))
                 .findFirst()
-                .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnNameOrAlias + "]"));
-        if (visible) {
+                .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnNameOrAlias + "]"))
+                .create(columnName, columnAlias, isVisible, columnOrdinal);
+        if (isVisible) {
             this.visibleColumns.add(queryColumn);
         } else {
             this.invisibleColumns.add(queryColumn);
@@ -122,7 +123,7 @@ public class TempTableContainer extends TableContainer {
 
     @Override
     public QueryTemplatePacket createQueryTemplatePacketWithRange(Range range) {
-        addQueryColumn(range.getPath(), null, false, 0);
+        addQueryColumn(range.getPath(), null, false, -1);
         if (range instanceof EqualValueRange) {
             return new TempTableQTP((EqualValueRange) range);
         } else if (range instanceof SegmentRange) {

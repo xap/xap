@@ -60,7 +60,13 @@ public class OrderColumn implements IQueryColumn {
 
     @Override
     public Class<?> getReturnType() {
-        return null;
+        return this.queryColumn.getReturnType();
+    }
+
+    @Override
+    public IQueryColumn create(String columnName, String columnAlias, boolean isVisible, int columnOrdinal) {
+        return new OrderColumn(new ConcreteColumn(columnName, getReturnType(), columnAlias, isVisible,
+                getTableContainer(), columnOrdinal), isAsc(), isNullsLast());
     }
 
     public IQueryColumn getQueryColumn() {

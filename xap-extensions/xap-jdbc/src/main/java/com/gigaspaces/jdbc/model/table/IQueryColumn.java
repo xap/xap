@@ -19,4 +19,5 @@ public interface IQueryColumn extends Comparable<IQueryColumn> {
 
     Class<?> getReturnType();
 
+    IQueryColumn create(String columnName, String columnAlias, boolean isVisible, int columnOrdinal);
 }

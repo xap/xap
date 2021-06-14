@@ -11,7 +11,7 @@ public class AggregationColumn implements IQueryColumn {
     private final boolean isVisible;
     private final boolean allColumns;
     private final IQueryColumn queryColumn;
-    private final int columnOrdinal;
+    private int columnOrdinal;
 
     public AggregationColumn(AggregationFunctionType functionType, String functionAlias, IQueryColumn queryColumn,
                              boolean isVisible, boolean allColumns, int columnOrdinal) {
@@ -47,6 +47,12 @@ public class AggregationColumn implements IQueryColumn {
     @Override
     public Class<?> getReturnType() {
         return null;
+    }
+
+    @Override
+    public IQueryColumn create(String columnName, String columnAlias, boolean isVisible, int columnOrdinal) {
+        return new AggregationColumn(getType(), columnAlias == null ? columnName : columnAlias, getQueryColumn(),
+                isVisible, isAllColumns(), columnOrdinal);
     }
 
     public String getColumnName() {

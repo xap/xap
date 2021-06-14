@@ -198,15 +198,15 @@ public class ConcreteTableContainer extends TableContainer {
     }
 
     @Override
-    public IQueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnOrdinal) {
+    public IQueryColumn addQueryColumn(String columnName, String columnAlias, boolean isVisible, int columnOrdinal) {
         if (!columnName.equalsIgnoreCase(IQueryColumn.UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(columnName) == -1) {
             throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]");
         }
 
         try {
-            ConcreteColumn concreteColumn = new ConcreteColumn(columnName, SQLUtil.getPropertyType(typeDesc, columnName), alias,
-                    visible, this, columnOrdinal);
-            if (visible) {
+            ConcreteColumn concreteColumn = new ConcreteColumn(columnName, SQLUtil.getPropertyType(typeDesc, columnName), columnAlias,
+                    isVisible, this, columnOrdinal);
+            if (isVisible) {
                 this.visibleColumns.add(concreteColumn);
             } else {
                 this.invisibleColumns.add(concreteColumn);
