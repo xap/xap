@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.jdbc.model.table.*;
+import com.gigaspaces.metadata.StorageType;
 
 import java.util.Comparator;
 import java.util.List;
@@ -14,7 +15,6 @@ public class TableRowUtils {
             return new TableRow((IQueryColumn[]) null, null);
         }
         IQueryColumn[] rowsColumns = aggregationColumns.toArray(new IQueryColumn[0]);
-        //TODO: @sagiv validate! if from first or use aggregateValues
         OrderColumn[] firstRowOrderColumns = tableRows.get(0).getOrderColumns();
         Object[] firstRowOrderValues = tableRows.get(0).getOrderValues();
         ConcreteColumn[] firstRowGroupByColumns = tableRows.get(0).getGroupByColumns();
@@ -68,11 +68,23 @@ public class TableRowUtils {
     }
 
     private static Comparator<Object> getObjectComparator() {
-        return (o1, o2) -> { //TODO: @sagiv add try catch block. like in use castToComparable from WhereHandler.
-            Comparable first = (Comparable) o1;
-            Comparable second = (Comparable) o2;
+        return (o1, o2) -> {
+            Comparable first = castToComparable(o1);
+            Comparable second = castToComparable(o2);
             return first.compareTo(second);
         };
+    }
+
+    /**
+     * Cast the object to Comparable otherwise throws an IllegalArgumentException exception
+     */
+    public static Comparable castToComparable(Object obj) {
+        try {
+            return (Comparable) obj;
+        } catch (ClassCastException cce) {
+            throw new IllegalArgumentException("Type " + obj.getClass() +
+                    " doesn't implement Comparable, Serialization mode might be different than " + StorageType.OBJECT + ".", cce);
+        }
     }
 
 }

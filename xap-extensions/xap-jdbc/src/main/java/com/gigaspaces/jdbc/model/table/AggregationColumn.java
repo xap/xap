@@ -1,5 +1,7 @@
 package com.gigaspaces.jdbc.model.table;
 
+import com.sun.istack.internal.NotNull;
+
 import java.util.Locale;
 import java.util.Objects;
 
@@ -12,29 +14,14 @@ public class AggregationColumn implements IQueryColumn {
     private final IQueryColumn queryColumn;
     private final int columnOrdinal;
 
-    public AggregationColumn(AggregationFunctionType functionType, String functionAlias, IQueryColumn queryColumn,
+    public AggregationColumn(AggregationFunctionType functionType, @NotNull String functionAlias, IQueryColumn queryColumn,
                              boolean isVisible, boolean allColumns, int columnOrdinal) {
         this.queryColumn = queryColumn;
         this.type = functionType;
-        this.functionAlias = setFunctionAlias(functionType, functionAlias, queryColumn, allColumns);
+        this.functionAlias = functionAlias;
         this.allColumns = allColumns;
         this.isVisible = isVisible;
         this.columnOrdinal = columnOrdinal;
-    }
-
-    private String setFunctionAlias(AggregationFunctionType functionType, String functionAlias,
-                                    IQueryColumn queryColumn, boolean allColumns) {
-        if (functionAlias == null) {
-            String columnAlias;
-            if (queryColumn == null) {
-                columnAlias = allColumns ? "*" : null;
-            } else {
-                columnAlias = queryColumn.getAlias();
-            }
-            String functionName = functionType.name().toLowerCase(Locale.ROOT);
-            return String.format("%s(%s)", functionName, columnAlias);
-        }
-        return functionAlias;
     }
 
     public AggregationFunctionType getType() {
@@ -67,7 +54,7 @@ public class AggregationColumn implements IQueryColumn {
         if (this.queryColumn == null) {
             return isAllColumns() ? "*" : null;
         }
-        return this.queryColumn.getAlias();  //TODO: @sagiv use getName instead?
+        return this.queryColumn.getAlias();  //return either name or alias.
     }
 
     public boolean isVisible() {

@@ -78,8 +78,9 @@ public class ConcreteTableContainer extends TableContainer {
             ExplainPlanV3 explainPlanImpl = null;
             if (config.isExplainPlan()) {
                 // Using LinkedHashMap to keep insertion order from the ArrayList
-                final Map<String, String> visibleColumnsAndAliasMap = visibleColumns.stream().filter(IQueryColumn::isVisible).collect(Collectors.toMap
-                        (IQueryColumn::getName, queryColumn -> queryColumn.getAlias() == null ? "" : queryColumn.getAlias()
+                final Map<String, String> visibleColumnsAndAliasMap = getSelectedColumns().stream().collect(Collectors.toMap
+                        (IQueryColumn::getName, queryColumn ->
+                                        queryColumn.getAlias().equals(queryColumn.getName()) ? "" : queryColumn.getAlias()
                                 , (oldValue, newValue) -> newValue, LinkedHashMap::new));
 
                 explainPlanImpl = new ExplainPlanV3(name, alias, visibleColumnsAndAliasMap);
@@ -197,14 +198,14 @@ public class ConcreteTableContainer extends TableContainer {
     }
 
     @Override
-    public IQueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnIndex) {
+    public IQueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnOrdinal) {
         if (!columnName.equalsIgnoreCase(IQueryColumn.UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(columnName) == -1) {
             throw new ColumnNotFoundException("Could not find column with name [" + columnName + "]");
         }
 
         try {
             ConcreteColumn concreteColumn = new ConcreteColumn(columnName, SQLUtil.getPropertyType(typeDesc, columnName), alias,
-                    visible, this, columnIndex);
+                    visible, this, columnOrdinal);
             if (visible) {
                 this.visibleColumns.add(concreteColumn);
             } else {

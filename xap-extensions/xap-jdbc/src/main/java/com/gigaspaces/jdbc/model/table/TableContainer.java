@@ -23,7 +23,7 @@ public abstract class TableContainer {
 
     public abstract QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
 
-    public abstract IQueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnIndex);
+    public abstract IQueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnOrdinal);
 
     public abstract List<IQueryColumn> getVisibleColumns();
 

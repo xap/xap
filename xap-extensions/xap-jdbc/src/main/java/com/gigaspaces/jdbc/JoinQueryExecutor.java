@@ -28,7 +28,6 @@ public class JoinQueryExecutor {
         this.visibleColumns = queryExecutor.getVisibleColumns();
         this.config = queryExecutor.getConfig();
         this.config.setJoinUsed(true);
-        //TODO: @sagiv can be obtained from the tables?, just like the OrderColumns at 'execute()'?
         this.aggregationColumns = queryExecutor.getAggregationColumns();
         this.allQueryColumns = Stream.concat(visibleColumns.stream(), invisibleColumns.stream()).collect(Collectors.toList());
         this.selectedQueryColumns = Stream.concat(this.visibleColumns.stream(), this.aggregationColumns.stream()).sorted().collect(Collectors.toList());

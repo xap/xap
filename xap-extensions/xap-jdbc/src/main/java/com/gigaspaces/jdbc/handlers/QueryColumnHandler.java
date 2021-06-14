@@ -14,7 +14,7 @@ import net.sf.jsqlparser.statement.select.SelectItemVisitorAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Locale;
 
 public class QueryColumnHandler extends SelectItemVisitorAdapter {
     //TODO: consider not to pass queryExecutor but its relevant fields, when we need to serialize this object.
@@ -126,17 +126,30 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                 if (getTableContainer() != null) {  // assume we have only one table because of the checks above.
                     IQueryColumn qc = getTableContainer().addQueryColumn(getColumnName(function.isAllColumns()),
                             getColumnAlias(), false, columnCounter++);
-                    aggregationColumn = new AggregationColumn(aggregationFunctionType, this.alias, qc, true,
+                    aggregationColumn = new AggregationColumn(aggregationFunctionType, getFunctionAlias(function), qc, true,
                             function.isAllColumns(), qc.getColumnOrdinal());
                     getTableContainer().addAggregationColumn(aggregationColumn);
                     queryExecutor.addColumn(qc);
                 } else { // for example select COUNT(*) FROM table1 INNER JOIN table2...
-                    aggregationColumn = new AggregationColumn(aggregationFunctionType, this.alias,
+                    aggregationColumn = new AggregationColumn(aggregationFunctionType, getFunctionAlias(function),
                             null, true, function.isAllColumns(), columnCounter++);
                     queryExecutor.getTables().forEach(tableContainer -> tableContainer.addAggregationColumn(aggregationColumn));
                     queryExecutor.getTables().forEach(this::addAllTableColumn);
                 }
                 queryExecutor.addAggregationColumn(aggregationColumn);
+            }
+
+            private String getFunctionAlias(Function function) {
+                if(this.alias == null) {
+                    String columnAlias;
+                    if(function.isAllColumns()) {
+                        columnAlias =  "*";
+                    } else {
+                        columnAlias = getColumnAlias();
+                    }
+                    return String.format("%s(%s)", function.getName().toLowerCase(Locale.ROOT), columnAlias);
+                }
+                return this.alias;
             }
 
             private String getColumnName(boolean isAllColumn) {
@@ -148,10 +161,7 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
 
             private String getColumnAlias() {
                 if(!this.columns.isEmpty()) {
-                    String fullName = this.columns.get(0).getName(true);
-                    //for example max(P1.name), P1 is the table alias return P1.name.
-                    if(Objects.equals(fullName, this.columns.get(0).getColumnName())) return null;
-                    return fullName;
+                    return this.columns.get(0).getName(true);
                 }
                 return null;
             }

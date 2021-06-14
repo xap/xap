@@ -44,10 +44,10 @@ public class TempTableContainer extends TableContainer {
     public QueryResult executeRead(QueryExecutionConfig config) {
         if (config.isExplainPlan()) {
             ExplainPlanQueryResult explainResult = ((ExplainPlanQueryResult) tableResult);
-            SubqueryExplainPlan subquery = new SubqueryExplainPlan(visibleColumns,
+            SubqueryExplainPlan subquery = new SubqueryExplainPlan(getSelectedColumns(),
                     (alias == null ? config.getTempTableNameGenerator().generate() : alias),
                     explainResult.getExplainPlanInfo(), getExprTree(), Collections.unmodifiableList(getOrderColumns()));
-            return new ExplainPlanQueryResult(visibleColumns, subquery, this);
+            return new ExplainPlanQueryResult(getSelectedColumns(), subquery, this);
         }
         if (queryTemplatePacket != null) {
             tableResult.filter(x -> queryTemplatePacket.eval(x));
@@ -66,11 +66,12 @@ public class TempTableContainer extends TableContainer {
     }
 
     @Override
-    public IQueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnIndex) {
+    public IQueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnOrdinal) {
+        String columnNameOrAlias = alias == null ? columnName : alias;
         IQueryColumn queryColumn = tableColumns.stream()
-                .filter(qc -> qc.getAlias().equalsIgnoreCase(columnName)) //TODO: @sagiv equals on name and visible too?
+                .filter(qc -> qc.getAlias().equalsIgnoreCase(columnNameOrAlias))
                 .findFirst()
-                .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
+                .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnNameOrAlias + "]"));
         if (visible) {
             this.visibleColumns.add(queryColumn);
         } else {

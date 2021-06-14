@@ -51,8 +51,7 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
 
         if (visibleColumnsAndAliasMap != null) {
             String columns = visibleColumnsAndAliasMap.entrySet().stream()
-                    .map(column -> column.getKey() + (notEmpty(column.getValue()) && !column.getValue().equals(column.getKey()) ?
-                            " as " + column.getValue() : "")) //TODO different way?
+                    .map(column -> column.getKey() + (notEmpty(column.getValue()) ? " as " + column.getValue() : ""))
                     .collect(Collectors.joining(", "));
             if (notEmpty(columns)) {
                 formatter.line("Select: " + columns);

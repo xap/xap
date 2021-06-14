@@ -134,9 +134,9 @@ public class TableRow implements Comparable<TableRow> {
         return null;
     }
 
-    public Object getPropertyValue(String name) {
+    public Object getPropertyValue(String nameOrAlias) {
         for (int i = 0; i < columns.length; i++) {
-            if (columns[i].getAlias().equals(name)) {
+            if (columns[i].getAlias().equals(nameOrAlias)) {
                 return values[i];
             }
         }
@@ -167,9 +167,9 @@ public class TableRow implements Comparable<TableRow> {
     @Override
     public int compareTo(TableRow other) {
         int results = 0;
-        for (OrderColumn orderCol : this.orderColumns) { //TODO: @sagiv add try catch block. like in use castToComparable from WhereHandler.
-            Comparable first = (Comparable) this.getPropertyValue(orderCol);
-            Comparable second = (Comparable) other.getPropertyValue(orderCol);
+        for (OrderColumn orderCol : this.orderColumns) {
+            Comparable first = TableRowUtils.castToComparable(this.getPropertyValue(orderCol));
+            Comparable second = TableRowUtils.castToComparable(other.getPropertyValue(orderCol));
 
             if (first == second) {
                 continue;
