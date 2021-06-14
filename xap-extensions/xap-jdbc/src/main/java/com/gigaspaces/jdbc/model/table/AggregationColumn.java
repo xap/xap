@@ -11,7 +11,7 @@ public class AggregationColumn implements IQueryColumn {
     private final boolean isVisible;
     private final boolean allColumns;
     private final IQueryColumn queryColumn;
-    private int columnOrdinal;
+    private final int columnOrdinal;
 
     public AggregationColumn(AggregationFunctionType functionType, String functionAlias, IQueryColumn queryColumn,
                              boolean isVisible, boolean allColumns, int columnOrdinal) {

@@ -9,7 +9,7 @@ public class ConcreteColumn implements IQueryColumn {
     private final boolean isVisible;
     private final boolean isUUID;
     private final Class<?> returnType;
-    private int columnOrdinal;
+    private final int columnOrdinal;
 
     public ConcreteColumn(String columnName, Class<?> returnType, String columnAlias, boolean isVisible, TableContainer tableContainer, int columnOrdinal) {
         this.columnName = columnName;

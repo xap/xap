@@ -98,7 +98,7 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
             @Override
             public void visit(Column column) {
                 TableContainer table = getTableForColumn(column, tables);
-                if(isFromFunction) {
+                if (isFromFunction) {
                     this.columns.add(column);
                     this.tableContainers.add(table);
                 } else {
@@ -113,11 +113,11 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
                 super.visit(function);
                 AggregationFunctionType aggregationFunctionType = AggregationFunctionType.valueOf(function.getName().toUpperCase());
                 queryExecutor.setAllColumnsSelected(function.isAllColumns());
-                if(this.columns.size() > 1) { //TODO @sagiv: later need to supports max(age, 10) for example.
+                if (this.columns.size() > 1) { //TODO @sagiv: later need to supports max(age, 10) for example.
                     throw new IllegalArgumentException("Wrong number of arguments to aggregation function ["
                             + function.getName() + "()], expected 1 column but was " + this.columns.size());
                 }
-                if(function.isAllColumns()
+                if (function.isAllColumns()
                         && aggregationFunctionType != AggregationFunctionType.COUNT) {
                     throw new IllegalArgumentException("Wrong number of arguments to aggregation function ["
                             + function.getName() + "()], expected 1 column but was '*'");
@@ -140,10 +140,10 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
             }
 
             private String getFunctionAlias(Function function) {
-                if(this.alias == null) {
+                if (this.alias == null) {
                     String columnAlias;
-                    if(function.isAllColumns()) {
-                        columnAlias =  "*";
+                    if (function.isAllColumns()) {
+                        columnAlias = "*";
                     } else {
                         columnAlias = getColumnAlias();
                     }
@@ -153,14 +153,14 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
             }
 
             private String getColumnName(boolean isAllColumn) {
-                if(!this.columns.isEmpty()) {
+                if (!this.columns.isEmpty()) {
                     return this.columns.get(0).getColumnName();
                 }
                 return isAllColumn ? "*" : null;
             }
 
             private String getColumnAlias() {
-                if(!this.columns.isEmpty()) {
+                if (!this.columns.isEmpty()) {
                     return this.columns.get(0).getName(true);
                 }
                 return null;
