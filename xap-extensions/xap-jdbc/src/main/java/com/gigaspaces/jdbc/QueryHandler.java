@@ -1,5 +1,6 @@
 package com.gigaspaces.jdbc;
 
+import com.gigaspaces.jdbc.calcite.CalciteDefaults;
 import com.gigaspaces.jdbc.calcite.CalciteRootVisitor;
 import com.gigaspaces.jdbc.calcite.GSOptimizer;
 import com.gigaspaces.jdbc.calcite.GSRelNode;
@@ -44,7 +45,7 @@ public class QueryHandler {
 
     public ResponsePacket handle(String query, IJSpace space, Object[] preparedValues) throws SQLException {
         Properties customProperties = space.getURL().getCustomProperties();
-        if ("calcite".equals(customProperties.getProperty("v3driver"))) {
+        if (CalciteDefaults.isCalciteDriverPropertySet(customProperties)) {
             GSRelNode calcitePlan = optimizeWithCalcite(query, space);
             return executeStatement(space, calcitePlan, preparedValues);
         }
