@@ -1406,11 +1406,7 @@ public class CacheManager extends AbstractCacheManager
             if(context.getEntryTieredState() == null){
                 throw new IllegalStateException("trying to write entry in tiered mode but context.getEntryTieredState() == null, uid = "+entryHolder.getUID());
             }
-            if(initialLoadOrigin != InitialLoadOrigin.FROM_TIERED_STORAGE && context.isColdEntry() && entryHolder.getXidOriginatedTransaction() == null) {
-                _engine.getTieredStorageManager().getInternalStorage().insertEntry(context, entryHolder);
-            }
-
-
+            _engine.getTieredStorageManager().getInternalStorage().insertEntry(context, entryHolder, initialLoadOrigin);
         }
 
         if((isTieredStorage() && context.isHotEntry()) || !isTieredStorage()) {

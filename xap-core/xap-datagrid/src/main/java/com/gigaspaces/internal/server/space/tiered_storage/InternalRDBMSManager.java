@@ -6,6 +6,7 @@ import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.metrics.LongCounter;
+import com.j_spaces.core.cache.CacheManager;
 import com.j_spaces.core.cache.InitialLoadInfo;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.TieredState;
@@ -51,9 +52,10 @@ public class InternalRDBMSManager {
      * Inserts a new entry to the internalDiskStorage
      *
      * @param entryHolder entry to insert
+     * @param initialLoadOrigin
      */
-    public void insertEntry(Context context,  IEntryHolder entryHolder) throws SAException{
-        if(context.isColdEntry() && entryHolder.getXidOriginatedTransaction() == null) {
+    public void insertEntry(Context context, IEntryHolder entryHolder, CacheManager.InitialLoadOrigin initialLoadOrigin) throws SAException{
+        if(initialLoadOrigin != CacheManager.InitialLoadOrigin.FROM_TIERED_STORAGE && context.isColdEntry() && entryHolder.getXidOriginatedTransaction() == null) {
             writeDisk.inc();
             internalRDBMS.insertEntry(context, entryHolder);
         }
