@@ -75,6 +75,7 @@ public class SpaceCopyChunksExecutor extends SpaceActionExecutor {
         HashMap<Integer, ISpaceProxy> proxyMap = new HashMap<>(instanceIds.size());
         SpaceProxyFactory proxyFactory = new SpaceProxyFactory();
         for (Map.Entry<Integer, String> entry : instanceIds.entrySet()) {
+            logger.warn("----------------------entry" + entry.getKey() + entry.getValue());
             proxyFactory.setInstanceId(entry.getValue());
             ISpaceProxy space = proxyFactory.createSpaceProxy(spaceName, true);
             IJSpace nonClusteredProxy = space.getDirectProxy().getNonClusteredProxy();

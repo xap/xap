@@ -52,7 +52,7 @@ public class CopyChunksConsumer implements Runnable {
                 } catch (Exception e) {
                     logger.error("Consumer thread " + Thread.currentThread().getId() + "  caught exception", e);
                     exception = new IOException("Caught exception while trying to write to partition " +
-                            (writeBatch != null ? writeBatch.getPartitionId() : ""), e);
+                            (writeBatch != null ? writeBatch.getPartitionId() : "" + "thread id: " + Thread.currentThread().getId()), e);   //todo- 0.1- the first excpetion
                     return;
                 }
             }
