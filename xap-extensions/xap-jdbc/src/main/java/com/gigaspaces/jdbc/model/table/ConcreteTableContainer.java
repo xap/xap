@@ -170,7 +170,7 @@ public class ConcreteTableContainer extends TableContainer {
             aggregationSet = queryTemplatePacket.getAggregationSet();
         }
 
-        for (AggregationColumn aggregationColumn : getAggregationFunctionColumns()) {
+        for (AggregationColumn aggregationColumn : getAggregationColumns()) {
             String columnName = aggregationColumn.getColumnName();
             switch (aggregationColumn.getType()) {
                 case COUNT:

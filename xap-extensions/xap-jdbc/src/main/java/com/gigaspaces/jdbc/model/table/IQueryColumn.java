@@ -19,5 +19,4 @@ public interface IQueryColumn extends Comparable<IQueryColumn> {
 
     Class<?> getReturnType();
 
-    String getNameOrAlias();
 }

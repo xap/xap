@@ -34,7 +34,7 @@ public abstract class TableContainer {
     }
 
     public List<IQueryColumn> getSelectedColumns() {
-        return Stream.concat(getVisibleColumns().stream(), getAggregationFunctionColumns().stream())
+        return Stream.concat(getVisibleColumns().stream(), getAggregationColumns().stream())
                 .sorted().collect(Collectors.toList());
     }
 
@@ -96,7 +96,7 @@ public abstract class TableContainer {
         this.aggregationColumns.add(aggregationColumn);
     }
 
-    public List<AggregationColumn> getAggregationFunctionColumns() {
+    public List<AggregationColumn> getAggregationColumns() {
         return aggregationColumns;
     }
 
@@ -120,7 +120,7 @@ public abstract class TableContainer {
         }
         //TODO: block operation not supported -- see AggregationsUtil.convertAggregationResult
         if (hasAggregationFunctions() && hasOrderColumns()) {
-            throw new IllegalArgumentException("Column [" + getOrderColumns().get(0).getNameOrAlias() + "] must appear in the " +
+            throw new IllegalArgumentException("Column [" + getOrderColumns().get(0).getAlias() + "] must appear in the " +
                     "GROUP BY clause or be used in an aggregate function");
         }
     }

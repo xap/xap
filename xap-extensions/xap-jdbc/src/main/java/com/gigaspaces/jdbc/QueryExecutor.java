@@ -19,6 +19,8 @@ import net.sf.jsqlparser.statement.select.*;
 
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisitor {
     private final List<TableContainer> tables = new ArrayList<>();
@@ -224,5 +226,9 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
 
     public void addAggregationColumn(AggregationColumn aggregationColumn) {
         this.aggregationColumns.add(aggregationColumn);
+    }
+
+    public List<IQueryColumn> getSelectedColumns() {
+        return Stream.concat(getVisibleColumns().stream(), getAggregationColumns().stream()).sorted().collect(Collectors.toList());
     }
 }

@@ -16,10 +16,25 @@ public class AggregationColumn implements IQueryColumn {
                              boolean isVisible, boolean allColumns, int columnOrdinal) {
         this.queryColumn = queryColumn;
         this.type = functionType;
-        this.functionAlias = functionAlias;
+        this.functionAlias = setFunctionAlias(functionType, functionAlias, queryColumn, allColumns);
         this.allColumns = allColumns;
         this.isVisible = isVisible;
         this.columnOrdinal = columnOrdinal;
+    }
+
+    private String setFunctionAlias(AggregationFunctionType functionType, String functionAlias,
+                                    IQueryColumn queryColumn, boolean allColumns) {
+        if (functionAlias == null) {
+            String columnAlias;
+            if (queryColumn == null) {
+                columnAlias = allColumns ? "*" : null;
+            } else {
+                columnAlias = queryColumn.getAlias();
+            }
+            String functionName = functionType.name().toLowerCase(Locale.ROOT);
+            return String.format("%s(%s)", functionName, columnAlias);
+        }
+        return functionAlias;
     }
 
     public AggregationFunctionType getType() {
@@ -52,7 +67,7 @@ public class AggregationColumn implements IQueryColumn {
         if (this.queryColumn == null) {
             return isAllColumns() ? "*" : null;
         }
-        return this.queryColumn.getNameOrAlias();  //TODO: @sagiv use getName instead?
+        return this.queryColumn.getAlias();  //TODO: @sagiv use getName instead?
     }
 
     public boolean isVisible() {
@@ -75,11 +90,6 @@ public class AggregationColumn implements IQueryColumn {
 
     public String getName() {
         return String.format("%s(%s)", getFunctionName(), getColumnName());
-    }
-
-    @Override
-    public String getNameOrAlias() {
-        return getAlias() == null ? getName() : getAlias();
     }
 
     @Override

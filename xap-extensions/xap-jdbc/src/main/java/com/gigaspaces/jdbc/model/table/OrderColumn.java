@@ -32,7 +32,7 @@ public class OrderColumn implements IQueryColumn {
 
     @Override
     public String getAlias() {
-        return null;
+        return this.queryColumn.getAlias();
     }
 
     @Override
@@ -69,12 +69,7 @@ public class OrderColumn implements IQueryColumn {
 
     @Override
     public String toString() {
-        return getNameOrAlias() + " " + (isAsc ? "ASC" : "DESC") + " " + (isNullsLast ? "NULLS LAST" : "NULLS FIRST");
-    }
-
-    @Override
-    public String getNameOrAlias() {
-        return this.queryColumn.getNameOrAlias();
+        return getAlias() + " " + (isAsc ? "ASC" : "DESC") + " " + (isNullsLast ? "NULLS LAST" : "NULLS FIRST");
     }
 
     @Override

@@ -37,7 +37,7 @@ public class TempTableContainer extends TableContainer {
             tableColumns.addAll(tableResult.getSelectedColumns());
         }
 
-        allColumnNamesSorted = tableColumns.stream().map(IQueryColumn::getNameOrAlias).collect(Collectors.toList());
+        allColumnNamesSorted = tableColumns.stream().map(IQueryColumn::getAlias).collect(Collectors.toList());
     }
 
     @Override
@@ -68,7 +68,7 @@ public class TempTableContainer extends TableContainer {
     @Override
     public IQueryColumn addQueryColumn(String columnName, String alias, boolean visible, int columnIndex) {
         IQueryColumn queryColumn = tableColumns.stream()
-                .filter(qc -> qc.getNameOrAlias().equalsIgnoreCase(columnName)) //TODO: @sagiv equals on alias and  visible too?
+                .filter(qc -> qc.getAlias().equalsIgnoreCase(columnName)) //TODO: @sagiv equals on name and visible too?
                 .findFirst()
                 .orElseThrow(() -> new ColumnNotFoundException("Could not find column with name [" + columnName + "]"));
         if (visible) {

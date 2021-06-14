@@ -35,7 +35,7 @@ public class TableRow implements Comparable<TableRow> {
         final List<OrderColumn> orderColumns = tableContainer.getOrderColumns();
         final List<ConcreteColumn> groupByColumns = tableContainer.getGroupByColumns();
         if (tableContainer.hasAggregationFunctions() && entryPacket instanceof QueryEntryPacket) {
-            final List<AggregationColumn> aggregationColumns = tableContainer.getAggregationFunctionColumns();
+            final List<AggregationColumn> aggregationColumns = tableContainer.getAggregationColumns();
             Map<String, Object> fieldNameValueMap = new HashMap<>();
             QueryEntryPacket queryEntryPacket = ((QueryEntryPacket) entryPacket);
             for (int i = 0; i < entryPacket.getFieldValues().length; i++) {
@@ -136,7 +136,7 @@ public class TableRow implements Comparable<TableRow> {
 
     public Object getPropertyValue(String name) {
         for (int i = 0; i < columns.length; i++) {
-            if (columns[i].getNameOrAlias().equals(name)) {
+            if (columns[i].getAlias().equals(name)) {
                 return values[i];
             }
         }
