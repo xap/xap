@@ -1349,11 +1349,11 @@ public class Context {
         this.templateTieredState = templateTieredState;
     }
 
-    public boolean isHotEntry(){
+    public boolean isRAMEntry(){
         return entryTieredState == TieredState.TIERED_HOT || entryTieredState == TieredState.TIERED_HOT_AND_COLD;
     }
 
-    public boolean isColdEntry(){
+    public boolean isDiskEntry(){
         return entryTieredState == TieredState.TIERED_COLD || entryTieredState == TieredState.TIERED_HOT_AND_COLD;
     }
 }
