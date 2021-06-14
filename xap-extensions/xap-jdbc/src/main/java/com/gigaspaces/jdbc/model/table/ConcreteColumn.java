@@ -11,11 +11,11 @@ public class ConcreteColumn implements IQueryColumn {
     private final Class<?> returnType;
     private final int columnOrdinal;
 
-    public ConcreteColumn(String name, Class<?> returnType, String alias, boolean isVisible, TableContainer tableContainer, int columnOrdinal) {
-        this.columnName = name;
-        this.columnAlias = alias;
+    public ConcreteColumn(String columnName, Class<?> returnType, String columnAlias, boolean isVisible, TableContainer tableContainer, int columnOrdinal) {
+        this.columnName = columnName;
+        this.columnAlias = columnAlias == null ? columnName : columnAlias;
         this.isVisible = isVisible;
-        this.isUUID = name.equalsIgnoreCase(UUID_COLUMN);
+        this.isUUID = columnName.equalsIgnoreCase(UUID_COLUMN);
         this.tableContainer = tableContainer;
         this.returnType = returnType;
         this.columnOrdinal = columnOrdinal;
@@ -64,13 +64,13 @@ public class ConcreteColumn implements IQueryColumn {
     }
 
     @Override
-    public String toString() {
-        return tableContainer.getTableNameOrAlias() + "." + getNameOrAlias();
+    public IQueryColumn create(String columnName, String columnAlias, boolean isVisible, int columnOrdinal) {
+        return new ConcreteColumn(columnName, getReturnType(), columnAlias, isVisible, getTableContainer(), columnOrdinal);
     }
 
     @Override
-    public String getNameOrAlias() {
-        return columnAlias != null ? columnAlias : columnName;
+    public String toString() {
+        return tableContainer.getTableNameOrAlias() + "." + getAlias();
     }
 
     @Override

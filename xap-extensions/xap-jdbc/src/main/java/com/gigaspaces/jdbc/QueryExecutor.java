@@ -19,6 +19,8 @@ import net.sf.jsqlparser.statement.select.*;
 
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisitor {
     private final List<TableContainer> tables = new ArrayList<>();
@@ -70,8 +72,8 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
             }
             TableContainer rightTable = QueryColumnHandler.getTableForColumn(rColumn, tables);
             TableContainer leftTable = QueryColumnHandler.getTableForColumn(lColumn, tables);
-            IQueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false, 0);
-            IQueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false, 0);
+            IQueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false, -1);
+            IQueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false, -1);
             rightTable.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinInfo.JoinType.getType(join)));
             if (leftTable.getJoinedTable() == null) { // TODO set right table every time and align it to recursive form in JoinTablesIterator
                 if (!rightTable.isJoined()) {
@@ -224,5 +226,9 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
 
     public void addAggregationColumn(AggregationColumn aggregationColumn) {
         this.aggregationColumns.add(aggregationColumn);
+    }
+
+    public List<IQueryColumn> getSelectedColumns() {
+        return Stream.concat(getVisibleColumns().stream(), getAggregationColumns().stream()).sorted().collect(Collectors.toList());
     }
 }

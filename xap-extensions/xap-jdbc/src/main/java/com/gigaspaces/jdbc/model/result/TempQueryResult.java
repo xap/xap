@@ -14,7 +14,7 @@ public class TempQueryResult extends QueryResult{
         List<TableRow> tableRows = tempTableContainer.getQueryResult().getRows();
         if (tempTableContainer.hasAggregationFunctions()) {
             List<TableRow> aggregateRows = new ArrayList<>();
-            aggregateRows.add(TableRowUtils.aggregate(tableRows, tempTableContainer.getAggregationFunctionColumns()));
+            aggregateRows.add(TableRowUtils.aggregate(tableRows, tempTableContainer.getAggregationColumns()));
             this.rows = aggregateRows;
         } else {
             this.rows = tableRows.stream().map(row -> TableRowFactory.createProjectedTableRow(row, tempTableContainer)).collect(Collectors.toList());

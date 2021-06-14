@@ -1,5 +1,6 @@
 package com.gigaspaces.jdbc.model.table;
 
+
 import java.util.Locale;
 import java.util.Objects;
 
@@ -16,7 +17,7 @@ public class AggregationColumn implements IQueryColumn {
                              boolean isVisible, boolean allColumns, int columnOrdinal) {
         this.queryColumn = queryColumn;
         this.type = functionType;
-        this.functionAlias = functionAlias;
+        this.functionAlias = Objects.requireNonNull(functionAlias);
         this.allColumns = allColumns;
         this.isVisible = isVisible;
         this.columnOrdinal = columnOrdinal;
@@ -48,11 +49,17 @@ public class AggregationColumn implements IQueryColumn {
         return null;
     }
 
+    @Override
+    public IQueryColumn create(String columnName, String columnAlias, boolean isVisible, int columnOrdinal) {
+        return new AggregationColumn(getType(), columnAlias == null ? columnName : columnAlias, getQueryColumn(),
+                isVisible, isAllColumns(), columnOrdinal);
+    }
+
     public String getColumnName() {
         if (this.queryColumn == null) {
             return isAllColumns() ? "*" : null;
         }
-        return this.queryColumn.getNameOrAlias();  //TODO: @sagiv use getName instead?
+        return this.queryColumn.getAlias();  //return either name or alias.
     }
 
     public boolean isVisible() {
@@ -75,11 +82,6 @@ public class AggregationColumn implements IQueryColumn {
 
     public String getName() {
         return String.format("%s(%s)", getFunctionName(), getColumnName());
-    }
-
-    @Override
-    public String getNameOrAlias() {
-        return getAlias() == null ? getName() : getAlias();
     }
 
     @Override

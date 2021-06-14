@@ -35,7 +35,7 @@ public class GroupByHandler extends UnsupportedExpressionVisitor implements Grou
     }
 
     private boolean isVisibleColumn(String columnName) {
-        return this.queryExecutor.getVisibleColumns().stream().anyMatch(queryColumn -> queryColumn.getNameOrAlias().equals(columnName));
+        return this.queryExecutor.getVisibleColumns().stream().anyMatch(queryColumn -> queryColumn.getAlias().equals(columnName));
     }
 
     @Override
