@@ -21,10 +21,6 @@ public interface TieredStorageManager {
 
     TieredStorageTableConfig getTableConfig(String typeName);
 
-    TimePredicate getRetentionRule(String typeName); // get retention rule for a specific type
-
-    void setCacheRule(String typeName, CachePredicate newRule); // dynamically change rule
-
     InternalRDBMSManager getInternalStorage();
 
     TieredState getEntryTieredState(IEntryData entryData);
@@ -36,6 +32,10 @@ public interface TieredStorageManager {
     void initTieredStorageMetrics(SpaceImpl _spaceImpl, MetricManager metricManager);
 
     void close();
+
+    TimePredicate getRetentionRule(String typeName); // get retention rule for a specific type
+
+    void setCacheRule(String typeName, CachePredicate newRule); // dynamically change rule
 
     void initialize(SpaceEngine engine) throws SAException, RemoteException;
 

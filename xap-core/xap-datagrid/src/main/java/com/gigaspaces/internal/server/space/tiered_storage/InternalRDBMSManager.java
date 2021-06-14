@@ -14,8 +14,8 @@ import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class InternalRDBMSManager {
@@ -23,8 +23,8 @@ public class InternalRDBMSManager {
     InternalRDBMS internalRDBMS;
     private final LongCounter readDisk = new LongCounter();
     private final LongCounter writeDisk = new LongCounter();
-    Map<String,LongCounter> totalCounterMap = new HashMap<>();
-    Map<String, LongCounter> ramCounterMap = new HashMap<>();
+    Map<String,LongCounter> totalCounterMap = new ConcurrentHashMap<>();
+    Map<String, LongCounter> ramCounterMap = new ConcurrentHashMap<>();
 
     public InternalRDBMSManager(InternalRDBMS internalRDBMS) {
         this.internalRDBMS = internalRDBMS;
@@ -55,19 +55,13 @@ public class InternalRDBMSManager {
      * @param initialLoadOrigin
      */
     public void insertEntry(Context context, IEntryHolder entryHolder, CacheManager.InitialLoadOrigin initialLoadOrigin) throws SAException{
-        if(initialLoadOrigin != CacheManager.InitialLoadOrigin.FROM_TIERED_STORAGE && context.isColdEntry() && entryHolder.getXidOriginatedTransaction() == null) {
+        if(initialLoadOrigin != CacheManager.InitialLoadOrigin.FROM_TIERED_STORAGE && context.isDiskEntry() && entryHolder.getXidOriginatedTransaction() == null) {
             writeDisk.inc();
             internalRDBMS.insertEntry(context, entryHolder);
         }
         String type = entryHolder.getServerTypeDesc().getTypeName();
-        if(!totalCounterMap.containsKey(type)){
-            totalCounterMap.put(type,new LongCounter());
-            if(context.isHotEntry()){
-                ramCounterMap.put(type,new LongCounter());
-            }
-        }
         getCounterFromCounterMap(type).inc();
-        if(context.isHotEntry()){
+        if(context.isRAMEntry()){
             getRamCounterFromCounterMap(type).inc();
         }
     }
@@ -95,7 +89,7 @@ public class InternalRDBMSManager {
         String type = entryHolder.getServerTypeDesc().getTypeName();
         if(removed || context.getEntryTieredState() == TieredState.TIERED_HOT){
             getCounterFromCounterMap(type).dec();
-            if(context.isHotEntry()){
+            if(context.isRAMEntry()){
                 getRamCounterFromCounterMap(type).dec();
             }
         }
@@ -104,14 +98,14 @@ public class InternalRDBMSManager {
 
     private LongCounter getCounterFromCounterMap(String type){
         if(!totalCounterMap.containsKey(type)){
-            totalCounterMap.put(type, new LongCounter());
+            totalCounterMap.putIfAbsent(type, new LongCounter());
         }
         return totalCounterMap.get(type);
     }
 
     private LongCounter getRamCounterFromCounterMap(String type){
         if(!ramCounterMap.containsKey(type)){
-            ramCounterMap.put(type, new LongCounter());
+            ramCounterMap.putIfAbsent(type, new LongCounter());
         }
         return ramCounterMap.get(type);
     }

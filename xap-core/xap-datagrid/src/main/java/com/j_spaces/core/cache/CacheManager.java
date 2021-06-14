@@ -1050,7 +1050,7 @@ public class CacheManager extends AbstractCacheManager
                     if (insertBlobStoreEntryToCache) {
                         if (isTieredStorage()){
                             context.setEntryTieredState(_engine.getTieredStorageManager().getEntryTieredState(eh.getEntryData()));
-                            if (context.isHotEntry()){
+                            if (context.isRAMEntry()){
                                 long expiration = _engine.getLeaseManager().getExpirationByTimeRuleOnInitialLoad(eh.getEntryData());
                                 if(expiration != -1){
                                     eh.updateEntryData(eh.getEntryData(), expiration);
@@ -1409,7 +1409,7 @@ public class CacheManager extends AbstractCacheManager
             _engine.getTieredStorageManager().getInternalStorage().insertEntry(context, entryHolder, initialLoadOrigin);
         }
 
-        if((isTieredStorage() && context.isHotEntry()) || !isTieredStorage()) {
+        if((isTieredStorage() && context.isRAMEntry()) || !isTieredStorage()) {
             if(initialLoadOrigin == InitialLoadOrigin.FROM_NON_BLOBSTORE && isTieredStorage()){
                 pE = safeInsertEntryToCache(context, entryHolder, false /* newEntry */, null /*pType*/, false /*pin*/, initialLoadOrigin /*fromInitialLoad*/);
             }
@@ -1417,7 +1417,7 @@ public class CacheManager extends AbstractCacheManager
                 pE = insertEntryToCache(context, entryHolder, true /* newEntry */,
                         typeData, true /*pin*/, InitialLoadOrigin.NON /*fromInitialLoad*/);
             }
-        } else {//(isTieredStorage() && !context.isHotEntry())
+        } else {//(isTieredStorage() && !context.isRAMEntry())
             pE = EntryCacheInfoFactory.createEntryCacheInfo(entryHolder);
             context.setWriteResult(new WriteEntryResult(pE.getUID(), 0, 0));
         }
@@ -1522,7 +1522,7 @@ public class CacheManager extends AbstractCacheManager
                 if(!entry.isTransient()){
                     tieredStorageManager.getInternalStorage().updateEntry(context, cold_eh);
                 }
-                boolean isOriginalEntryHot = context.isHotEntry();
+                boolean isOriginalEntryHot = context.isRAMEntry();
                 String typeName = newEntryData.getSpaceTypeDescriptor().getTypeName();
                 if(!tieredStorageManager.hasCacheRule(typeName)) {
                     context.setEntryTieredState(TieredState.TIERED_COLD);
@@ -1538,18 +1538,18 @@ public class CacheManager extends AbstractCacheManager
                         context.setEntryTieredState(TieredState.TIERED_COLD);
                     }
                 }
-                boolean isNewEntryHot = context.isHotEntry();
+                boolean isNewEntryHot = context.isRAMEntry();
                 tieredStorageManager.getInternalStorage().updateRamCounterAfterUpdate(typeName,isNewEntryHot,isOriginalEntryHot);
 
                 if(pEntry != null){ //old is hot or transient
-                    if(context.isHotEntry()){
+                    if(context.isRAMEntry()){
                         pEntry = updateEntryInCache(context, pEntry,  pEntry.getEntryHolder(this) , newEntryData, newEntryData.getExpirationTime(), template.getOperationModifiers());
                     } else {
                         boolean removed = removeEntryFromCache(entry, false, true, pEntry, RecentDeleteCodes.NONE);
                         pEntry = null;
                     }
                 } else {
-                    if(context.isHotEntry()){
+                    if(context.isRAMEntry()){
                         pEntry = insertEntryToCache(context, cold_eh, false, getTypeData(cold_eh.getServerTypeDesc()), false,  InitialLoadOrigin.NON);
                     }
                 }
