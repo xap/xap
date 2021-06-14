@@ -1,6 +1,5 @@
 package com.gigaspaces.jdbc.model.table;
 
-import com.sun.istack.internal.NotNull;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -14,11 +13,11 @@ public class AggregationColumn implements IQueryColumn {
     private final IQueryColumn queryColumn;
     private final int columnOrdinal;
 
-    public AggregationColumn(AggregationFunctionType functionType, @NotNull String functionAlias, IQueryColumn queryColumn,
+    public AggregationColumn(AggregationFunctionType functionType, String functionAlias, IQueryColumn queryColumn,
                              boolean isVisible, boolean allColumns, int columnOrdinal) {
         this.queryColumn = queryColumn;
         this.type = functionType;
-        this.functionAlias = functionAlias;
+        this.functionAlias = Objects.requireNonNull(functionAlias);
         this.allColumns = allColumns;
         this.isVisible = isVisible;
         this.columnOrdinal = columnOrdinal;
