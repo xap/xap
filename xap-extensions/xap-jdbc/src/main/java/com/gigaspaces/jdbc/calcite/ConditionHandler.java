@@ -64,10 +64,13 @@ public class ConditionHandler extends RexShuttle {
                 break;
             case OR:
                 leftHandler = new ConditionHandler(program, queryExecutor, fields);
-                rightHandler = new ConditionHandler(program, queryExecutor, fields);
                 leftOp.accept(leftHandler);
-                rightOp.accept(rightHandler);
-                or(leftHandler, rightHandler);
+                for (int i = 1; i < call.getOperands().size(); i++) {
+                    rightOp = getNode((RexLocalRef) call.getOperands().get(i));
+                    rightHandler = new ConditionHandler(program, queryExecutor, fields);
+                    rightOp.accept(rightHandler);
+                    or(leftHandler, rightHandler);
+                }
                 break;
             case EQUALS:
             case NOT_EQUALS:
@@ -177,7 +180,12 @@ public class ConditionHandler extends RexShuttle {
             } else if (rightTable instanceof UnionTemplatePacket) {
                 this.qtpMap.put(leftTable.getKey(), leftTable.getValue().union(((UnionTemplatePacket) rightTable)));
             } else {
-                this.qtpMap.put(leftTable.getKey(), leftTable.getValue().union(rightTable));
+                QueryTemplatePacket existingQueryTemplatePacket = this.qtpMap.get(leftTable.getKey());
+                if (existingQueryTemplatePacket == null) {
+                    this.qtpMap.put(leftTable.getKey(), leftTable.getValue().union(rightTable));
+                } else {
+                    existingQueryTemplatePacket.union(rightTable);
+                }
             }
         }
 
