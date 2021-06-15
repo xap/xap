@@ -25,10 +25,12 @@ public class TableRow implements Comparable<TableRow> {
                     ConcreteColumn[] groupByColumns, Object[] groupByValues) {
         this.columns = columns;
         this.values = values;
+
         this.orderColumns = orderColumns;
         this.orderValues = orderValues;
         this.groupByColumns = groupByColumns;
         this.groupByValues = groupByValues;
+
     }
 
     TableRow(IEntryPacket entryPacket, ConcreteTableContainer tableContainer) {
@@ -158,6 +160,16 @@ public class TableRow implements Comparable<TableRow> {
 
     Object[] getGroupByValues() {
         return groupByValues;
+    }
+
+    public Object[] getDistinctValues() {
+        Object[] distinctValues = new Object[columns.length];
+        for (int i = 0; i < columns.length; i++) {
+            if (columns[i].isVisible()){
+                distinctValues[i] = this.values[i];
+            }
+        }
+        return distinctValues;
     }
 
     ConcreteColumn[] getGroupByColumns() {

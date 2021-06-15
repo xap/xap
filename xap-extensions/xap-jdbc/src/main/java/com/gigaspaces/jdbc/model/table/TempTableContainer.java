@@ -62,6 +62,9 @@ public class TempTableContainer extends TableContainer {
         if(!getGroupByColumns().isEmpty()){
             queryResult.groupBy(); //group the results at the client
         }
+        if(isDistinct()){
+            queryResult.distinct();
+        }
         return queryResult;
     }
 

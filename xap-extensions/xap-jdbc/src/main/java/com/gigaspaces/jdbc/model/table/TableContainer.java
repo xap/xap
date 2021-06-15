@@ -19,6 +19,7 @@ public abstract class TableContainer {
     private final List<OrderColumn> orderColumns = new ArrayList<>();
     private final List<AggregationColumn> aggregationColumns = new ArrayList<>();
     private final List<ConcreteColumn> groupByColumns = new ArrayList<>();
+    private boolean distinct;
     private Expression exprTree;
 
     public abstract QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
@@ -110,6 +111,14 @@ public abstract class TableContainer {
 
     public boolean hasOrderColumns() {
         return !this.orderColumns.isEmpty();
+    }
+
+    public boolean isDistinct() {
+        return distinct;
+    }
+
+    public void setDistinct(boolean distinct) {
+        this.distinct = distinct;
     }
 
     protected void validateAggregationFunction() {

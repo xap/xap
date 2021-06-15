@@ -147,4 +147,18 @@ public abstract class QueryResult {
             setRows( new ArrayList<>(tableRows.values()) );
         }
     }
+
+    public void distinct() {
+        Map<TableRowGroupByKey,TableRow> tableRows = new HashMap<>();
+        for( TableRow tableRow : getRows() ){
+            Object[] distinctValues = tableRow.getDistinctValues();
+            if( distinctValues.length > 0 ){
+                tableRows.putIfAbsent( new TableRowGroupByKey( distinctValues ), tableRow );
+            }
+        }
+        if (!tableRows.isEmpty()){
+            setRows( new ArrayList<>(tableRows.values()));
+        }
+
+    }
 }

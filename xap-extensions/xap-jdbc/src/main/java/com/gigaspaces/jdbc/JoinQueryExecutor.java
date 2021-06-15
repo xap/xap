@@ -36,11 +36,13 @@ public class JoinQueryExecutor {
     public QueryResult execute() {
         final List<OrderColumn> orderColumns = new ArrayList<>();
         final List<ConcreteColumn> groupByColumns = new ArrayList<>();
+        boolean isDistinct = false;
         for (TableContainer table : tables) {
             try {
                 table.executeRead(config);
                 orderColumns.addAll(table.getOrderColumns());
                 groupByColumns.addAll(table.getGroupByColumns());
+                isDistinct |= table.isDistinct();
             } catch (SQLException e) {
                 e.printStackTrace();
                 throw new IllegalArgumentException(e);
@@ -67,6 +69,9 @@ public class JoinQueryExecutor {
         }
         if(!groupByColumns.isEmpty()) {
             res.groupBy(); //group by the results at the client
+        }
+        if (isDistinct){
+            res.distinct();
         }
 
         return res;

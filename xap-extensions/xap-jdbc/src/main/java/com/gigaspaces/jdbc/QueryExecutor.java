@@ -1,10 +1,7 @@
 package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
-import com.gigaspaces.jdbc.handlers.GroupByHandler;
-import com.gigaspaces.jdbc.handlers.OrderByHandler;
-import com.gigaspaces.jdbc.handlers.QueryColumnHandler;
-import com.gigaspaces.jdbc.handlers.WhereHandler;
+import com.gigaspaces.jdbc.handlers.*;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.QueryResult;
@@ -53,6 +50,7 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         prepareWhereClause(plainSelect);
         prepareOrderByClause(plainSelect);
         prepareGroupByClause(plainSelect);
+        prepareDistinctClause(plainSelect);
     }
 
     private void handleJoin(Join join){
@@ -117,6 +115,25 @@ public class QueryExecutor extends SelectVisitorAdapter implements FromItemVisit
         if (plainSelect.getGroupBy() != null) {
             GroupByHandler groupByVisitor = new GroupByHandler(this);
             plainSelect.getGroupBy().accept( groupByVisitor );
+        }
+    }
+
+    private void prepareDistinctClause(PlainSelect plainSelect) {
+
+        if (plainSelect.getDistinct() != null) {
+            List<SelectItem> items = plainSelect.getSelectItems();
+            if (items.get(0) instanceof AllColumns){
+                for (TableContainer table : tables){
+                    if(!table.getVisibleColumns().isEmpty())
+                        table.setDistinct(true);
+                }
+            }
+            else {
+                for (SelectItem item : items) {
+                    SelectExpressionItem sItem = (SelectExpressionItem) item;
+                    QueryColumnHandler.getTableForColumn((Column) sItem.getExpression(), tables).setDistinct(true);
+                }
+            }
         }
     }
 
