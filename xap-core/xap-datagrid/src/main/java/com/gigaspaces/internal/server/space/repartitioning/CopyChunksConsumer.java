@@ -41,6 +41,7 @@ public class CopyChunksConsumer implements Runnable {
                     if (batch != null) {
                         writeBatch = ((WriteBatch) batch);
                         ISpaceProxy spaceProxy = proxyMap.get(writeBatch.getPartitionId());
+                        logger.info("+++++++++++=proxy is: " + spaceProxy.getContainerName()   +  "   "   +spaceProxy.getName());
                         spaceProxy.writeMultiple(writeBatch.getEntries().toArray(), null, Lease.FOREVER, Modifiers.BACKUP_ONLY);
                         responseInfo.getMovedToPartition().get((short) writeBatch.getPartitionId()).addAndGet(writeBatch.getEntries().size());
                     }
@@ -52,7 +53,8 @@ public class CopyChunksConsumer implements Runnable {
                 } catch (Exception e) {
                     logger.error("Consumer thread " + Thread.currentThread().getId() + "  caught exception", e);
                     exception = new IOException("Caught exception while trying to write to partition " +
-                            (writeBatch != null ? writeBatch.getPartitionId() : "" + "thread id: " + Thread.currentThread().getId()), e);   //todo- 0.1- the first excpetion
+                            (writeBatch != null ? writeBatch.getPartitionId() : "" + "thread id: " + Thread.currentThread().getId()), e);
+                    e.printStackTrace();//todo- 0.1- the first excpetion
                     return;
                 }
             }
