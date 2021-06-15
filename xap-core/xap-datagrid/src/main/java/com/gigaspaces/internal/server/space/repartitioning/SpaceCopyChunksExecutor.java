@@ -39,12 +39,13 @@ public class SpaceCopyChunksExecutor extends SpaceActionExecutor {
         try {
 
             HashMap<Integer, ISpaceProxy> proxyMap = createProxyMap(info.getSpaceName(), info.getInstanceIds(), info.getToken());
-
+            logger.info("++++++++++++++++++++++++++in producer");
             CopyBarrier barrier = new CopyBarrier(threadCount);
             for (int i = 0; i < threadCount; i++) {
                 executorService.submit(new CopyChunksConsumer(proxyMap,
                         batchQueue, responseInfo, barrier));
             }
+            logger.info("++++++++++++++++++++++++++after submit consumer");
             CopyChunksProducer aggregator = new CopyChunksProducer(info.getNewMap(), batchQueue, batchSize, info.getScaleType(), info.getInstanceIds().keySet());
             EmptyQueryPacket queryPacket = new EmptyQueryPacket();
             queryPacket.setQueryResultType(QueryResultTypeInternal.NOT_SET);
@@ -75,7 +76,7 @@ public class SpaceCopyChunksExecutor extends SpaceActionExecutor {
         HashMap<Integer, ISpaceProxy> proxyMap = new HashMap<>(instanceIds.size());
         SpaceProxyFactory proxyFactory = new SpaceProxyFactory();
         for (Map.Entry<Integer, String> entry : instanceIds.entrySet()) {
-            logger.warn("----------------------entry" + entry.getKey() + entry.getValue());
+            logger.warn("+++++++++++++++++++++entry" + entry.getKey() + entry.getValue());
             proxyFactory.setInstanceId(entry.getValue());
             ISpaceProxy space = proxyFactory.createSpaceProxy(spaceName, true);
             IJSpace nonClusteredProxy = space.getDirectProxy().getNonClusteredProxy();
