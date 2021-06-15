@@ -1,5 +1,6 @@
 package com.gigaspaces.jdbc;
 
+import org.junit.Assert;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.GigaSpaceConfigurer;
 import org.openspaces.core.space.AbstractSpaceConfigurer;
@@ -28,8 +29,22 @@ public class MainTester {
         try (Connection connection = DriverManager.getConnection(newDriver ? "jdbc:gigaspaces:v3://localhost:4174/" + space.getSpaceName() : "jdbc:gigaspaces:url:jini://*/*/" + space.getSpaceName(), properties)) {
 
             Statement statement = connection.createStatement();
-//            execute(statement, String.format("SELECT * FROM %s ORDER BY name",MyPojo.class.getName()));
-            execute(statement, String.format("SELECT name FROM %s ORDER BY 1",MyPojo.class.getName()));
+            try {
+                execute(statement, String.format("SELECT AVG(name) FROM %s",MyPojo.class.getName()));
+                Assert.fail("should fail");
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+            try {
+                execute(statement, String.format("SELECT AVG(name) FROM (SELECT * FROM %s)",MyPojo.class.getName()));
+                Assert.fail("should fail");
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+
+            execute(statement, String.format("SELECT * FROM (SELECT count(*) FROM %s)",MyPojo.class.getName()));
+            execute(statement, String.format("SELECT AVG(age) FROM (SELECT * FROM %s)",MyPojo.class.getName()));
+            execute(statement, String.format("SELECT SUM(age) FROM (SELECT * FROM %s)",MyPojo.class.getName()));
 
             teardown(space, true);
         }

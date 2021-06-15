@@ -1,12 +1,12 @@
 package com.gigaspaces.jdbc.model.result;
 
+import com.gigaspaces.internal.utils.math.MutableNumber;
 import com.gigaspaces.jdbc.model.table.*;
 import com.gigaspaces.metadata.StorageType;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class TableRowUtils {
 
@@ -24,7 +24,8 @@ public class TableRowUtils {
         int index = 0;
         for (AggregationColumn aggregationColumn : aggregationColumns) {
             Object value = null;
-            if(tableRows.get(0).hasColumn(aggregationColumn)) { // if this column already exists by reference.
+            Class<?> classType = aggregationColumn.getReturnType();
+            if (tableRows.get(0).hasColumn(aggregationColumn)) { // if this column already exists by reference.
                 value = tableRows.get(0).getPropertyValue(aggregationColumn);
             } else {
                 AggregationFunctionType type = aggregationColumn.getType();
@@ -48,16 +49,38 @@ public class TableRowUtils {
                                 .filter(Objects::nonNull).min(getObjectComparator()).orElse(null);
                         break;
                     case AVG:
-                        //TODO: for now supported only Number.
-                        List<Number> collect = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName))
-                                .filter(Objects::nonNull).collect(Collectors.toList());
-                        value = collect.stream()
-                                .reduce(0d, (a, b) -> a.doubleValue() + b.doubleValue()).doubleValue() / collect.size();
+                        if (!Number.class.isAssignableFrom(classType)) {
+                            throw new UnsupportedOperationException("Can't perform AVG aggregation function on type " +
+                                    "[" + classType.getTypeName() + "], AVG supports only types of " + Number.class);
+                        }
+                        MutableNumber sum = null;
+                        long count = 0;
+                        for (TableRow tableRow : tableRows) {
+                            Number number = (Number) tableRow.getPropertyValue(columnName);
+                            if (number == null) continue;
+                            if (sum == null) {
+                                sum = MutableNumber.fromClass(number.getClass(), true);
+                            }
+                            sum.add(number);
+                            count++;
+                        }
+                        value = count == 0 ? 0 : sum.calcDivision(count);
                         break;
                     case SUM:
-                        //TODO: for now supported only Number.
-                        value = tableRows.stream().map(tr -> (Number) tr.getPropertyValue(columnName))
-                                .filter(Objects::nonNull).reduce(0d, (a, b) -> a.doubleValue() + b.doubleValue()).doubleValue();
+                        if (!Number.class.isAssignableFrom(classType)) {
+                            throw new UnsupportedOperationException("Can't perform SUM aggregation function on type " +
+                                    "[" + classType.getTypeName() + "], SUM supports only types of " + Number.class);
+                        }
+                        sum = null;
+                        for (TableRow tableRow : tableRows) {
+                            Number number = (Number) tableRow.getPropertyValue(columnName);
+                            if (number == null) continue;
+                            if (sum == null) {
+                                sum = MutableNumber.fromClass(number.getClass(), true);
+                            }
+                            sum.add(number);
+                        }
+                        value = sum == null ? null : sum.toNumber();
                         break;
                 }
             }

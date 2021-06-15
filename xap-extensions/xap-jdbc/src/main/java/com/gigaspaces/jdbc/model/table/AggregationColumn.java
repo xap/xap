@@ -36,17 +36,20 @@ public class AggregationColumn implements IQueryColumn {
     }
 
     public TableContainer getTableContainer() {
-        return this.queryColumn.getTableContainer();
+        return this.queryColumn != null ? this.queryColumn.getTableContainer() : null;
     }
 
     @Override
     public Object getCurrentValue() {
-        return null;
+        if (getTableContainer().getQueryResult().getCurrent() == null) {
+            return null;
+        }
+        return getTableContainer().getQueryResult().getCurrent().getPropertyValue(this);
     }
 
     @Override
     public Class<?> getReturnType() {
-        return null;
+        return this.queryColumn != null ? this.queryColumn.getReturnType() : null;
     }
 
     @Override
