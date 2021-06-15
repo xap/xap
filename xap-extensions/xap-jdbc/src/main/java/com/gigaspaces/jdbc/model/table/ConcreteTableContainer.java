@@ -90,10 +90,8 @@ public class ConcreteTableContainer extends TableContainer {
 
             validateAggregationFunction();
 
-            // When we use join, we aggregate the results on the client side instead of on the server.
-            if(!config.isJoinUsed()) {
-                setAggregations();
-            }
+            setAggregations(config.isJoinUsed());
+
             queryTemplatePacket.prepareForSpace(typeDesc);
 
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
@@ -112,10 +110,34 @@ public class ConcreteTableContainer extends TableContainer {
         return Stream.concat(visibleColumns.stream(), invisibleColumns.stream()).map(IQueryColumn::getName).distinct().toArray(String[]::new);
     }
 
-    private void setAggregations() {
-        setOrderByAggregation();
-        setAggregationFunctions();
-        setGroupByAggregation();
+    private void setAggregations(boolean isJoinUsed) {
+        // When we use join, we aggregate the results on the client side instead of on the server.
+        if(!isJoinUsed) {
+            setOrderByAggregation();
+            setAggregationFunctions();
+            setGroupByAggregation();
+        }
+        setDistinctAggregation();
+    }
+
+    private void setDistinctAggregation() {
+        //distinct in server
+        if (isDistinct()) {
+            if (!visibleColumns.isEmpty()) {
+                String[] distinctColumnsArray = new String[visibleColumns.size()];
+                for (int i = 0; i < visibleColumns.size(); i++) {
+                    distinctColumnsArray[i] = visibleColumns.get(i).getName();
+                }
+                DistinctAggregator distinctAggregator = new DistinctAggregator().distinct(limit, distinctColumnsArray);
+                if (queryTemplatePacket.getAggregationSet() == null) {
+                    AggregationSet aggregationSet = new AggregationSet().distinct(distinctAggregator);
+                    queryTemplatePacket.setAggregationSet(aggregationSet);
+                } else {
+                    queryTemplatePacket.getAggregationSet().add(distinctAggregator);
+                }
+            }
+        }
+
     }
 
     private void setGroupByAggregation() {
