@@ -19,6 +19,8 @@ import java.util.Iterator;
  *
  */
 public class SpaceReplicaBatch implements Collection<ISpaceReplicaData>, SmartExternalizable {
+    private static final long serialVersionUID = -7311317700438888710L;
+
     private Collection<ISpaceReplicaData> batch;
 
     private int fifoId = 0 ;
