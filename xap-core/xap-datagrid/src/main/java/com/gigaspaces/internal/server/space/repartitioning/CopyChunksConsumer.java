@@ -35,14 +35,18 @@ public class CopyChunksConsumer implements Runnable {
                 WriteBatch writeBatch = null;
                 try {
                     Batch batch = batchQueue.poll(5, TimeUnit.SECONDS);
+                    logger.info("batch is : " + batch);
+
                     if (batch == Batch.EMPTY_BATCH) {
                         return;
                     }
                     if (batch != null) {
                         writeBatch = ((WriteBatch) batch);
                         ISpaceProxy spaceProxy = proxyMap.get(writeBatch.getPartitionId());
-                        logger.info("+++++++++++=proxy is: " + spaceProxy.getContainerName()   +  "   "   +spaceProxy.getName());
+                        logger.info("Proxy is:  "  + spaceProxy);
+                        logger.info("+++++++++++proxy is: " + spaceProxy.getContainerName()   +  "   "   +spaceProxy.getName());
                         spaceProxy.writeMultiple(writeBatch.getEntries().toArray(), null, Lease.FOREVER, Modifiers.BACKUP_ONLY);
+                        logger.info("after write multiple");
                         responseInfo.getMovedToPartition().get((short) writeBatch.getPartitionId()).addAndGet(writeBatch.getEntries().size());
                     }
                 } catch (InterruptedException e) {
@@ -52,9 +56,8 @@ public class CopyChunksConsumer implements Runnable {
                     return;
                 } catch (Exception e) {
                     logger.error("Consumer thread " + Thread.currentThread().getId() + "  caught exception", e);
-                    exception = new IOException("Caught exception while trying to write to partition " +
-                            (writeBatch != null ? writeBatch.getPartitionId() : "" + "thread id: " + Thread.currentThread().getId()), e);
-                    e.printStackTrace();//todo- 0.1- the first excpetion
+                    exception = new IOException("Caught exception while trying to write to partition with thread id: " + Thread.currentThread().getId() +
+                            (writeBatch != null ? writeBatch.getPartitionId() : ""), e);
                     return;
                 }
             }
