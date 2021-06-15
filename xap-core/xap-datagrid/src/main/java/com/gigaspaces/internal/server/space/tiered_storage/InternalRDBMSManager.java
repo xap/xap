@@ -23,16 +23,13 @@ public class InternalRDBMSManager {
     InternalRDBMS internalRDBMS;
     private final LongCounter readDisk = new LongCounter();
     private final LongCounter writeDisk = new LongCounter();
-    Map<String,LongCounter> totalCounterMap = new ConcurrentHashMap<>();
-    Map<String, LongCounter> ramCounterMap = new ConcurrentHashMap<>();
+    private final EntriesInfo entriesInfo = new EntriesInfo();
 
     public InternalRDBMSManager(InternalRDBMS internalRDBMS) {
         this.internalRDBMS = internalRDBMS;
     }
 
-
     public boolean initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager, boolean isBackup) throws SAException{
-        totalCounterMap.put("java.lang.Object",new LongCounter());
         return internalRDBMS.initialize(spaceName, fullMemberName, typeManager, isBackup);
     }
 
@@ -48,6 +45,10 @@ public class InternalRDBMSManager {
         internalRDBMS.createTable(typeDesc);
     }
 
+    public EntriesInfo getEntriesInfo(){
+        return entriesInfo;
+    }
+
     /**
      * Inserts a new entry to the internalDiskStorage
      *
@@ -60,9 +61,9 @@ public class InternalRDBMSManager {
             internalRDBMS.insertEntry(context, entryHolder);
         }
         String type = entryHolder.getServerTypeDesc().getTypeName();
-        getCounterFromCounterMap(type).inc();
+        entriesInfo.increaseCounterMap(type);
         if(context.isRAMEntry()){
-            getRamCounterFromCounterMap(type).inc();
+            entriesInfo.increaseRamCounterMap(type);
         }
     }
 
@@ -88,35 +89,23 @@ public class InternalRDBMSManager {
         }
         String type = entryHolder.getServerTypeDesc().getTypeName();
         if(removed || context.getEntryTieredState() == TieredState.TIERED_HOT){
-            getCounterFromCounterMap(type).dec();
+            entriesInfo.decreaseCounterMap(type);
             if(context.isRAMEntry()){
-                getRamCounterFromCounterMap(type).dec();
+                entriesInfo.decreaseRamCounterMap(type);
             }
         }
         return removed;
     }
 
-    private LongCounter getCounterFromCounterMap(String type){
-        if(!totalCounterMap.containsKey(type)){
-            totalCounterMap.putIfAbsent(type, new LongCounter());
-        }
-        return totalCounterMap.get(type);
-    }
 
-    private LongCounter getRamCounterFromCounterMap(String type){
-        if(!ramCounterMap.containsKey(type)){
-            ramCounterMap.putIfAbsent(type, new LongCounter());
-        }
-        return ramCounterMap.get(type);
-    }
 
     public void updateRamCounterAfterUpdate(String type, boolean isUpdatedEntryHot, boolean isOriginEntryHot){
         if(isOriginEntryHot != isUpdatedEntryHot){
             if(isUpdatedEntryHot){
-                getRamCounterFromCounterMap(type).inc();
+                entriesInfo.increaseRamCounterMap(type);
             }
             else{
-                getRamCounterFromCounterMap(type).dec();
+                entriesInfo.decreaseRamCounterMap(type);
             }
         }
     }
@@ -160,13 +149,6 @@ public class InternalRDBMSManager {
         return writeDisk;
     }
 
-    public Map<String,Integer> getCounterMap() {
-        return totalCounterMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (int) e.getValue().getCount()));
-    }
-
-    public Map<String,Integer> getRamCounterMap() {
-        return ramCounterMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (int) e.getValue().getCount()));
-    }
     public void deleteData() throws SAException {
         internalRDBMS.deleteData();
     }

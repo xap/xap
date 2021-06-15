@@ -5987,8 +5987,8 @@ public class CacheManager extends AbstractCacheManager
         boolean memoryOnlyIter;
 
         if(isTieredStorage()){
-            entriesInfo = _engine.getTieredStorageManager().getInternalStorage().getCounterMap();
-            ramEntriesInfo = _engine.getTieredStorageManager().getInternalStorage().getRamCounterMap();
+            entriesInfo = _engine.getTieredStorageManager().getInternalStorage().getEntriesInfo().getCounterMap();
+            ramEntriesInfo = _engine.getTieredStorageManager().getInternalStorage().getEntriesInfo().getRamCounterMap();
         }else {
             ramEntriesInfo = new HashMap<>();
 //             APP-833 (Guy K): 18.12.2006 in order to avoid
