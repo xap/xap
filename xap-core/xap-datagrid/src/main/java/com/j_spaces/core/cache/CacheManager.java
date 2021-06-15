@@ -5782,6 +5782,11 @@ public class CacheManager extends AbstractCacheManager
                 _spaceMetricsRegistrationUtils.registerSpaceDataTypeMetrics(serverTypeDesc, typeData, _engine.getMetricManager().getMetricFlagsState());
             //}
 
+            if (isTieredStorage()){
+                _engine.getTieredStorageManager().initTieredStorageDataTypeMetrics(typeName, _engine);
+            }
+
+
             if (!typeName.equals(IServerTypeDesc.ROOT_TYPE_NAME) && isBlobStoreCachePolicy()) {
                 if (getBlobStoreStorageHandler().getOffHeapCache() != null)
                     getBlobStoreStorageHandler().getOffHeapCache().register(typeName, typeDescCode);

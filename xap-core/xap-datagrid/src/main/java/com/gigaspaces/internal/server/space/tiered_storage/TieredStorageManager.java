@@ -1,5 +1,6 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
+import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
@@ -26,6 +27,7 @@ public interface TieredStorageManager {
     TemplateMatchTier guessTemplateTier(ITemplateHolder templateHolder);
 
     void initTieredStorageMetrics(SpaceImpl _spaceImpl, MetricManager metricManager);
+    void initTieredStorageDataTypeMetrics(String typeName, SpaceEngine engine);
 
     void close();
 

@@ -1,6 +1,7 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
 import com.gigaspaces.internal.client.spaceproxy.IDirectSpaceProxy;
+import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.gigaspaces.internal.server.storage.IEntryData;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
@@ -132,6 +133,10 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     diskSizeRegistratorInit(_spaceImpl, metricManager);
     }
 
+
+    public void initTieredStorageDataTypeMetrics(String typeName, SpaceEngine engine){
+        engine.getDataTypeMetricRegistrar(typeName).register("disk-data-types", getInternalStorage().totalCounterMap.get(typeName));
+    }
 
     private void operationRegistratorInit(SpaceImpl _spaceImpl, MetricManager metricManager){
         Map<String, DynamicMetricTag> dynamicTags = new HashMap<>();
