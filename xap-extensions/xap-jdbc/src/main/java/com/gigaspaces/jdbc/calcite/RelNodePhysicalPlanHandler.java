@@ -38,6 +38,7 @@ public class RelNodePhysicalPlanHandler implements PhysicalPlanHandler<GSRelNode
                 Object table = relOptTable.unwrap(GSTable.class);
                 if (table == null) table = relOptTable.unwrap(GSSchemaTable.class);
                 stack.push(table);
+                extracted(null , table);
                 return scan;
             }
 
@@ -48,37 +49,42 @@ public class RelNodePhysicalPlanHandler implements PhysicalPlanHandler<GSRelNode
                 if (other instanceof GSCalc) {
                     GSCalc calc = (GSCalc) other;
                     Object pop = stack.pop();
-                    TableContainer tableContainer;
-                    if (pop instanceof GSSchemaTable) {
-                        tableContainer = new SchemaTableContainer(((GSSchemaTable) pop), queryExecutor.getSpace());
-                    } else if (pop instanceof GSTable) {
-                        tableContainer = new ConcreteTableContainer(((GSTable) pop).getName(), null, queryExecutor.getSpace());
-                    } else {
-                        throw new UnsupportedOperationException("Got unsupported table type: " + pop);
-                    }
-                    queryExecutor.getTables().add(tableContainer);
-                    RexProgram program = calc.getProgram();
-                    List<String> inputFields = program.getInputRowType().getFieldNames();
-                    List<String> outputFields = program.getOutputRowType().getFieldNames();
-                    for (int i = 0; i < outputFields.size(); i++) {
-                        String alias = outputFields.get(i);
-                        String originalName = inputFields.get(program.getSourceField(i));
-                        tableContainer.addQueryColumn(originalName, alias, true);
-                    }
-                    RexHandler rexHandler = new RexHandler(program);
-                    for (RexNode expr : program.getExprList()) {
-                        expr.accept(rexHandler);
-                    }
-                    ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, rexHandler.getFields());
-                    if (program.getCondition() != null) {
-                        program.getCondition().accept(conditionHandler);
-                        for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : conditionHandler.getQTPMap().entrySet()) {
-                            tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
-                        }
-                    }
+                    extracted(calc, pop);
 
                 }
                 return res;
+            }
+
+            private void extracted(GSCalc calc, Object pop) {
+                TableContainer tableContainer;
+                if (pop instanceof GSSchemaTable) {
+                    tableContainer = new SchemaTableContainer(((GSSchemaTable) pop), queryExecutor.getSpace());
+                } else if (pop instanceof GSTable) {
+                    tableContainer = new ConcreteTableContainer(((GSTable) pop).getName(), null, queryExecutor.getSpace());
+                } else {
+                    throw new UnsupportedOperationException("Got unsupported table type: " + pop);
+                }
+                queryExecutor.getTables().add(tableContainer);
+                if (calc == null) return;
+                RexProgram program = calc.getProgram();
+                List<String> inputFields = program.getInputRowType().getFieldNames();
+                List<String> outputFields = program.getOutputRowType().getFieldNames();
+                for (int i = 0; i < outputFields.size(); i++) {
+                    String alias = outputFields.get(i);
+                    String originalName = inputFields.get(program.getSourceField(i));
+                    tableContainer.addQueryColumn(originalName, alias, true);
+                }
+                RexHandler rexHandler = new RexHandler(program);
+                for (RexNode expr : program.getExprList()) {
+                    expr.accept(rexHandler);
+                }
+                ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, rexHandler.getFields());
+                if (program.getCondition() != null) {
+                    program.getCondition().accept(conditionHandler);
+                    for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : conditionHandler.getQTPMap().entrySet()) {
+                        tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
+                    }
+                }
             }
         });
         return queryExecutor;

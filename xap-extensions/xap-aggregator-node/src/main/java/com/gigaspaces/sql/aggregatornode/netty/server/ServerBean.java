@@ -3,6 +3,7 @@ package com.gigaspaces.sql.aggregatornode.netty.server;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.sql.aggregatornode.netty.authentication.AuthenticationProvider;
 import com.gigaspaces.sql.aggregatornode.netty.query.QueryProviderImpl;
+import com.gigaspaces.start.SystemInfo;
 import com.j_spaces.core.client.SpaceFinder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
@@ -13,11 +14,15 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import org.openspaces.pu.container.jee.JeeServiceDetails;
+import org.openspaces.pu.container.jee.JeeType;
+import org.openspaces.pu.service.ServiceDetails;
+import org.openspaces.pu.service.ServiceDetailsProvider;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-public final class ServerBean implements AutoCloseable {
+public final class ServerBean implements AutoCloseable, ServiceDetailsProvider {
     static final boolean SSL = System.getProperty("ssl") != null;
     static final int PORT = Integer.parseInt(System.getProperty("port", "5432"));
 
@@ -72,5 +77,12 @@ public final class ServerBean implements AutoCloseable {
 
         if (workerGroup != null)
             workerGroup.shutdownGracefully();
+    }
+
+    @Override
+    public ServiceDetails[] getServicesDetails() {
+        final String host = SystemInfo.singleton().network().getHostId();
+        JeeServiceDetails details = new JeeServiceDetails(host, PORT, 0, "/", false, "jetty", JeeType.CUSTOM, 0);
+        return new ServiceDetails[]{details};
     }
 }
