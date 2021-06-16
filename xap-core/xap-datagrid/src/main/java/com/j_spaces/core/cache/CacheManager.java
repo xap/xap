@@ -937,6 +937,7 @@ public class CacheManager extends AbstractCacheManager
                 _engine.getTieredStorageManager().getInternalStorage().initialLoad(context, _engine, initialLoadInfo);
                 if (_logger.isInfoEnabled()) {
                     _logger.info("Data source recovery:\n " +
+                            "\tEntries found in warm tier: " + initialLoadInfo.getFoundInDatabase() + ".\n" +
                             "\tEntries inserted to hot tier: " + initialLoadInfo.getInsertedToCache() + ".\n" +
                             "\tTotal Time: " + JSpaceUtilities.formatMillis(SystemTime.timeMillis() - initialLoadInfo.getRecoveryStartTime()) + ".");
                 }
@@ -5987,8 +5988,8 @@ public class CacheManager extends AbstractCacheManager
         boolean memoryOnlyIter;
 
         if(isTieredStorage()){
-            entriesInfo = _engine.getTieredStorageManager().getInternalStorage().getEntriesInfo().getCounterMap();
-            ramEntriesInfo = _engine.getTieredStorageManager().getInternalStorage().getEntriesInfo().getRamCounterMap();
+            entriesInfo = _engine.getTieredStorageManager().getInternalStorage().getMetaData().getCounterMap();
+            ramEntriesInfo = _engine.getTieredStorageManager().getInternalStorage().getMetaData().getRamCounterMap();
         }else {
             ramEntriesInfo = new HashMap<>();
 //             APP-833 (Guy K): 18.12.2006 in order to avoid

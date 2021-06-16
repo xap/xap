@@ -6,11 +6,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class EntriesInfo {
+public class TypesMetaData {
     private final Map<String, LongCounter> totalCounterMap = new ConcurrentHashMap<>();
     private final Map<String, LongCounter> ramCounterMap = new ConcurrentHashMap<>();
 
-    public EntriesInfo(){
+    public TypesMetaData(){
         String objectClassName = "java.lang.Object";
         totalCounterMap.put(objectClassName,new LongCounter());
         ramCounterMap.put(objectClassName,new LongCounter());

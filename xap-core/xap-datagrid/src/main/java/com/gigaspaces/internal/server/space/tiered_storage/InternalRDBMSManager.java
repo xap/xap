@@ -14,16 +14,13 @@ import com.j_spaces.core.sadapter.ISAdapterIterator;
 import com.j_spaces.core.sadapter.SAException;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class InternalRDBMSManager {
 
     InternalRDBMS internalRDBMS;
     private final LongCounter readDisk = new LongCounter();
     private final LongCounter writeDisk = new LongCounter();
-    private final EntriesInfo entriesInfo = new EntriesInfo();
+    private final TypesMetaData metaData = new TypesMetaData();
 
     public InternalRDBMSManager(InternalRDBMS internalRDBMS) {
         this.internalRDBMS = internalRDBMS;
@@ -45,8 +42,8 @@ public class InternalRDBMSManager {
         internalRDBMS.createTable(typeDesc);
     }
 
-    public EntriesInfo getEntriesInfo(){
-        return entriesInfo;
+    public TypesMetaData getMetaData(){
+        return metaData;
     }
 
     /**
@@ -61,9 +58,9 @@ public class InternalRDBMSManager {
             internalRDBMS.insertEntry(context, entryHolder);
         }
         String type = entryHolder.getServerTypeDesc().getTypeName();
-        entriesInfo.increaseCounterMap(type);
+        metaData.increaseCounterMap(type);
         if(context.isRAMEntry()){
-            entriesInfo.increaseRamCounterMap(type);
+            metaData.increaseRamCounterMap(type);
         }
     }
 
@@ -89,9 +86,9 @@ public class InternalRDBMSManager {
         }
         String type = entryHolder.getServerTypeDesc().getTypeName();
         if(removed || context.getEntryTieredState() == TieredState.TIERED_HOT){
-            entriesInfo.decreaseCounterMap(type);
+            metaData.decreaseCounterMap(type);
             if(context.isRAMEntry()){
-                entriesInfo.decreaseRamCounterMap(type);
+                metaData.decreaseRamCounterMap(type);
             }
         }
         return removed;
@@ -102,10 +99,10 @@ public class InternalRDBMSManager {
     public void updateRamCounterAfterUpdate(String type, boolean isUpdatedEntryHot, boolean isOriginEntryHot){
         if(isOriginEntryHot != isUpdatedEntryHot){
             if(isUpdatedEntryHot){
-                entriesInfo.increaseRamCounterMap(type);
+                metaData.increaseRamCounterMap(type);
             }
             else{
-                entriesInfo.decreaseRamCounterMap(type);
+                metaData.decreaseRamCounterMap(type);
             }
         }
     }
