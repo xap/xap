@@ -64,11 +64,11 @@ public class JoinQueryExecutor {
             aggregateRows.add(TableRowUtils.aggregate(res.getRows(), this.aggregationColumns));
             res.setRows(aggregateRows);
         }
-        if(!orderColumns.isEmpty()) {
-            res.sort(); //sort the results at the client
-        }
         if(!groupByColumns.isEmpty()) {
             res.groupBy(); //group by the results at the client
+        }
+        if(!orderColumns.isEmpty()) {
+            res.sort(); //sort the results at the client
         }
         if (isDistinct){
             res.distinct();

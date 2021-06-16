@@ -53,18 +53,19 @@ public class TempTableContainer extends TableContainer {
             tableResult.filter(x -> queryTemplatePacket.eval(x));
         }
 
-        validateAggregationFunction();
+        validate();
 
         QueryResult queryResult = new TempQueryResult(this);
-        if(!getOrderColumns().isEmpty()) {
-            queryResult.sort(); //sort the results at the client
-        }
         if(!getGroupByColumns().isEmpty()){
             queryResult.groupBy(); //group the results at the client
+        }
+        if(!getOrderColumns().isEmpty()) {
+            queryResult.sort(); //sort the results at the client
         }
         if(isDistinct()){
             queryResult.distinct();
         }
+
         return queryResult;
     }
 
