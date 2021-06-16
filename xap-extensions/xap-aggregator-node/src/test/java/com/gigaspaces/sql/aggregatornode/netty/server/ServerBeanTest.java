@@ -47,14 +47,14 @@ class ServerBeanTest {
     void testConnection() throws Exception {
         Class.forName("org.postgresql.Driver");
 
-        String url = "jdbc:postgresql://localhost/test?user=fred&password=secret";
+        String url = "jdbc:postgresql://localhost/?user=fred&password=secret";
         try (Connection conn = DriverManager.getConnection(url)) {
             assertFalse(conn.isClosed());
             assertTrue(conn.isValid(1000));
 
             Statement statement = conn.createStatement();
 
-            execute(statement, String.format("SELECT first_name, last_name, email, age FROM %s as T where T.last_name = 'Aa' OR T.first_name = 'Adam'", "\"" + MyPojo.class.getName() + "\""));
+            execute(statement, String.format("SELECT replace(first_name, 'a', 'b'), last_name, email, age FROM %s as T where T.last_name = 'Aa' OR T.first_name = 'Adam'", "\"" + MyPojo.class.getName() + "\""));
         }
     }
 
