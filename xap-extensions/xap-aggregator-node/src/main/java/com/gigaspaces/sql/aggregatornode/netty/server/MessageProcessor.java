@@ -402,6 +402,8 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                         }
                         case "database": {
                             this.database = value;
+                            if (this.database.length() > 0)
+                                throw new NonBreakingException("Providing space name is not supported");
                             break;
                         }
                         case "client_encoding": {
