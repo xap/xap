@@ -47,6 +47,7 @@ public class QueryProviderImpl implements QueryProvider{
 
     @Override
     public void prepare(String stmt, String qry, int[] paramTypes) throws ProtocolException {
+        log("prepare request for statement [{}] and query [{}]", stmt, qry);
         if (stmt.isEmpty())
             statements.remove(stmt);
         else if (statements.containsKey(stmt))
@@ -62,6 +63,7 @@ public class QueryProviderImpl implements QueryProvider{
 
     @Override
     public List<String> prepareMultiline(String qry) throws ProtocolException {
+        log("prepareMultiling request for query [{}]", qry);
         ArrayList<String> res = new ArrayList<>();
         String[] split = qry.split(";"); // todo replace with statements tokenizer
         try {
@@ -85,6 +87,7 @@ public class QueryProviderImpl implements QueryProvider{
 
     @Override
     public void bind(String portal, String stmt, Object[] params, int[] formatCodes) throws ProtocolException {
+        log("Bind request for portal [{}] and statement [{}]", portal, stmt);
         if (!statements.containsKey(stmt))
             throw new NonBreakingException("26000", "invalid statement name");
 
@@ -103,6 +106,7 @@ public class QueryProviderImpl implements QueryProvider{
 
     @Override
     public StatementDescription describeS(String stmt) throws ProtocolException {
+        log("describeS for statement [{}]" ,stmt);
         if (!statements.containsKey(stmt))
             throw new NonBreakingException("26000", "invalid statement name ["+stmt+"]");
 
@@ -111,6 +115,7 @@ public class QueryProviderImpl implements QueryProvider{
 
     @Override
     public RowDescription describeP(String portal) throws ProtocolException {
+        log("describeP for portal [{}]" ,portal);
         if (!portals.containsKey(portal))
             throw new NonBreakingException("34000", "invalid cursor name ["+portal+"]");
 
@@ -119,6 +124,7 @@ public class QueryProviderImpl implements QueryProvider{
 
     @Override
     public Portal<?> execute(String portal) throws ProtocolException {
+        log("execute portal [{}]", portal);
         if (!portals.containsKey(portal))
             throw new NonBreakingException("34000", "invalid cursor name ["+portal+"]");
 
@@ -127,6 +133,7 @@ public class QueryProviderImpl implements QueryProvider{
 
     @Override
     public void closeS(String name) throws ProtocolException {
+        log("closeS [{}]", name);
         List<String> toClose = portals.values().stream()
                 .filter(p -> p.getStatement().getName().equals(name))
                 .map(Portal::name)
@@ -140,15 +147,18 @@ public class QueryProviderImpl implements QueryProvider{
 
     @Override
     public void closeP(String name) throws ProtocolException {
+        log("closeP [{}]", name);
         portals.remove(name);
     }
 
     @Override
     public void cancel(int pid, int secret) {
+        log("cancel pid={}, secret={}", pid, secret);
         // todo
     }
 
     private Statement prepareStatement(String name, String query, int[] paramTypes) throws Exception {
+        log("prepareStatement name=[{}], query=[{}]", name, query);
         Pair<RelDataType, RelDataType> types = handler.extractTypes(query, space);
 
         RelDataType params = types.getFirst();
@@ -170,6 +180,7 @@ public class QueryProviderImpl implements QueryProvider{
     }
 
     private Portal<?> preparePortal(String name, Statement statement, Object[] params, int[] formatCodes) throws Exception {
+        log("preparePortal name=[{}]", name);
         ResponsePacket packet = handler.handle(statement.getQuery(), space, params);
         return new PortalImpl<>(name, statement, Portal.Tag.SELECT, formatCodes, new ArrayIterator<>(packet.getResultEntry().getFieldValues()));
     }
@@ -183,6 +194,7 @@ public class QueryProviderImpl implements QueryProvider{
     private static final String SELECT_TABLES = "select relname, nspname, relkind from pg_catalog.pg_class c, pg_catalog.pg_namespace n where relkind in ('r', 'v', 'm', 'f', 'p') and nspname not in ('pg_catalog', 'information_schema', 'pg_toast', 'pg_temp_1') and n.oid = relnamespace order by nspname, relname";
 
     private Statement prepareStatement0(String name, String query, int[] paramTypes) throws Exception {
+        log("prepareStatement0 name=[{}], query=[{}]", name, query);
         switch (query) {
             case SELECT_NULL_NULL_NULL: {
                 ParametersDescription params = new ParametersDescription(paramTypes);
@@ -242,6 +254,7 @@ public class QueryProviderImpl implements QueryProvider{
     }
 
     private Portal<?> preparePortal0(String name, Statement statement, Object[] params, int[] formatCodes) throws Exception {
+        log("preparePortal0 name=[{}]", name);
         switch (statement.getQuery()) {
             case SHOW_TRANSACTION_ISOLATION:
                 return new PortalImpl<>(name, statement, Portal.Tag.SELECT, formatCodes, Collections.singletonList(
@@ -386,5 +399,10 @@ public class QueryProviderImpl implements QueryProvider{
         public void close() throws Exception {
             closeP(name);
         }
+    }
+
+
+    private void log(String str, Object...objects) {
+        log.info("><QPI>< - " + str, objects);
     }
 }

@@ -38,7 +38,6 @@ public class RelNodePhysicalPlanHandler implements PhysicalPlanHandler<GSRelNode
                 Object table = relOptTable.unwrap(GSTable.class);
                 if (table == null) table = relOptTable.unwrap(GSSchemaTable.class);
                 stack.push(table);
-                extracted(null , table);
                 return scan;
             }
 
