@@ -76,6 +76,13 @@ public class MainTester {
             gigaSpace.write(new MyPojo("Eve Cc", 35, "UK", date3, new Time(date3.getTime()), new Timestamp(date3.getTime())));
             gigaSpace.write(new MyPojo("NoCountry Dd", 40, null, date4, new Time(date4.getTime()), new Timestamp(date4.getTime())));
             gigaSpace.write(new MyPojo("Adam Bb", 30, "Israel", date2, new Time(date2.getTime()), new Timestamp(date2.getTime())));
+            gigaSpace.write(new MyPojo("Moshe Cc", 30, "Israel", date1, new Time(date1.getTime()), new Timestamp(date1.getTime())));
+            gigaSpace.write(new MyPojo("Yoav Dd", 40, "Israel", date1, new Time(date1.getTime()), new Timestamp(date1.getTime())));
+            gigaSpace.write(new Person(1, 103, "Adam", "Bb", 1234.0 ) );
+            gigaSpace.write(new Person(2, 101, "Adler", "Aa", 1235.0) );
+            gigaSpace.write(new Person(3, 102, "Moshe", "Cc", 1236.0) );
+            gigaSpace.write(new Person(4, 102, "Eve", "Cc", 1237.0) );
+            gigaSpace.write(new Person(5, 101, "Yoav", "Dd", 1238.0) );
         }
         return gigaSpace;
     }
