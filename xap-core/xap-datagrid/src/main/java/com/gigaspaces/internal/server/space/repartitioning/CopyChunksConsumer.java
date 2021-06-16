@@ -35,7 +35,6 @@ public class CopyChunksConsumer implements Runnable {
                 WriteBatch writeBatch = null;
                 try {
                     Batch batch = batchQueue.poll(5, TimeUnit.SECONDS);
-                    logger.info("batch is : " + batch);
 
                     if (batch == Batch.EMPTY_BATCH) {
                         return;
@@ -43,10 +42,9 @@ public class CopyChunksConsumer implements Runnable {
                     if (batch != null) {
                         writeBatch = ((WriteBatch) batch);
                         ISpaceProxy spaceProxy = proxyMap.get(writeBatch.getPartitionId());
-                        logger.info("Proxy is:  "  + spaceProxy);
                         logger.info("+++++++++++proxy is: " + spaceProxy.getContainerName()   +  "   "   +spaceProxy.getName());
                         spaceProxy.writeMultiple(writeBatch.getEntries().toArray(), null, Lease.FOREVER, Modifiers.BACKUP_ONLY);
-                        logger.info("after write multiple");
+                        logger.info("**********after write multiple");
                         responseInfo.getMovedToPartition().get((short) writeBatch.getPartitionId()).addAndGet(writeBatch.getEntries().size());
                     }
                 } catch (InterruptedException e) {
