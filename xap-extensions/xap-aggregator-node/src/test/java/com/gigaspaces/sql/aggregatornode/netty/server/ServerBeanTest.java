@@ -54,7 +54,7 @@ class ServerBeanTest {
 
             Statement statement = conn.createStatement();
 
-            execute(statement, String.format("SELECT replace(first_name, 'a', 'b'), last_name, email, age FROM %s as T where T.last_name = 'Aa' OR T.first_name = 'Adam'", "\"" + MyPojo.class.getName() + "\""));
+            execute(statement, String.format("SELECT replace(last_name, 'a', 'b'), last_name FROM %s", "\"" + MyPojo.class.getName() + "\""));
         }
     }
 

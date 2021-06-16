@@ -48,13 +48,6 @@ public class RelNodePhysicalPlanHandler implements PhysicalPlanHandler<GSRelNode
                 if (other instanceof GSCalc) {
                     GSCalc calc = (GSCalc) other;
                     Object pop = stack.pop();
-                    extracted(calc, pop);
-
-                }
-                return res;
-            }
-
-            private void extracted(GSCalc calc, Object pop) {
                 TableContainer tableContainer;
                 if (pop instanceof GSSchemaTable) {
                     tableContainer = new SchemaTableContainer(((GSSchemaTable) pop), queryExecutor.getSpace());
@@ -64,7 +57,6 @@ public class RelNodePhysicalPlanHandler implements PhysicalPlanHandler<GSRelNode
                     throw new UnsupportedOperationException("Got unsupported table type: " + pop);
                 }
                 queryExecutor.getTables().add(tableContainer);
-                if (calc == null) return;
                 RexProgram program = calc.getProgram();
                 List<String> inputFields = program.getInputRowType().getFieldNames();
                 List<String> outputFields = program.getOutputRowType().getFieldNames();
@@ -84,6 +76,9 @@ public class RelNodePhysicalPlanHandler implements PhysicalPlanHandler<GSRelNode
                         tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
                     }
                 }
+
+                }
+                return res;
             }
         });
         return queryExecutor;
