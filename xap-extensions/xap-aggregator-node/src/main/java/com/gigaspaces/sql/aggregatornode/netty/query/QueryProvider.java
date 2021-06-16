@@ -27,13 +27,6 @@ public interface QueryProvider {
     void prepare(String stmt, String qry, int[] paramTypes) throws ProtocolException;
 
     /**
-     * Prepares multiline query.
-     * @param qry Query string.
-     * @return List of prepared statement names.
-     */
-    List<String> prepareMultiline(String qry) throws ProtocolException;
-
-    /**
      * Setups prepared statement parameters and binds the statement with
      * a portal - a PG abstraction describing server side cursor.
      * @param portal Portal name, or a server side cursor name.
@@ -86,4 +79,11 @@ public interface QueryProvider {
      * @param secret Session secret.
      */
     void cancel(int pid, int secret);
+
+    /**
+     * Executes multiline query.
+     * @param qry Query string.
+     * @return List of query cursor sources.
+     */
+    List<LazyPortal<?>> executeQueryMultiline(String qry) throws ProtocolException;
 }

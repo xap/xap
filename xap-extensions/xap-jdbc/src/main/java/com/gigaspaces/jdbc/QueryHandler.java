@@ -27,6 +27,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.externalize.RelWriterImpl;
 import org.apache.calcite.rel.logical.ToLogicalConverter;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.SqlNode;
@@ -34,19 +35,13 @@ import org.apache.calcite.sql.SqlNode;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class QueryHandler {
 
     private final Feature[] allowedFeatures = new Feature[] {Feature.select, Feature.explain, Feature.exprLike, Feature.jdbcParameter, Feature.join, Feature.joinInner, Feature.joinLeft};
-
-    public Pair<RelDataType, RelDataType> extractTypes(String query, IJSpace space) {
-        GSOptimizer optimizer = new GSOptimizer(space);
-        SqlNode ast = optimizer.parse(query);
-        ast = optimizer.validate(ast);
-        return new Pair<>(optimizer.extractParameterType(ast), optimizer.extractRowType(ast));
-    }
 
     public ResponsePacket handle(String query, IJSpace space, Object[] preparedValues) throws SQLException {
         GSRelNode calcitePlan = optimizeWithCalcite(query, space);
@@ -65,7 +60,7 @@ public class QueryHandler {
 //        }
     }
 
-    private ResponsePacket  executeStatement(IJSpace space, GSRelNode relNode, Object[] preparedValues) throws SQLException {
+    public ResponsePacket executeStatement(IJSpace space, GSRelNode relNode, Object[] preparedValues) throws SQLException {
         ResponsePacket packet = new ResponsePacket();
         QueryExecutor qE = new QueryExecutor(space, preparedValues);
         RelNodePhysicalPlanHandler planHandler = new RelNodePhysicalPlanHandler(qE);

@@ -1,13 +1,15 @@
 package com.gigaspaces.sql.aggregatornode.netty.query;
 
-public class ParameterDescription {
-    private final int type;
+import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
+import com.gigaspaces.sql.aggregatornode.netty.utils.PgType;
+import io.netty.buffer.ByteBuf;
 
-    public ParameterDescription(int type) {
-        this.type = type;
+public class ParameterDescription extends TypeAware {
+    public ParameterDescription(PgType type) {
+        super(type);
     }
 
-    public int getType() {
-        return type;
+    public <T> T read(Session session, ByteBuf buf, int format) throws ProtocolException {
+        return PgType.readParameter(session, buf, this, format);
     }
 }

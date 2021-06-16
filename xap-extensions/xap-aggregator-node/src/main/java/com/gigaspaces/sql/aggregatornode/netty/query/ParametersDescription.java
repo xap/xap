@@ -1,5 +1,7 @@
 package com.gigaspaces.sql.aggregatornode.netty.query;
 
+import com.gigaspaces.sql.aggregatornode.netty.utils.PgType;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -7,10 +9,13 @@ import java.util.stream.Collectors;
 import static java.util.Collections.unmodifiableList;
 
 public class ParametersDescription {
-    private List<ParameterDescription> parameters;
+    private final List<ParameterDescription> parameters;
 
     public ParametersDescription(int[] types) {
-        this.parameters = Arrays.stream(types).mapToObj(ParameterDescription::new).collect(Collectors.toList());
+        this.parameters = Arrays.stream(types)
+                .mapToObj(PgType::getType)
+                .map(ParameterDescription::new)
+                .collect(Collectors.toList());
     }
 
     public ParametersDescription(List<ParameterDescription> parameters) {

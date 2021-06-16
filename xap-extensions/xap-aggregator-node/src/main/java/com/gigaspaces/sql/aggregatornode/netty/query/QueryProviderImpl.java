@@ -2,38 +2,37 @@ package com.gigaspaces.sql.aggregatornode.netty.query;
 
 import com.fasterxml.jackson.databind.util.ArrayIterator;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
-import com.gigaspaces.internal.transport.ITransportPacket;
 import com.gigaspaces.jdbc.QueryHandler;
-import com.gigaspaces.sql.aggregatornode.netty.exception.BreakingException;
+import com.gigaspaces.jdbc.calcite.GSOptimizer;
+import com.gigaspaces.jdbc.calcite.GSRelNode;
 import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
-import com.gigaspaces.sql.aggregatornode.netty.utils.Constants;
-import com.gigaspaces.sql.aggregatornode.netty.utils.TypeUtils;
-import com.gigaspaces.utils.Pair;
-import com.google.common.collect.Iterables;
-import com.j_spaces.jdbc.ConnectionContext;
-import com.j_spaces.jdbc.IQueryProcessor;
-import com.j_spaces.jdbc.QueryProcessorFactory;
+import com.gigaspaces.sql.aggregatornode.netty.utils.PgType;
 import com.j_spaces.jdbc.ResponsePacket;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.slf4j.Logger;
 
+import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class QueryProviderImpl implements QueryProvider{
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(QueryProviderImpl.class);
 
-    private static final AtomicLong COUNTER = new AtomicLong();
+    private static final int[] ALL_TEXT = new int[0];
+    private static final String EMPTY_NAME = "";
 
     private final ISpaceProxy space;
     private final QueryHandler handler;
 
-    private Map<String, Statement> statements = new HashMap<>();
-    private Map<String, Portal<?>> portals = new HashMap<>();
+    private final Map<String, StatementImpl> statements = new HashMap<>();
+    private final Map<String, PortalImpl<?>> portals = new HashMap<>();
 
     public QueryProviderImpl(ISpaceProxy space) {
         this.space = space;
@@ -52,35 +51,12 @@ public class QueryProviderImpl implements QueryProvider{
             throw new NonBreakingException("26000", "duplicate statement name");
 
         try {
-//            statements.put(stmt, prepareStatement(stmt, qry, paramTypes)); todo
-            statements.put(stmt, prepareStatement0(stmt, qry, paramTypes));
+            statements.put(stmt, prepareStatement(stmt, qry, paramTypes));
         } catch (Exception e) {
             throw new NonBreakingException("42000",	"failed to prepare statement", e);
         }
     }
 
-    @Override
-    public List<String> prepareMultiline(String qry) throws ProtocolException {
-        ArrayList<String> res = new ArrayList<>();
-        String[] split = qry.split(";"); // todo replace with statements tokenizer
-        try {
-            for (String s : split) {
-                String stmt = "##___generated" + COUNTER.getAndIncrement();
-                prepare(stmt, s, new int[0]);
-                res.add(stmt);
-            }
-        } catch (Exception e) {
-            for (String stmt : res) {
-                try {
-                    closeS(stmt);
-                } catch (ProtocolException ex) {
-                    e.addSuppressed(ex);
-                }
-            }
-            throw e;
-        }
-        return res;
-    }
 
     @Override
     public void bind(String portal, String stmt, Object[] params, int[] formatCodes) throws ProtocolException {
@@ -93,8 +69,9 @@ public class QueryProviderImpl implements QueryProvider{
             throw new NonBreakingException("34000", "duplicate cursor name");
 
         try {
-//            portals.put(portal, preparePortal(portal, statements.get(stmt), params, formatCodes)); todo
-            portals.put(portal, preparePortal0(portal, statements.get(stmt), params, formatCodes));
+            portals.put(portal, preparePortal(portal, statements.get(stmt), null, params, formatCodes));
+        } catch (ProtocolException e) {
+            throw e;
         } catch (Exception e) {
             throw new NonBreakingException("42000",	"failed to bind statement to a portal", e);
         }
@@ -147,137 +124,72 @@ public class QueryProviderImpl implements QueryProvider{
         // todo
     }
 
-    private Statement prepareStatement(String name, String query, int[] paramTypes) throws Exception {
-        Pair<RelDataType, RelDataType> types = handler.extractTypes(query, space);
-
-        RelDataType params = types.getFirst();
-        RelDataType rows = types.getSecond();
-
-        List<ParameterDescription> params0 = new ArrayList<>();
-        for (RelDataTypeField f : params.getFieldList()) {
-            params0.add(new ParameterDescription(TypeUtils.pgType(f.getType())));
+    @Override
+    public List<LazyPortal<?>> executeQueryMultiline(String query) {
+        GSOptimizer optimizer = new GSOptimizer(space);
+        SqlNodeList nodes = optimizer.parseMultiline(query);
+        List<LazyPortal<?>> result = new ArrayList<>();
+        for (SqlNode node : nodes) {
+            SqlNode validated = optimizer.validate(node);
+            StatementDescription description = describe(optimizer, validated, ALL_TEXT);
+            StatementImpl statement = new StatementImpl(EMPTY_NAME, validated, description);
+            result.add(() -> (Portal) preparePortal(EMPTY_NAME, statement, optimizer, new Object[0], new int[0]));
         }
-        ParametersDescription paramDesc = new ParametersDescription(params0);
-
-        List<ColumnDescription> rows0 = new ArrayList<>();
-        for (RelDataTypeField f : rows.getFieldList()) {
-            rows0.add(new ColumnDescription(f.getName(), TypeUtils.pgType(f.getType())));
-        }
-        RowDescription rowDesc = new RowDescription(rows0);
-
-        return new StatementImpl(name, query, new StatementDescription(paramDesc, rowDesc));
+        return result;
     }
 
-    private Portal<?> preparePortal(String name, Statement statement, Object[] params, int[] formatCodes) throws Exception {
-        ResponsePacket packet = handler.handle(statement.getQuery(), space, params);
-        return new PortalImpl<>(name, statement, Portal.Tag.SELECT, formatCodes, new ArrayIterator<>(packet.getResultEntry().getFieldValues()));
+    private StatementImpl prepareStatement(String name, String query, int[] paramTypes) {
+        GSOptimizer optimizer = new GSOptimizer(space);
+        SqlNode sqlNode = optimizer.parse(query);
+        SqlNode validated = optimizer.validate(sqlNode);
+        StatementDescription description = describe(optimizer, validated, paramTypes);
+        return new StatementImpl(name, sqlNode, description);
     }
 
-    // todo
-    private static final String EMPTY_QUERY = "";
-    private static final String SHOW_TRANSACTION_ISOLATION = "show transaction_isolation";
-    private static final String SHOW_MAX_IDENTIFIER_LENGTH = "show max_identifier_length";
-    private static final String SELECT_LO = "select oid, typbasetype from pg_type where typname = 'lo'";
-    private static final String SELECT_NULL_NULL_NULL = "select NULL, NULL, NULL";
-    private static final String SELECT_TABLES = "select relname, nspname, relkind from pg_catalog.pg_class c, pg_catalog.pg_namespace n where relkind in ('r', 'v', 'm', 'f', 'p') and nspname not in ('pg_catalog', 'information_schema', 'pg_toast', 'pg_temp_1') and n.oid = relnamespace order by nspname, relname";
-
-    private Statement prepareStatement0(String name, String query, int[] paramTypes) throws Exception {
-        switch (query) {
-            case SELECT_NULL_NULL_NULL: {
-                ParametersDescription params = new ParametersDescription(paramTypes);
-                ColumnDescription column1 = new ColumnDescription("col1", Constants.PG_TYPE_UNKNOWN);
-                ColumnDescription column2 = new ColumnDescription("col2", Constants.PG_TYPE_UNKNOWN);
-                ColumnDescription column3 = new ColumnDescription("col1", Constants.PG_TYPE_UNKNOWN);
-                RowDescription rows = new RowDescription(Arrays.asList(column1, column2, column3));
-                return new StatementImpl(name, query, new StatementDescription(params, rows));
+    private StatementDescription describe(GSOptimizer optimizer, SqlNode queryAst, int[] paramTypes) {
+        RelDataType columns = optimizer.extractRowType(queryAst);
+        ParametersDescription paramDesc;
+        if (paramTypes == null || paramTypes.length == 0) {
+            List<ParameterDescription> params0 = new ArrayList<>();
+            RelDataType params = optimizer.extractParameterType(queryAst);
+            for (RelDataTypeField f : params.getFieldList()) {
+                params0.add(new ParameterDescription(PgType.fromInternal(f.getType())));
             }
-            case SELECT_LO: {
-                ParametersDescription params = new ParametersDescription(paramTypes);
-                ColumnDescription column1 = new ColumnDescription("oid", Constants.PG_TYPE_INT4, 4, -1);
-                ColumnDescription column2 = new ColumnDescription("typbasetype", Constants.PG_TYPE_INT4, 4, -1);
-                RowDescription rows = new RowDescription(Arrays.asList(column1, column2));
-                return new StatementImpl(name, query, new StatementDescription(params, rows));
-            }
-
-            case SELECT_TABLES: {
-                ParametersDescription params = new ParametersDescription(paramTypes);
-                ColumnDescription column1 = new ColumnDescription("relname", Constants.PG_TYPE_VARCHAR);
-                ColumnDescription column2 = new ColumnDescription("nspname", Constants.PG_TYPE_VARCHAR);
-                ColumnDescription column3 = new ColumnDescription("relkind", Constants.PG_TYPE_CHAR, 1, -1);
-
-                RowDescription rows = new RowDescription(Arrays.asList(column1, column2, column3));
-                return new StatementImpl(name, query, new StatementDescription(params, rows));
-            }
-
-            case SHOW_TRANSACTION_ISOLATION: {
-                ParametersDescription params = new ParametersDescription(paramTypes);
-                ColumnDescription column = new ColumnDescription("transaction_isolation", Constants.PG_TYPE_VARCHAR);
-                RowDescription rows = new RowDescription(Collections.singletonList(column));
-                return new StatementImpl(name, query, new StatementDescription(params, rows));
-            }
-
-            case SHOW_MAX_IDENTIFIER_LENGTH: {
-                ParametersDescription params = new ParametersDescription(paramTypes);
-                ColumnDescription column = new ColumnDescription("max_identifier_length", Constants.PG_TYPE_INT4, 4, -1);
-                RowDescription rows = new RowDescription(Collections.singletonList(column));
-                return new StatementImpl(name, query, new StatementDescription(params, rows));
-            }
-
-            case EMPTY_QUERY: {
-                ParametersDescription params = new ParametersDescription(paramTypes);
-                RowDescription rows = new RowDescription(Collections.emptyList());
-                return new StatementImpl(name, query, new StatementDescription(params, rows));
-            }
-
-            default:
-                if (query.toLowerCase().startsWith("set ")) {
-                    ParametersDescription params = new ParametersDescription(paramTypes);
-                    RowDescription rows = new RowDescription(Collections.emptyList());
-                    return new StatementImpl(name, query, new StatementDescription(params, rows));
-                }
+            paramDesc = new ParametersDescription(params0);
+        } else {
+            paramDesc = new ParametersDescription(paramTypes);
         }
 
-        return prepareStatement(name, query, paramTypes);
+        List<ColumnDescription> columns0 = new ArrayList<>();
+        for (RelDataTypeField f : columns.getFieldList()) {
+            columns0.add(new ColumnDescription(f.getName(), PgType.fromInternal(f.getType())));
+        }
+        RowDescription rowDesc = new RowDescription(columns0);
+        return new StatementDescription(paramDesc, rowDesc);
     }
 
-    private Portal<?> preparePortal0(String name, Statement statement, Object[] params, int[] formatCodes) throws Exception {
-        switch (statement.getQuery()) {
-            case SHOW_TRANSACTION_ISOLATION:
-                return new PortalImpl<>(name, statement, Portal.Tag.SELECT, formatCodes, Collections.singletonList(
-                        new Object[] {"SERIALIZABLE"}
-                ).iterator());
-
-            case SHOW_MAX_IDENTIFIER_LENGTH:
-                return new PortalImpl<>(name, statement, Portal.Tag.SELECT, formatCodes, Collections.singletonList(
-                        new Object[] {63}
-                ).iterator());
-
-            case SELECT_NULL_NULL_NULL:
-                return new PortalImpl<>(name, statement, Portal.Tag.SELECT, formatCodes, Collections.singletonList(
-                        new Object[] {null, null, null}
-                ).iterator());
-
-            case EMPTY_QUERY:
-                return new PortalImpl<>(name, statement, Portal.Tag.NONE, formatCodes, Collections.emptyIterator());
-
-            case SELECT_LO:
-            case SELECT_TABLES:
-                return new PortalImpl<>(name, statement, Portal.Tag.SELECT, formatCodes, Collections.emptyIterator());
-
-            default:
-                if (statement.getQuery().toLowerCase().startsWith("set "))
-                    return new PortalImpl<>(name, statement, Portal.Tag.SELECT, formatCodes, Collections.emptyIterator());
+    private PortalImpl<?> preparePortal(String name, StatementImpl statement, GSOptimizer optimizer, Object[] params, int[] formatCodes) throws ProtocolException {
+        try {
+            SqlNode query = statement.getQuery();
+            if (optimizer == null) {
+                optimizer = new GSOptimizer(space);
+                query = optimizer.validate(query);
+            }
+            RelNode logicalPlan = optimizer.createLogicalPlan(query);
+            GSRelNode physicalPlan = optimizer.createPhysicalPlan(logicalPlan);
+            ResponsePacket packet = handler.executeStatement(space, physicalPlan, params);
+            return new PortalImpl<>(name, statement, Portal.Tag.SELECT, formatCodes, new ArrayIterator<>(packet.getResultEntry().getFieldValues()));
+        } catch (SQLException e) {
+            throw new NonBreakingException("Failed to execute query", e);
         }
-
-        return preparePortal(name, statement, params, formatCodes);
     }
 
     private class StatementImpl implements Statement {
         private final String name;
-        private final String query;
+        private final SqlNode query;
         private final StatementDescription description;
 
-        public StatementImpl(String name, String query, StatementDescription description) {
+        public StatementImpl(String name, SqlNode query, StatementDescription description) {
             this.name = name;
             this.query = query;
             this.description = description;
@@ -289,7 +201,12 @@ public class QueryProviderImpl implements QueryProvider{
         }
 
         @Override
-        public String getQuery() {
+        public String getQueryString() {
+            return query.toSqlString(PostgresqlSqlDialect.DEFAULT).getSql();
+        }
+
+        @Override
+        public SqlNode getQuery() {
             return query;
         }
 

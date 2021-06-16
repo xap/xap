@@ -7,7 +7,6 @@ import com.gigaspaces.sql.aggregatornode.netty.authentication.Authentication;
 import com.gigaspaces.sql.aggregatornode.netty.authentication.AuthenticationProvider;
 import com.gigaspaces.sql.aggregatornode.netty.authentication.ClearTextPassword;
 import com.gigaspaces.sql.aggregatornode.netty.query.*;
-import com.gigaspaces.sql.aggregatornode.netty.utils.TypeUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -21,7 +20,6 @@ import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.gigaspaces.sql.aggregatornode.netty.utils.Constants.*;
-import static com.gigaspaces.sql.aggregatornode.netty.utils.TypeUtils.*;
 
 public class MessageProcessor extends ChannelInboundHandlerAdapter {
     private static final AtomicInteger ID_COUNTER = new AtomicInteger();
@@ -34,11 +32,8 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
     private final AuthenticationProvider authProvider;
 
     private boolean initRead;
-    private Charset charset = DEFAULT_CHARSET;
-    private String dateStyle = DEFAULT_DATE_STYLE;
-    private TimeZone timeZone = DEFAULT_TIME_ZONE;
-    private String username;
-    private String database;
+
+    private final Session session = new Session();
 
     public MessageProcessor(QueryProvider queryProvider, AuthenticationProvider authProvider) {
         this.queryProvider = queryProvider;
@@ -152,14 +147,12 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
 
     private void onQuery(ChannelHandlerContext ctx, ByteBuf msg) throws ProtocolException {
         String query = readString(msg);
-        List<String> statements = null;
         ByteBuf buf = null;
         try {
-            statements = queryProvider.prepareMultiline(query);
             buf = ctx.alloc().ioBuffer();
-            for (String stmt : statements) {
-                queryProvider.bind("", stmt, new Object[0], new int[0]);
-                Portal<?> portal = queryProvider.execute("");
+            List<LazyPortal<?>> multiline = queryProvider.executeQueryMultiline(query);
+            for (LazyPortal<?> lazyPortal : multiline) {
+                Portal<?> portal = lazyPortal.getPortal();
                 if (portal.tag() != Portal.Tag.NONE) {
                     writeRowDescription(buf, portal.getDescription());
                     int inBatch = 0;
@@ -174,22 +167,11 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                     writeCommandComplete(buf, portal.tag(), portal.processed());
                 } else
                     writeEmptyResponse(buf);
-
-                queryProvider.closeS(stmt);
             }
             writeReadyForQuery(buf);
             ctx.write(buf);
         } catch (Exception e) {
             ReferenceCountUtil.release(buf);
-            if (statements != null) {
-                for (String stmt : statements) {
-                    try {
-                        queryProvider.closeS(stmt);
-                    } catch (ProtocolException ex) {
-                        e.addSuppressed(ex);
-                    }
-                }
-            }
             throw e;
         }
     }
@@ -311,38 +293,8 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
 
         Object[] params = new Object[paramsLen];
         for (int i = 0; i < paramsLen; i++) {
-            boolean binary;
-            if (inFcLen == 0) {
-                binary = false;
-            } else if (inFcLen == 1)
-                binary = inFc[0] == 1;
-            else
-                binary = inFc[i] == 1;
-
-            int type = paramsDesc.get(i).getType();
-            switch (type) {
-                case PG_TYPE_VARCHAR:
-                case PG_TYPE_TEXT:
-                case PG_TYPE_BPCHAR:
-                    params[i] = TypeUtils.readString(msg, type, charset);
-                    break;
-
-                case PG_TYPE_BOOL:
-                    params[i] = binary ? readBoolB(msg, type) : readBoolS(msg, type, charset);
-                    break;
-
-                case PG_TYPE_INT8:
-                    params[i] = binary ? readLongB(msg, type) : readLongS(msg, type, charset);
-                    break;
-
-                case PG_TYPE_INT2:
-                case PG_TYPE_INT4:
-                    params[i] = binary ? readIntB(msg, type) : readIntS(msg, type, charset);
-                    break;
-
-                default:
-                    throw new BreakingException("XX000" /* internal error */, "unsupported data type: " + type);
-            }
+            int fc = inFcLen == 0 ? 0 : inFcLen == 1 ? inFc[0] : inFc[i];
+            params[i] = paramsDesc.get(i).read(session, msg, fc);
         }
 
         int outFcLen = msg.readShort();
@@ -397,11 +349,11 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
 
                     switch (key) {
                         case "user": {
-                            this.username = value;
+                            session.setUsername(value);
                             break;
                         }
                         case "database": {
-                            this.database = value;
+                            session.setDatabase(value);
                             break;
                         }
                         case "client_encoding": {
@@ -415,12 +367,12 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                             break;
                         }
                         case "DateStyle": {
-                            dateStyle = value.indexOf(',') < 0 ? value + ", MDY" : value;
+                            session.setDateStyle(value.indexOf(',') < 0 ? value + ", MDY" : value);
                             break;
                         }
                         case "TimeZone": {
                             try {
-                                timeZone = TimeZone.getTimeZone(pgTimeZone(value));
+                                session.setTimeZone(TimeZone.getTimeZone(pgTimeZone(value)));
                             } catch (Exception e) {
                                 log.warn("Unknown TimeZone: " + value, e);
                             }
@@ -435,7 +387,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                 }
 
                 if (newCharset != null)
-                    charset = newCharset;
+                    session.setCharset(newCharset);
 
                 // request clear text password
                 if (authProvider == AuthenticationProvider.NO_OP_PROVIDER)
@@ -468,14 +420,14 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
 
         ByteBuf buf = ctx.alloc().ioBuffer();
         writeAuthenticationOK(buf);
-        writeParameterStatus(buf, "client_encoding", charset.name());
-        writeParameterStatus(buf, "DateStyle", dateStyle);
+        writeParameterStatus(buf, "client_encoding", session.getCharset().name());
+        writeParameterStatus(buf, "DateStyle", session.getDateStyle());
         writeParameterStatus(buf, "is_superuser", "off");
         writeParameterStatus(buf, "server_encoding", "SQL_ASCII");
         writeParameterStatus(buf, "server_version", "8.2.23");
-        writeParameterStatus(buf, "session_authorization", username);
+        writeParameterStatus(buf, "session_authorization", session.getUsername());
         writeParameterStatus(buf, "standard_conforming_strings", "off");
-        writeParameterStatus(buf, "TimeZone", pgTimeZone(timeZone.getID()));
+        writeParameterStatus(buf, "TimeZone", pgTimeZone(session.getTimeZone().getID()));
         writeParameterStatus(buf, "integer_datetimes", "on");
         writeBackendKeyData(buf);
         writeReadyForQuery(buf);
@@ -500,54 +452,8 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         buf.writeInt(0);
         buf.writeShort(desc.getColumnsCount());
         List<ColumnDescription> columns = desc.getColumns();
-        for (int i = 0; i < columns.size(); i++) {
-            ColumnDescription column = columns.get(i);
-            boolean binary = column.getFormatCode() == 1;
-            int type = column.getType();
-            switch (type) {
-                case PG_TYPE_VARCHAR:
-                case PG_TYPE_TEXT:
-                case PG_TYPE_BPCHAR:
-                    writeS(buf, (String) row0[i], type, charset);
-                    break;
-
-                case PG_TYPE_BOOL:
-                    if (binary)
-                        writeB(buf, (Boolean) row0[i], type);
-                    else
-                        writeS(buf, (Boolean) row0[i], type, charset);
-
-                    break;
-
-                case PG_TYPE_INT8:
-                    if (binary)
-                        writeB(buf, (Long) row0[i], type);
-                    else
-                        writeS(buf, (Long) row0[i], type, charset);
-
-                    break;
-
-                case PG_TYPE_INT2:
-                case PG_TYPE_INT4:
-                    if (binary)
-                        writeB(buf, (Integer) row0[i], type);
-                    else
-                        writeS(buf, (Integer) row0[i], type, charset);
-
-                    break;
-
-                case PG_TYPE_UNKNOWN:
-                    if (binary)
-                        writeB(buf, row0[i], type);
-                    else
-                        writeS(buf, row0[i], type, charset);
-
-                    break;
-
-                default:
-                    throw new BreakingException("unsupported data type: " + type);
-            }
-        }
+        for (int i = 0; i < columns.size(); i++)
+            columns.get(i).write(session, buf, row0[i]);
 
         buf.setInt(idx, buf.writerIndex() - idx);
     }
@@ -562,7 +468,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         msg.writeShort(desc.getParametersCount());
 
         for (ParameterDescription paramDesc : desc.getParameters()) {
-            msg.writeInt(paramDesc.getType());
+            msg.writeInt(paramDesc.getTypeId());
         }
 
         msg.setInt(idx, msg.writerIndex() - idx);
@@ -590,10 +496,10 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                 writeString(buf, columnDesc.getName());
                 buf.writeInt(columnDesc.getTableId());
                 buf.writeShort(columnDesc.getTableIndex());
-                buf.writeInt(columnDesc.getType());
+                buf.writeInt(columnDesc.getTypeId());
                 buf.writeShort(columnDesc.getTypeLen());
                 buf.writeInt(columnDesc.getTypeModifier());
-                buf.writeShort(columnDesc.getFormatCode());
+                buf.writeShort(columnDesc.getFormat());
             }
 
             buf.setInt(idx, buf.writerIndex() - idx);
@@ -686,14 +592,14 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         int len = 0, index = msg.readerIndex();
         while (msg.getByte(index++) != 0) len++; // find end of the string
 
-        String res = msg.readCharSequence(len, charset).toString();
+        String res = msg.readCharSequence(len, session.getCharset()).toString();
         byte terminator = msg.readByte(); // skip null character
         assert terminator == 0;
         return res;
     }
 
     private void writeString(ByteBuf msg, String value) {
-        msg.writeCharSequence(value, charset);
+        msg.writeCharSequence(value, session.getCharset());
         msg.writeByte(0); // null character
     }
 

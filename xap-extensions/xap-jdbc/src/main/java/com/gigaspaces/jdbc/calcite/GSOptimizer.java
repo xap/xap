@@ -1,5 +1,6 @@
 package com.gigaspaces.jdbc.calcite;
 
+import com.gigaspaces.jdbc.calcite.parser.GSSqlParserFactoryWrapper;
 import com.j_spaces.core.IJSpace;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.config.CalciteConnectionConfig;
@@ -15,8 +16,10 @@ import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
@@ -42,6 +45,7 @@ public class GSOptimizer {
         this.space = space;
 
         CalciteConnectionConfig config = CalciteConnectionConfig.DEFAULT
+            .set(CalciteConnectionProperty.PARSER_FACTORY, GSSqlParserFactoryWrapper.FACTORY_CLASS)
             .set(CalciteConnectionProperty.CASE_SENSITIVE, "false")
             .set(CalciteConnectionProperty.QUOTED_CASING, Casing.UNCHANGED.toString())
             .set(CalciteConnectionProperty.UNQUOTED_CASING, Casing.UNCHANGED.toString());
@@ -65,6 +69,10 @@ public class GSOptimizer {
         cluster = RelOptCluster.create(planner, new RexBuilder(typeFactory));
     }
 
+    public RelDataTypeFactory typeFactory() {
+        return typeFactory;
+    }
+
     public SqlNode parse(String query) {
         SqlParser.Config config = SqlParser.configBuilder()
             .setQuotedCasing(Casing.UNCHANGED)
@@ -75,6 +83,21 @@ public class GSOptimizer {
 
         try {
             return parser.parseQuery();
+        } catch (SqlParseException e) {
+            throw new RuntimeException("Failed to parse the query.");
+        }
+    }
+
+    public SqlNodeList parseMultiline(String query) {
+        SqlParser.Config config = SqlParser.configBuilder()
+                .setQuotedCasing(Casing.UNCHANGED)
+                .setUnquotedCasing(Casing.UNCHANGED)
+                .setCaseSensitive(false).build();
+
+        SqlParser parser = SqlParser.create(query, config);
+
+        try {
+            return parser.parseStmtList();
         } catch (SqlParseException e) {
             throw new RuntimeException("Failed to parse the query.");
         }
