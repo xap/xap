@@ -91,7 +91,7 @@ public class ConditionHandler extends RexShuttle {
         Range range = null;
         switch (leftOp.getKind()){
             case LITERAL:
-                value = ((RexLiteral) leftOp).getValue2();
+                value = ((RexLiteral) leftOp).getValue3();
                 break;
             case INPUT_REF:
                 column = fields.get(((RexInputRef) leftOp).getIndex());
@@ -100,7 +100,7 @@ public class ConditionHandler extends RexShuttle {
         }
         switch (rightOp.getKind()){
             case LITERAL:
-                value = ((RexLiteral) rightOp).getValue2();
+                value = ((RexLiteral) rightOp).getValue3();
                 break;
             case INPUT_REF:
                 column = fields.get(((RexInputRef) rightOp).getIndex());
