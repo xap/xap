@@ -8,6 +8,7 @@ import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.jsql.handlers.JsqlPhysicalPlanHandler;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.result.ExplainPlanQueryResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.ResponsePacket;
@@ -81,12 +82,12 @@ public class QueryHandler {
             public void visit(ExplainStatement explainStatement) {
                 QueryExecutionConfig config = new QueryExecutionConfig(true, explainStatement.getOption(ExplainStatement.OptionType.VERBOSE)!= null);
                 QueryExecutor qE = new QueryExecutor(space, config, preparedValues);
-                QueryResult res;
+                ExplainPlanQueryResult res;
                 try {
                     JsqlPhysicalPlanHandler physicalPlanHandler = new JsqlPhysicalPlanHandler(qE);
                     qE = physicalPlanHandler.prepareForExecution(explainStatement.getStatement().getSelectBody());
-                    res = qE.execute();
-                    packet.setResultEntry(res.convertEntriesToResultArrays());
+                    res = (ExplainPlanQueryResult) qE.execute();
+                    packet.setResultEntry(res.convertEntriesToResultArrays(config));
                 } catch (SQLException e) {
                     throw new SQLExceptionWrapper(e);
                 }
