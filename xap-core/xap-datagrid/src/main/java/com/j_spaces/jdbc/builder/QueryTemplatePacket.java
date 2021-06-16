@@ -24,23 +24,15 @@ import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.internal.io.IOUtils;
 import com.gigaspaces.internal.metadata.EntryType;
 import com.gigaspaces.internal.metadata.ITypeDesc;
-import com.gigaspaces.internal.query.CompoundAndCustomQuery;
-import com.gigaspaces.internal.query.CompoundContainsItemsCustomQuery;
-import com.gigaspaces.internal.query.ExacValueCompoundIndexScanner;
-import com.gigaspaces.internal.query.IContainsItemsCustomQuery;
-import com.gigaspaces.internal.query.ICustomQuery;
-import com.gigaspaces.internal.query.IQueryIndexScanner;
-import com.gigaspaces.internal.query.NullValueIndexScanner;
-import com.gigaspaces.internal.query.RangeCompoundIndexScanner;
-import com.gigaspaces.query.explainplan.ExplainPlan;
+import com.gigaspaces.internal.query.*;
 import com.gigaspaces.internal.transport.AbstractProjectionTemplate;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.metadata.index.CompoundIndex;
 import com.gigaspaces.metadata.index.ISpaceCompoundIndexSegment;
 import com.gigaspaces.metadata.index.SpaceIndex;
-import com.gigaspaces.metadata.index.SpaceIndexType;
 import com.gigaspaces.query.aggregators.AggregationSet;
+import com.gigaspaces.query.explainplan.ExplainPlan;
 import com.j_spaces.core.ExternalTemplatePacket;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.client.TemplateMatchCodes;
@@ -48,15 +40,10 @@ import com.j_spaces.jdbc.AbstractDMLQuery;
 import com.j_spaces.jdbc.AggregationsUtil;
 import com.j_spaces.jdbc.JoinedEntry;
 import com.j_spaces.jdbc.SQLUtil;
-import com.j_spaces.jdbc.builder.range.ContainsItemIntersectionBase;
-import com.j_spaces.jdbc.builder.range.ContainsItemValueRange;
-import com.j_spaces.jdbc.builder.range.EmptyRange;
-import com.j_spaces.jdbc.builder.range.Range;
-import com.j_spaces.jdbc.builder.range.RelationRange;
+import com.j_spaces.jdbc.builder.range.*;
 import com.j_spaces.jdbc.query.ArrayListResult;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 import com.j_spaces.jdbc.query.QueryTableData;
-
 import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.Transaction;
 import net.jini.core.transaction.TransactionException;
@@ -65,14 +52,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 @com.gigaspaces.api.InternalApi
@@ -547,9 +527,7 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
      * Merge given templates into one template.
      */
     public QueryTemplatePacket and(QueryTemplatePacket template) {
-
         QueryTemplatePacket result = new QueryTemplatePacket(this);
-
         result.intersectRanges(template);
         result.intersectUids(template);
         result.uniteContainsItems(template);

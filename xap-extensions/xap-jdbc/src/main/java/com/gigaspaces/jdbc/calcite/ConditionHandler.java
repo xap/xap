@@ -52,34 +52,44 @@ public class ConditionHandler extends RexShuttle {
     }
 
     private void handleRexCall(RexCall call){
-        RexNode leftOp = getNode((RexLocalRef) call.getOperands().get(0));
-        RexNode rightOp = getNode((RexLocalRef) call.getOperands().get(1));
+
         switch (call.getKind()) {
-            case AND:
+            case AND: {
                 ConditionHandler leftHandler = new ConditionHandler(program, queryExecutor, fields);
                 ConditionHandler rightHandler = new ConditionHandler(program, queryExecutor, fields);
-                leftOp.accept(leftHandler);
-                rightOp.accept(rightHandler);
-                and(leftHandler, rightHandler);
-                break;
-            case OR:
-                leftHandler = new ConditionHandler(program, queryExecutor, fields);
+                RexNode leftOp = getNode((RexLocalRef) call.getOperands().get(0));
                 leftOp.accept(leftHandler);
                 for (int i = 1; i < call.getOperands().size(); i++) {
-                    rightOp = getNode((RexLocalRef) call.getOperands().get(i));
+                    RexNode rightOp = getNode((RexLocalRef) call.getOperands().get(i));
                     rightHandler = new ConditionHandler(program, queryExecutor, fields);
+                    rightOp.accept(rightHandler);
+                    and(leftHandler, rightHandler);
+                }
+                break;
+            }
+            case OR: {
+                ConditionHandler leftHandler = new ConditionHandler(program, queryExecutor, fields);
+                RexNode leftOp = getNode((RexLocalRef) call.getOperands().get(0));
+                leftOp.accept(leftHandler);
+                for (int i = 1; i < call.getOperands().size(); i++) {
+                    RexNode rightOp = getNode((RexLocalRef) call.getOperands().get(i));
+                    ConditionHandler rightHandler = new ConditionHandler(program, queryExecutor, fields);
                     rightOp.accept(rightHandler);
                     or(leftHandler, rightHandler);
                 }
                 break;
+            }
             case EQUALS:
             case NOT_EQUALS:
             case LESS_THAN:
             case LESS_THAN_OR_EQUAL:
             case GREATER_THAN:
-            case GREATER_THAN_OR_EQUAL:
+            case GREATER_THAN_OR_EQUAL: {
+                RexNode leftOp = getNode((RexLocalRef) call.getOperands().get(0));
+                RexNode rightOp = getNode((RexLocalRef) call.getOperands().get(1));
                 handleSingle(leftOp, rightOp, call.getKind());
                 break;
+            }
             default:
                 throw new UnsupportedOperationException(String.format("Queries with %s are not supported",call.getKind()));
         }
@@ -156,7 +166,12 @@ public class ConditionHandler extends RexShuttle {
             } else if (rightTable instanceof UnionTemplatePacket) {
                 this.qtpMap.put(leftTable.getKey(), leftTable.getValue().and(((UnionTemplatePacket) rightTable)));
             } else {
-                this.qtpMap.put(leftTable.getKey(), leftTable.getValue().and(rightTable));
+                QueryTemplatePacket existingQueryTemplatePacket = this.qtpMap.get(leftTable.getKey());
+                if (existingQueryTemplatePacket == null) {
+                    this.qtpMap.put(leftTable.getKey(), leftTable.getValue().and(rightTable));
+                } else {
+                    this.qtpMap.put(leftTable.getKey(), existingQueryTemplatePacket.and(rightTable));
+                }
             }
         }
 
@@ -184,7 +199,7 @@ public class ConditionHandler extends RexShuttle {
                 if (existingQueryTemplatePacket == null) {
                     this.qtpMap.put(leftTable.getKey(), leftTable.getValue().union(rightTable));
                 } else {
-                    existingQueryTemplatePacket.union(rightTable);
+                    this.qtpMap.put(leftTable.getKey(), existingQueryTemplatePacket.union(rightTable));
                 }
             }
         }
