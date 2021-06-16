@@ -102,6 +102,9 @@ public class ConcreteTableContainer extends TableContainer {
                 queryResult = new ExplainPlanQueryResult(visibleColumns, explainPlanImpl.getExplainPlanInfo(), this);
             } else {
                 queryResult = new ConcreteQueryResult(res, this);
+                if( hasGroupByColumns() && hasOrderColumns() ){
+                    queryResult.sort();
+                }
             }
             return queryResult;
         } catch (Exception e) {
@@ -114,7 +117,9 @@ public class ConcreteTableContainer extends TableContainer {
     }
 
     private void setAggregations() {
-        setOrderByAggregation();
+        if( !hasGroupByColumns() ){
+            setOrderByAggregation();
+        }
         setAggregationFunctions();
         setGroupByAggregation();
     }
@@ -129,6 +134,7 @@ public class ConcreteTableContainer extends TableContainer {
                 groupByColumnsArray[ i ] = groupByColumns.get( i ).getName();
             }
 
+            //int limit = hasOrderColumns() ? Integer.MAX_VALUE : entriesLimit;
             DistinctAggregator distinctAggregator = new DistinctAggregator().distinct(limit, groupByColumnsArray);
             if( queryTemplatePacket.getAggregationSet() == null ) {
                 AggregationSet aggregationSet = new AggregationSet().distinct( distinctAggregator );
