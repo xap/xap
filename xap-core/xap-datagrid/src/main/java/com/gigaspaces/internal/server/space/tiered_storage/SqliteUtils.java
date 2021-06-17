@@ -150,16 +150,16 @@ public class SqliteUtils {
         map.put(LocalTime.class.getName(), (res, i) -> LocalTime.ofNanoOfDay(res.getLong(i)));
         map.put(LocalDateTime.class.getName(), (res, i) -> LocalDateTime.ofInstant(fromGsTime(res.getLong(i)), ZoneId.of("UTC")));
 
-        map.put(Boolean.class.getName(), ResultSet::getObject);
-        map.put(Byte.class.getName(), ResultSet::getObject);
-        map.put(Short.class.getName(), ResultSet::getObject);
-        map.put(Integer.class.getName(), ResultSet::getObject);
-        map.put(Long.class.getName(), ResultSet::getObject);
-        map.put(BigInteger.class.getName(), ResultSet::getObject);
-        map.put(BigDecimal.class.getName(), ResultSet::getObject);
-        map.put(Float.class.getName(), ResultSet::getObject);
-        map.put(Double.class.getName(), ResultSet::getObject);
-        map.put(Byte[].class.getName(), ResultSet::getObject);
+        map.put(Boolean.class.getName(), ResultSet::getBoolean);
+        map.put(Byte.class.getName(), ResultSet::getByte);
+        map.put(Short.class.getName(), ResultSet::getShort);
+        map.put(Integer.class.getName(), ResultSet::getInt);
+        map.put(Long.class.getName(), ResultSet::getLong);
+        map.put(BigInteger.class.getName(), (res,i) -> res.getBigDecimal(i).toBigInteger());
+        map.put(BigDecimal.class.getName(), ResultSet::getBigDecimal);
+        map.put(Float.class.getName(), ResultSet::getFloat);
+        map.put(Double.class.getName(), ResultSet::getDouble);
+        map.put(Byte[].class.getName(), ResultSet::getBytes);
         return map;
     }
 
@@ -183,16 +183,16 @@ public class SqliteUtils {
         map.put(LocalTime.class.getName(), (statement, i, val) -> statement.setLong(i, ((LocalTime) val).toNanoOfDay()));
         map.put(LocalDateTime.class.getName(), (statement, i, val) -> statement.setLong(i, toGSTime(((LocalDateTime) val).atZone(ZoneId.of("UTC")).toInstant())));
 
-        map.put(Boolean.class.getName(), PreparedStatement::setObject);
-        map.put(Byte.class.getName(), PreparedStatement::setObject);
-        map.put(Short.class.getName(), PreparedStatement::setObject);
-        map.put(Integer.class.getName(), PreparedStatement::setObject);
-        map.put(Long.class.getName(), PreparedStatement::setObject);
-        map.put(BigInteger.class.getName(), PreparedStatement::setObject);
-        map.put(BigDecimal.class.getName(), PreparedStatement::setObject);
-        map.put(Float.class.getName(), PreparedStatement::setObject);
-        map.put(Double.class.getName(), PreparedStatement::setObject);
-        map.put(Byte[].class.getName(), PreparedStatement::setObject);
+        map.put(Boolean.class.getName(), (statement, i, val) -> statement.setBoolean(i, (Boolean) val));
+        map.put(Byte.class.getName(), (statement, i, val) -> statement.setByte(i, (byte) val));
+        map.put(Short.class.getName(), (statement, i, val) -> statement.setShort(i, (short) val));
+        map.put(Integer.class.getName(), (statement, i, val) -> statement.setInt(i, (int) val));
+        map.put(Long.class.getName(), (statement, i, val) -> statement.setLong(i, (long) val));
+        map.put(BigInteger.class.getName(), (statement, i, val) -> statement.setObject(i, val, java.sql.Types.BIGINT));
+        map.put(BigDecimal.class.getName(), (statement, i, val) -> statement.setBigDecimal(i, (BigDecimal) val));
+        map.put(Float.class.getName(), (statement, i, val) -> statement.setFloat(i, (float) val));
+        map.put(Double.class.getName(), (statement, i, val) -> statement.setDouble(i, (double) val));
+        map.put(Byte[].class.getName(), (statement, i, val) -> statement.setBytes(i, (byte[]) val));
         return map;
     }
 
@@ -208,8 +208,13 @@ public class SqliteUtils {
             throw new IllegalArgumentException("cannot map non trivial type " + propertyType.getName());
         }
         final ExtractFunction extractFunction = sqlExtractorsMap.get(propertyType.getName());
-        return extractFunction.extract(resultSet, index);
+        Object value = extractFunction.extract(resultSet, index);
+        if(resultSet.wasNull()){
+            return null;
+        }
+        return value;
     }
+
 
 
     public static void setPropertyValue(boolean isUpdate, PreparedStatement statement, Class<?> propertyType, int index, Object value) throws SQLException {
