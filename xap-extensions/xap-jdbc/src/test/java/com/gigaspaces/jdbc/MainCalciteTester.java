@@ -106,6 +106,7 @@ public class MainCalciteTester {
         String spaceName = "demo" + (newDriver ? "new" : "old");
         AbstractSpaceConfigurer configurer = embedded ? new EmbeddedSpaceConfigurer(spaceName)
                 .addProperty("space-config.QueryProcessor.datetime_format", "yyyy-MM-dd HH:mm:ss.SSS")
+                .addProperty("v3driver", "calcite")
 //                .tieredStorage(new TieredStorageConfigurer().addTable(new TieredStorageTableConfig().setName(MyPojo.class.getName()).setCriteria("age > 20")))
                 : new SpaceProxyConfigurer(spaceName);
 
