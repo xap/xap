@@ -5,10 +5,7 @@ import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.UnionTemplatePacket;
-import com.j_spaces.jdbc.builder.range.EqualValueRange;
-import com.j_spaces.jdbc.builder.range.NotEqualValueRange;
-import com.j_spaces.jdbc.builder.range.Range;
-import com.j_spaces.jdbc.builder.range.SegmentRange;
+import com.j_spaces.jdbc.builder.range.*;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlKind;
 
@@ -56,12 +53,11 @@ public class ConditionHandler extends RexShuttle {
         switch (call.getKind()) {
             case AND: {
                 ConditionHandler leftHandler = new ConditionHandler(program, queryExecutor, fields);
-                ConditionHandler rightHandler = new ConditionHandler(program, queryExecutor, fields);
                 RexNode leftOp = getNode((RexLocalRef) call.getOperands().get(0));
                 leftOp.accept(leftHandler);
                 for (int i = 1; i < call.getOperands().size(); i++) {
                     RexNode rightOp = getNode((RexLocalRef) call.getOperands().get(i));
-                    rightHandler = new ConditionHandler(program, queryExecutor, fields);
+                    ConditionHandler rightHandler = new ConditionHandler(program, queryExecutor, fields);
                     rightOp.accept(rightHandler);
                     and(leftHandler, rightHandler);
                 }
@@ -84,18 +80,53 @@ public class ConditionHandler extends RexShuttle {
             case LESS_THAN:
             case LESS_THAN_OR_EQUAL:
             case GREATER_THAN:
-            case GREATER_THAN_OR_EQUAL: {
+            case GREATER_THAN_OR_EQUAL:
                 RexNode leftOp = getNode((RexLocalRef) call.getOperands().get(0));
                 RexNode rightOp = getNode((RexLocalRef) call.getOperands().get(1));
-                handleSingle(leftOp, rightOp, call.getKind());
+                handleTwoOperandsCall(leftOp, rightOp, call.getKind());
                 break;
-            }
+            case IS_NULL:
+            case IS_NOT_NULL:
+                handleSingleOperandsCall(getNode((RexLocalRef) call.getOperands().get(0)), call.getKind());
+                break;
             default:
                 throw new UnsupportedOperationException(String.format("Queries with %s are not supported",call.getKind()));
         }
     }
 
-    private void handleSingle(RexNode leftOp, RexNode rightOp, SqlKind sqlKind){
+    private void handleSingleOperandsCall(RexNode operand, SqlKind sqlKind){
+        String column = null;
+        Range range = null;
+        switch (operand.getKind()){
+            case INPUT_REF:
+                column = fields.get(((RexInputRef) operand).getIndex());
+            default:
+                break;
+        }
+        TableContainer table = getTableForColumn(column);
+        assert table != null;
+        switch (sqlKind) {
+            case IS_NULL:
+                range = new IsNullRange(column);
+                if(table.getJoinInfo() != null){
+                    table.getJoinInfo().insertRangeToJoinInfo(range);
+                    return;
+                }
+                break;
+            case IS_NOT_NULL:
+                range = new NotNullRange(column);
+                if(table.getJoinInfo() != null){
+                    table.getJoinInfo().insertRangeToJoinInfo(range);
+                    return;
+                }
+                break;
+            default:
+                throw new UnsupportedOperationException(String.format("Queries with %s are not supported",sqlKind));
+        }
+        qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+    }
+
+    private void handleTwoOperandsCall(RexNode leftOp, RexNode rightOp, SqlKind sqlKind){
         String column = null;
         Object value = null;
         Range range = null;
@@ -148,6 +179,7 @@ public class ConditionHandler extends RexShuttle {
         }
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
     }
+
     private TableContainer getTableForColumn(String column){
         for (TableContainer table : queryExecutor.getTables()) {
             if (table.hasColumn(column)) {
