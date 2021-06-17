@@ -10,9 +10,9 @@ import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlKind;
 
 import java.sql.SQLException;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.*;
 
 public class ConditionHandler extends RexShuttle {
     private final RexProgram program;
@@ -132,8 +132,7 @@ public class ConditionHandler extends RexShuttle {
         Range range = null;
         switch (leftOp.getKind()){
             case LITERAL:
-                value = ((RexLiteral) leftOp).getValue3();
-                break;
+                value = getValue((RexLiteral) leftOp);
             case INPUT_REF:
                 column = fields.get(((RexInputRef) leftOp).getIndex());
                 break;
@@ -145,7 +144,7 @@ public class ConditionHandler extends RexShuttle {
         }
         switch (rightOp.getKind()){
             case LITERAL:
-                value = ((RexLiteral) rightOp).getValue3();
+                value = getValue((RexLiteral) rightOp);
                 break;
             case INPUT_REF:
                 column = fields.get(((RexInputRef) rightOp).getIndex());
@@ -187,6 +186,38 @@ public class ConditionHandler extends RexShuttle {
         }
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
     }
+
+    private Object getValue(RexLiteral literal) {
+        if (literal == null) {
+            return null;
+        }
+        switch (literal.getType().getSqlTypeName()) {
+            case BOOLEAN:
+                return RexLiteral.booleanValue(literal);
+            case CHAR:
+                return literal.getType().getPrecision() > 1 ? literal.getValueAs(String.class) : literal.getValueAs(Class.class);
+            case VARCHAR:
+                return literal.getValueAs(String.class);
+            case REAL:
+            case TINYINT:
+            case SMALLINT:
+            case INTEGER:
+            case BIGINT:
+            case FLOAT:
+            case DOUBLE:
+            case DECIMAL:
+                return literal.getValue3();
+            case DATE:
+                return new Date(literal.getValueAs(Calendar.class).getTimeInMillis());
+            case TIME:
+                return new Time(literal.getValueAs(Calendar.class).getTimeInMillis());
+            case TIMESTAMP:
+                return new Timestamp(literal.getValueAs(Calendar.class).getTimeInMillis());
+            default:
+                throw new UnsupportedOperationException("Unsupported type: " + literal.getType().getSqlTypeName());
+        }
+    }
+
 
     private TableContainer getTableForColumn(String column){
         for (TableContainer table : queryExecutor.getTables()) {
