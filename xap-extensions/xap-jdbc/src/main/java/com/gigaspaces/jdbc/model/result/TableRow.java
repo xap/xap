@@ -16,7 +16,6 @@ public class TableRow implements Comparable<TableRow> {
     private final Object[] orderValues;
     private final ConcreteColumn[] groupByColumns;
     private final Object[] groupByValues;
-    private final Object[] distinctValues;
 
     public TableRow(IQueryColumn[] columns, Object[] values) {
         this(columns, values, new OrderColumn[0], new Object[0], new ConcreteColumn[0], new Object[0]);
@@ -26,17 +25,12 @@ public class TableRow implements Comparable<TableRow> {
                     ConcreteColumn[] groupByColumns, Object[] groupByValues) {
         this.columns = columns;
         this.values = values;
+
         this.orderColumns = orderColumns;
         this.orderValues = orderValues;
         this.groupByColumns = groupByColumns;
         this.groupByValues = groupByValues;
 
-        this.distinctValues = new Object[columns.length];
-        for (int i = 0; i < columns.length; i++) {
-            if (columns[i].isVisible()){
-                distinctValues[i] = this.values[i];
-            }
-        }
     }
 
     TableRow(IEntryPacket entryPacket, ConcreteTableContainer tableContainer) {
@@ -52,13 +46,9 @@ public class TableRow implements Comparable<TableRow> {
             int columnsSize = aggregationColumns.size();
             this.columns = new IQueryColumn[columnsSize];
             this.values = new Object[columnsSize];
-            this.distinctValues = new Object[columnsSize];
             for (int i = 0; i < columnsSize; i++) {
                 this.columns[i] = aggregationColumns.get(i);
                 this.values[i] = fieldNameValueMap.get(aggregationColumns.get(i).getName());
-                if (columns[i].isVisible()){
-                    distinctValues[i] = this.values[i];
-                }
             }
         } else {
             //for the join/where contains both visible and invisible columns
@@ -66,12 +56,8 @@ public class TableRow implements Comparable<TableRow> {
 
             this.columns = allQueryColumns.toArray(new IQueryColumn[0]);
             this.values = new Object[this.columns.length];
-            this.distinctValues = new Object[this.columns.length];
             for (int i = 0; i < this.columns.length; i++) {
                 values[i] = getEntryPacketValue(entryPacket, allQueryColumns.get(i));
-                if (columns[i].isVisible()){
-                    distinctValues[i] = this.values[i];
-                }
             }
         }
 
@@ -91,12 +77,8 @@ public class TableRow implements Comparable<TableRow> {
     TableRow(List<IQueryColumn> columns, List<OrderColumn> orderColumns, List<ConcreteColumn> groupByColumns) {
         this.columns = columns.toArray(new IQueryColumn[0]);
         values = new Object[this.columns.length];
-        distinctValues = new Object[this.columns.length];
         for (int i = 0; i < this.columns.length; i++) {
             values[i] = this.columns[i].getCurrentValue();
-            if(this.columns[i].isVisible()){
-                distinctValues[i]=values[i];
-            }
         }
 
         this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
@@ -115,12 +97,8 @@ public class TableRow implements Comparable<TableRow> {
     TableRow(TableRow row, TempTableContainer tempTableContainer) {
         this.columns = tempTableContainer.getSelectedColumns().toArray(new IQueryColumn[0]);
         this.values = new Object[this.columns.length];
-        this.distinctValues = new Object[this.columns.length];
         for (int i = 0; i < this.columns.length; i++) {
             this.values[i] = row.getPropertyValue(this.columns[i]);
-            if(this.columns[i].isVisible()){
-                this.distinctValues[i]=values[i];
-            }
         }
 
         this.orderColumns = tempTableContainer.getOrderColumns().toArray(new OrderColumn[0]);
@@ -185,6 +163,12 @@ public class TableRow implements Comparable<TableRow> {
     }
 
     public Object[] getDistinctValues() {
+        Object[] distinctValues = new Object[columns.length];
+        for (int i = 0; i < columns.length; i++) {
+            if (columns[i].isVisible()){
+                distinctValues[i] = this.values[i];
+            }
+        }
         return distinctValues;
     }
 
