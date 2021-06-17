@@ -136,6 +136,10 @@ public class ConditionHandler extends RexShuttle {
                 break;
             case INPUT_REF:
                 column = fields.get(((RexInputRef) leftOp).getIndex());
+                break;
+            case CAST:
+                handleTwoOperandsCall(getNode((RexLocalRef) ((RexCall) leftOp).getOperands().get(0)), rightOp, sqlKind);
+                return; //return from recursion
             default:
                 break;
         }
@@ -145,6 +149,10 @@ public class ConditionHandler extends RexShuttle {
                 break;
             case INPUT_REF:
                 column = fields.get(((RexInputRef) rightOp).getIndex());
+                break;
+            case CAST:
+                handleTwoOperandsCall(leftOp, getNode((RexLocalRef) ((RexCall) rightOp).getOperands().get(0)), sqlKind);
+                return; //return from recursion
             default:
                 break;
         }
