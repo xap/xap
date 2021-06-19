@@ -39,7 +39,7 @@ SqlSetOption SqlSetOptionAlt() :
         LOOKAHEAD(2)
         <SET> <SESSION> <CHARACTERISTICS> <AS> <TRANSACTION> <ISOLATION> <LEVEL>
         {
-            name = new SqlIdentifier("TRANSACTION_ISOLATION_LEVEL", getPos());
+            name = new SqlIdentifier("TRANSACTION_ISOLATION", getPos());
         }
         (
             LOOKAHEAD(2)
@@ -52,7 +52,7 @@ SqlSetOption SqlSetOptionAlt() :
             }
         |
             <REPEATABLE> <READ> {
-                val = SqlLiteral.createCharString("READ_UNCOMMITTED", getPos());
+                val = SqlLiteral.createCharString("REPEATABLE_READ", getPos());
             }
         |
             <SERIALIZABLE> {

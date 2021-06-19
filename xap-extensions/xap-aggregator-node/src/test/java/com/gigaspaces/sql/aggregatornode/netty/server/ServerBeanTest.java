@@ -1,18 +1,12 @@
 package com.gigaspaces.sql.aggregatornode.netty.server;
 
-import org.junit.BeforeClass;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.GigaSpaceConfigurer;
-import org.openspaces.core.space.AbstractSpaceConfigurer;
 import org.openspaces.core.space.EmbeddedSpaceConfigurer;
-import org.openspaces.core.space.SpaceProxyConfigurer;
 
 import java.sql.*;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,6 +47,26 @@ class ServerBeanTest {
     }
 
     @Test
+    void testSet() throws Exception {
+        try (Connection conn = connect()) {
+            final Statement statement = conn.createStatement();
+            assertEquals(1, statement.executeUpdate("SET DateStyle = 'ISO'"));
+        }
+    }
+
+    @Test
+    void testShow() throws Exception {
+        try (Connection conn = connect()) {
+            final Statement statement = conn.createStatement();
+            assertTrue(statement.execute("SHOW DateStyle"));
+            ResultSet res = statement.getResultSet();
+            assertNotNull(res);
+            assertTrue(res.next());
+            assertEquals("ISO, MDY", res.getString(1));
+        }
+    }
+
+    // @Test TODO
     void testParametrized() throws Exception {
         try (Connection conn = connect()) {
             final String qry = String.format("SELECT first_name, last_name, email, age FROM \"%s\" as T where T.last_name = ? OR T.first_name = ?", MyPojo.class.getName());
@@ -61,20 +75,6 @@ class ServerBeanTest {
             statement.setString(2, "Adam");
 
             assertTrue(statement.execute());
-
-            final ResultSet resultSet = statement.getResultSet();
-        }
-    }
-
-    private static void execute(Connection connection, String sql, String... params) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            System.out.println();
-            System.out.println("Executing: " + sql);
-            for (int i = 0; i < params.length; i++) {
-                statement.setString(i + 1, params[i]);
-            }
-            ResultSet res = statement.executeQuery(sql);
-            DumpUtils.dump(res);
         }
     }
 

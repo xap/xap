@@ -52,7 +52,7 @@ public class GSSqlParserImplTest {
         Assert.assertTrue(parseResult instanceof SqlSetOption);
         SqlSetOption set = (SqlSetOption) parseResult;
         String name = set.getName().toString();
-        Assert.assertEquals("TRANSACTION_ISOLATION_LEVEL", name);
+        Assert.assertEquals("TRANSACTION_ISOLATION", name);
         SqlNode valueNode = set.getValue();
         Assert.assertTrue(valueNode instanceof SqlLiteral);
         SqlLiteral literal = (SqlLiteral) valueNode;

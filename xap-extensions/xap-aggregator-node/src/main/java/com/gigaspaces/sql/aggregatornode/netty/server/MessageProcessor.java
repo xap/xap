@@ -1,11 +1,11 @@
 package com.gigaspaces.sql.aggregatornode.netty.server;
 
-import com.gigaspaces.sql.aggregatornode.netty.exception.BreakingException;
-import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
-import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.authentication.Authentication;
 import com.gigaspaces.sql.aggregatornode.netty.authentication.AuthenticationProvider;
 import com.gigaspaces.sql.aggregatornode.netty.authentication.ClearTextPassword;
+import com.gigaspaces.sql.aggregatornode.netty.exception.BreakingException;
+import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
+import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -150,10 +150,11 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         ByteBuf buf = null;
         try {
             buf = ctx.alloc().ioBuffer();
-            List<LazyPortal<?>> multiline = queryProvider.executeQueryMultiline(query);
-            for (LazyPortal<?> lazyPortal : multiline) {
-                Portal<?> portal = lazyPortal.getPortal();
-                if (portal.tag() != Portal.Tag.NONE) {
+            List<Portal<?>> multiline = queryProvider.executeQueryMultiline(session, query);
+            for (Portal<?> portal : multiline) {
+                if (!portal.empty()) {
+                    portal.execute();
+
                     writeRowDescription(buf, portal.getDescription());
                     int inBatch = 0;
                     while (portal.hasNext()) {
@@ -164,7 +165,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                             inBatch = 0;
                         }
                     }
-                    writeCommandComplete(buf, portal.tag(), portal.processed());
+                    writeCommandComplete(buf, portal.tag());
                 } else
                     writeEmptyResponse(buf);
             }
@@ -212,7 +213,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         try {
             buf = ctx.alloc().ioBuffer();
             Portal<?> portal = queryProvider.execute(pName);
-            if (portal.tag() != Portal.Tag.NONE) {
+            if (!portal.empty()) {
                 int inBatch = 0;
                 while (portal.hasNext()) {
                     writeDataRow(buf, portal.next(), portal.getDescription());
@@ -230,7 +231,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                 if (portal.hasNext())
                     writePortalSuspended(buf);
                 else
-                    writeCommandComplete(buf, portal.tag(), portal.processed());
+                    writeCommandComplete(buf, portal.tag());
             } else {
                 writeEmptyResponse(buf);
             }
@@ -303,7 +304,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
             outFc[i] = msg.readShort();
 
         try {
-            queryProvider.bind(portal, stmt, params, outFc);
+            queryProvider.bind(session, portal, stmt, params, outFc);
         } catch (Exception e) {
             throw new NonBreakingException("XX000" /* internal error */, "cannot bind statement", e);
         }
@@ -320,7 +321,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         for (int i = 0; i < paramLen; i++)
             paramTypes[i] = msg.readInt();
         try {
-            queryProvider.prepare(stmt, query, paramTypes);
+            queryProvider.prepare(session, stmt, query, paramTypes);
         } catch (Exception e) {
             throw new NonBreakingException("XX000" /* internal error */, "cannot prepare statement", e);
         }
@@ -537,11 +538,11 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         buf.setInt(idx, buf.writerIndex() - idx);
     }
 
-    private void writeCommandComplete(ByteBuf buf, Portal.Tag tag, int processed) {
+    private void writeCommandComplete(ByteBuf buf, String tag) {
         buf.writeByte('C');
         int idx = buf.writerIndex();
         buf.writeInt(0);
-        writeString(buf, String.format("%s %d", tag, processed));
+        writeString(buf, tag);
         buf.setInt(idx, buf.writerIndex() - idx);
     }
 

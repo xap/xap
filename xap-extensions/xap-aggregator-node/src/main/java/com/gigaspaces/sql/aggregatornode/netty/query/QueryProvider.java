@@ -13,28 +13,39 @@ public interface QueryProvider {
      * Initializes query provider
      */
     void init() throws ProtocolException;
+
+    /**
+     * Executes multiline query.
+     *
+     * @param session Session
+     * @param qry Query string.
+     * @return List of query cursors.
+     */
+    List<Portal<?>> executeQueryMultiline(Session session, String qry) throws ProtocolException;
+
     /**
      * Prepares a query for future execution
+     * @param session Session
      * @param stmt Statement name, named statement may be executed without
      *             parsing and validation. You should consider it as a prepared statement id.
      *             May be empty, in this case the statement will free resources and be destroyed
      *             right after execution
      * @param qry Query string.
      * @param paramTypes Inferred parameter types, an ODBC/JDBC driver does a query pre-parsing to
-     *                   identify query parameter types. May be empty, in this case server should
-     *                   infer types by themself.
+*                   identify query parameter types. May be empty, in this case server should
      */
-    void prepare(String stmt, String qry, int[] paramTypes) throws ProtocolException;
+    void prepare(Session session, String stmt, String qry, int[] paramTypes) throws ProtocolException;
 
     /**
      * Setups prepared statement parameters and binds the statement with
      * a portal - a PG abstraction describing server side cursor.
+     * @param session Session
      * @param portal Portal name, or a server side cursor name.
      * @param stmt Statement name.
      * @param params Parameter values.
      * @param formatCodes Result format codes, it says how to serialize values - as text or as binary data.
      */
-    void bind(String portal, String stmt, Object[] params, int[] formatCodes) throws ProtocolException;
+    void bind(Session session, String portal, String stmt, Object[] params, int[] formatCodes) throws ProtocolException;
 
     /**
      * Describes a statement, its parameters and result columns
@@ -79,11 +90,4 @@ public interface QueryProvider {
      * @param secret Session secret.
      */
     void cancel(int pid, int secret);
-
-    /**
-     * Executes multiline query.
-     * @param qry Query string.
-     * @return List of query cursor sources.
-     */
-    List<LazyPortal<?>> executeQueryMultiline(String qry) throws ProtocolException;
 }

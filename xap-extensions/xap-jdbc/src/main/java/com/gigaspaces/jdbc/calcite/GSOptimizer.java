@@ -75,6 +75,7 @@ public class GSOptimizer {
 
     public SqlNode parse(String query) {
         SqlParser.Config config = SqlParser.configBuilder()
+            .setParserFactory(GSSqlParserFactoryWrapper.FACTORY)
             .setQuotedCasing(Casing.UNCHANGED)
             .setUnquotedCasing(Casing.UNCHANGED)
             .setCaseSensitive(false).build();
