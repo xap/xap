@@ -84,6 +84,17 @@ public class GSSqlParserImplTest {
         Assert.assertEquals("CLIENT_ENCODING", name);
     }
 
+    @Test
+    public void testParseLiteral() throws Exception {
+        String sql = "select 1::int2";
+        SqlNode parseResult = parse(sql);
+        Assert.assertNotNull(parseResult);
+        Assert.assertTrue(parseResult instanceof SqlShowOption);
+        SqlShowOption show = (SqlShowOption) parseResult;
+        String name = show.getName().toString();
+        Assert.assertEquals("CLIENT_ENCODING", name);
+    }
+
     private SqlNode parse(String sql) throws Exception {
         SqlParser.Config config = SqlParser.configBuilder()
                 .setParserFactory(GSSqlParserFactoryWrapper.FACTORY)

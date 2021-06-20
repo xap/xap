@@ -1,6 +1,7 @@
 package com.gigaspaces.sql.aggregatornode.netty.utils;
 
 import com.gigaspaces.sql.aggregatornode.netty.exception.BreakingException;
+import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.ColumnDescription;
 import com.gigaspaces.sql.aggregatornode.netty.query.ParameterDescription;
@@ -15,10 +16,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public abstract class PgType {
+    private static final String DELIMITER = ",";
+
     public static final PgType PG_TYPE_UNKNOWN = new PgType(705, "unknown", -2, 0, 0) {};
     public static final PgType PG_TYPE_ANY = new PgType(2276, "any", 4, 0, 0) {};
 
@@ -70,44 +72,37 @@ public abstract class PgType {
 
     public static final PgType PG_TYPE_CURSOR = new TypeCursor();
 
-    private final int id;
-    private final String name;
-    private final int length;
-    private final int arrayType;
-    private final int elementType;
+    protected final int id;
+    protected final String name;
+    protected final int length;
+    protected final int arrayType;
+    protected final int elementType;
 
     private static final IntObjectHashMap<PgType> elementToArray;
-    private static final IntObjectHashMap<PgType> arrayToElement;
     private static final IntObjectHashMap<PgType> typeIdToType;
     
     static {
+        Field[] fields = PgType.class.getDeclaredFields();
+        elementToArray = new IntObjectHashMap<>(fields.length * 2);
+        typeIdToType = new IntObjectHashMap<>(fields.length * 2);
         Set<PgType> typeSet = new HashSet<>();
         try {
-            for (Field field : PgType.class.getDeclaredFields()) {
+            for (Field field : fields) {
                 if (PgType.class.isAssignableFrom(field.getType()) && Modifier.isStatic(field.getModifiers())) {
                     field.setAccessible(true);
                     PgType type = (PgType) field.get(null);
                     if (typeSet.add(type)) {
+                        typeIdToType.put(type.id, type);
                         if (type.arrayType != 0) {
-                            typeSet.add(generateArrayType(type));
+                            PgType arrayType = arrayType(type);
+                            if (typeSet.add(arrayType))
+                                elementToArray.put(type.id, arrayType);
                         } 
                     }
                 }
             }
         } catch (Throwable e) {
             // failed to initialize types
-        }
-
-        elementToArray = new IntObjectHashMap<>(typeSet.size());
-        arrayToElement = new IntObjectHashMap<>(typeSet.size());
-        typeIdToType = new IntObjectHashMap<>(typeSet.size());
-
-        for (PgType type : typeSet) {
-            typeIdToType.put(type.id, type);
-            if (type.arrayType != 0)
-                arrayToElement.put(type.arrayType, type);
-            if (type.elementType != 0)
-                elementToArray.put(type.elementType, type);
         }
     }
 
@@ -131,25 +126,11 @@ public abstract class PgType {
         return length;
     }
 
-    public final int getArrayType() {
-        return arrayType;
-    }
-
-    public final int getElementType() {
-        return elementType;
-    }
-
     protected final void asText(Session session, ByteBuf dst, Object value) throws ProtocolException {
         if (writeNull(dst, value))
             return;
 
         asTextInternal(session, dst, value);
-    }
-
-    protected final void asBinary(Session session, ByteBuf dst, Object value) throws ProtocolException {
-        if (writeNull(dst, value))
-            return;
-        asBinaryInternal(session, dst, value);
     }
 
     protected final <T> T fromText(Session session, ByteBuf src) throws ProtocolException {
@@ -158,26 +139,32 @@ public abstract class PgType {
         return fromTextInternal(session, src);
     }
 
+    protected final void asBinary(Session session, ByteBuf dst, Object value) throws ProtocolException {
+        if (writeNull(dst, value))
+            return;
+        asBinaryInternal(session, dst, value);
+    }
+
     protected final <T> T fromBinary(Session session, ByteBuf src) throws ProtocolException {
         if (readNull(src))
             return null;
-        return fromTextInternal(session, src);
+        return fromBinaryInternal(session, src);
     }
 
     protected void asTextInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
-        throw new BreakingException("Unsupported data type: " + id);
+        throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unsupported data type: " + id);
     }
 
     protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
-        throw new BreakingException("Unsupported data type: " + id);
+        throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unsupported data type: " + id);
     }
 
     protected void asBinaryInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
-        throw new BreakingException("Unsupported data type: " + id);
+        throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unsupported data type: " + id);
     }
 
     protected <T> T fromBinaryInternal(Session session, ByteBuf src) throws ProtocolException {
-        throw new BreakingException("Unsupported data type: " + id);
+        throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unsupported data type: " + id);
     }
 
     @Override
@@ -195,16 +182,8 @@ public abstract class PgType {
         return id;
     }
 
-    public static Collection<PgType> allTypes() {
-        return Collections.unmodifiableCollection(typeIdToType.values());
-    }
-
     public static PgType getType(int id) {
         return typeIdToType.getOrDefault(id, PG_TYPE_UNKNOWN);
-    }
-
-    public static PgType getElementType(int arrayTypeId) {
-        return arrayToElement.getOrDefault(arrayTypeId, PG_TYPE_UNKNOWN);
     }
 
     public static PgType getArrayType(int elementTypeId) {
@@ -217,7 +196,7 @@ public abstract class PgType {
         else if (format == Constants.BINARY)
             return desc.getType().fromBinary(session, dst);
         else
-            throw new BreakingException("Unexpected format code: " + format);
+            throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unexpected format code: " + format);
     }
 
     public static void writeColumn(Session session, ByteBuf dst, Object value, ColumnDescription desc) throws ProtocolException {
@@ -227,7 +206,7 @@ public abstract class PgType {
         else if (format == Constants.BINARY)
             desc.getType().asBinary(session, dst, value);
         else
-            throw new BreakingException("Unexpected format code: " + format);
+            throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unexpected format code: " + format);
     }
 
     public static PgType fromInternal(RelDataType internalType) {
@@ -302,14 +281,6 @@ public abstract class PgType {
             default:
                 return PG_TYPE_UNKNOWN;
         }
-
-
-    }
-
-    public static List<RelDataType> toInternal(int[] types, RelDataTypeFactory factory) {
-        return Arrays.stream(types)
-                .mapToObj(type -> toInternal(type, factory))
-                .collect(Collectors.toList());
     }
 
     public static RelDataType toInternal(int type, RelDataTypeFactory factory) {
@@ -358,20 +329,26 @@ public abstract class PgType {
         }
     }
 
-    private static PgType generateArrayType(PgType type) {
+    private static PgType arrayType(PgType type) {
+        if (type == PG_TYPE_INT2)
+            return new PgTypeInt2Array();
+        if (type == PG_TYPE_INT4)
+            return new PgTypeInt4Array();
+
+        // TODO implement array type encoder/decoder
         return new PgType(type.arrayType, type.name + "_array", -1, 0, type.id){};
     }
 
     private static void checkType(Object value, Class<?> type) throws ProtocolException {
         if (type.isInstance(value))
             return;
-        throw new BreakingException("Unexpected value type: " + value.getClass());
+        throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value type: " + value.getClass());
     }
 
     private static void checkLen(ByteBuf src, int expected) throws ProtocolException {
         int actual = src.readInt();
         if (actual != expected)
-            throw new BreakingException("Unexpected value length, actual: " + actual + "; expected: " + expected);
+            throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value length, actual: " + actual + "; expected: " + expected);
     }
 
     private static boolean readNull(ByteBuf src) {
@@ -399,6 +376,15 @@ public abstract class PgType {
         dst.writeInt(bytes.length).writeBytes(bytes);
     }
 
+    private static int countNulls(Object[] values) {
+        int res = 0;
+        for (Object value : values) {
+            if (value == null)
+                res++;
+        }
+        return res;
+    }
+
     // --------------------------------------------------------------
 
     private static class TypeBool extends PgType {
@@ -421,7 +407,7 @@ public abstract class PgType {
                 case "f":
                     return (T) Boolean.FALSE;
                 default:
-                    throw new BreakingException("Cannot read value: " + text);
+                    throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Cannot read value: " + text);
             }
         }
 
@@ -453,7 +439,7 @@ public abstract class PgType {
         protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
             String text = PgType.readText(session, src);
             if (text.length() != 1)
-                throw new BreakingException("Cannot read value: " + text);
+                throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Cannot read value: " + text);
             return (T) Character.valueOf(text.charAt(0));
         }
 
@@ -482,7 +468,7 @@ public abstract class PgType {
         }
 
         @Override
-        protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
+        protected <T> T fromTextInternal(Session session, ByteBuf src) {
             return (T) Long.valueOf(PgType.readText(session, src));
         }
 
@@ -511,7 +497,7 @@ public abstract class PgType {
         }
 
         @Override
-        protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
+        protected <T> T fromTextInternal(Session session, ByteBuf src) {
             return (T) Short.valueOf(PgType.readText(session, src));
         }
 
@@ -540,7 +526,7 @@ public abstract class PgType {
         }
 
         @Override
-        protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
+        protected <T> T fromTextInternal(Session session, ByteBuf src) {
             return (T) Integer.valueOf(PgType.readText(session, src));
         }
 
@@ -569,7 +555,7 @@ public abstract class PgType {
         }
 
         @Override
-        protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
+        protected <T> T fromTextInternal(Session session, ByteBuf src) {
             return (T) Integer.valueOf(PgType.readText(session, src));
         }
 
@@ -598,7 +584,7 @@ public abstract class PgType {
         }
 
         @Override
-        protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
+        protected <T> T fromTextInternal(Session session, ByteBuf src) {
             return (T) Float.valueOf(PgType.readText(session, src));
         }
 
@@ -627,7 +613,7 @@ public abstract class PgType {
         }
 
         @Override
-        protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
+        protected <T> T fromTextInternal(Session session, ByteBuf src) {
             return (T) Double.valueOf(PgType.readText(session, src));
         }
 
@@ -656,7 +642,7 @@ public abstract class PgType {
         }
 
         @Override
-        protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
+        protected <T> T fromTextInternal(Session session, ByteBuf src) {
             return (T) PgType.readText(session, src);
         }
 
@@ -667,7 +653,7 @@ public abstract class PgType {
         }
 
         @Override
-        protected <T> T fromBinaryInternal(Session session, ByteBuf src) throws ProtocolException {
+        protected <T> T fromBinaryInternal(Session session, ByteBuf src) {
             return (T) PgType.readText(session, src);
         }
     }
@@ -684,7 +670,7 @@ public abstract class PgType {
         }
 
         @Override
-        protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
+        protected <T> T fromTextInternal(Session session, ByteBuf src) {
             return (T) PgType.readText(session, src);
         }
 
@@ -695,7 +681,7 @@ public abstract class PgType {
         }
 
         @Override
-        protected <T> T fromBinaryInternal(Session session, ByteBuf src) throws ProtocolException {
+        protected <T> T fromBinaryInternal(Session session, ByteBuf src) {
             return (T) PgType.readText(session, src);
         }
     }
@@ -712,7 +698,7 @@ public abstract class PgType {
         }
 
         @Override
-        protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
+        protected <T> T fromTextInternal(Session session, ByteBuf src) {
             return (T) PgType.readText(session, src);
         }
 
@@ -723,7 +709,7 @@ public abstract class PgType {
         }
 
         @Override
-        protected <T> T fromBinaryInternal(Session session, ByteBuf src) throws ProtocolException {
+        protected <T> T fromBinaryInternal(Session session, ByteBuf src) {
             return (T) PgType.readText(session, src);
         }
     }
@@ -769,7 +755,7 @@ public abstract class PgType {
         protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
             byte[] s = PgType.readText(session, src).getBytes(StandardCharsets.US_ASCII);
             if (s.length < 2 || s[0] != '\\' || s[1] != 'x')
-                throw new BreakingException("Unsupported text format");
+                throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unsupported text format");
 
             byte[] output = new byte[(s.length - 2) / 2];
             for (int i = 0; i < output.length; i++) {
@@ -788,7 +774,7 @@ public abstract class PgType {
         }
 
         @Override
-        protected <T> T fromBinaryInternal(Session session, ByteBuf src) throws ProtocolException {
+        protected <T> T fromBinaryInternal(Session session, ByteBuf src) {
             int len = src.readInt();
             byte[] bytes = new byte[len];
             src.readBytes(bytes);
@@ -796,84 +782,746 @@ public abstract class PgType {
         }
     }
 
-    // TODO
+    private static class PgTypeInt2Array extends PgType {
+        public PgTypeInt2Array() {
+            super(PG_TYPE_INT2.arrayType, PG_TYPE_INT2.name + "_array", -1, 0, PG_TYPE_INT2.id);
+        }
+
+        @Override
+        protected void asTextInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
+            Object[] values;
+            try {
+                values = (Object[]) value;
+            } catch (Exception e) {
+                throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value type: " + value.getClass());
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.append('{');
+            for (int i = 0; i < values.length; i++) {
+                if (i > 0)
+                    sb.append(DELIMITER);
+
+                Short val;
+                try {
+                    val = (Short) values[i];
+                } catch (Exception e) {
+                    throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value type: " + value.getClass());
+                }
+
+                if (val == null)
+                    sb.append("NULL");
+                else {
+                    sb.append(val);
+                }
+            }
+            sb.append('}');
+
+            PgType.writeText(session, dst, sb.toString());
+        }
+
+        @Override
+        protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
+            ArrayList<Short> values = new ArrayList<>();
+            char[] chars = PgType.readText(session, src).toCharArray();
+            StringBuilder sb = new StringBuilder();
+            boolean arrayOpened = false;
+            boolean arrayClosed = false;
+            int startOffset = 0;
+            if (chars[0] == '[') {
+                while (chars[startOffset] != '=') {
+                    startOffset++;
+                }
+                startOffset++; // skip =
+            }
+            for (int i = startOffset; i < chars.length; i++) {
+                char ch = chars[i];
+                if (Character.isWhitespace(ch))
+                    continue;
+
+                switch (ch) {
+                    case '{': {
+                        if (arrayClosed)
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected array start");
+
+                        if (arrayOpened)
+                            throw new NonBreakingException(ErrorCodes.UNSUPPORTED_FEATURE, "Multidimensional arrays are unsupported");
+
+                        arrayOpened = true;
+
+                        break;
+                    }
+
+                    case '}': {
+                        if (!arrayOpened || arrayClosed)
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected array end");
+
+                        arrayClosed = true;
+                        if (sb.length() > 0) {
+                            try {
+                                String val = sb.toString();
+                                sb.setLength(0);
+
+                                if ("NULL".equals(val.toUpperCase(Locale.ROOT)))
+                                    values.add(null);
+                                else
+                                    values.add(Short.parseShort(val));
+                            } catch (NumberFormatException e) {
+                                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+                            }
+                        }
+
+                        break;
+                    }
+
+                    case ',': {
+                        if (!arrayOpened || arrayClosed || sb.length() == 0)
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected array delimiter");
+
+                        try {
+                            String val = sb.toString();
+                            sb.setLength(0);
+
+                            if ("NULL".equals(val.toUpperCase(Locale.ROOT)))
+                                values.add(null);
+                            else
+                                values.add(Short.parseShort(val));
+                        } catch (NumberFormatException e) {
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+                        }
+
+                        break;
+                    }
+
+                    default:
+                        sb.append(ch);
+                        break;
+                }
+            }
+
+            if (!arrayOpened || !arrayClosed)
+                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+
+            return (T) values.toArray();
+        }
+
+        @Override
+        protected void asBinaryInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
+            Object[] values;
+            try {
+                values = (Object[]) value;
+            } catch (Exception e) {
+                throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value type: " + value.getClass());
+            }
+
+            int idx = dst.writerIndex();
+            dst.writeInt(0);
+
+            dst.writeInt(1); // dimensions
+            dst.writeInt(countNulls(values)); // nulls
+            dst.writeInt(elementType); // element type
+            dst.writeInt(values.length); // length
+            dst.writeInt(1); // base
+            for (Object value0 : values) {
+                PG_TYPE_INT2.asBinary(session, dst, value0);
+            }
+
+            dst.setInt(idx, dst.writerIndex() - idx - 4);
+        }
+
+        @Override
+        protected <T> T fromBinaryInternal(Session session, ByteBuf src) throws ProtocolException {
+            int end = src.readInt() + src.writerIndex();
+            if (src.readInt() != 1)
+                throw new NonBreakingException(ErrorCodes.UNSUPPORTED_FEATURE, "Multidimensional arrays are unsupported");
+            src.skipBytes(4); // null element count
+            if (src.readInt() != elementType)
+                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "unexpected element type");
+            int length = src.readInt();
+            ArrayList<Short> values = new ArrayList<>(length);
+            src.skipBytes(4); // base
+            for (int i = 0; i < length; i++) {
+                values.add(PG_TYPE_INT2.fromBinary(session, src));
+            }
+            if (src.writerIndex() != end)
+                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+
+            return (T) values.toArray();
+        }
+    }
+
+    private static class PgTypeInt4Array extends PgType {
+        public PgTypeInt4Array() {
+            super(PG_TYPE_INT4.arrayType, PG_TYPE_INT4.name + "_array", -1, 0, PG_TYPE_INT4.id);
+        }
+
+        @Override
+        protected void asTextInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
+            Object[] values;
+            try {
+                values = (Object[]) value;
+            } catch (Exception e) {
+                throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value type: " + value.getClass());
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.append('{');
+            for (int i = 0; i < values.length; i++) {
+                if (i > 0)
+                    sb.append(DELIMITER);
+
+                Integer val;
+                try {
+                    val = (Integer) values[i];
+                } catch (Exception e) {
+                    throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value type: " + value.getClass());
+                }
+
+                if (val == null)
+                    sb.append("NULL");
+                else {
+                    sb.append(val);
+                }
+            }
+            sb.append('}');
+
+            PgType.writeText(session, dst, sb.toString());
+        }
+
+        @Override
+        protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
+            ArrayList<Integer> values = new ArrayList<>();
+            char[] chars = PgType.readText(session, src).toCharArray();
+            StringBuilder sb = new StringBuilder();
+            boolean arrayOpened = false;
+            boolean arrayClosed = false;
+            int startOffset = 0;
+            if (chars[0] == '[') {
+                while (chars[startOffset] != '=') {
+                    startOffset++;
+                }
+                startOffset++; // skip =
+            }
+            for (int i = startOffset; i < chars.length; i++) {
+                char ch = chars[i];
+                if (Character.isWhitespace(ch))
+                    continue;
+
+                switch (ch) {
+                    case '{': {
+                        if (arrayClosed)
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected array start");
+
+                        if (arrayOpened)
+                            throw new NonBreakingException(ErrorCodes.UNSUPPORTED_FEATURE, "Multidimensional arrays are unsupported");
+
+                        arrayOpened = true;
+
+                        break;
+                    }
+
+                    case '}': {
+                        if (!arrayOpened || arrayClosed)
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected array end");
+
+                        arrayClosed = true;
+                        if (sb.length() > 0) {
+                            try {
+                                String val = sb.toString();
+                                sb.setLength(0);
+
+                                if ("NULL".equals(val.toUpperCase(Locale.ROOT)))
+                                    values.add(null);
+                                else
+                                    values.add(Integer.parseInt(val));
+                            } catch (NumberFormatException e) {
+                                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+                            }
+                        }
+
+                        break;
+                    }
+
+                    case ',': {
+                        if (!arrayOpened || arrayClosed || sb.length() == 0)
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected array delimiter");
+
+                        try {
+                            String val = sb.toString();
+                            sb.setLength(0);
+
+                            if ("NULL".equals(val.toUpperCase(Locale.ROOT)))
+                                values.add(null);
+                            else
+                                values.add(Integer.parseInt(val));
+                        } catch (NumberFormatException e) {
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+                        }
+
+                        break;
+                    }
+
+                    default:
+                        sb.append(ch);
+                        break;
+                }
+            }
+
+            if (!arrayOpened || !arrayClosed)
+                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+
+            return (T) values.toArray();
+        }
+
+        @Override
+        protected void asBinaryInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
+            Object[] values;
+            try {
+                values = (Object[]) value;
+            } catch (Exception e) {
+                throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value type: " + value.getClass());
+            }
+
+            int idx = dst.writerIndex();
+            dst.writeInt(0);
+
+            dst.writeInt(1); // dimensions
+            dst.writeInt(countNulls(values)); // nulls
+            dst.writeInt(elementType); // element type
+            dst.writeInt(values.length); // length
+            dst.writeInt(1); // base
+            for (Object value0 : values) {
+                PG_TYPE_INT4.asBinary(session, dst, value0);
+            }
+
+            dst.setInt(idx, dst.writerIndex() - idx - 4);
+        }
+
+        @Override
+        protected <T> T fromBinaryInternal(Session session, ByteBuf src) throws ProtocolException {
+            int end = src.readInt() + src.writerIndex();
+            if (src.readInt() != 1)
+                throw new NonBreakingException(ErrorCodes.UNSUPPORTED_FEATURE, "Multidimensional arrays are unsupported");
+            src.skipBytes(4); // null element count
+            if (src.readInt() != elementType)
+                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "unexpected element type");
+            int length = src.readInt();
+            ArrayList<Short> values = new ArrayList<>(length);
+            src.skipBytes(4); // base
+            for (int i = 0; i < length; i++) {
+                values.add(PG_TYPE_INT4.fromBinary(session, src));
+            }
+            if (src.writerIndex() != end)
+                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+
+            return (T) values.toArray();
+        }
+    }
+
+    private static class TypeOidVector extends PgType {
+        public TypeOidVector() {
+            super(30, "oidvector", -1, 0, PG_TYPE_OID.id);
+        }
+
+        @Override
+        protected void asTextInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
+            Object[] values;
+            try {
+                values = (Object[]) value;
+            } catch (Exception e) {
+                throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value type: " + value.getClass());
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.append('{');
+            for (int i = 0; i < values.length; i++) {
+                if (i > 0)
+                    sb.append(DELIMITER);
+
+                Integer val;
+                try {
+                    val = (Integer) values[i];
+                } catch (Exception e) {
+                    throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value type: " + value.getClass());
+                }
+
+                if (val == null)
+                    sb.append("NULL");
+                else {
+                    sb.append(val);
+                }
+            }
+            sb.append('}');
+
+            PgType.writeText(session, dst, sb.toString());
+        }
+
+        @Override
+        protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
+            ArrayList<Integer> values = new ArrayList<>();
+            char[] chars = PgType.readText(session, src).toCharArray();
+            StringBuilder sb = new StringBuilder();
+            boolean arrayOpened = false;
+            boolean arrayClosed = false;
+            int startOffset = 0;
+            if (chars[0] == '[') {
+                while (chars[startOffset] != '=') {
+                    startOffset++;
+                }
+                startOffset++; // skip =
+            }
+            for (int i = startOffset; i < chars.length; i++) {
+                char ch = chars[i];
+                if (Character.isWhitespace(ch))
+                    continue;
+
+                switch (ch) {
+                    case '{': {
+                        if (arrayClosed)
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected array start");
+
+                        if (arrayOpened)
+                            throw new NonBreakingException(ErrorCodes.UNSUPPORTED_FEATURE, "Multidimensional arrays are unsupported");
+
+                        arrayOpened = true;
+
+                        break;
+                    }
+
+                    case '}': {
+                        if (!arrayOpened || arrayClosed)
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected array end");
+
+                        arrayClosed = true;
+                        if (sb.length() > 0) {
+                            try {
+                                String val = sb.toString();
+                                sb.setLength(0);
+
+                                if ("NULL".equals(val.toUpperCase(Locale.ROOT)))
+                                    values.add(null);
+                                else
+                                    values.add(Integer.parseInt(val));
+                            } catch (NumberFormatException e) {
+                                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+                            }
+                        }
+
+                        break;
+                    }
+
+                    case ',': {
+                        if (!arrayOpened || arrayClosed || sb.length() == 0)
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected array delimiter");
+
+                        try {
+                            String val = sb.toString();
+                            sb.setLength(0);
+
+                            if ("NULL".equals(val.toUpperCase(Locale.ROOT)))
+                                values.add(null);
+                            else
+                                values.add(Integer.parseInt(val));
+                        } catch (NumberFormatException e) {
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+                        }
+
+                        break;
+                    }
+
+                    default:
+                        sb.append(ch);
+                        break;
+                }
+            }
+
+            if (!arrayOpened || !arrayClosed)
+                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+
+            return (T) values.toArray();
+        }
+
+        @Override
+        protected void asBinaryInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
+            Object[] values;
+            try {
+                values = (Object[]) value;
+            } catch (Exception e) {
+                throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value type: " + value.getClass());
+            }
+
+            int idx = dst.writerIndex();
+            dst.writeInt(0);
+
+            dst.writeInt(1); // dimensions
+            dst.writeInt(countNulls(values)); // nulls
+            dst.writeInt(elementType); // element type
+            dst.writeInt(values.length); // length
+            dst.writeInt(1); // base
+            for (Object value0 : values) {
+                PG_TYPE_OID.asBinary(session, dst, value0);
+            }
+
+            dst.setInt(idx, dst.writerIndex() - idx - 4);
+        }
+
+        @Override
+        protected <T> T fromBinaryInternal(Session session, ByteBuf src) throws ProtocolException {
+            int end = src.readInt() + src.writerIndex();
+            if (src.readInt() != 1)
+                throw new NonBreakingException(ErrorCodes.UNSUPPORTED_FEATURE, "Multidimensional arrays are unsupported");
+            src.skipBytes(4); // null element count
+            if (src.readInt() != elementType)
+                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "unexpected element type");
+            int length = src.readInt();
+            ArrayList<Short> values = new ArrayList<>(length);
+            src.skipBytes(4); // base
+            for (int i = 0; i < length; i++) {
+                values.add(PG_TYPE_OID.fromBinary(session, src));
+            }
+            if (src.writerIndex() != end)
+                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+
+            return (T) values.toArray();
+        }
+    }
+
+    private static class TypeInt2vector extends PgType {
+        public TypeInt2vector() {
+            super(22, "int2vector", -1, 1006, PG_TYPE_INT2.id);
+        }
+
+        @Override
+        protected void asTextInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
+            Object[] values;
+            try {
+                values = (Object[]) value;
+            } catch (Exception e) {
+                throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value type: " + value.getClass());
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.append('{');
+            for (int i = 0; i < values.length; i++) {
+                if (i > 0)
+                    sb.append(DELIMITER);
+
+                Short val;
+                try {
+                    val = (Short) values[i];
+                } catch (Exception e) {
+                    throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value type: " + value.getClass());
+                }
+
+                if (val == null)
+                    sb.append("NULL");
+                else {
+                    sb.append(val);
+                }
+            }
+            sb.append('}');
+
+            PgType.writeText(session, dst, sb.toString());
+        }
+
+        @Override
+        protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
+            ArrayList<Short> values = new ArrayList<>();
+            char[] chars = PgType.readText(session, src).toCharArray();
+            StringBuilder sb = new StringBuilder();
+            boolean arrayOpened = false;
+            boolean arrayClosed = false;
+            int startOffset = 0;
+            if (chars[0] == '[') {
+                while (chars[startOffset] != '=') {
+                    startOffset++;
+                }
+                startOffset++; // skip =
+            }
+            for (int i = startOffset; i < chars.length; i++) {
+                char ch = chars[i];
+                if (Character.isWhitespace(ch))
+                    continue;
+
+                switch (ch) {
+                    case '{': {
+                        if (arrayClosed)
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected array start");
+
+                        if (arrayOpened)
+                            throw new NonBreakingException(ErrorCodes.UNSUPPORTED_FEATURE, "Multidimensional arrays are unsupported");
+
+                        arrayOpened = true;
+
+                        break;
+                    }
+
+                    case '}': {
+                        if (!arrayOpened || arrayClosed)
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected array end");
+
+                        arrayClosed = true;
+                        if (sb.length() > 0) {
+                            try {
+                                String val = sb.toString();
+                                sb.setLength(0);
+
+                                if ("NULL".equals(val.toUpperCase(Locale.ROOT)))
+                                    values.add(null);
+                                else
+                                    values.add(Short.parseShort(val));
+                            } catch (NumberFormatException e) {
+                                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+                            }
+                        }
+
+                        break;
+                    }
+
+                    case ',': {
+                        if (!arrayOpened || arrayClosed || sb.length() == 0)
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected array delimiter");
+
+                        try {
+                            String val = sb.toString();
+                            sb.setLength(0);
+
+                            if ("NULL".equals(val.toUpperCase(Locale.ROOT)))
+                                values.add(null);
+                            else
+                                values.add(Short.parseShort(val));
+                        } catch (NumberFormatException e) {
+                            throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+                        }
+
+                        break;
+                    }
+
+                    default:
+                        sb.append(ch);
+                        break;
+                }
+            }
+
+            if (!arrayOpened || !arrayClosed)
+                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+
+            return (T) values.toArray();
+        }
+
+        @Override
+        protected void asBinaryInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
+            Object[] values;
+            try {
+                values = (Object[]) value;
+            } catch (Exception e) {
+                throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unexpected value type: " + value.getClass());
+            }
+
+            int idx = dst.writerIndex();
+            dst.writeInt(0);
+
+            dst.writeInt(1); // dimensions
+            dst.writeInt(countNulls(values)); // nulls
+            dst.writeInt(elementType); // element type
+            dst.writeInt(values.length); // length
+            dst.writeInt(1); // base
+            for (Object value0 : values) {
+                PG_TYPE_INT2.asBinary(session, dst, value0);
+            }
+
+            dst.setInt(idx, dst.writerIndex() - idx - 4);
+        }
+
+        @Override
+        protected <T> T fromBinaryInternal(Session session, ByteBuf src) throws ProtocolException {
+            int end = src.readInt() + src.writerIndex();
+            if (src.readInt() != 1)
+                throw new NonBreakingException(ErrorCodes.UNSUPPORTED_FEATURE, "Multidimensional arrays are unsupported");
+            src.skipBytes(4); // null element count
+            if (src.readInt() != elementType)
+                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "unexpected element type");
+            int length = src.readInt();
+            ArrayList<Short> values = new ArrayList<>(length);
+            src.skipBytes(4); // base
+            for (int i = 0; i < length; i++) {
+                values.add(PG_TYPE_INT2.fromBinary(session, src));
+            }
+            if (src.writerIndex() != end)
+                throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Failed to read value");
+
+            return (T) values.toArray();
+        }
+    }
+
+    // TODO implement type encoder/decoder
     private static class TypeDate extends PgType {
         public TypeDate() {
             super(1082, "date", 4, 1182, 0);
         }
     }
 
-    // TODO
+    // TODO implement type encoder/decoder
     private static class TypeTime extends PgType {
         public TypeTime() {
             super(1083, "time", 8, 1183, 0);
         }
     }
 
-    // TODO
+    // TODO implement type encoder/decoder
     private static class TypeTimestamp extends PgType {
         public TypeTimestamp() {
             super(1114, "timestamp", 8, 1115, 0);
         }
     }
 
-    // TODO
+    // TODO implement type encoder/decoder
     private static class TypeTamestampTZ extends PgType {
         public TypeTamestampTZ() {
             super(1184, "timestamptz", 8, 1185, 0);
         }
     }
 
-    // TODO
+    // TODO implement type encoder/decoder
     private static class TypeTimeTZ extends PgType {
         public TypeTimeTZ() {
             super(1266, "timetz", 12, 1270, 0);
         }
     }
 
-    // TODO
+    // TODO implement type encoder/decoder
     private static class TypeNumeric extends PgType {
         public TypeNumeric() {
             super(1700, "numeric", -1, 1231, 0);
         }
     }
 
-    // TODO
+    // TODO implement type encoder/decoder
     private static class TypeCursor extends PgType {
         public TypeCursor() {
             super(1790, "refcursor", -1, 2201, 0);
         }
     }
 
-    // TODO
+    // TODO implement type encoder/decoder
     private static class TypeInterval extends PgType {
         public TypeInterval() {
             super(1186, "interval", 16, 1187, 0);
         }
     }
 
-    // TODO
+    // TODO implement type encoder/decoder
     private static class TypeBpchar extends PgType {
         public TypeBpchar() {
             super(1042, "bpchar", -1, 1014, 0);
         }
     }
 
-    // TODO
-    private static class TypeOidVector extends PgType {
-        public TypeOidVector() {
-            super(30, "oidvector", -1, 0, 0);
-        }
-    }
-
-    // TODO
-    private static class TypeInt2vector extends PgType {
-        public TypeInt2vector() {
-            super(22, "int2vector", -1, 1006, 0);
-        }
-    }
-
-    // TODO
+    // TODO implement type encoder/decoder
     private static class TypeRegproc extends PgType {
         public TypeRegproc() {
             super(24, "regproc", 4, 1008, 0);

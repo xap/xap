@@ -6,6 +6,7 @@ import com.gigaspaces.jdbc.QueryHandler;
 import com.gigaspaces.jdbc.calcite.GSOptimizer;
 import com.gigaspaces.jdbc.calcite.GSRelNode;
 import com.gigaspaces.jdbc.calcite.sql.extension.SqlShowOption;
+import com.gigaspaces.sql.aggregatornode.netty.exception.BreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.utils.ErrorCodes;
@@ -16,9 +17,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.*;
-import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.slf4j.Logger;
 
 import java.nio.charset.Charset;
 import java.sql.SQLException;
@@ -30,8 +29,6 @@ import static java.util.Collections.singletonList;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class QueryProviderImpl implements QueryProvider {
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(QueryProviderImpl.class);
-
     private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
     private static final int[] EMPTY_INT_ARRAY = new int[0];
     private static final String EMPTY_STRING = "";
@@ -47,7 +44,7 @@ public class QueryProviderImpl implements QueryProvider {
         this.handler = new QueryHandler();
     }
 
-    public void init() throws ProtocolException {
+    public void init() {
 
     }
 
@@ -56,14 +53,14 @@ public class QueryProviderImpl implements QueryProvider {
         if (stmt.isEmpty())
             statements.remove(stmt);
         else if (statements.containsKey(stmt))
-            throw new NonBreakingException("26000", "duplicate statement name");
+            throw new NonBreakingException(ErrorCodes.INVALID_STATEMENT_NAME, "Duplicate statement name");
 
         try {
             statements.put(stmt, prepareStatement(stmt, qry, paramTypes));
         } catch (ProtocolException e) {
             throw e;
         } catch (Exception e) {
-            throw new NonBreakingException("42000",	"failed to prepare statement", e);
+            throw new NonBreakingException(ErrorCodes.SYNTAX_ERROR,	"Failed to prepare statement", e);
         }
     }
 
@@ -71,26 +68,26 @@ public class QueryProviderImpl implements QueryProvider {
     @Override
     public void bind(Session session, String portal, String stmt, Object[] params, int[] formatCodes) throws ProtocolException {
         if (!statements.containsKey(stmt))
-            throw new NonBreakingException("26000", "invalid statement name");
+            throw new NonBreakingException(ErrorCodes.INVALID_STATEMENT_NAME, "Invalid statement name");
 
         if (portal.isEmpty())
             portals.remove(stmt);
         else if (portals.containsKey(portal))
-            throw new NonBreakingException("34000", "duplicate cursor name");
+            throw new NonBreakingException(ErrorCodes.INVALID_CURSOR_NAME, "Duplicate cursor name");
 
         try {
             portals.put(portal, preparePortal(session, portal, statements.get(stmt), new GSOptimizer(space), params, formatCodes));
         } catch (ProtocolException e) {
             throw e;
         } catch (Exception e) {
-            throw new NonBreakingException("42000",	"failed to bind statement to a portal", e);
+            throw new NonBreakingException(ErrorCodes.INTERNAL_ERROR, "Failed to bind statement to a portal", e);
         }
     }
 
     @Override
     public StatementDescription describeS(String stmt) throws ProtocolException {
         if (!statements.containsKey(stmt))
-            throw new NonBreakingException("26000", "invalid statement name");
+            throw new NonBreakingException(ErrorCodes.INVALID_STATEMENT_NAME, "Invalid statement name");
 
         return statements.get(stmt).getDescription();
     }
@@ -98,7 +95,7 @@ public class QueryProviderImpl implements QueryProvider {
     @Override
     public RowDescription describeP(String portal) throws ProtocolException {
         if (!portals.containsKey(portal))
-            throw new NonBreakingException("34000", "invalid cursor name");
+            throw new NonBreakingException(ErrorCodes.INVALID_CURSOR_NAME, "Invalid cursor name");
 
         return portals.get(portal).getDescription();
     }
@@ -106,7 +103,7 @@ public class QueryProviderImpl implements QueryProvider {
     @Override
     public Portal<?> execute(String portal) throws ProtocolException {
         if (!portals.containsKey(portal))
-            throw new NonBreakingException("34000", "invalid cursor name");
+            throw new NonBreakingException(ErrorCodes.INVALID_CURSOR_NAME, "Invalid cursor name");
 
         Portal<?> res = portals.get(portal);
         res.execute();
@@ -114,7 +111,7 @@ public class QueryProviderImpl implements QueryProvider {
     }
 
     @Override
-    public void closeS(String name) throws ProtocolException {
+    public void closeS(String name) {
         List<String> toClose = portals.values().stream()
                 .filter(p -> p.getStatement().getName().equals(name))
                 .map(Portal::name)
@@ -127,21 +124,21 @@ public class QueryProviderImpl implements QueryProvider {
     }
 
     @Override
-    public void closeP(String name) throws ProtocolException {
+    public void closeP(String name) {
         portals.remove(name);
     }
 
     @Override
     public void cancel(int pid, int secret) {
-        // todo
+        // TODO implement query cancel protocol
     }
 
     @Override
     public List<Portal<?>> executeQueryMultiline(Session session, String query) throws ProtocolException {
         try {
             if (query.trim().isEmpty()) {
-                ParametersDescription paramDesc = new ParametersDescription(emptyList());
-                RowDescription rowDesc = new RowDescription(emptyList());
+                ParametersDescription paramDesc = new ParametersDescription();
+                RowDescription rowDesc = new RowDescription();
                 StatementDescription description = new StatementDescription(paramDesc, rowDesc);
                 StatementImpl statement = new StatementImpl(EMPTY_STRING, null, description);
                 EmptyPortal<Object> portal = new EmptyPortal<>(EMPTY_STRING, statement);
@@ -160,13 +157,16 @@ public class QueryProviderImpl implements QueryProvider {
         } catch (ProtocolException e) {
             throw e;
         } catch (Exception e) {
-            throw new NonBreakingException("Failed to execute query", e);
+            throw new NonBreakingException(ErrorCodes.INTERNAL_ERROR, "Failed to execute query", e);
         }
     }
 
     private StatementImpl prepareStatement(String name, String query, int[] paramTypes) throws ProtocolException {
         if (query.trim().isEmpty()) {
-            return new StatementImpl(name, null, new StatementDescription(new ParametersDescription(paramTypes), new RowDescription(emptyList())));
+            assert paramTypes.length == 0;
+            ParametersDescription paramDesc = new ParametersDescription();
+            RowDescription rowDesc = new RowDescription();
+            return new StatementImpl(name, null, new StatementDescription(paramDesc, rowDesc));
         }
 
         GSOptimizer optimizer = new GSOptimizer(space);
@@ -212,6 +212,12 @@ public class QueryProviderImpl implements QueryProvider {
                                     singletonList("COL1"));
                             break;
                         }
+
+                        default: {
+                            columns = tf.createStructType(
+                                    singletonList(tf.createUnknownType()),
+                                    singletonList("COL1"));
+                        }
                     }
                 }
             }
@@ -247,7 +253,7 @@ public class QueryProviderImpl implements QueryProvider {
             return prepareFunction(session, name, statement, optimizer, params, formatCodes, query);
         }
 
-        throw new NonBreakingException("Unsupported query kind: " + query.getKind());
+        throw new NonBreakingException(ErrorCodes.UNSUPPORTED_FEATURE, "Unsupported query kind: " + query.getKind());
     }
 
     private Portal<?> prepareFunction(Session session, String name, Statement statement, GSOptimizer optimizer, Object[] params, int[] formatCodes, SqlNode query) throws ProtocolException {
@@ -258,21 +264,21 @@ public class QueryProviderImpl implements QueryProvider {
                 String var = option.getName().toString();
                 switch (var.toLowerCase(Locale.ROOT)) {
                     case "transaction_isolation":
-                        return new SelectPortal(name, statement, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{"READ_COMMITTED"}).iterator());
+                        return new QueryPortal(name, statement, PortalCommand.SHOW, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{"READ_COMMITTED"}).iterator());
                     case "client_encoding":
-                        return new SelectPortal(name, statement, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{session.getCharset().name()}).iterator());
+                        return new QueryPortal(name, statement, PortalCommand.SHOW, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{session.getCharset().name()}).iterator());
                     case "datestyle":
-                        return new SelectPortal(name, statement, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{session.getDateStyle()}).iterator());
+                        return new QueryPortal(name, statement, PortalCommand.SHOW, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{session.getDateStyle()}).iterator());
                     case "statement_timeout":
-                        return new SelectPortal(name, statement, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{0}).iterator());
+                        return new QueryPortal(name, statement, PortalCommand.SHOW, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{0}).iterator());
                     case "extra_float_digits":
-                        return new SelectPortal(name, statement, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{2}).iterator());
+                        return new QueryPortal(name, statement, PortalCommand.SHOW, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{2}).iterator());
                     default:
-                        throw new NonBreakingException(ErrorCodes.INVALID_NAME,
-                                option.getName().getParserPosition(), "Unknown parameter name.");
+                        return new QueryPortal(name, statement, PortalCommand.SHOW, EMPTY_INT_ARRAY, Collections::emptyIterator);
                 }
             }
         }
+        
         return prepareQuery(name, statement, optimizer, params, formatCodes, query);
     }
 
@@ -287,12 +293,6 @@ public class QueryProviderImpl implements QueryProvider {
 
             SqlLiteral literal = (SqlLiteral) setOption.getValue();
             switch (var.toLowerCase(Locale.ROOT)) {
-                case "transaction_isolation": {
-                    String val = asString(literal);
-                    // TODO
-                    return new DmlPortal<>(name, statement, PortalCommand.SET, () -> 0);
-                }
-
                 case "client_encoding": {
                     String val = asString(literal);
                     ThrowingSupplier<Integer, ProtocolException> op = () -> {
@@ -317,20 +317,13 @@ public class QueryProviderImpl implements QueryProvider {
                     return new DmlPortal<>(name, statement, PortalCommand.SET, op);
                 }
 
-                case "statement_timeout":
-                case "extra_float_digits":
-                    int val = asInt(literal);
-
-                    // TODO
-                    return new DmlPortal<>(name, statement, PortalCommand.SET, () -> 0);
-
                 default:
-                    throw new NonBreakingException(ErrorCodes.INVALID_NAME,
-                            setOption.getName().getParserPosition(), "Unknown parameter name.");
+                    // TODO support missing variables
+                    return new DmlPortal<>(name, statement, PortalCommand.SET, () -> 0);
             }
         }
 
-        throw new NonBreakingException("Unsupported query kind: " + query.getKind());
+        throw new NonBreakingException(ErrorCodes.UNSUPPORTED_FEATURE, "Unsupported query kind: " + query.getKind());
     }
 
     private String asString(SqlLiteral literal) throws NonBreakingException {
@@ -338,20 +331,6 @@ public class QueryProviderImpl implements QueryProvider {
             throw new NonBreakingException(ErrorCodes.INVALID_PARAMETER_VALUE,
                     literal.getParserPosition(), "String literal is expected.");
         return literal.getValueAs(String.class);
-    }
-
-    private int asInt(SqlLiteral literal) throws NonBreakingException {
-        if (!SqlLiteral.valueMatchesType(literal.getValue(), SqlTypeName.DECIMAL))
-            throw new NonBreakingException(ErrorCodes.INVALID_PARAMETER_VALUE,
-                    literal.getParserPosition(), "Integer literal is expected.");
-
-        SqlNumericLiteral numeric = (SqlNumericLiteral) literal;
-
-        if (!numeric.isInteger())
-            throw new NonBreakingException(ErrorCodes.INVALID_PARAMETER_VALUE,
-                    literal.getParserPosition(), "Integer literal is expected.");
-
-        return numeric.intValue(true);
     }
 
     private Portal<?> prepareQuery(String name, Statement statement, GSOptimizer optimizer, Object[] params, int[] formatCodes, SqlNode query) throws ProtocolException {
@@ -364,12 +343,12 @@ public class QueryProviderImpl implements QueryProvider {
                     ResponsePacket packet = handler.executeStatement(space, physicalPlan, params);
                     return new ArrayIterator<>(packet.getResultEntry().getFieldValues());
                 } catch (SQLException e) {
-                    throw new NonBreakingException("Failed to execute operation.", e);
+                    throw new NonBreakingException(ErrorCodes.INTERNAL_ERROR, "Failed to execute operation.", e);
                 }
             };
-            return new SelectPortal<>(name, statement, formatCodes, op);
+            return new QueryPortal<>(name, statement, PortalCommand.SELECT, formatCodes, op);
         } catch (Exception e) {
-            throw new NonBreakingException("Failed to prepare portal", e);
+            throw new NonBreakingException(ErrorCodes.INTERNAL_ERROR, "Failed to prepare portal", e);
         }
     }
 
@@ -390,11 +369,6 @@ public class QueryProviderImpl implements QueryProvider {
         }
 
         @Override
-        public String getQueryString() {
-            return query.toSqlString(PostgresqlSqlDialect.DEFAULT).getSql();
-        }
-
-        @Override
         public SqlNode getQuery() {
             return query;
         }
@@ -405,7 +379,7 @@ public class QueryProviderImpl implements QueryProvider {
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() {
             closeS(name);
         }
     }
@@ -449,7 +423,7 @@ public class QueryProviderImpl implements QueryProvider {
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() {
             closeP(name);
         }
 
@@ -460,41 +434,43 @@ public class QueryProviderImpl implements QueryProvider {
 
         @Override
         public RowDescription getDescription() {
-            return statement.getDescription().getRowDescription();
+            return new RowDescription();
         }
 
         @Override
         public String tag() {
-            throw new UnsupportedOperationException();
+            return EMPTY_STRING;
         }
 
         @Override
-        public void execute() throws ProtocolException {
+        public void execute() {
         }
 
         @Override
         public boolean hasNext() {
-            throw new UnsupportedOperationException();
+            return false;
         }
 
         @Override
         public T next() {
-            throw new UnsupportedOperationException();
+            throw new NoSuchElementException();
         }
     }
 
-    private class SelectPortal<T> implements Portal<T>{
+    private class QueryPortal<T> implements Portal<T>{
         private final String name;
         private final Statement stmt;
         private final RowDescription description;
+        private final PortalCommand command;
         private final ThrowingSupplier<Iterator<T>, ProtocolException> op;
 
         private int processed;
         private Iterator<T> it;
 
-        public SelectPortal(String name, Statement stmt, int[] formatCodes, ThrowingSupplier<Iterator<T>, ProtocolException> op) {
+        public QueryPortal(String name, Statement stmt, PortalCommand command, int[] formatCodes, ThrowingSupplier<Iterator<T>, ProtocolException> op) {
             this.name = name;
             this.stmt = stmt;
+            this.command = command;
             this.op = op;
 
             RowDescription desc = stmt.getDescription().getRowDescription();
@@ -535,13 +511,15 @@ public class QueryProviderImpl implements QueryProvider {
 
         @Override
         public String tag() {
-            return "SELECT 0 " + processed;
+            if (command == PortalCommand.SELECT)
+                return String.format("%s 0 %d", command.tag(), processed);
+            return String.format("%s %d", command.tag(), processed);
         }
 
         @Override
         public void execute() throws ProtocolException {
             if (it != null)
-                throw new NonBreakingException("Failed to execute operation");
+                throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Duplicate execute message");
             it = op.apply();
         }
 
@@ -561,7 +539,7 @@ public class QueryProviderImpl implements QueryProvider {
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() {
             closeP(name);
         }
     }
@@ -593,7 +571,7 @@ public class QueryProviderImpl implements QueryProvider {
 
         @Override
         public RowDescription getDescription() {
-            return new RowDescription(Collections.emptyList());
+            return new RowDescription();
         }
 
         @Override
@@ -614,7 +592,7 @@ public class QueryProviderImpl implements QueryProvider {
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() {
             closeP(name);
         }
 

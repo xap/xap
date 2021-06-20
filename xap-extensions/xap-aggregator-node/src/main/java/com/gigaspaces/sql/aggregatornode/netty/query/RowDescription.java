@@ -6,6 +6,10 @@ import java.util.List;
 public class RowDescription {
     private final List<ColumnDescription> columns;
 
+    public RowDescription() {
+        this.columns = Collections.emptyList();
+    }
+
     public RowDescription(List<ColumnDescription> columns) {
         this.columns = columns;
     }

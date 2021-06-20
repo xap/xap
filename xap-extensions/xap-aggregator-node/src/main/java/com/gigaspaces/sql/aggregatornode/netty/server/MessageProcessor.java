@@ -7,6 +7,7 @@ import com.gigaspaces.sql.aggregatornode.netty.exception.BreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.*;
+import com.gigaspaces.sql.aggregatornode.netty.utils.ErrorCodes;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -41,20 +42,6 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
 
         id = ID_COUNTER.getAndIncrement();
         secret = new SecureRandom(SecureRandom.getSeed(8)).nextInt();
-    }
-
-    /**
-     * @return Process id, used for query cancelling.
-     */
-    public int getId() {
-        return this.id;
-    }
-
-    /**
-     * @return Secret, used for query cancelling.
-     */
-    public int getSecret() {
-        return this.secret;
     }
 
     @Override
@@ -120,7 +107,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                     break;
     
                 default:
-                    throw new BreakingException("08P01" /* protocol violation */, "unexpected message type");
+                    throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION /* protocol violation */, "unexpected message type");
             }
         } catch (ProtocolException e) {
             e.printStackTrace(System.err);
@@ -152,7 +139,9 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
             buf = ctx.alloc().ioBuffer();
             List<Portal<?>> multiline = queryProvider.executeQueryMultiline(session, query);
             for (Portal<?> portal : multiline) {
-                if (!portal.empty()) {
+                if (portal.empty()) {
+                    writeEmptyResponse(buf);
+                } else {
                     portal.execute();
 
                     RowDescription rowDesc = portal.getDescription();
@@ -172,8 +161,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                         }
                     }
                     writeCommandComplete(buf, portal.tag());
-                } else
-                    writeEmptyResponse(buf);
+                }
             }
             writeReadyForQuery(buf);
             ctx.write(buf);
@@ -199,7 +187,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                 break;
 
             default:
-                throw new BreakingException("08P01" /* protocol violation */, "unexpected close type");
+                throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION /* protocol violation */, "unexpected close type");
         }
     }
 
@@ -220,7 +208,9 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         try {
             buf = ctx.alloc().ioBuffer();
             Portal<?> portal = queryProvider.execute(pName);
-            if (!portal.empty()) {
+            if (portal.empty()) {
+                writeEmptyResponse(buf);
+            } else {
                 int inBatch = 0;
                 while (portal.hasNext()) {
                     writeDataRow(buf, portal.next(), portal.getDescription());
@@ -239,14 +229,14 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                     writePortalSuspended(buf);
                 else
                     writeCommandComplete(buf, portal.tag());
-            } else {
-                writeEmptyResponse(buf);
             }
             ctx.write(buf);
+            buf = null;
         } catch (Exception e) {
-            ReferenceCountUtil.release(buf);
             queryProvider.closeP(pName);
             throw e;
+        } finally {
+            ReferenceCountUtil.release(buf);
         }
     }
 
@@ -263,7 +253,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
             }
 
             default:
-                throw new BreakingException("08P01" /* protocol violation */, "unexpected describe type");
+                throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION /* protocol violation */, "unexpected describe type");
         }
     }
 
@@ -286,7 +276,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         int inFcLen = msg.readShort();
 
         if (inFcLen != desc.getParametersCount() && inFcLen > 1) {
-            throw new BreakingException("08P01" /* protocol violation */, "invalid format codes count");
+            throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION /* protocol violation */, "invalid format codes count");
         }
 
         int[] inFc = new int[inFcLen];
@@ -296,7 +286,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         int paramsLen = msg.readShort();
         List<ParameterDescription> paramsDesc = desc.getParameters();
         if (paramsLen != paramsDesc.size()) {
-            throw new BreakingException("08P01" /* protocol violation */, "invalid parameter count");
+            throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION /* protocol violation */, "invalid parameter count");
         }
 
         Object[] params = new Object[paramsLen];
@@ -313,7 +303,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         try {
             queryProvider.bind(session, portal, stmt, params, outFc);
         } catch (Exception e) {
-            throw new NonBreakingException("XX000" /* internal error */, "cannot bind statement", e);
+            throw new NonBreakingException(ErrorCodes.INTERNAL_ERROR /* internal error */, "cannot bind statement", e);
         }
 
         // BindComplete message
@@ -330,7 +320,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         try {
             queryProvider.prepare(session, stmt, query, paramTypes);
         } catch (Exception e) {
-            throw new NonBreakingException("XX000" /* internal error */, "cannot prepare statement", e);
+            throw new NonBreakingException(ErrorCodes.INTERNAL_ERROR, "cannot prepare statement", e);
         }
 
         // ParseComplete message
@@ -340,7 +330,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
     private void onPassword(ChannelHandlerContext ctx, ByteBuf msg) throws ProtocolException {
         Authentication auth = authProvider.authenticate(new ClearTextPassword(readString(msg)));
         if (auth != Authentication.OK)
-            throw new BreakingException("28P01" /* invalid password */, "Authentication failed");
+            throw new BreakingException(ErrorCodes.INVALID_CREDENTIALS, "Authentication failed");
 
         onAuthenticationOK(ctx);
     }
@@ -418,7 +408,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                 break;
             }
             default: {
-                throw new BreakingException("08P01" /* protocol violation */, "Unsupported driver protocol version: " + (version >> 16) + "." + (version & 0xff));
+                throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "Unsupported driver protocol version: " + (version >> 16) + "." + (version & 0xff));
             }
         }
     }
@@ -443,17 +433,18 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
     }
 
     private void writeDataRow(ByteBuf buf, Object row, RowDescription desc) throws ProtocolException {
-        Object[] row0; // TODO use right row type
+        // TODO use right row type
+        Object[] row0;
         try {
             row0 = (Object[]) row;
         } catch (Exception e) {
-            throw new BreakingException("unexpected row type", e);
+            throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "unexpected row type", e);
         }
 
         if (row0 == null)
-            throw new BreakingException("row is null");
+            throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "row is null");
         else if (row0.length != desc.getColumnsCount())
-            throw new BreakingException("unexpected row columns count");
+            throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION, "unexpected row columns count");
 
         buf.writeByte('D');
         int idx = buf.writerIndex();

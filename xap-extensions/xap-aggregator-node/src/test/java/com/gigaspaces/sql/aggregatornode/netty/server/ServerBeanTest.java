@@ -72,8 +72,9 @@ class ServerBeanTest {
         }
     }
 
+    // TODO return test over extended query protocol after parameters support by SqlValidator implemented
     @ParameterizedTest
-    @ValueSource(booleans = {true/*, false TODO*/})
+    @ValueSource(booleans = {true/*, false */})
     void testParametrized(boolean simple) throws Exception {
         try (Connection conn = connect(simple)) {
             final String qry = String.format("SELECT first_name, last_name, email, age FROM \"%s\" as T where T.last_name = ? OR T.first_name = ?", MyPojo.class.getName());

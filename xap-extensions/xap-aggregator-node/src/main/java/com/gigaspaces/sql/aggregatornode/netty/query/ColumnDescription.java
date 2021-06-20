@@ -13,15 +13,7 @@ public class ColumnDescription extends TypeAware {
     private final int tableIndex;
 
     public ColumnDescription(String name, PgType type) {
-        this(name, type, type.getLength(), -1);
-    }
-
-    public ColumnDescription(String name, PgType type, int typeLen, int typeModifier) {
-        this(name, type, typeLen, typeModifier, 0, 0, 0);
-    }
-
-    public ColumnDescription(String name, PgType type, int typeLen, int typeModifier, int format) {
-        this(name, type, typeLen, typeModifier, format, 0, 0);
+        this(name, type, type.getLength(), -1, 0, 0, 0);
     }
 
     public ColumnDescription(String name, PgType type, int typeLen, int typeModifier, int format, int tableId, int tableIndex) {

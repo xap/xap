@@ -3,13 +3,6 @@ package com.gigaspaces.sql.aggregatornode.netty.exception;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 public final class NonBreakingException extends ProtocolException {
-    public NonBreakingException(String message) {
-        super(message);
-    }
-
-    public NonBreakingException(String message, Throwable cause) {
-        super(message, cause);
-    }
 
     public NonBreakingException(String code, String message) {
         super(code, message);
