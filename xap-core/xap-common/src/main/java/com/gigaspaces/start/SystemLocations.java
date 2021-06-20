@@ -26,8 +26,6 @@ public class SystemLocations {
         return instance;
     }
 
-
-
     private final Path home;
     private final String homeFwdSlash;
     private final Path xapNetHome;
@@ -44,7 +42,6 @@ public class SystemLocations {
     private final Path work;
     private final Path deploy;
     private final Path sparkHome;
-    private final Path userProductHome;
     private final Path tools;
 
     private SystemLocations() {
@@ -62,7 +59,6 @@ public class SystemLocations {
         this.logs = GsEnv.propertyPath("com.gs.logs").get(home.resolve("logs"));
         this.work = GsEnv.propertyPath("com.gs.work").getAndInit(home.resolve("work"));
         this.deploy = GsEnv.propertyPath("com.gs.deploy").getAndInit(home.resolve("deploy"));
-        this.userProductHome = Paths.get(System.getProperty("user.home"), ".gigaspaces");
         this.sparkHome = fromEnvVar("SPARK_HOME", home.resolve("insightedge").resolve("spark"));
         this.tools = GsEnv.propertyPath("com.gigaspaces.tools").get(home.resolve("tools"));
         System.setProperty("spark.home", sparkHome.toString());
@@ -251,10 +247,6 @@ public class SystemLocations {
 
     public Path libPlatformExt() {
         return libPlatformExt;
-    }
-
-    public Path userProductHome() {
-        return userProductHome;
     }
 
     public Path tools() {
