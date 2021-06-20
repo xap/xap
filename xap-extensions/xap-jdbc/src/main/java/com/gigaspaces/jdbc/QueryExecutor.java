@@ -8,10 +8,7 @@ import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.core.IJSpace;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class QueryExecutor {
     private final List<TableContainer> tables = new ArrayList<>();
@@ -22,6 +19,7 @@ public class QueryExecutor {
     private final QueryExecutionConfig config;
     private final Object[] preparedValues;
     private boolean isAllColumnsSelected = false;
+    private final LinkedList<Integer> fieldCountList = new LinkedList<>();
 
 
     public QueryExecutor(IJSpace space, QueryExecutionConfig config, Object[] preparedValues) {
@@ -88,5 +86,35 @@ public class QueryExecutor {
 
     public void addAggregationColumn(AggregationColumn aggregationColumn) {
         this.aggregationColumns.add(aggregationColumn);
+    }
+
+    public void addTable(TableContainer tableContainer){
+        tables.add(tableContainer);
+        addFieldCount(tableContainer.getVisibleColumns().size());
+    }
+
+    public TableContainer getTableByColumnIndex(int columnIndex){
+        for (int i = 0; i < fieldCountList.size(); i++) {
+            if(columnIndex < fieldCountList.get(i)){
+                return getTables().get(i);
+            }
+        }
+        throw new UnsupportedOperationException("");
+    }
+
+    public IQueryColumn getColumnByColumnIndex(int globalColumnIndex){
+        for (int i = 0; i < fieldCountList.size(); i++) {
+            if(globalColumnIndex < fieldCountList.get(i)){
+                int columnIndex = i == 0 ? globalColumnIndex : globalColumnIndex - fieldCountList.get(i - 1);
+                return getTables().get(i).getVisibleColumns().get(columnIndex);
+            }
+        }
+        throw new UnsupportedOperationException("");
+    }
+
+
+    public void addFieldCount(int size) {
+        int columnCount = fieldCountList.isEmpty() ?  size: fieldCountList.getLast() + size;
+        fieldCountList.add(columnCount);
     }
 }
