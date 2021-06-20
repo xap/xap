@@ -52,8 +52,8 @@ public class InternalRDBMSManager {
      */
     public void insertEntry(Context context,  IEntryHolder entryHolder) throws SAException{
         if(context.isDiskEntry() && entryHolder.getXidOriginatedTransaction() == null) {
-            writeDisk.inc();
             internalRDBMS.insertEntry(context, entryHolder);
+            writeDisk.inc();
         }
         String type = entryHolder.getServerTypeDesc().getTypeName();
         getCounterFromCounterMap(type).inc();
@@ -118,26 +118,32 @@ public class InternalRDBMSManager {
     }
 
     public IEntryHolder getEntryById(Context context, String typeName, Object id, ITemplateHolder templateHolder) throws SAException{
+        IEntryHolder entryById = internalRDBMS.getEntryById(context, typeName, id);
+
         if (templateHolder != null && templateHolder.isReadOperation()){
             readDisk.inc();
         }
 
-        return internalRDBMS.getEntryById(context, typeName, id);
+        return entryById;
     }
 
     public IEntryHolder getEntryByUID(Context context, String typeName, String uid, ITemplateHolder templateHolder) throws SAException{
+        IEntryHolder entryByUID = internalRDBMS.getEntryByUID(context, typeName, uid);
+
         if (templateHolder != null && templateHolder.isReadOperation()){
             readDisk.inc();
         }
-        return internalRDBMS.getEntryByUID(context, typeName, uid);
+        return entryByUID;
     }
 
     public ISAdapterIterator<IEntryHolder> makeEntriesIter(Context context, String typeName, ITemplateHolder templateHolder) throws SAException{
+        ISAdapterIterator<IEntryHolder> iEntryHolderISAdapterIterator = internalRDBMS.makeEntriesIter(context, typeName, templateHolder);
+
         if (templateHolder != null && templateHolder.isReadOperation() && !context.isDisableTieredStorageMetric()){
             readDisk.inc();
         }
 
-        return internalRDBMS.makeEntriesIter(context, typeName, templateHolder);
+        return iEntryHolderISAdapterIterator;
     }
 
     public boolean isKnownType(String name){
