@@ -53,7 +53,7 @@ public class TempTableContainer extends TableContainer {
             tableResult.filter(x -> queryTemplatePacket.eval(x));
         }
 
-        validateAggregationFunction();
+        validate();
 
         QueryResult queryResult = new TempQueryResult(this);
         if(!getGroupByColumns().isEmpty()){

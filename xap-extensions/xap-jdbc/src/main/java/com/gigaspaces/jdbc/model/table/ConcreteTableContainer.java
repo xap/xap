@@ -12,10 +12,7 @@ import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.ConcreteQueryResult;
 import com.gigaspaces.jdbc.model.result.ExplainPlanQueryResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
-import com.gigaspaces.query.aggregators.AggregationSet;
-import com.gigaspaces.query.aggregators.DistinctAggregator;
-import com.gigaspaces.query.aggregators.OrderBy;
-import com.gigaspaces.query.aggregators.OrderByAggregator;
+import com.gigaspaces.query.aggregators.*;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
@@ -89,7 +86,7 @@ public class ConcreteTableContainer extends TableContainer {
                 modifiers = Modifiers.add(modifiers, Modifiers.DRY_RUN);
             }
 
-            validateAggregationFunction();
+            validate();
 
             // When we use join, we aggregate the results on the client side instead of on the server.
             if(!config.isJoinUsed()) {
@@ -134,14 +131,25 @@ public class ConcreteTableContainer extends TableContainer {
                 groupByColumnsArray[ i ] = groupByColumns.get( i ).getName();
             }
 
-            //int limit = hasOrderColumns() ? Integer.MAX_VALUE : entriesLimit;
-            DistinctAggregator distinctAggregator = new DistinctAggregator().distinct(limit, groupByColumnsArray);
-            if( queryTemplatePacket.getAggregationSet() == null ) {
-                AggregationSet aggregationSet = new AggregationSet().distinct( distinctAggregator );
-                queryTemplatePacket.setAggregationSet(aggregationSet);
+            if( hasAggregationFunctions() ){
+
+                GroupByAggregator groupByAggregator = new GroupByAggregator().groupBy(groupByColumnsArray);
+                List<SpaceEntriesAggregator> aggregators = AggregationInternalUtils.getAggregators(queryTemplatePacket.getAggregationSet());
+                if (!aggregators.isEmpty()) {
+                    groupByAggregator = groupByAggregator.select(aggregators.toArray(new SpaceEntriesAggregator[]{}));
+                }
+
+                queryTemplatePacket.setAggregationSet( new AggregationSet().groupBy(groupByAggregator) );
             }
-            else{
-                queryTemplatePacket.getAggregationSet().add(distinctAggregator);
+            else {
+                //int limit = hasOrderColumns() ? Integer.MAX_VALUE : entriesLimit;
+                DistinctAggregator distinctAggregator = new DistinctAggregator().distinct(limit, groupByColumnsArray);
+                if (queryTemplatePacket.getAggregationSet() == null) {
+                    AggregationSet aggregationSet = new AggregationSet().distinct(distinctAggregator);
+                    queryTemplatePacket.setAggregationSet(aggregationSet);
+                } else {
+                    queryTemplatePacket.getAggregationSet().add(distinctAggregator);
+                }
             }
         }
     }
@@ -200,6 +208,10 @@ public class ConcreteTableContainer extends TableContainer {
                     aggregationSet.sum(columnName);
                     break;
             }
+        }
+
+        for( IQueryColumn visibleColumn : getVisibleColumns() ){
+            aggregationSet = aggregationSet.add(new SingleValueAggregator().setPath(visibleColumn.getName()));
         }
     }
 

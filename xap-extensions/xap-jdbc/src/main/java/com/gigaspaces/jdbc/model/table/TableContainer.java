@@ -9,6 +9,7 @@ import net.sf.jsqlparser.expression.Expression;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -112,16 +113,46 @@ public abstract class TableContainer {
         return !this.orderColumns.isEmpty();
     }
 
-    protected void validateAggregationFunction() {
-        //TODO: block until supports of group by implementation.
-        if (hasAggregationFunctions() && !getVisibleColumns().isEmpty()) {
-            throw new IllegalArgumentException("Column [" + getVisibleColumns().get(0) + "] must appear in the " +
-                    "GROUP BY clause or be used in an aggregate function");
-        }
+    protected void validate() {
+
+        validateGroupBy();
+
         //TODO: block operation not supported -- see AggregationsUtil.convertAggregationResult
         if (hasAggregationFunctions() && hasOrderColumns()) {
             throw new IllegalArgumentException("Column [" + getOrderColumns().get(0).getAlias() + "] must appear in the " +
                     "GROUP BY clause or be used in an aggregate function");
+        }
+    }
+
+    private void validateGroupBy() {
+        if( hasGroupByColumns() ){
+            List<ConcreteColumn> groupByColumns = getGroupByColumns();
+            List<IQueryColumn> selectedColumns = getSelectedColumns();
+            List<AggregationColumn> aggregationColumns = getAggregationColumns();
+
+            List<String> selectedColumnNames = new ArrayList<>();
+            List<String> aggregationColumnNames = new ArrayList<>();
+            for( IQueryColumn selectedColumn : selectedColumns ){
+                selectedColumnNames.add( selectedColumn.getName() );
+            }
+            for( AggregationColumn aggregationColumn : aggregationColumns ){
+                aggregationColumnNames.add( aggregationColumn.getColumnName() );
+            }
+
+            List<String> invalidGroupByColumns = new ArrayList<>();
+            for( ConcreteColumn groupByColumn : groupByColumns ){
+                String groupByColumnName = groupByColumn.getName();
+                if( !selectedColumnNames.contains( groupByColumnName ) &&
+                        !aggregationColumnNames.contains( groupByColumnName ) ){
+                    invalidGroupByColumns.add( groupByColumnName );
+                }
+            }
+
+            if( !invalidGroupByColumns.isEmpty() ){
+                throw new IllegalArgumentException( ( invalidGroupByColumns.size() == 1 ? "Column" : "Columns" ) +
+                        Arrays.toString( invalidGroupByColumns.toArray( new String[0] ) ) + " must appear in the " +
+                        "SELECT clause or be used in an aggregate function");
+            }
         }
     }
 

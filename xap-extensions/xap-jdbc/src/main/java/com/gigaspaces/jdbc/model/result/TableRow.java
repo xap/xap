@@ -1,5 +1,6 @@
 package com.gigaspaces.jdbc.model.result;
 
+import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.model.table.*;
 import com.j_spaces.jdbc.builder.QueryEntryPacket;
@@ -35,23 +36,25 @@ public class TableRow implements Comparable<TableRow> {
         final List<OrderColumn> orderColumns = tableContainer.getOrderColumns();
         final List<ConcreteColumn> groupByColumns = tableContainer.getGroupByColumns();
         if (tableContainer.hasAggregationFunctions() && entryPacket instanceof QueryEntryPacket) {
-            final List<AggregationColumn> aggregationColumns = tableContainer.getAggregationColumns();
-            Map<String, Object> fieldNameValueMap = new HashMap<>();
             QueryEntryPacket queryEntryPacket = ((QueryEntryPacket) entryPacket);
+            Map<String, Object> fieldNameValueMap = new HashMap<>();
+            //important since order is important and all selected columns are considered in such case
+            List<IQueryColumn> selectedColumns = tableContainer.getSelectedColumns();
+            int columnsSize = selectedColumns.size();
+            this.columns = new IQueryColumn[columnsSize];
+            this.values = new Object[columnsSize];
+
             for (int i = 0; i < entryPacket.getFieldValues().length; i++) {
                 fieldNameValueMap.put(queryEntryPacket.getFieldNames()[i], queryEntryPacket.getFieldValues()[i]);
             }
-            int columnsSize = aggregationColumns.size();
-            this.columns = new IQueryColumn[columnsSize];
-            this.values = new Object[columnsSize];
+
             for (int i = 0; i < columnsSize; i++) {
-                this.columns[i] = aggregationColumns.get(i);
-                this.values[i] = fieldNameValueMap.get(aggregationColumns.get(i).getName());
+                this.columns[i] = selectedColumns.get(i);
+                this.values[i] = fieldNameValueMap.get(selectedColumns.get(i).getName());
             }
         } else {
             //for the join/where contains both visible and invisible columns
             final List<IQueryColumn> allQueryColumns = tableContainer.getAllQueryColumns();
-
             this.columns = allQueryColumns.toArray(new IQueryColumn[0]);
             this.values = new Object[this.columns.length];
             for (int i = 0; i < this.columns.length; i++) {
@@ -66,9 +69,12 @@ public class TableRow implements Comparable<TableRow> {
         }
 
         this.groupByColumns = groupByColumns.toArray(new ConcreteColumn[0]);
-        groupByValues = new Object[this.groupByColumns.length];
-        for (int i = 0; i < groupByColumns.size(); i++) {
-            groupByValues[i] = getEntryPacketValue(entryPacket, groupByColumns.get(i));
+        ITypeDesc typeDescriptor = entryPacket.getTypeDescriptor();
+        groupByValues = new Object[ typeDescriptor != null ? this.groupByColumns.length : 0];
+        if( typeDescriptor != null ) {
+            for (int i = 0; i < groupByColumns.size(); i++) {
+                groupByValues[i] = getEntryPacketValue(entryPacket, groupByColumns.get(i));
+            }
         }
     }
 
