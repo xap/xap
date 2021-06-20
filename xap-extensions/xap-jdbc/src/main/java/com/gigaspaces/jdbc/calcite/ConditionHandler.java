@@ -8,11 +8,12 @@ import com.j_spaces.jdbc.builder.UnionTemplatePacket;
 import com.j_spaces.jdbc.builder.range.*;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ConditionHandler extends RexShuttle {
     private final RexProgram program;
@@ -39,13 +40,23 @@ public class ConditionHandler extends RexShuttle {
 
     @Override
     public RexNode visitLocalRef(RexLocalRef localRef) {
-        getNode(localRef).accept(this);
+        final RexNode node = getNode(localRef);
+        if (!(node instanceof  RexLocalRef)) {
+            node.accept(this);
+        }
         return localRef;
     }
 
     @Override
-    public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
-        return super.visitDynamicParam(dynamicParam);
+    public RexNode visitInputRef(RexInputRef inputRef) {
+        if(inputRef.getType().getSqlTypeName().equals(SqlTypeName.BOOLEAN)) {
+            String column = fields.get(inputRef.getIndex());
+            TableContainer table = getTableForColumn(column);
+            assert table != null;
+            Range range = new EqualValueRange(column, true); // always equality to true, otherwise the path goes through the handleRexCall method.
+            qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+        }
+        return inputRef;
     }
 
     private void handleRexCall(RexCall call){
@@ -87,6 +98,7 @@ public class ConditionHandler extends RexShuttle {
                 break;
             case IS_NULL:
             case IS_NOT_NULL:
+            case NOT:
                 handleSingleOperandsCall(getNode((RexLocalRef) call.getOperands().get(0)), call.getKind());
                 break;
             default:
@@ -100,8 +112,9 @@ public class ConditionHandler extends RexShuttle {
         switch (operand.getKind()){
             case INPUT_REF:
                 column = fields.get(((RexInputRef) operand).getIndex());
-            default:
                 break;
+            default:
+                throw new UnsupportedOperationException(String.format("Queries with %s are not supported",operand.getKind()));
         }
         TableContainer table = getTableForColumn(column);
         assert table != null;
@@ -115,6 +128,16 @@ public class ConditionHandler extends RexShuttle {
                 break;
             case IS_NOT_NULL:
                 range = new NotNullRange(column);
+                if(table.getJoinInfo() != null){
+                    table.getJoinInfo().insertRangeToJoinInfo(range);
+                    return;
+                }
+                break;
+            case NOT:
+                if (!operand.getType().getSqlTypeName().equals(SqlTypeName.BOOLEAN)) {
+                    throw new UnsupportedOperationException("Queries with NOT on non-boolean column are not supported yet");
+                }
+                range = new EqualValueRange(column, false);
                 if(table.getJoinInfo() != null){
                     table.getJoinInfo().insertRangeToJoinInfo(range);
                     return;
@@ -201,7 +224,6 @@ public class ConditionHandler extends RexShuttle {
             case BOOLEAN:
                 return RexLiteral.booleanValue(literal);
             case CHAR:
-                return literal.getType().getPrecision() > 1 ? literal.getValueAs(String.class) : literal.getValueAs(Class.class);
             case VARCHAR:
                 return literal.getValueAs(String.class);
             case REAL:
@@ -214,11 +236,9 @@ public class ConditionHandler extends RexShuttle {
             case DECIMAL:
                 return literal.getValue3();
             case DATE:
-                return new Date(literal.getValueAs(Calendar.class).getTimeInMillis());
-            case TIME:
-                return new Time(literal.getValueAs(Calendar.class).getTimeInMillis());
             case TIMESTAMP:
-                return new Timestamp(literal.getValueAs(Calendar.class).getTimeInMillis());
+            case TIME:
+                return literal.toString(); // we use our parsers with AbstractParser.parse
             default:
                 throw new UnsupportedOperationException("Unsupported type: " + literal.getType().getSqlTypeName());
         }
