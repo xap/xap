@@ -16,15 +16,15 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.sql.SqlKind;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
+
+import static java.lang.String.format;
 
 public class CalciteRootVisitor extends RelShuttleImpl {
     private final QueryExecutor queryExecutor;
-    private final Stack<TableContainer> containerStack = new Stack<>();
+    private final List<TableContainer> tableContainerList = new ArrayList<>();
     private final Map<RelNode, GSCalc> childToCalc = new HashMap<>();
+    private RelNode root = null;
 
     public CalciteRootVisitor(QueryExecutor queryExecutor) {
         this.queryExecutor = queryExecutor;
@@ -39,17 +39,20 @@ public class CalciteRootVisitor extends RelShuttleImpl {
         if (!childToCalc.containsKey(scan)) {
             for (String col : tableContainer.getAllColumnNames()) {
                 tableContainer.addQueryColumn(col, null, true, 0);
+                tableContainerList.add(tableContainer);
             }
         }
         else{
             handleCalc(childToCalc.get(scan), tableContainer);
         }
-        containerStack.push(tableContainer);
         return result;
     }
 
     @Override
     public RelNode visit(RelNode other) {
+        if(root == null){
+            root = other;
+        }
         if(other instanceof GSCalc){
             GSCalc calc = (GSCalc) other;
             childToCalc.put(calc.getInput(), calc);
@@ -69,10 +72,16 @@ public class CalciteRootVisitor extends RelShuttleImpl {
         if(rexCall.getKind() != SqlKind.EQUALS){
             throw new UnsupportedOperationException("Only equi joins are supported");
         }
-        String lColumn = join.getRowType().getFieldNames().get(((RexInputRef) rexCall.getOperands().get(0)).getIndex());
-        String rColumn = join.getRowType().getFieldNames().get(((RexInputRef) rexCall.getOperands().get(1)).getIndex());
-        TableContainer rightContainer = containerStack.pop();
-        TableContainer leftContainer = containerStack.pop();
+        int total = join.getRowType().getFieldCount();
+        int left = join.getLeft().getRowType().getFieldCount();
+        int right = join.getRight().getRowType().getFieldCount();
+        int leftIndex = ((RexInputRef) rexCall.getOperands().get(0)).getIndex();
+        int rightIndex = ((RexInputRef) rexCall.getOperands().get(1)).getIndex();
+        String lColumn = join.getLeft().getRowType().getFieldNames().get(leftIndex);
+        String rColumn = join.getRight().getRowType().getFieldNames().get(rightIndex - left);
+        TableContainer rightContainer = tableContainerList.get(rightIndex);
+        TableContainer leftContainer = tableContainerList.get(leftIndex);
+        System.out.println(format("join: %s leftColumn: %s rightColumn: %s left table: %s right table: %s", join.getCondition(), lColumn, rColumn, leftContainer.getTableNameOrAlias(), rightContainer.getTableNameOrAlias()));
         IQueryColumn rightColumn = rightContainer.addQueryColumn(rColumn, null, false, 0);
         IQueryColumn leftColumn = leftContainer.addQueryColumn(lColumn, null, false, 0);
         rightContainer.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinInfo.JoinType.getType(join.getJoinType())));
@@ -83,14 +92,19 @@ public class CalciteRootVisitor extends RelShuttleImpl {
             }
         }
         if(!childToCalc.containsKey(join)) {
-            queryExecutor.getVisibleColumns().addAll(leftContainer.getVisibleColumns());
-            queryExecutor.getVisibleColumns().addAll(rightContainer.getVisibleColumns());
+            if(join.equals(root)) {
+                TableContainer prev = null;
+                for (TableContainer tableContainer : tableContainerList) {
+                    if(prev == null || prev != tableContainer) {
+                        queryExecutor.getVisibleColumns().addAll(tableContainer.getVisibleColumns());
+                        prev = tableContainer;
+                    }
+                }
+            }
         }
         else{
             handleCalc(childToCalc.get(join), join, leftContainer, rightContainer);
         }
-        containerStack.push(leftContainer);
-        containerStack.push(rightContainer);
     }
 
     private void handleCalc(GSCalc other, TableContainer tableContainer) {
@@ -101,6 +115,7 @@ public class CalciteRootVisitor extends RelShuttleImpl {
             String alias = outputFields.get(i);
             String originalName = inputFields.get(program.getSourceField(i));
             tableContainer.addQueryColumn(originalName, alias, true, 0);
+            tableContainerList.add(tableContainer);
         }
         ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
         if (program.getCondition() != null) {
@@ -118,7 +133,7 @@ public class CalciteRootVisitor extends RelShuttleImpl {
         int total = outputFields.size();
         int left = join.getLeft().getRowType().getFieldCount();
         int right = join.getRight().getRowType().getFieldCount();
-        if(total == left + right){//select *
+        if(total == left + right){
             for (int i = 0; i < total; i++) {
                 if(i < left){
                     IQueryColumn qc = leftContainer.getAllQueryColumns().get(i);
@@ -138,17 +153,6 @@ public class CalciteRootVisitor extends RelShuttleImpl {
                 queryExecutor.getVisibleColumns().add(qc);
             }
         }
-
-        /*RexProgram program = other.getProgram();
-        final RelDataType inputRowType = program.getInputRowType();
-        List<String> inputFields = inputRowType.getFieldNames();
-        List<String> outputFields = program.getOutputRowType().getFieldNames();
-        for (int i = 0; i < outputFields.size(); i++) {
-            String alias = outputFields.get(i);
-            String originalName = inputFields.get(program.getSourceField(i));
-            IQueryColumn qc = QueryColumnHandler.getColumn(originalName, alias, queryExecutor.getTables());
-            queryExecutor.getVisibleColumns().add(qc);
-        }*/
         if (program.getCondition() != null) {
             ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
             program.getCondition().accept(conditionHandler);
