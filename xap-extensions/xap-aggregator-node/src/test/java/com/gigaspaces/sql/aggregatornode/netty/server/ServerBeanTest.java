@@ -1,7 +1,8 @@
 package com.gigaspaces.sql.aggregatornode.netty.server;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.GigaSpaceConfigurer;
 import org.openspaces.core.space.EmbeddedSpaceConfigurer;
@@ -19,6 +20,8 @@ class ServerBeanTest {
 
     @BeforeAll
     static void setUp() throws Exception {
+        Class.forName("org.postgresql.Driver");
+
         gigaSpace = new GigaSpaceConfigurer(
                 new EmbeddedSpaceConfigurer(SPACE_NAME)
                         .addProperty("space-config.QueryProcessor.datetime_format", "yyyy-MM-dd HH:mm:ss.SSS")
@@ -38,25 +41,28 @@ class ServerBeanTest {
         server.init();
     }
 
-    @Test
-    void testConnection() throws Exception {
-        try (Connection conn = connect()) {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testConnection(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
             assertFalse(conn.isClosed());
             assertTrue(conn.isValid(1000));
         }
     }
 
-    @Test
-    void testSet() throws Exception {
-        try (Connection conn = connect()) {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testSet(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
             final Statement statement = conn.createStatement();
             assertEquals(1, statement.executeUpdate("SET DateStyle = 'ISO'"));
         }
     }
 
-    @Test
-    void testShow() throws Exception {
-        try (Connection conn = connect()) {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testShow(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
             final Statement statement = conn.createStatement();
             assertTrue(statement.execute("SHOW DateStyle"));
             ResultSet res = statement.getResultSet();
@@ -66,9 +72,10 @@ class ServerBeanTest {
         }
     }
 
-    // @Test TODO
-    void testParametrized() throws Exception {
-        try (Connection conn = connect()) {
+    @ParameterizedTest
+    @ValueSource(booleans = {true/*, false TODO*/})
+    void testParametrized(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
             final String qry = String.format("SELECT first_name, last_name, email, age FROM \"%s\" as T where T.last_name = ? OR T.first_name = ?", MyPojo.class.getName());
             final PreparedStatement statement = conn.prepareStatement(qry);
             statement.setString(1, "Aa");
@@ -78,9 +85,33 @@ class ServerBeanTest {
         }
     }
 
-    private Connection connect() throws Exception {
-        Class.forName("org.postgresql.Driver");
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testMultiline(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = String.format("" +
+                    "SELECT first_name, last_name, email, age FROM \"%s\" as T where T.last_name = 'Aa' OR T.first_name = 'Adam';" +
+                    "SET DateStyle = 'ISO';" +
+                    "SHOW transaction_isolation",
+                    MyPojo.class.getName());
+            final Statement statement = conn.createStatement();
+            assertTrue(statement.execute(qry));
+            ResultSet res = statement.getResultSet();
+            DumpUtils.dump(res);
+            statement.getMoreResults();
+            int updateCount = statement.getUpdateCount();
+            assertEquals(1, updateCount);
+            statement.getMoreResults();
+            res = statement.getResultSet();
+            DumpUtils.dump(res);
+        }
+    }
+
+    private Connection connect(boolean simple) throws Exception {
         String url = "jdbc:postgresql://localhost/test?user=fred&password=secret";
+        if (simple)
+            url += "&preferQueryMode=simple";
+
         final Connection conn = DriverManager.getConnection(url);
         assertFalse(conn.isClosed());
         assertTrue(conn.isValid(1000));

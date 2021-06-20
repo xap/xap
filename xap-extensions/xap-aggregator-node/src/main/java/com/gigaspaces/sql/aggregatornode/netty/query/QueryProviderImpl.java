@@ -138,15 +138,30 @@ public class QueryProviderImpl implements QueryProvider {
 
     @Override
     public List<Portal<?>> executeQueryMultiline(Session session, String query) throws ProtocolException {
-        GSOptimizer optimizer = new GSOptimizer(space);
-        SqlNodeList nodes = optimizer.parseMultiline(query);
-        List<Portal<?>> result = new ArrayList<>();
-        for (SqlNode node : nodes) {
-            StatementDescription description = describe(optimizer, node, EMPTY_INT_ARRAY);
-            StatementImpl statement = new StatementImpl(EMPTY_STRING, node, description);
-            result.add(preparePortal(session, EMPTY_STRING, statement, optimizer, EMPTY_OBJECT_ARRAY, EMPTY_INT_ARRAY));
+        try {
+            if (query.trim().isEmpty()) {
+                ParametersDescription paramDesc = new ParametersDescription(emptyList());
+                RowDescription rowDesc = new RowDescription(emptyList());
+                StatementDescription description = new StatementDescription(paramDesc, rowDesc);
+                StatementImpl statement = new StatementImpl(EMPTY_STRING, null, description);
+                EmptyPortal<Object> portal = new EmptyPortal<>(EMPTY_STRING, statement);
+                return Collections.singletonList(portal);
+            }
+
+            GSOptimizer optimizer = new GSOptimizer(space);
+            SqlNodeList nodes = optimizer.parseMultiline(query);
+            List<Portal<?>> result = new ArrayList<>();
+            for (SqlNode node : nodes) {
+                StatementDescription description = describe(optimizer, node, EMPTY_INT_ARRAY);
+                StatementImpl statement = new StatementImpl(EMPTY_STRING, node, description);
+                result.add(preparePortal(session, EMPTY_STRING, statement, optimizer, EMPTY_OBJECT_ARRAY, EMPTY_INT_ARRAY));
+            }
+            return result;
+        } catch (ProtocolException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new NonBreakingException("Failed to execute query", e);
         }
-        return result;
     }
 
     private StatementImpl prepareStatement(String name, String query, int[] paramTypes) throws ProtocolException {
@@ -583,7 +598,14 @@ public class QueryProviderImpl implements QueryProvider {
 
         @Override
         public String tag() {
-            return String.format("%s 0 %d", command.tag(), processed);
+            switch (command) {
+                case DELETE:
+                case UPDATE:
+                case INSERT:
+                    return String.format("%s 0 %d", command.tag(), processed);
+                default:
+                    return String.format("%s %d", command.tag(), processed);
+            }
         }
 
         @Override

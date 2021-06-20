@@ -155,14 +155,20 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                 if (!portal.empty()) {
                     portal.execute();
 
-                    writeRowDescription(buf, portal.getDescription());
-                    int inBatch = 0;
-                    while (portal.hasNext()) {
-                        writeDataRow(buf, portal.next(), portal.getDescription());
-                        if (++inBatch == BATCH_SIZE) {
-                            ctx.write(buf);
-                            buf = ctx.alloc().ioBuffer();
-                            inBatch = 0;
+                    RowDescription rowDesc = portal.getDescription();
+                    if (rowDesc.getColumnsCount() == 0) {
+                        // portal does not send any results
+                        assert !portal.hasNext();
+                    } else {
+                        writeRowDescription(buf, rowDesc);
+                        int inBatch = 0;
+                        while (portal.hasNext()) {
+                            writeDataRow(buf, portal.next(), rowDesc);
+                            if (++inBatch == BATCH_SIZE) {
+                                ctx.write(buf);
+                                buf = ctx.alloc().ioBuffer();
+                                inBatch = 0;
+                            }
                         }
                     }
                     writeCommandComplete(buf, portal.tag());
@@ -171,9 +177,10 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
             }
             writeReadyForQuery(buf);
             ctx.write(buf);
-        } catch (Exception e) {
+
+            buf = null;
+        } finally {
             ReferenceCountUtil.release(buf);
-            throw e;
         }
     }
 

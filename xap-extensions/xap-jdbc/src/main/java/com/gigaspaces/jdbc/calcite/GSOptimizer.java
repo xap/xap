@@ -32,6 +32,17 @@ import org.apache.calcite.tools.Program;
 import java.util.Collections;
 
 public class GSOptimizer {
+    private static final CalciteConnectionConfig CONNECTION_CONFIG = CalciteConnectionConfig.DEFAULT
+        .set(CalciteConnectionProperty.PARSER_FACTORY, GSSqlParserFactoryWrapper.FACTORY_CLASS)
+        .set(CalciteConnectionProperty.CASE_SENSITIVE, "false")
+        .set(CalciteConnectionProperty.QUOTED_CASING, Casing.UNCHANGED.toString())
+        .set(CalciteConnectionProperty.UNQUOTED_CASING, Casing.UNCHANGED.toString());
+
+    private static final SqlParser.Config PARSER_CONFIG = SqlParser.configBuilder()
+        .setParserFactory(GSSqlParserFactoryWrapper.FACTORY)
+        .setQuotedCasing(Casing.UNCHANGED)
+        .setUnquotedCasing(Casing.UNCHANGED)
+        .setCaseSensitive(false).build();
 
     private final IJSpace space;
 
@@ -44,24 +55,20 @@ public class GSOptimizer {
     public GSOptimizer(IJSpace space) {
         this.space = space;
 
-        CalciteConnectionConfig config = CalciteConnectionConfig.DEFAULT
-            .set(CalciteConnectionProperty.PARSER_FACTORY, GSSqlParserFactoryWrapper.FACTORY_CLASS)
-            .set(CalciteConnectionProperty.CASE_SENSITIVE, "false")
-            .set(CalciteConnectionProperty.QUOTED_CASING, Casing.UNCHANGED.toString())
-            .set(CalciteConnectionProperty.UNQUOTED_CASING, Casing.UNCHANGED.toString());
-
         typeFactory = new JavaTypeFactoryImpl();
 
         catalogReader = new CalciteCatalogReader(
             createSchema(space),
             Collections.singletonList("root"),
             typeFactory,
-            config);
+            CONNECTION_CONFIG);
 
-        validator = SqlValidatorUtil.newValidator(SqlStdOperatorTable.instance(), catalogReader, typeFactory,
+        validator = SqlValidatorUtil.newValidator(
+            SqlStdOperatorTable.instance(),
+            catalogReader, typeFactory,
             SqlValidator.Config.DEFAULT);
 
-        planner = new VolcanoPlanner(RelOptCostImpl.FACTORY, Contexts.of(config));
+        planner = new VolcanoPlanner(RelOptCostImpl.FACTORY, Contexts.of(CONNECTION_CONFIG));
         planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
         planner.addRelTraitDef(RelCollationTraitDef.INSTANCE);
         planner.setTopDownOpt(true);
@@ -74,13 +81,7 @@ public class GSOptimizer {
     }
 
     public SqlNode parse(String query) {
-        SqlParser.Config config = SqlParser.configBuilder()
-            .setParserFactory(GSSqlParserFactoryWrapper.FACTORY)
-            .setQuotedCasing(Casing.UNCHANGED)
-            .setUnquotedCasing(Casing.UNCHANGED)
-            .setCaseSensitive(false).build();
-
-        SqlParser parser = SqlParser.create(query, config);
+        SqlParser parser = SqlParser.create(query, PARSER_CONFIG);
 
         try {
             return parser.parseQuery();
@@ -90,17 +91,12 @@ public class GSOptimizer {
     }
 
     public SqlNodeList parseMultiline(String query) {
-        SqlParser.Config config = SqlParser.configBuilder()
-                .setQuotedCasing(Casing.UNCHANGED)
-                .setUnquotedCasing(Casing.UNCHANGED)
-                .setCaseSensitive(false).build();
-
-        SqlParser parser = SqlParser.create(query, config);
+        SqlParser parser = SqlParser.create(query, PARSER_CONFIG);
 
         try {
             return parser.parseStmtList();
         } catch (SqlParseException e) {
-            throw new RuntimeException("Failed to parse the query.");
+            throw new RuntimeException("Failed to parse the query.", e);
         }
     }
 
