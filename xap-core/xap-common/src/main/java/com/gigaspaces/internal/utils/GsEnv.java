@@ -112,6 +112,14 @@ public class GsEnv {
         return new GsEnvProperty<>(systemProperty, envKey, Integer::parseInt);
     }
 
+    public static GsEnvProperty<Long> propertyLong(String systemProperty) {
+        return propertyLong(systemProperty, toEnvKey(systemProperty));
+    }
+
+    public static GsEnvProperty<Long> propertyLong(String systemProperty, String envKey) {
+        return new GsEnvProperty<>(systemProperty, envKey, Long::parseLong);
+    }
+
     public static GsEnvProperty<Boolean> propertyBoolean(String systemProperty) {
         return propertyBoolean(systemProperty, toEnvKey(systemProperty));
     }

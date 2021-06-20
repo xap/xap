@@ -10,6 +10,7 @@ import com.gigaspaces.api.InternalApi;
 public class ZNodePathFactory {
     private static final String XAP_PREFIX = "/xap/";
     private static final String PUS = "pus";
+    private static final String PUS_PERSISTENT = "pus-persistent";
     private static final String LOCKS = "locks";
     private static final String SPACES = "spaces";
 
@@ -25,6 +26,18 @@ public class ZNodePathFactory {
 
     public static String processingUnit(String puName) {
         return path(PUS, puName);
+    }
+
+    public static String persistentProcessingUnit(String puName) {
+        return path(PUS_PERSISTENT, puName);
+    }
+
+    public static String persistentProcessingUnit(String puName, String component) {
+        return path(PUS_PERSISTENT, puName, component);
+    }
+
+    public static String persistentProcessingUnit(String puName, String component, int partitionId, String ... elements) {
+        return path(PUS_PERSISTENT, puName, component, partitionId, elements);
     }
 
     public static String lockPuName(String name) {

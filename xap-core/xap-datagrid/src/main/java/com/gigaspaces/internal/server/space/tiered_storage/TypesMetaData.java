@@ -25,17 +25,21 @@ public class TypesMetaData {
     }
 
     private LongCounter getCounterFromCounterMap(String type){
-        if(!totalCounterMap.containsKey(type)){
-            totalCounterMap.putIfAbsent(type, new LongCounter());
+        LongCounter counter = totalCounterMap.get(type);
+        if(counter == null){
+            counter = new LongCounter();
+            totalCounterMap.putIfAbsent(type, counter);
         }
-        return totalCounterMap.get(type);
+        return counter;
     }
 
     private LongCounter getRamCounterFromCounterMap(String type){
+        LongCounter counter = ramCounterMap.get(type);
         if(!ramCounterMap.containsKey(type)){
-            ramCounterMap.putIfAbsent(type, new LongCounter());
+            counter = new LongCounter();
+            ramCounterMap.putIfAbsent(type, counter);
         }
-        return ramCounterMap.get(type);
+        return counter;
     }
 
     public void increaseCounterMap(String type) {
