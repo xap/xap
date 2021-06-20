@@ -5,6 +5,7 @@ import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
 import com.gigaspaces.metrics.LongCounter;
+import com.gigaspaces.metrics.ThroughputMetric;
 import com.j_spaces.core.cache.context.Context;
 import com.j_spaces.core.cache.context.TieredState;
 import com.j_spaces.core.sadapter.ISAdapterIterator;
@@ -18,8 +19,8 @@ import java.util.stream.Collectors;
 public class InternalRDBMSManager {
 
     InternalRDBMS internalRDBMS;
-    private final LongCounter readDisk = new LongCounter();
-    private final LongCounter writeDisk = new LongCounter();
+    private final ThroughputMetric writeDisk = new ThroughputMetric();
+    private final ThroughputMetric readDisk = new ThroughputMetric();
     Map<String,LongCounter> totalCounterMap = new ConcurrentHashMap<>();
     Map<String, LongCounter> ramCounterMap = new ConcurrentHashMap<>();
 
@@ -53,7 +54,8 @@ public class InternalRDBMSManager {
     public void insertEntry(Context context,  IEntryHolder entryHolder) throws SAException{
         if(context.isDiskEntry() && entryHolder.getXidOriginatedTransaction() == null) {
             internalRDBMS.insertEntry(context, entryHolder);
-            writeDisk.inc();
+            writeDisk.increment();
+
         }
         String type = entryHolder.getServerTypeDesc().getTypeName();
         getCounterFromCounterMap(type).inc();
@@ -121,7 +123,7 @@ public class InternalRDBMSManager {
         IEntryHolder entryById = internalRDBMS.getEntryById(context, typeName, id);
 
         if (templateHolder != null && templateHolder.isReadOperation()){
-            readDisk.inc();
+            readDisk.increment();
         }
 
         return entryById;
@@ -131,7 +133,7 @@ public class InternalRDBMSManager {
         IEntryHolder entryByUID = internalRDBMS.getEntryByUID(context, typeName, uid);
 
         if (templateHolder != null && templateHolder.isReadOperation()){
-            readDisk.inc();
+            readDisk.increment();
         }
         return entryByUID;
     }
@@ -140,7 +142,8 @@ public class InternalRDBMSManager {
         ISAdapterIterator<IEntryHolder> iEntryHolderISAdapterIterator = internalRDBMS.makeEntriesIter(context, typeName, templateHolder);
 
         if (templateHolder != null && templateHolder.isReadOperation() && !context.isDisableTieredStorageMetric()){
-            readDisk.inc();
+            readDisk.increment();
+
         }
 
         return iEntryHolderISAdapterIterator;
@@ -154,11 +157,11 @@ public class InternalRDBMSManager {
         internalRDBMS.shutDown();
     }
 
-    public LongCounter getReadDisk() {
+    public ThroughputMetric getReadDisk() {
         return readDisk;
     }
 
-    public LongCounter getWriteDisk() {
+    public ThroughputMetric getWriteDisk() {
         return writeDisk;
     }
 
