@@ -51,19 +51,6 @@ public class QueryColumnHandler extends SelectItemVisitorAdapter {
         return tableContainer;
     }
 
-    public static IQueryColumn getColumn(String name, String alias, List<TableContainer> tables){
-        for(TableContainer tableContainer: tables){
-            if(tableContainer.hasColumn(name)){
-                for (IQueryColumn visibleColumn : tableContainer.getVisibleColumns()) {
-                    if(visibleColumn.getName().equals(name) || (visibleColumn.getAlias() != null && visibleColumn.getAlias().equals(alias))){
-                        return visibleColumn;
-                    }
-                }
-            }
-        }
-        throw new ColumnNotFoundException("Column " + name + " was not found");
-    }
-
     @Override
     public void visit(AllColumns columns) {
         this.queryExecutor.setAllColumnsSelected(true);
