@@ -45,16 +45,16 @@ public class QueryHandler {
             Feature.orderByNullOrdering, Feature.function, Feature.selectGroupBy};
 
     public ResponsePacket handle(String query, IJSpace space, Object[] preparedValues) throws SQLException {
-        Properties customProperties = space.getURL().getCustomProperties();
-        if (CalciteDefaults.isCalciteDriverPropertySet(customProperties)) {
-            GSRelNode calcitePlan = optimizeWithCalcite(query, space);
-            return executeStatement(space, calcitePlan, preparedValues);
-        }
-        //else jsql
         try {
-            Statement statement = CCJSqlParserUtil.parse(query);
-            validateStatement(statement);
-            return executeStatement(space, statement, preparedValues);
+            Properties customProperties = space.getURL().getCustomProperties();
+            if (CalciteDefaults.isCalciteDriverPropertySet(customProperties)) {
+                GSRelNode calcitePlan = optimizeWithCalcite(query, space);
+                return executeStatement(space, calcitePlan, preparedValues);
+            } else { //else jsql
+                Statement statement = CCJSqlParserUtil.parse(query);
+                validateStatement(statement);
+                return executeStatement(space, statement, preparedValues);
+            }
         } catch (JSQLParserException e) {
             throw new SQLException("Failed to parse query", e);
         } catch (SQLExceptionWrapper e) {
