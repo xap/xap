@@ -232,6 +232,9 @@ public class ConditionHandler extends RexShuttle {
             throw new IllegalArgumentException("rowNum value must be of type Integer, but was [" + value.getClass() +"]");
         }
         Integer limit = ((Number) value).intValue();
+        if(limit < 0) {
+            throw new IllegalArgumentException("rowNum value must be greater than 0");
+        }
         switch (sqlKind) {
             case LESS_THAN:
                 queryExecutor.getTables().forEach(tableContainer -> tableContainer.setLimit(limit - 1));
