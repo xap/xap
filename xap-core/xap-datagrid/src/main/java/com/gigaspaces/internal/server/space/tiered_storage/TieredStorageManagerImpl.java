@@ -146,13 +146,16 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
         });
 
         InternalMetricRegistrator registratorForPrimary = (InternalMetricRegistrator) metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, createTags(_spaceImpl), dynamicTags);
-        registratorForPrimary.register( ("tiered-storage-read-tp"), getInternalStorage().getReadDisk());
-        registratorForPrimary.register( ("tiered-storage-read-total"), getInternalStorage().getReadDisk().getTotalMetric());
-        registratorForPrimary.register("tiered-storage-write-tp", getInternalStorage().getWriteDisk());
-        registratorForPrimary.register("tiered-storage-write-total", getInternalStorage().getWriteDisk().getTotalMetric());
+        registerMetric (registratorForPrimary, "read", getInternalStorage().getReadDisk());
+        registerMetric (registratorForPrimary, "write", getInternalStorage().getWriteDisk());
         this.operationsRegistrator = registratorForPrimary;
     }
 
+
+    private void registerMetric(MetricRegistrator registrator, String name, ThroughputMetric metric) {
+        registrator.register("tiered-storage" + name + "-tp", metric);
+        registrator.register("tiered-storage" + name + "-total", metric.getTotalMetric());
+    }
 
     private void diskSizeRegistratorInit(SpaceImpl _spaceImpl, MetricManager metricManager){
         InternalMetricRegistrator registratorForAll = (InternalMetricRegistrator) metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, createTags(_spaceImpl));
