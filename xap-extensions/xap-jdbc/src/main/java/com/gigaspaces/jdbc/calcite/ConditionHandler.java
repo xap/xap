@@ -165,8 +165,11 @@ public class ConditionHandler extends RexShuttle {
             case DYNAMIC_PARAM:
                 value = queryExecutor.getPreparedValues()[((RexDynamicParam) leftOp).getIndex()];
                 break;
-            default:
+            case ROW_NUMBER:
+                column = "rowNum";
                 break;
+            default:
+                throw new UnsupportedOperationException(String.format("Queries with %s are not supported",sqlKind));
         }
         switch (rightOp.getKind()){
             case LITERAL:
@@ -181,9 +184,17 @@ public class ConditionHandler extends RexShuttle {
             case DYNAMIC_PARAM:
                 value = queryExecutor.getPreparedValues()[((RexDynamicParam) rightOp).getIndex()];
                 break;
-            default:
+            case ROW_NUMBER:
+                column = "rowNum";
                 break;
+            default:
+                throw new UnsupportedOperationException(String.format("Queries with %s are not supported",sqlKind));
         }
+        if("rowNum".equals(column)) {
+            handleRowNumber(sqlKind, value);
+            return; //return and don't continue.
+        }
+
         TableContainer table = getTableForColumn(column);
         assert table != null;
         try {
@@ -214,6 +225,25 @@ public class ConditionHandler extends RexShuttle {
                 throw new UnsupportedOperationException(String.format("Queries with %s are not supported",sqlKind));
         }
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
+    }
+
+    private void handleRowNumber(SqlKind sqlKind, Object value) {
+        if (!(value instanceof Number)) { //TODO: bigDecimal...
+            throw new IllegalArgumentException("rowNum value must be of type Integer, but was [" + value.getClass() +"]");
+        }
+        Integer limit = ((Number) value).intValue();
+        switch (sqlKind) {
+            case LESS_THAN:
+                queryExecutor.getTables().forEach(tableContainer -> tableContainer.setLimit(limit - 1));
+                break;
+            case LESS_THAN_OR_EQUAL:
+                queryExecutor.getTables().forEach(tableContainer -> tableContainer.setLimit(limit));
+                break;
+            default:
+                throw new UnsupportedOperationException("rowNum supports less than / less than or equal, but was " +
+                        "[" + sqlKind + "]");
+
+        }
     }
 
     private Object getValue(RexLiteral literal) {
