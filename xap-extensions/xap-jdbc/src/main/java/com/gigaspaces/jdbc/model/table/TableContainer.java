@@ -124,36 +124,36 @@ public abstract class TableContainer {
         }
     }
 
+
+
     private void validateGroupBy() {
-        if( hasGroupByColumns() ){
+
+        if( hasAggregationFunctions() ){
+            List<IQueryColumn> visibleColumns = getVisibleColumns();
             List<ConcreteColumn> groupByColumns = getGroupByColumns();
-            List<IQueryColumn> selectedColumns = getSelectedColumns();
-            List<AggregationColumn> aggregationColumns = getAggregationColumns();
 
-            List<String> selectedColumnNames = new ArrayList<>();
-            List<String> aggregationColumnNames = new ArrayList<>();
-            for( IQueryColumn selectedColumn : selectedColumns ){
-                selectedColumnNames.add( selectedColumn.getName() );
-            }
-            for( AggregationColumn aggregationColumn : aggregationColumns ){
-                aggregationColumnNames.add( aggregationColumn.getColumnName() );
+            if( visibleColumns.isEmpty() ){
+                return;
             }
 
-            List<String> invalidGroupByColumns = new ArrayList<>();
-            for( ConcreteColumn groupByColumn : groupByColumns ){
-                String groupByColumnName = groupByColumn.getName();
-                if( !selectedColumnNames.contains( groupByColumnName ) &&
-                        !aggregationColumnNames.contains( groupByColumnName ) ){
-                    invalidGroupByColumns.add( groupByColumnName );
+            List<String> groupByColumnNames = new ArrayList<>();
+            for( IQueryColumn groupByColumn : groupByColumns ){
+                groupByColumnNames.add( groupByColumn.getName() );
+            }
+
+            List<String> missingVisibleColumnNames = new ArrayList<>();
+            for( IQueryColumn visibleColumn : visibleColumns ){
+                String visibleColumnName = visibleColumn.getName();
+                if( !groupByColumnNames.contains( visibleColumnName ) ){
+                    missingVisibleColumnNames.add( visibleColumnName );
                 }
             }
 
-            if( !invalidGroupByColumns.isEmpty() ){
-                throw new IllegalArgumentException( ( invalidGroupByColumns.size() == 1 ? "Column" : "Columns" ) +
-                        Arrays.toString( invalidGroupByColumns.toArray( new String[0] ) ) + " must appear in the " +
-                        "SELECT clause or be used in an aggregate function");
+            if( !missingVisibleColumnNames.isEmpty() ){
+                throw new IllegalArgumentException( ( missingVisibleColumnNames.size() == 1 ? "Column" : "Columns" ) + " " +
+                        Arrays.toString( missingVisibleColumnNames.toArray( new String[0] ) ) + " must appear in the " +
+                        "GROUP BY clause or be used in an aggregate function");
             }
         }
     }
-
 }
