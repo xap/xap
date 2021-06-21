@@ -17,18 +17,6 @@ public class GSTable extends AbstractTable {
         this.typeDesc = typeDesc;
     }
 
-    @Override
-    public RelDataType getRowType(RelDataTypeFactory typeFactory) {
-        RelDataTypeFactory.Builder builder = new RelDataTypeFactory.Builder(typeFactory);
-        for (PropertyInfo property : typeDesc.getProperties()) {
-            builder.add(
-                property.getName(),
-                mapToSqlType(property.getType())
-            );
-        }
-        return builder.build();
-    }
-
     private static SqlTypeName mapToSqlType(Class<?> clazz) {
         if (clazz == Short.class) {
             return SqlTypeName.SMALLINT;
@@ -46,18 +34,33 @@ public class GSTable extends AbstractTable {
             return SqlTypeName.BOOLEAN;
         } else if (clazz == String.class) {
             return SqlTypeName.VARCHAR;
-        }  else if (clazz == java.util.Date.class) {
+        } else if (clazz == java.util.Date.class
+                || clazz == java.sql.Date.class) {
             return SqlTypeName.DATE;
-        } else if (clazz == java.sql.Date.class) {
-            return SqlTypeName.DATE;
-        } else if (clazz == java.sql.Time.class) {
-            return SqlTypeName.TIME;
+        } else if (clazz == java.sql.Time.class
+                || clazz == java.time.Instant.class) {
+            return SqlTypeName.TIME_WITH_LOCAL_TIME_ZONE;
         } else if (clazz == java.sql.Timestamp.class) {
             return SqlTypeName.TIMESTAMP;
+        } else if (clazz == java.time.LocalDateTime.class
+                || clazz == java.time.LocalTime.class
+                || clazz == java.time.LocalDate.class) {
+            return SqlTypeName.TIME;
         }
 
-
         throw new UnsupportedOperationException("Unsupported type: " + clazz);
+    }
+
+    @Override
+    public RelDataType getRowType(RelDataTypeFactory typeFactory) {
+        RelDataTypeFactory.Builder builder = new RelDataTypeFactory.Builder(typeFactory);
+        for (PropertyInfo property : typeDesc.getProperties()) {
+            builder.add(
+                    property.getName(),
+                    mapToSqlType(property.getType())
+            );
+        }
+        return builder.build();
     }
 
     public ITypeDesc getTypeDesc() {

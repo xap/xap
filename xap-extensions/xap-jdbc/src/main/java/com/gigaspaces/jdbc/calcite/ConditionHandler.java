@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc.calcite;
 
 import com.gigaspaces.jdbc.QueryExecutor;
+import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
@@ -199,8 +200,8 @@ public class ConditionHandler extends RexShuttle {
         assert table != null;
         try {
             value = table.getColumnValue(column, value);
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+        } catch (SQLException e) {
+            throw new SQLExceptionWrapper(e);//throw as runtime.
         }
         switch (sqlKind) {
             case EQUALS:
@@ -270,6 +271,7 @@ public class ConditionHandler extends RexShuttle {
                 return literal.getValue3();
             case DATE:
             case TIMESTAMP:
+            case TIME_WITH_LOCAL_TIME_ZONE:
             case TIME:
                 return literal.toString(); // we use our parsers with AbstractParser.parse
             default:
