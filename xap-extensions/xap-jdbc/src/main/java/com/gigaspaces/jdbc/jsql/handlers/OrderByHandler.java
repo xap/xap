@@ -12,6 +12,7 @@ import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.OrderByVisitor;
 
 import java.util.List;
+import java.util.Objects;
 
 public class OrderByHandler extends UnsupportedExpressionVisitor implements OrderByVisitor {
     //TODO: consider not to pass queryExecutor but its relevant fields, when we need to serialize this object.
@@ -40,7 +41,9 @@ public class OrderByHandler extends UnsupportedExpressionVisitor implements Orde
     }
 
     private String getColumnAlias() {
-        return getColumn().getName(true);
+        String fullName = getColumn().getName(true);
+        if(Objects.equals(fullName, getColumn().getColumnName())) return null;
+        return fullName;
     }
 
 
@@ -51,7 +54,7 @@ public class OrderByHandler extends UnsupportedExpressionVisitor implements Orde
 
     @Override
     public void visit(LongValue longValue) {
-        final List<IQueryColumn> queryColumns = this.queryExecutor.getSelectedColumns();
+        final List<IQueryColumn> queryColumns = this.queryExecutor.getVisibleColumns();
         int colIndex = (int) longValue.getValue();
         //validate range
         if(colIndex > queryColumns.size() || colIndex < 1) { //TODO: fix msg later
