@@ -19,27 +19,11 @@ public class Constants {
 
     public static final int BATCH_SIZE = 1000;
 
-    public static final int PG_TYPE_BOOL = 16;
-    public static final int PG_TYPE_CHAR = 18;
-    public static final int PG_TYPE_BPCHAR = 1042;
-    public static final int PG_TYPE_INT8 = 20;
-    public static final int PG_TYPE_INT2 = 21;
-    public static final int PG_TYPE_INT4 = 23;
-    public static final int PG_TYPE_TEXT = 25;
-    public static final int PG_TYPE_VARCHAR = 1043;
-    public static final int PG_TYPE_BYTE_ARRAY = 17;
-    public static final int PG_TYPE_FLOAT4 = 700;
-    public static final int PG_TYPE_FLOAT8 = 701;
-    public static final int PG_TYPE_NUMERIC = 1700;
-    public static final int PG_TYPE_UNKNOWN = 705;
-    public static final int PG_TYPE_DATE = 1082;
-    public static final int PG_TYPE_TIME = 1083;
-    public static final int PG_TYPE_TIMETZ = 1266;
-    public static final int PG_TYPE_TIMESTAMP = 1114;
-    public static final int PG_TYPE_TIMESTAMPTZ = 1184;
-    public static final int PG_TYPE_INTERVAL = 1186;
-    public static final int PG_TYPE_ANY = 2276;
-    public static final int PG_TYPE_CURSOR = 1790;
+    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+    public static final int[] EMPTY_INT_ARRAY = new int[0];
+    public static final String EMPTY_STRING = "";
+
+    public static final String DELIMITER = ",";
 
     private Constants() {}
 }

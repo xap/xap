@@ -76,12 +76,12 @@ public class GSOptimizer {
         cluster = RelOptCluster.create(planner, new RexBuilder(typeFactory));
     }
 
-    public RelDataTypeFactory typeFactory() {
-        return typeFactory;
+    public SqlValidator validator() {
+        return validator;
     }
 
     public SqlNode parse(String query) {
-        SqlParser parser = SqlParser.create(query, PARSER_CONFIG);
+        SqlParser parser = parser(query);
 
         try {
             return parser.parseQuery();
@@ -90,8 +90,12 @@ public class GSOptimizer {
         }
     }
 
+    public SqlParser parser(String query) {
+        return SqlParser.create(query, PARSER_CONFIG);
+    }
+
     public SqlNodeList parseMultiline(String query) {
-        SqlParser parser = SqlParser.create(query, PARSER_CONFIG);
+        SqlParser parser = parser(query);
 
         try {
             return parser.parseStmtList();
@@ -104,15 +108,11 @@ public class GSOptimizer {
         return validator.validate(ast);
     }
 
-    public RelDataType extractParameterType(SqlNode validatedAst) {
-        return validator.getParameterRowType(validatedAst);
-    }
-
-    public RelDataType extractRowType(SqlNode validatedAst) {
-        return validator.getValidatedNodeType(validatedAst);
-    }
-
     public RelNode createLogicalPlan(SqlNode validatedAst) {
+        return createLogicalPlan(validatedAst, this.validator);
+    }
+
+    public RelNode createLogicalPlan(SqlNode validatedAst, SqlValidator validator) {
         SqlToRelConverter relConverter = new SqlToRelConverter(
             null,
             validator,

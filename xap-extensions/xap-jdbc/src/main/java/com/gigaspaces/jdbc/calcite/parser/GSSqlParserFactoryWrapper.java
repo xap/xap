@@ -1,6 +1,6 @@
 package com.gigaspaces.jdbc.calcite.parser;
 
-import com.gigaspaces.jdbc.calcite.parser.impl.GSSqlParserImpl;
+import com.gigaspaces.jdbc.calcite.parser.generated.GSSqlParserImpl;
 import org.apache.calcite.server.DdlExecutor;
 import org.apache.calcite.sql.parser.SqlAbstractParserImpl;
 import org.apache.calcite.sql.parser.SqlParserImplFactory;

@@ -2,6 +2,7 @@ package com.gigaspaces.sql.aggregatornode.netty.query;
 
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.utils.PgType;
+import com.gigaspaces.sql.aggregatornode.netty.utils.TypeUtils;
 import io.netty.buffer.ByteBuf;
 
 public class ColumnDescription extends TypeAware {
@@ -51,6 +52,6 @@ public class ColumnDescription extends TypeAware {
     }
 
     public void write(Session session, ByteBuf dst, Object value) throws ProtocolException {
-        PgType.writeColumn(session, dst, value, this);
+        TypeUtils.writeColumn(session, dst, value, this);
     }
 }

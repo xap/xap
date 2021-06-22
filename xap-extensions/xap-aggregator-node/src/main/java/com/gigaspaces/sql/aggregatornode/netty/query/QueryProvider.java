@@ -10,11 +10,6 @@ import java.util.List;
  */
 public interface QueryProvider {
     /**
-     * Initializes query provider
-     */
-    void init() throws ProtocolException;
-
-    /**
      * Executes multiline query.
      *
      * @param session Session

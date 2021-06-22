@@ -414,8 +414,6 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
     }
 
     private void onAuthenticationOK(ChannelHandlerContext ctx) throws ProtocolException {
-        queryProvider.init();
-
         ByteBuf buf = ctx.alloc().ioBuffer();
         writeAuthenticationOK(buf);
         writeParameterStatus(buf, "client_encoding", session.getCharset().name());

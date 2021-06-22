@@ -4,11 +4,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class RowDescription {
-    private final List<ColumnDescription> columns;
+    public static final RowDescription EMPTY = new RowDescription(Collections.emptyList());
 
-    public RowDescription() {
-        this.columns = Collections.emptyList();
-    }
+    private final List<ColumnDescription> columns;
 
     public RowDescription(List<ColumnDescription> columns) {
         this.columns = columns;

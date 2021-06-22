@@ -35,7 +35,7 @@
 data: {
   parser: {
     # Generated parser implementation package and class name.
-    package: "com.gigaspaces.jdbc.calcite.parser.impl",
+    package: "com.gigaspaces.jdbc.calcite.parser.generated",
     class: "GSSqlParserImpl",
 
     # List of additional classes and packages to import.
