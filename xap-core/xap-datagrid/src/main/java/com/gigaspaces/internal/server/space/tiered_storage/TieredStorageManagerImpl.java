@@ -170,7 +170,7 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
                 }
             }
         });
-        this.operationsRegistrator = registratorForAll;
+        this.diskSizeRegistrator = registratorForAll;
     }
 
 
