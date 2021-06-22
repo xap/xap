@@ -1,8 +1,10 @@
 package com.gigaspaces.jdbc.jsql.handlers;
 
+import com.gigaspaces.jdbc.JoinQueryExecutor;
 import com.gigaspaces.jdbc.QueryExecutor;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
+import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
 import com.gigaspaces.jdbc.model.table.IQueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
@@ -34,6 +36,7 @@ public class JsqlPhysicalPlanHandler extends SelectVisitorAdapter implements Fro
         prepareWhereClause(plainSelect);
         prepareOrderByClause(plainSelect);
         prepareGroupByClause(plainSelect);
+        prepareDistinctClause(plainSelect);
     }
 
     private void handleJoin(Join join){
@@ -54,8 +57,8 @@ public class JsqlPhysicalPlanHandler extends SelectVisitorAdapter implements Fro
             }
             TableContainer rightTable = QueryColumnHandler.getTableForColumn(rColumn, tables);
             TableContainer leftTable = QueryColumnHandler.getTableForColumn(lColumn, tables);
-            IQueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false, 0);
-            IQueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false, 0);
+            IQueryColumn rightColumn = rightTable.addQueryColumn(rColumn.getColumnName(), null, false, -1);
+            IQueryColumn leftColumn = leftTable.addQueryColumn(lColumn.getColumnName(), null, false, -1);
             rightTable.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinInfo.JoinType.getType(join)));
             if (leftTable.getJoinedTable() == null) { // TODO set right table every time and align it to recursive form in JoinTablesIterator
                 if (!rightTable.isJoined()) {
@@ -70,8 +73,8 @@ public class JsqlPhysicalPlanHandler extends SelectVisitorAdapter implements Fro
     }
 
     private void prepareQueryColumns(PlainSelect plainSelect) {
-        QueryColumnHandler visitor = new QueryColumnHandler(queryExecutor);
-        plainSelect.getSelectItems().forEach(selectItem -> selectItem.accept(visitor));
+        QueryColumnHandler queryColumnHandler = new QueryColumnHandler(queryExecutor);
+        plainSelect.getSelectItems().forEach(selectItem -> selectItem.accept(queryColumnHandler));
     }
 
     private void prepareWhereClause(PlainSelect plainSelect) {
@@ -102,6 +105,24 @@ public class JsqlPhysicalPlanHandler extends SelectVisitorAdapter implements Fro
         }
     }
 
+    private void prepareDistinctClause(PlainSelect plainSelect) {
+
+        if (plainSelect.getDistinct() != null) {
+            List<SelectItem> items = plainSelect.getSelectItems();
+            if (items.get(0) instanceof AllColumns){
+                for (TableContainer table : queryExecutor.getTables()){
+                    if(!table.getVisibleColumns().isEmpty())
+                        table.setDistinct(true);
+                }
+            }
+            else {
+                for (SelectItem item : items) {
+                    SelectExpressionItem sItem = (SelectExpressionItem) item;
+                    QueryColumnHandler.getTableForColumn((Column) sItem.getExpression(), queryExecutor.getTables()).setDistinct(true);
+                }
+            }
+        }
+    }
 
     @Override
     public void visit(Table table) {
@@ -115,8 +136,9 @@ public class JsqlPhysicalPlanHandler extends SelectVisitorAdapter implements Fro
     @Override
     public void visit(SubSelect subSelect) {
         QueryExecutor subQueryExecutor = new QueryExecutor(queryExecutor.getSpace(), queryExecutor.getConfig(), queryExecutor.getPreparedValues());
+        JsqlPhysicalPlanHandler physicalPlanHandler = new JsqlPhysicalPlanHandler(subQueryExecutor);
+        subQueryExecutor = physicalPlanHandler.prepareForExecution(subSelect.getSelectBody());
         try {
-            subQueryExecutor = new JsqlPhysicalPlanHandler(subQueryExecutor).prepareForExecution(subSelect.getSelectBody());
             queryExecutor.getTables().add(new TempTableContainer(subQueryExecutor.execute(), subSelect.getAlias() == null ? null : subSelect.getAlias().getName()));
         } catch (SQLException e) {
             throw new SQLExceptionWrapper(e);
@@ -147,6 +169,16 @@ public class JsqlPhysicalPlanHandler extends SelectVisitorAdapter implements Fro
     @Override
     public void visit(ParenthesisFromItem aThis) {
         throw new UnsupportedOperationException("Unsupported yet!");
+    }
+
+    public QueryResult execute(SelectBody selectBody) throws SQLException {
+        prepareForExecution(selectBody);
+
+        if (queryExecutor.getTables().size() == 1) { //Simple Query
+            return queryExecutor.getTables().get(0).executeRead(queryExecutor.getConfig());
+        }
+        JoinQueryExecutor joinE = new JoinQueryExecutor(queryExecutor);
+        return joinE.execute();
     }
 
     public QueryExecutor prepareForExecution(SelectBody selectBody) {
