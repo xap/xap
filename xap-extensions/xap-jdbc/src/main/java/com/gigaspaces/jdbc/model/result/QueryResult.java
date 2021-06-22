@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 public abstract class QueryResult {
     private final List<IQueryColumn> selectedColumns;
     private Cursor<TableRow> cursor;
+    private Map<TableRowGroupByKey,List<TableRow>> groupByRows = new HashMap<>();
 
     public QueryResult(List<IQueryColumn> selectedColumns) {
         this.selectedColumns = selectedColumns;
@@ -29,6 +30,14 @@ public abstract class QueryResult {
     }
 
     public void setRows(List<TableRow> rows) {
+    }
+
+    public void setGroupByRowsResult( Map<TableRowGroupByKey,List<TableRow>> groupByRows) {
+        this.groupByRows = groupByRows;
+    }
+
+    public Map<TableRowGroupByKey,List<TableRow>> getGroupByRowsResult() {
+        return groupByRows;
     }
 
     public void addRow(TableRow tableRow) {
@@ -137,13 +146,24 @@ public abstract class QueryResult {
     public void groupBy(){
 
         Map<TableRowGroupByKey,TableRow> tableRows = new HashMap<>();
+        Map<TableRowGroupByKey,List<TableRow>> groupByTableRows = new HashMap<>();
+
         for( TableRow tableRow : getRows() ){
             Object[] groupByValues = tableRow.getGroupByValues();
             if( groupByValues.length > 0 ){
-                tableRows.putIfAbsent( new TableRowGroupByKey( groupByValues ), tableRow );
+                TableRowGroupByKey key = new TableRowGroupByKey( groupByValues );
+                tableRows.putIfAbsent( key, tableRow );
+
+                List<TableRow> tableRowsList = groupByTableRows.get(key);
+                if( tableRowsList == null ){
+                    tableRowsList = new ArrayList<>();
+                    groupByTableRows.put( key, tableRowsList );
+                }
+                tableRowsList.add( tableRow );
             }
         }
         if( !tableRows.isEmpty() ) {
+            setGroupByRowsResult( groupByTableRows );
             setRows( new ArrayList<>(tableRows.values()) );
         }
     }

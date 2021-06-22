@@ -6,10 +6,7 @@ import com.gigaspaces.jdbc.model.result.*;
 import com.gigaspaces.jdbc.model.table.*;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,12 +33,14 @@ public class JoinQueryExecutor {
     public QueryResult execute() {
         final List<OrderColumn> orderColumns = new ArrayList<>();
         final List<ConcreteColumn> groupByColumns = new ArrayList<>();
+        final List<AggregationColumn> aggregationColumns = new ArrayList<>();
         boolean isDistinct = false;
         for (TableContainer table : tables) {
             try {
                 table.executeRead(config);
                 orderColumns.addAll(table.getOrderColumns());
                 groupByColumns.addAll(table.getGroupByColumns());
+                aggregationColumns.addAll(table.getAggregationColumns());
                 isDistinct |= table.isDistinct();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -59,13 +58,25 @@ public class JoinQueryExecutor {
                 res.addRow(TableRowFactory.createTableRowFromSpecificColumns(this.allQueryColumns, orderColumns,
                         groupByColumns));
         }
-        if(!this.aggregationColumns.isEmpty()) {
-            List<TableRow> aggregateRows = new ArrayList<>();
-            aggregateRows.add(TableRowUtils.aggregate(res.getRows(), this.aggregationColumns));
-            res.setRows(aggregateRows);
+
+        if( groupByColumns.isEmpty()) {
+            if( !this.aggregationColumns.isEmpty() ) {
+                List<TableRow> aggregateRows = new ArrayList<>();
+                aggregateRows.add(TableRowUtils.aggregate(res.getRows(), selectedQueryColumns, this.aggregationColumns, visibleColumns));
+                res.setRows(aggregateRows);
+            }
         }
-        if(!groupByColumns.isEmpty()) {
+        else {
             res.groupBy(); //group by the results at the client
+            if( !aggregationColumns.isEmpty() ) {
+                Map<TableRowGroupByKey, List<TableRow>> groupByRowsResult = res.getGroupByRowsResult();
+                List<TableRow> totalAggregationsResultRowsList = new ArrayList<>();
+                for (List<TableRow> rowsList : groupByRowsResult.values()) {
+                    TableRow aggregatedRow = TableRowUtils.aggregate( rowsList, selectedQueryColumns, aggregationColumns, visibleColumns );
+                    totalAggregationsResultRowsList.add( aggregatedRow );
+                }
+                res.setRows( totalAggregationsResultRowsList );
+            }
         }
         if(!orderColumns.isEmpty()) {
             res.sort(); //sort the results at the client
