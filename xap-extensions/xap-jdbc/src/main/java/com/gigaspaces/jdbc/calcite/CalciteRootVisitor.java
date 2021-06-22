@@ -28,6 +28,7 @@ public class CalciteRootVisitor extends RelShuttleImpl {
     }
 
     @Override
+    // TODO check inserting of same table
     public RelNode visit(TableScan scan) {
         RelNode result = super.visit(scan);
         GSTable table = scan.getTable().unwrap(GSTable.class);
@@ -121,19 +122,9 @@ public class CalciteRootVisitor extends RelShuttleImpl {
         RexProgram program = other.getProgram();
         List<String> inputFields = program.getInputRowType().getFieldNames();
         List<String> outputFields = program.getOutputRowType().getFieldNames();
-        int total = outputFields.size();
-        int left = join.getLeft().getRowType().getFieldCount();
-        int right = join.getRight().getRowType().getFieldCount();
-        if(total == left + right && other.equals(root)){
-            for (TableContainer tableContainer : queryExecutor.getTables()) {
-                queryExecutor.getVisibleColumns().addAll(tableContainer.getVisibleColumns());
-            }
-        }
-        else{
-            for (int i = 0; i < outputFields.size(); i++) {
-                IQueryColumn qc = queryExecutor.getColumnByColumnIndex(program.getSourceField(i));
-                queryExecutor.getVisibleColumns().add(qc);
-            }
+        for (int i = 0; i < outputFields.size(); i++) {
+            IQueryColumn qc = queryExecutor.getColumnByColumnIndex(program.getSourceField(i));
+            queryExecutor.getVisibleColumns().add(qc);
         }
         if (program.getCondition() != null) {
             ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
