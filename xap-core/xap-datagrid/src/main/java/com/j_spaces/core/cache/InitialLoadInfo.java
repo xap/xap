@@ -37,6 +37,7 @@ public class InitialLoadInfo {
 
     private int _foundInDatabase;
     private int _insertedToCache;
+    private int _insertedToHotTier;
     private long _recoveryStartTime;
     private long _lastLoggedTime;
     private final Logger _logger;
@@ -81,6 +82,14 @@ public class InitialLoadInfo {
 
     public void incrementInsertedToCache() {
         this._insertedToCache++;
+    }
+
+    public void incrementInsertedToHotTier() {
+        this._insertedToHotTier++;
+    }
+
+    public int getInsertedToHotTier() {
+        return _insertedToHotTier;
     }
 
     public long getRecoveryStartTime() {

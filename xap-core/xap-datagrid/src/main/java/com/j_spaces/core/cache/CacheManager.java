@@ -938,7 +938,7 @@ public class CacheManager extends AbstractCacheManager
                 if (_logger.isInfoEnabled()) {
                     _logger.info("Data source recovery:\n " +
                             "\tEntries found in warm tier: " + initialLoadInfo.getFoundInDatabase() + ".\n" +
-                            "\tEntries inserted to hot tier: " + initialLoadInfo.getInsertedToCache() + ".\n" +
+                            "\tEntries inserted to hot tier: " + initialLoadInfo.getInsertedToHotTier() + ".\n" +
                             "\tTotal Time: " + JSpaceUtilities.formatMillis(SystemTime.timeMillis() - initialLoadInfo.getRecoveryStartTime()) + ".");
                 }
                 return;
@@ -962,12 +962,22 @@ public class CacheManager extends AbstractCacheManager
 
         if (_logger.isInfoEnabled()) {
             String formattedErrors = format(initialLoadInfo.getInitialLoadErrors());
-            _logger.info("Data source recovery:\n " +
-                    "\tEntries found in data source: " + initialLoadInfo.getFoundInDatabase() + ".\n" +
-                    "\tEntries inserted to space: " + initialLoadInfo.getInsertedToCache() + ".\n" +
-                    "\tEntries ignored: " + (initialLoadInfo.getFoundInDatabase() - initialLoadInfo.getInsertedToCache()) + ".\n" +
-                    formattedErrors +
-                    "\tTotal Time: " + JSpaceUtilities.formatMillis(SystemTime.timeMillis() - initialLoadInfo.getRecoveryStartTime()) + ".");
+            if(isTieredStorage()){
+                _logger.info("Data source recovery:\n " +
+                        "\tEntries found in data source: " + initialLoadInfo.getFoundInDatabase() + ".\n" +
+                        "\tEntries inserted to space: " + initialLoadInfo.getInsertedToCache() + ".\n" +
+                        "\tEntries inserted to hot tier: " + initialLoadInfo.getInsertedToHotTier() + ".\n" +
+                        "\tEntries ignored: " + (initialLoadInfo.getFoundInDatabase() - initialLoadInfo.getInsertedToCache()) + ".\n" +
+                        formattedErrors +
+                        "\tTotal Time: " + JSpaceUtilities.formatMillis(SystemTime.timeMillis() - initialLoadInfo.getRecoveryStartTime()) + ".");
+            } else {
+                _logger.info("Data source recovery:\n " +
+                        "\tEntries found in data source: " + initialLoadInfo.getFoundInDatabase() + ".\n" +
+                        "\tEntries inserted to space: " + initialLoadInfo.getInsertedToCache() + ".\n" +
+                        "\tEntries ignored: " + (initialLoadInfo.getFoundInDatabase() - initialLoadInfo.getInsertedToCache()) + ".\n" +
+                        formattedErrors +
+                        "\tTotal Time: " + JSpaceUtilities.formatMillis(SystemTime.timeMillis() - initialLoadInfo.getRecoveryStartTime()) + ".");
+            }
         }
         if (getBlobStoreInternalCache() != null) {
             if (getBlobStoreInternalCache().getBlobStoreInternalCacheFilter() != null) {
@@ -1052,6 +1062,7 @@ public class CacheManager extends AbstractCacheManager
                         if (isTieredStorage()){
                             context.setEntryTieredState(_engine.getTieredStorageManager().getEntryTieredState(eh.getEntryData()));
                             if (context.isRAMEntry()){
+                                initialLoadInfo.incrementInsertedToHotTier();
                                 long expiration = _engine.getLeaseManager().getExpirationByTimeRuleOnInitialLoad(eh.getEntryData());
                                 if(expiration != -1){
                                     eh.updateEntryData(eh.getEntryData(), expiration);

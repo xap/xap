@@ -34,6 +34,7 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
     private ConcurrentHashMap<String, CachePredicate> hotCacheRules = new ConcurrentHashMap<>();
 
     private InternalRDBMSManager internalDiskStorage;
+    private InternalMetricRegistrator diskSizeRegistrator;
     private InternalMetricRegistrator operationsRegistrator;
 
     public TieredStorageManagerImpl(TieredStorageConfig storageConfig, InternalRDBMSManager internalDiskStorage, String fullSpaceName) {
@@ -174,7 +175,7 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
                 }
             }
         });
-        this.operationsRegistrator = registratorForAll;
+        this.diskSizeRegistrator = registratorForAll;
     }
 
 
@@ -220,6 +221,9 @@ public class TieredStorageManagerImpl implements TieredStorageManager {
 
     @Override
     public void close() {
+        if (diskSizeRegistrator != null) {
+            diskSizeRegistrator.clear();
+        }
         if(operationsRegistrator != null) {
             operationsRegistrator.clear();
         }
