@@ -37,7 +37,8 @@ public class TableRow implements Comparable<TableRow> {
     TableRow(IEntryPacket entryPacket, ConcreteTableContainer tableContainer) {
         final List<OrderColumn> orderColumns = tableContainer.getOrderColumns();
         final List<ConcreteColumn> groupByColumns = tableContainer.getGroupByColumns();
-        if (tableContainer.hasAggregationFunctions() && entryPacket instanceof QueryEntryPacket) {
+        boolean isQueryEntryPacket = entryPacket instanceof QueryEntryPacket;
+        if (tableContainer.hasAggregationFunctions() && isQueryEntryPacket) {
             QueryEntryPacket queryEntryPacket = ((QueryEntryPacket) entryPacket);
             Map<String, Object> fieldNameValueMap = new HashMap<>();
             //important since order is important and all selected columns are considered in such case
@@ -73,7 +74,7 @@ public class TableRow implements Comparable<TableRow> {
         this.groupByColumns = groupByColumns.toArray(new ConcreteColumn[0]);
         ITypeDesc typeDescriptor = entryPacket.getTypeDescriptor();
         groupByValues = new Object[ typeDescriptor != null ? this.groupByColumns.length : 0];
-        if( typeDescriptor != null ) {
+        if( !isQueryEntryPacket ) {
             for (int i = 0; i < groupByColumns.size(); i++) {
                 groupByValues[i] = getEntryPacketValue(entryPacket, groupByColumns.get(i));
             }
@@ -104,7 +105,21 @@ public class TableRow implements Comparable<TableRow> {
         this.columns = tempTableContainer.getSelectedColumns().toArray(new IQueryColumn[0]);
         this.values = new Object[this.columns.length];
         for (int i = 0; i < this.columns.length; i++) {
-            this.values[i] = row.getPropertyValue(this.columns[i]);
+
+            if( tempTableContainer.hasGroupByColumns() && this.columns[i] instanceof AggregationColumn ){
+                AggregationColumn aggregationColumn = (AggregationColumn)this.columns[i];
+                IQueryColumn column = aggregationColumn.getQueryColumn().
+                                create( aggregationColumn.getQueryColumn().getName(),
+                                        aggregationColumn.getQueryColumn().getAlias(),
+                                        aggregationColumn.getQueryColumn().isVisible(),
+                                        aggregationColumn.getQueryColumn().getColumnOrdinal() );
+
+                this.columns[i] = column;
+                this.values[i] = row.getPropertyValue(column.getAlias());
+            }
+            else{
+                this.values[i] = row.getPropertyValue(this.columns[i]);
+            }
         }
 
         this.orderColumns = tempTableContainer.getOrderColumns().toArray(new OrderColumn[0]);

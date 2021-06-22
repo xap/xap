@@ -5,10 +5,7 @@ import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.explainplan.SubqueryExplainPlan;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
-import com.gigaspaces.jdbc.model.result.ExplainPlanQueryResult;
-import com.gigaspaces.jdbc.model.result.QueryResult;
-import com.gigaspaces.jdbc.model.result.TempQueryResult;
-import com.gigaspaces.jdbc.model.result.TempTableQTP;
+import com.gigaspaces.jdbc.model.result.*;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.EqualValueRange;
 import com.j_spaces.jdbc.builder.range.Range;
@@ -55,9 +52,18 @@ public class TempTableContainer extends TableContainer {
 
         validate();
 
-        QueryResult queryResult = new TempQueryResult(this);
+        TempQueryResult queryResult = new TempQueryResult(this);
         if(!getGroupByColumns().isEmpty()){
             queryResult.groupBy(); //group the results at the client
+            if( hasAggregationFunctions() ) {
+                Map<TableRowGroupByKey, List<TableRow>> groupByRowsResult = queryResult.getGroupByRowsResult();
+                List<TableRow> totalAggregationsResultRowsList = new ArrayList<>();
+                for (List<TableRow> rowsList : groupByRowsResult.values()) {
+                    TableRow aggregatedRow = queryResult.aggregate(rowsList);
+                    totalAggregationsResultRowsList.add( aggregatedRow );
+                }
+                queryResult.setRows( totalAggregationsResultRowsList );
+            }
         }
         if(!getOrderColumns().isEmpty()) {
             queryResult.sort(); //sort the results at the client

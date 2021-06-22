@@ -10,18 +10,23 @@ import java.util.Objects;
 
 public class TableRowUtils {
 
-    public static TableRow aggregate(List<TableRow> tableRows, List<AggregationColumn> aggregationColumns) {
+    public static TableRow aggregate(List<TableRow> tableRows, List<IQueryColumn> selectedColumns,
+                                     List<AggregationColumn> aggregationColumns, List<IQueryColumn> visibleColumns) {
         if (tableRows.isEmpty()) {
             return new TableRow((IQueryColumn[]) null, null);
         }
-        IQueryColumn[] rowsColumns = aggregationColumns.toArray(new IQueryColumn[0]);
+        IQueryColumn[] rowsColumns = selectedColumns.toArray(new IQueryColumn[0]);
         OrderColumn[] firstRowOrderColumns = tableRows.get(0).getOrderColumns();
         Object[] firstRowOrderValues = tableRows.get(0).getOrderValues();
         ConcreteColumn[] firstRowGroupByColumns = tableRows.get(0).getGroupByColumns();
         Object[] firstRowGroupByValues = tableRows.get(0).getGroupByValues();
 
-        Object[] aggregateValues = new Object[rowsColumns.length];
-        int index = 0;
+        Object[] values = new Object[rowsColumns.length];
+
+        for (IQueryColumn visibleColumn : visibleColumns) {
+            values[visibleColumn.getColumnOrdinal()] = tableRows.get(0).getPropertyValue( visibleColumn );//visibleColumn.getCurrentValue();
+        }
+
         for (AggregationColumn aggregationColumn : aggregationColumns) {
             Object value = null;
             Class<?> classType = aggregationColumn.getReturnType();
@@ -84,9 +89,9 @@ public class TableRowUtils {
                         break;
                 }
             }
-            aggregateValues[index++] = value;
+            values[aggregationColumn.getColumnOrdinal()] = value;
         }
-        return new TableRow(rowsColumns, aggregateValues, firstRowOrderColumns, firstRowOrderValues,
+        return new TableRow(rowsColumns, values, firstRowOrderColumns, firstRowOrderValues,
                 firstRowGroupByColumns, firstRowGroupByValues);
     }
 
