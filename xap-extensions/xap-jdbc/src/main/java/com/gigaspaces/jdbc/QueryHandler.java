@@ -1,12 +1,11 @@
 package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.calcite.CalciteDefaults;
-import com.gigaspaces.jdbc.calcite.CalciteRootVisitor;
+import com.gigaspaces.jdbc.calcite.SelectHandler;
 import com.gigaspaces.jdbc.calcite.GSOptimizer;
 import com.gigaspaces.jdbc.calcite.GSRelNode;
 import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
-import com.gigaspaces.jdbc.jsql.handlers.JsqlPhysicalPlanHandler;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.ExplainPlanQueryResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
@@ -67,8 +66,8 @@ public class QueryHandler {
     private ResponsePacket  executeStatement(IJSpace space, GSRelNode relNode, Object[] preparedValues) throws SQLException {
         ResponsePacket packet = new ResponsePacket();
         QueryExecutor qE = new QueryExecutor(space, preparedValues);
-        CalciteRootVisitor calciteRootVisitor = new CalciteRootVisitor(qE);
-        relNode.accept(calciteRootVisitor);
+        SelectHandler selectHandler = new SelectHandler(qE);
+        relNode.accept(selectHandler);
         QueryResult queryResult = qE.execute();
         packet.setResultEntry(queryResult.convertEntriesToResultArrays());
         return packet;
@@ -84,7 +83,7 @@ public class QueryHandler {
                 QueryExecutor qE = new QueryExecutor(space, config, preparedValues);
                 ExplainPlanQueryResult res;
                 try {
-                    JsqlPhysicalPlanHandler physicalPlanHandler = new JsqlPhysicalPlanHandler(qE);
+                    com.gigaspaces.jdbc.jsql.handlers.SelectHandler physicalPlanHandler = new com.gigaspaces.jdbc.jsql.handlers.SelectHandler(qE);
                     qE = physicalPlanHandler.prepareForExecution(explainStatement.getStatement().getSelectBody());
                     res = (ExplainPlanQueryResult) qE.execute();
                     packet.setResultEntry(res.convertEntriesToResultArrays(config));
@@ -98,7 +97,7 @@ public class QueryHandler {
                 QueryExecutor qE = new QueryExecutor(space, preparedValues);
                 QueryResult res;
                 try {
-                    JsqlPhysicalPlanHandler physicalPlanHandler = new JsqlPhysicalPlanHandler(qE);
+                    com.gigaspaces.jdbc.jsql.handlers.SelectHandler physicalPlanHandler = new com.gigaspaces.jdbc.jsql.handlers.SelectHandler(qE);
                     qE = physicalPlanHandler.prepareForExecution(select.getSelectBody());
                     res = qE.execute();
                     packet.setResultEntry(res.convertEntriesToResultArrays());

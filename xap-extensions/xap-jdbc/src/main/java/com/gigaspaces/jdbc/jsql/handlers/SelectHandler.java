@@ -20,10 +20,10 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-public class JsqlPhysicalPlanHandler extends SelectVisitorAdapter implements FromItemVisitor {
+public class SelectHandler extends SelectVisitorAdapter implements FromItemVisitor {
     private final QueryExecutor queryExecutor;
 
-    public JsqlPhysicalPlanHandler(QueryExecutor queryExecutor) {
+    public SelectHandler(QueryExecutor queryExecutor) {
         this.queryExecutor = queryExecutor;
     }
     @Override
@@ -136,7 +136,7 @@ public class JsqlPhysicalPlanHandler extends SelectVisitorAdapter implements Fro
     @Override
     public void visit(SubSelect subSelect) {
         QueryExecutor subQueryExecutor = new QueryExecutor(queryExecutor.getSpace(), queryExecutor.getConfig(), queryExecutor.getPreparedValues());
-        JsqlPhysicalPlanHandler physicalPlanHandler = new JsqlPhysicalPlanHandler(subQueryExecutor);
+        SelectHandler physicalPlanHandler = new SelectHandler(subQueryExecutor);
         subQueryExecutor = physicalPlanHandler.prepareForExecution(subSelect.getSelectBody());
         try {
             queryExecutor.getTables().add(new TempTableContainer(subQueryExecutor.execute(), subSelect.getAlias() == null ? null : subSelect.getAlias().getName()));

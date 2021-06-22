@@ -18,12 +18,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CalciteRootVisitor extends RelShuttleImpl {
+public class SelectHandler extends RelShuttleImpl {
     private final QueryExecutor queryExecutor;
     private final Map<RelNode, GSCalc> childToCalc = new HashMap<>();
     private RelNode root = null;
 
-    public CalciteRootVisitor(QueryExecutor queryExecutor) {
+    public SelectHandler(QueryExecutor queryExecutor) {
         this.queryExecutor = queryExecutor;
     }
 
