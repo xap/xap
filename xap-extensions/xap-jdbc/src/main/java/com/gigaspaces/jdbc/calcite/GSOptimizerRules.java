@@ -89,7 +89,8 @@ public class GSOptimizerRules {
         GSTableScanRule.INSTANCE,
         GSFilterRule.INSTANCE,
         GSProjectRule.INSTANCE,
-        GSJoinRule.INSTANCE
+        GSJoinRule.INSTANCE,
+        GSSortRule.INSTANCE
         //,GSValuesRule.INSTANCE //commented out - not need for adding ValuesRule now
     );
 
