@@ -1,5 +1,6 @@
 package com.gigaspaces.jdbc.calcite;
 
+import com.gigaspaces.jdbc.calcite.parser.GSSqlParserFactoryWrapper;
 import com.j_spaces.core.IJSpace;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.config.CalciteConnectionConfig;
@@ -17,6 +18,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
@@ -29,35 +31,38 @@ import org.apache.calcite.tools.Program;
 import java.util.Collections;
 
 public class GSOptimizer {
+    private static final CalciteConnectionConfig CONNECTION_CONFIG = CalciteConnectionConfig.DEFAULT
+        .set(CalciteConnectionProperty.PARSER_FACTORY, GSSqlParserFactoryWrapper.FACTORY_CLASS)
+        .set(CalciteConnectionProperty.CASE_SENSITIVE, "false")
+        .set(CalciteConnectionProperty.QUOTED_CASING, Casing.UNCHANGED.toString())
+        .set(CalciteConnectionProperty.UNQUOTED_CASING, Casing.UNCHANGED.toString());
 
-    private final IJSpace space;
+    private static final SqlParser.Config PARSER_CONFIG = SqlParser.configBuilder()
+        .setParserFactory(GSSqlParserFactoryWrapper.FACTORY)
+        .setQuotedCasing(Casing.UNCHANGED)
+        .setUnquotedCasing(Casing.UNCHANGED)
+        .setCaseSensitive(false).build();
 
-    private final JavaTypeFactoryImpl typeFactory;
     private final CalciteCatalogReader catalogReader;
     private final SqlValidator validator;
     private final VolcanoPlanner planner;
     private final RelOptCluster cluster;
 
     public GSOptimizer(IJSpace space) {
-        this.space = space;
-
-        CalciteConnectionConfig config = CalciteConnectionConfig.DEFAULT
-            .set(CalciteConnectionProperty.CASE_SENSITIVE, "false")
-            .set(CalciteConnectionProperty.QUOTED_CASING, Casing.UNCHANGED.toString())
-            .set(CalciteConnectionProperty.UNQUOTED_CASING, Casing.UNCHANGED.toString());
-
-        typeFactory = new JavaTypeFactoryImpl();
+        JavaTypeFactoryImpl typeFactory = new JavaTypeFactoryImpl();
 
         catalogReader = new CalciteCatalogReader(
             createSchema(space),
             Collections.singletonList("root"),
             typeFactory,
-            config);
+            CONNECTION_CONFIG);
 
-        validator = SqlValidatorUtil.newValidator(SqlStdOperatorTable.instance(), catalogReader, typeFactory,
+        validator = SqlValidatorUtil.newValidator(
+            SqlStdOperatorTable.instance(),
+            catalogReader, typeFactory,
             SqlValidator.Config.DEFAULT);
 
-        planner = new VolcanoPlanner(RelOptCostImpl.FACTORY, Contexts.of(config));
+        planner = new VolcanoPlanner(RelOptCostImpl.FACTORY, Contexts.of(CONNECTION_CONFIG));
         planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
         planner.addRelTraitDef(RelCollationTraitDef.INSTANCE);
         planner.setTopDownOpt(true);
@@ -66,12 +71,7 @@ public class GSOptimizer {
     }
 
     public SqlNode parse(String query) {
-        SqlParser.Config config = SqlParser.configBuilder()
-            .setQuotedCasing(Casing.UNCHANGED)
-            .setUnquotedCasing(Casing.UNCHANGED)
-            .setCaseSensitive(false).build();
-
-        SqlParser parser = SqlParser.create(query, config);
+        SqlParser parser = createParser(query);
 
         try {
             return parser.parseQuery();
@@ -80,19 +80,34 @@ public class GSOptimizer {
         }
     }
 
-    public SqlNode validate(SqlNode ast) {
-        return validator.validate(ast);
+    public SqlNodeList parseMultiline(String query) {
+        SqlParser parser = createParser(query);
+
+        try {
+            return parser.parseStmtList();
+        } catch (SqlParseException e) {
+            throw new RuntimeException("Failed to parse the query.", e);
+        }
     }
 
-    public RelDataType extractParameterType(SqlNode validatedAst) {
-        return validator.getParameterRowType(validatedAst);
+    private SqlParser createParser(String query) {
+        return SqlParser.create(query, PARSER_CONFIG);
     }
 
-    public RelDataType extractRowType(SqlNode validatedAst) {
-        return validator.getValidatedNodeType(validatedAst);
+    public GSOptimizerValidationResult validate(SqlNode ast) {
+        SqlNode validatedAst = validator.validate(ast);
+        RelDataType rowType = validator.getValidatedNodeType(validatedAst);
+        RelDataType parameterRowType = validator.getParameterRowType(validatedAst);
+
+        return new GSOptimizerValidationResult(validatedAst, rowType, parameterRowType);
     }
 
-    public RelNode createLogicalPlan(SqlNode validatedAst) {
+    public GSRelNode optimize(SqlNode validatedAst) {
+        RelNode logicalPlan = optimizeLogical(validatedAst, this.validator);
+        return optimizePhysical(logicalPlan);
+    }
+
+    private RelNode optimizeLogical(SqlNode validatedAst, SqlValidator validator) {
         SqlToRelConverter relConverter = new SqlToRelConverter(
             null,
             validator,
@@ -108,7 +123,7 @@ public class GSOptimizer {
         return relConverter.convertQuery(validatedAst, false, true).rel;
     }
 
-    public GSRelNode createPhysicalPlan(RelNode logicalPlan) {
+    private GSRelNode optimizePhysical(RelNode logicalPlan) {
         Program program = GSOptimizerProgram.createProgram();
 
         RelNode res = program.run(

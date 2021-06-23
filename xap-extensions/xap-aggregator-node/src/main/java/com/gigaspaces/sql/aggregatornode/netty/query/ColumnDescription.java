@@ -1,42 +1,34 @@
 package com.gigaspaces.sql.aggregatornode.netty.query;
 
-public class ColumnDescription {
+import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
+import com.gigaspaces.sql.aggregatornode.netty.utils.PgType;
+import com.gigaspaces.sql.aggregatornode.netty.utils.TypeUtils;
+import io.netty.buffer.ByteBuf;
+
+public class ColumnDescription extends TypeAware {
     private final String name;
-    private final int type;
     private final int typeLen;
     private final int typeModifier;
-    private final int formatCode;
+    private final int format;
     private final int tableId;
     private final int tableIndex;
 
-    public ColumnDescription(String name, int type) {
-        this(name, type, -1, -1);
+    public ColumnDescription(String name, PgType type) {
+        this(name, type, type.getLength(), -1, 0, 0, 0);
     }
 
-    public ColumnDescription(String name, int type, int typeLen, int typeModifier) {
-        this(name, type, typeLen, typeModifier, 0, 0, 0);
-    }
-
-    public ColumnDescription(String name, int type, int typeLen, int typeModifier, int formatCode) {
-        this(name, type, typeLen, typeModifier, formatCode, 0, 0);
-    }
-
-    public ColumnDescription(String name, int type, int typeLen, int typeModifier, int formatCode, int tableId, int tableIndex) {
+    public ColumnDescription(String name, PgType type, int typeLen, int typeModifier, int format, int tableId, int tableIndex) {
+        super(type);
         this.name = name;
-        this.type = type;
         this.typeLen = typeLen;
         this.typeModifier = typeModifier;
-        this.formatCode = formatCode;
+        this.format = format;
         this.tableId = tableId;
         this.tableIndex = tableIndex;
     }
 
     public String getName() {
         return name;
-    }
-
-    public int getType() {
-        return type;
     }
 
     public int getTypeLen() {
@@ -47,8 +39,8 @@ public class ColumnDescription {
         return typeModifier;
     }
 
-    public int getFormatCode() {
-        return formatCode;
+    public int getFormat() {
+        return format;
     }
 
     public int getTableId() {
@@ -57,5 +49,9 @@ public class ColumnDescription {
 
     public int getTableIndex() {
         return tableIndex;
+    }
+
+    public void write(Session session, ByteBuf dst, Object value) throws ProtocolException {
+        TypeUtils.writeColumn(session, dst, value, this);
     }
 }

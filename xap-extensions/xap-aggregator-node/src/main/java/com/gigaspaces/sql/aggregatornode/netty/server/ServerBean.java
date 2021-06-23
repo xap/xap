@@ -40,7 +40,8 @@ public final class ServerBean implements AutoCloseable {
     public void init() throws Exception {
         space = (ISpaceProxy) SpaceFinder.find("jini://*/*/" + spaceName);
 
-        authProvider = AuthenticationProvider.NO_OP_PROVIDER; // TODO
+        // TODO use real authentication provider
+        authProvider = AuthenticationProvider.NO_OP_PROVIDER;
 
         bossGroup = new NioEventLoopGroup(1);
         workerGroup = new NioEventLoopGroup();
