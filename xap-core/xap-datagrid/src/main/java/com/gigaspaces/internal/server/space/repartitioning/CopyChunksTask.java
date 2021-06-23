@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CopyChunksTask extends SystemDistributedTask<SpaceResponseInfo> implements SmartExternalizable {
-
+    private static final long serialVersionUID = -6534857288071741108L;
     private CopyChunksRequestInfo requestInfo;
 
     public CopyChunksTask() {

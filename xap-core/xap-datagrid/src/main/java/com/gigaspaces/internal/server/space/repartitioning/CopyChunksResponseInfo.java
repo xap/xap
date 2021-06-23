@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CopyChunksResponseInfo implements SpaceResponseInfo {
-
+    private static final long serialVersionUID = -4971890861132517763L;
     private int partitionId;
     private volatile IOException exception;
     private Map<Short, AtomicInteger> movedToPartition;

@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CompoundChunksResponse implements SpaceResponseInfo {
-
+    private static final long serialVersionUID = -1679935942453681969L;
     private List<SpaceResponseInfo> responses;
 
     public CompoundChunksResponse() {

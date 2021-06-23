@@ -27,6 +27,7 @@ import java.io.ObjectOutput;
  */
 @ExperimentalApi
 public class BetweenRangeNode extends RangeNode{
+    private static final long serialVersionUID = -5867816054704778400L;
     private Comparable minValue;
     private Comparable maxValue;
     private boolean includeMin;
