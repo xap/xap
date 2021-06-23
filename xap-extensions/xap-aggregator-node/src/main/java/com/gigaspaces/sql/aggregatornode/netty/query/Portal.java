@@ -1,15 +1,10 @@
 package com.gigaspaces.sql.aggregatornode.netty.query;
 
+import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
+
 import java.util.Iterator;
 
 public interface Portal<T> extends Iterator<T>, AutoCloseable {
-    /**
-     * Operation tag
-     */
-    enum Tag {
-        SELECT, DELETE, UPDATE, INSERT, NONE
-    }
-
     /**
      * @return Portal name.
      */
@@ -28,10 +23,17 @@ public interface Portal<T> extends Iterator<T>, AutoCloseable {
     /**
      * @return Operation tag.
      */
-    Tag tag();
+    String tag();
 
     /**
-     * @return Processed rows by operation.
+     * Executes portal operation
      */
-    int processed();
+    void execute() throws ProtocolException;
+
+    /**
+     * Indicates whether the portal is empty.
+     */
+    default boolean empty() {
+        return false;
+    }
 }

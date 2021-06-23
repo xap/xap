@@ -1,15 +1,11 @@
 package com.gigaspaces.jdbc;
 
-import com.gigaspaces.jdbc.calcite.CalciteDefaults;
-import com.gigaspaces.jdbc.calcite.GSOptimizer;
-import com.gigaspaces.jdbc.calcite.GSRelNode;
-import com.gigaspaces.jdbc.calcite.SelectHandler;
+import com.gigaspaces.jdbc.calcite.*;
 import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.ExplainPlanQueryResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
-import com.gigaspaces.utils.Pair;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.ResponsePacket;
 import net.sf.jsqlparser.JSQLParserException;
@@ -32,7 +28,6 @@ import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlExplain;
 import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.validate.SqlValidatorException;
 
 import java.io.PrintWriter;
@@ -51,13 +46,6 @@ public class QueryHandler {
     private final Feature[] allowedFeatures = new Feature[]{Feature.select, Feature.explain, Feature.exprLike,
             Feature.jdbcParameter, Feature.join, Feature.joinInner, Feature.joinLeft, Feature.orderBy,
             Feature.orderByNullOrdering, Feature.function, Feature.selectGroupBy, Feature.distinct};
-
-    public Pair<RelDataType, RelDataType> extractTypes(String query, IJSpace space) throws SqlParseException {
-        GSOptimizer optimizer = new GSOptimizer(space);
-        SqlNode ast = optimizer.parse(query);
-        ast = optimizer.validate(ast);
-        return new Pair<>(optimizer.extractParameterType(ast), optimizer.extractRowType(ast));
-    }
 
     public ResponsePacket handle(String query, IJSpace space, Object[] preparedValues) throws SQLException {
         try {
@@ -81,7 +69,7 @@ public class QueryHandler {
         }
     }
 
-    private ResponsePacket executeStatement(IJSpace space, GSRelNode relNode, Object[] preparedValues) throws SQLException {
+    public ResponsePacket executeStatement(IJSpace space, GSRelNode relNode, Object[] preparedValues) throws SQLException {
         ResponsePacket packet = new ResponsePacket();
         QueryExecutionConfig queryExecutionConfig;
         if (explainPlan) {
@@ -159,9 +147,8 @@ public class QueryHandler {
                 ast = ((SqlExplain) ast).getExplicandum();
                 explainPlan = true;
             }
-            SqlNode validatedAst = optimizer.validate(ast);
-            RelRoot logicalPlan = optimizer.createLogicalPlan(validatedAst);
-            GSRelNode physicalPlan = optimizer.createPhysicalPlan(logicalPlan);
+            GSOptimizerValidationResult validated = optimizer.validate(ast);
+            GSRelNode physicalPlan = optimizer.optimize(validated.getValidatedAst());
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             RelWriterImpl writer = new RelWriterImpl(pw, SqlExplainLevel.EXPPLAN_ATTRIBUTES, false);
@@ -169,8 +156,6 @@ public class QueryHandler {
             System.out.println(sw);
 
             return physicalPlan;
-        } catch (SqlParseException sqlParseException) {
-            throw new SQLException("Query parsing failed.", sqlParseException);
         } catch (CalciteException calciteException) {
             Throwable cause = calciteException.getCause();
             if (cause != null) {
