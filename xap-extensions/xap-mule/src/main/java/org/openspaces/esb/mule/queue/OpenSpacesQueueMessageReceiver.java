@@ -51,7 +51,7 @@ import java.util.List;
  * @author kimchy
  */
 public class OpenSpacesQueueMessageReceiver extends TransactedPollingMessageReceiver {
-
+    static final long serialVersionUID = 2838384288676282809L;
     private static final MuleEvent voidEvent = new VoidMuleEvent() {
         // This override is required for org.mule.transport.TransactedPollingMessageReceiver$1.process(TransactedPollingMessageReceiver.java:161) ~[mule-core-3.7.0.jar:3.7.0]
         @Override
