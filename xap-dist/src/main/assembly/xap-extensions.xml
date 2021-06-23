@@ -231,7 +231,7 @@
             <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>product/lib/platform/jdbc</outputDirectory>
             <includes>
-                <include>org.gigaspaces:xap-jdbc</include>
+<!--                <include>org.gigaspaces:xap-jdbc</include>-->
                 <include>com.github.jsqlparser:jsqlparser</include>
             </includes>
             <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
@@ -276,7 +276,13 @@
                 <exclude>jetty-all-*</exclude>
             </excludes>
         </fileSet>
-
+        <fileSet>
+            <directory>${project.basedir}/../xap-extensions/xap-jdbc/target</directory>
+            <outputDirectory>product/lib/platform/jdbc</outputDirectory>
+            <includes>
+                <include>xap-jdbc.jar</include>
+            </includes>
+        </fileSet>
         <!--scala-->
         <fileSet>
             <directory>${project.basedir}/../xap-extensions/xap-scala/xap-scala-core/target</directory>

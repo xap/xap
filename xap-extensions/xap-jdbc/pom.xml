@@ -29,6 +29,68 @@
             <groupId>org.apache.calcite</groupId>
             <artifactId>calcite-core</artifactId>
             <version>${calcite.version}</version>
+            <exclusions>
+                <!--
+                "mvn dependency:tree" as of Calcite 1.26.0:
+
+                [INFO] +- org.apache.calcite:calcite-core:jar:1.26.0:compile
+                [INFO] |  +- org.apache.calcite:calcite-linq4j:jar:1.26.0:compile
+                [INFO] |  +- com.fasterxml.jackson.core:jackson-annotations:jar:2.12.1:compile
+                [INFO] |  +- org.apiguardian:apiguardian-api:jar:1.1.0:compile
+                [INFO] |  +- com.esri.geometry:esri-geometry-api:jar:2.2.0:runtime
+                [INFO] |  +- com.fasterxml.jackson.core:jackson-core:jar:2.12.1:runtime
+                [INFO] |  +- com.fasterxml.jackson.core:jackson-databind:jar:2.12.1:runtime
+                [INFO] |  +- com.jayway.jsonpath:json-path:jar:2.4.0:runtime
+                [INFO] |  |  \- net.minidev:json-smart:jar:2.3:runtime
+                [INFO] |  |     \- net.minidev:accessors-smart:jar:1.2:runtime
+                [INFO] |  |        \- org.ow2.asm:asm:jar:5.0.4:runtime
+                [INFO] |  +- commons-codec:commons-codec:jar:1.10:runtime
+                [INFO] |  +- org.apache.commons:commons-lang3:jar:3.3.2:compile
+                [INFO] |  \- commons-io:commons-io:jar:2.4:compile
+
+                Dependencies that are not needed for how we use Calcite right now.
+                -->
+                <exclusion>
+                    <groupId>org.apache.calcite.avatica</groupId>
+                    <artifactId>avatica-server</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.calcite.avatica</groupId>
+                    <artifactId>avatica-metrics</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.uzaygezen</groupId>
+                    <artifactId>uzaygezen-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpcore</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-dbcp2</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.dataformat</groupId>
+                    <artifactId>jackson-dataformat-yaml</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.yahoo.datasketches</groupId>
+                    <artifactId>sketches-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.hydromatic</groupId>
+                    <artifactId>aggdesigner-algorithm</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -41,4 +103,118 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+<!--                        <id>shade-flink</id>-->
+                        <phase>package</phase>
+                        <goals>
+                            <goal>
+                                shade
+                            </goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>target/xap-jdbc.jar</outputFile>
+                            <shadeTestJar>false</shadeTestJar>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <!-- Excluded all these files for a clean flink-table-planner-blink JAR -->
+                                        <exclude>org-apache-calcite-jdbc.properties</exclude>
+                                        <exclude>common.proto</exclude>
+                                        <exclude>requests.proto</exclude>
+                                        <exclude>responses.proto</exclude>
+                                        <exclude>codegen/**</exclude>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/services/java.sql.Driver</exclude>
+                                        <!-- com.ibm.icu:icu4j includes a LICENSE file in its root folder -->
+                                        <exclude>LICENSE</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <artifactSet>
+                                <includes combine.children="append">
+                                    <include>org.apache.calcite:*</include>
+                                    <include>org.apache.calcite.avatica:*</include>
+
+                                    <!-- Calcite's dependencies -->
+                                    <include>com.esri.geometry:esri-geometry-api</include>
+                                    <include>com.google.guava:guava</include>
+                                    <include>com.google.guava:failureaccess</include>
+                                    <include>com.jayway.jsonpath:json-path</include>
+                                    <include>com.fasterxml.jackson.core:jackson-core</include>
+                                    <include>com.fasterxml.jackson.core:jackson-databind</include>
+                                    <include>com.fasterxml.jackson.core:jackson-annotations</include>
+                                    <include>commons-codec:commons-codec</include>
+                                    <include>commons-io:commons-io</include>
+
+                                    <!-- flink-table-planner-blink dependencies -->
+<!--                                    <include>org.apache.flink:flink-sql-parser</include>-->
+<!--                                    <include>org.apache.flink:flink-sql-parser-hive</include>-->
+
+                                    <!-- flink-table-runtime-blink dependencies -->
+                                    <include>org.codehaus.janino:*</include>
+
+                                    <!-- Tools to unify display format for different languages -->
+                                    <include>com.ibm.icu:icu4j</include>
+
+                                    <include>org.reflections:reflections</include>
+                                </includes>
+                            </artifactSet>
+                            <relocations>
+                                <!-- Calcite is not relocated for now, because we expose it at some locations such as CalciteConfig -->
+                                <!--<relocation>
+                                    <pattern>org.apache.calcite</pattern>
+                                    <shadedPattern>shaded.org.apache.calcite</shadedPattern>
+                                </relocation>-->
+
+                                <!-- Calcite's dependencies -->
+                                <relocation>
+                                    <pattern>com.google</pattern>
+                                    <shadedPattern>shaded.com.google</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.jayway</pattern>
+                                    <shadedPattern>shaded.com.jayway</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.fasterxml</pattern>
+                                    <shadedPattern>shaded.com.fasterxml</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.apache.commons.codec</pattern>
+                                    <shadedPattern>shaded.org.apache.commons.codec</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.apache.commons.io</pattern>
+                                    <shadedPattern>shaded.org.apache.commons.io</shadedPattern>
+                                </relocation>
+
+                                <!-- flink-table-planner dependencies -->
+                                <!-- not relocated for now, because we need to change the contents of the properties field otherwise -->
+                                <!--<relocation>
+                                    <pattern>org.codehaus</pattern>
+                                    <shadedPattern>org.apache.flink.table.shaded.org.codehaus</shadedPattern>
+                                </relocation>-->
+
+                                <relocation>
+                                    <pattern>org.reflections</pattern>
+                                    <shadedPattern>shaded.org.reflections</shadedPattern>
+                                </relocation>
+
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
