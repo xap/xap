@@ -1,20 +1,28 @@
 package com.gigaspaces.sql.aggregatornode.netty.query;
 
+import com.gigaspaces.sql.aggregatornode.netty.utils.TypeUtils;
+
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.unmodifiableList;
 
 public class ParametersDescription {
-    private List<ParameterDescription> parameters;
+    public static ParametersDescription EMPTY = new ParametersDescription(Collections.emptyList());
 
-    public ParametersDescription(int[] types) {
-        this.parameters = Arrays.stream(types).mapToObj(ParameterDescription::new).collect(Collectors.toList());
-    }
+    private final List<ParameterDescription> parameters;
 
     public ParametersDescription(List<ParameterDescription> parameters) {
         this.parameters = parameters;
+    }
+
+    public ParametersDescription(int[] types) {
+        this.parameters = Arrays.stream(types)
+                .mapToObj(TypeUtils::getType)
+                .map(ParameterDescription::new)
+                .collect(Collectors.toList());
     }
 
     public int getParametersCount() {
