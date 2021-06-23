@@ -40,6 +40,7 @@ public class OrderByHandler extends UnsupportedExpressionVisitor implements Orde
         return this.queryExecutor.getVisibleColumns().stream().anyMatch(queryColumn -> queryColumn.getAlias().equals(columnName));
     }
 
+    //TODO: @sagiv was changed after the merge!
     private String getColumnAlias() {
         String fullName = getColumn().getName(true);
         if(Objects.equals(fullName, getColumn().getColumnName())) return null;
