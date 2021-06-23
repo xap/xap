@@ -26,6 +26,7 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
     private final Map<String, String> visibleColumnsAndAliasMap;
     private List<PartitionIndexInspectionDetail> indexInspectionsPerPartition = new ArrayList<>();
     private String filter;
+    private boolean distinct;
 
 
     public ExplainPlanInfo(ExplainPlanV3 explainPlan) {
@@ -49,21 +50,14 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
         }
         formatter.indent();
 
-        if (visibleColumnsAndAliasMap != null) {
-            String columns = visibleColumnsAndAliasMap.entrySet().stream()
-                    .map(column -> column.getKey() + (notEmpty(column.getValue()) ? " as " + column.getValue() : ""))
-                    .collect(Collectors.joining(", "));
-            if (notEmpty(columns)) {
-                formatter.line("Select: " + columns);
-            }
-        }
+        TextReportFormatter tempTextFormatter = new TextReportFormatter(formatter);
 
         if (notEmpty(filter)) {
-            formatter.line("Filter: " + filter);
+            tempTextFormatter.line("Filter: " + filter);
         }
 
         if (executionType != null && executionType.equals(SINGLE)) {
-            formatter.line("Execution type: " + "Single Partition");
+            tempTextFormatter.line("Execution type: " + "Single Partition");
         }
 
         if (!verbose) {
@@ -83,17 +77,17 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
                 }
                 String partitions = partitionAndSizes.stream().map(PartitionAndSizes::getPartitionId).collect(joining(", "));
                 if (partitions.contains(",")) {
-                    formatter.line(String.format("Partitions: [%s]", partitions));
+                    tempTextFormatter.line(String.format("Partitions: [%s]", partitions));
                 } else {
-                    formatter.line(String.format("Partition: [%s]", partitions));
+                    tempTextFormatter.line(String.format("Partition: [%s]", partitions));
                 }
-                formatter.indent();
+                tempTextFormatter.indent();
                 if (usedTieredStorage) {
-                    formatter.line(getTiersFormatted(usedTiers));
+                    tempTextFormatter.line(getTiersFormatted(usedTiers));
                 }
 
                 if (useAggregators) {
-                    formatAggregators(usedAggregators, formatter);
+                    formatAggregators(usedAggregators, tempTextFormatter);
                 }
 
                 List<String> selectedIndexesFormatted = new ArrayList<>();
@@ -105,19 +99,19 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
                     selectedIndexesFormatted.add(index.toStringNotVerbose(min, max));
                 }
                 if (!selectedIndexesFormatted.isEmpty()) {
-                    formatter.line(SELECTED_INDEX_STRING);
+                    tempTextFormatter.line(SELECTED_INDEX_STRING);
                     if (unionIndexChoice) {
-                        formatter.indent();
-                        formatter.line("Union:");
+                        tempTextFormatter.indent();
+                        tempTextFormatter.line("Union:");
                     }
-                    formatter.indent();
-                    selectedIndexesFormatted.forEach(formatter::line);
-                    formatter.unindent();
+                    tempTextFormatter.indent();
+                    selectedIndexesFormatted.forEach(tempTextFormatter::line);
+                    tempTextFormatter.unindent();
                     if (unionIndexChoice) {
-                        formatter.unindent();
+                        tempTextFormatter.unindent();
                     }
                 }
-                formatter.unindent();
+                tempTextFormatter.unindent();
             });
         } else {
             for (PartitionIndexInspectionDetail inspectionDetail : indexInspectionsPerPartition) {
@@ -127,50 +121,67 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
                     continue;
                 }
 
-                formatter.line(String.format("Partition: [%s]", inspectionDetail.getPartition()));
-                formatter.indent();
+                tempTextFormatter.line(String.format("Partition: [%s]", inspectionDetail.getPartition()));
+                tempTextFormatter.indent();
                 if (inspectionDetail.getUsedTiers() != null && inspectionDetail.getUsedTiers().size() != 0) {
-                    formatter.line(getTiersFormatted(inspectionDetail.getUsedTiers()));
+                    tempTextFormatter.line(getTiersFormatted(inspectionDetail.getUsedTiers()));
                 }
 
                 if (inspectionDetail.getAggregators() != null && inspectionDetail.getAggregators().size() != 0) {
-                    formatAggregators(inspectionDetail.getAggregators(), formatter);
+                    formatAggregators(inspectionDetail.getAggregators(), tempTextFormatter);
                 }
 
                 if (inspectionDetail.getIndexes() == null || inspectionDetail.getIndexes().isEmpty()) {
-                    formatter.unindent();
+                    tempTextFormatter.unindent();
                     continue;
                 }
 
                 for (int i = inspectionDetail.getIndexes().size() - 1; i >= 0; i--) {
                     IndexChoiceDetail indexChoice = inspectionDetail.getIndexes().get(i);
                     formatter.line(indexChoice.getOperator());
-                    formatter.indent();
-                    formatter.line("Inspected index: ");
-                    formatter.indent();
-                    indexChoice.getInspectedIndexes().forEach(inspected -> formatter.line(inspected.toString()));
-                    formatter.unindent();
+                    tempTextFormatter.indent();
+                    tempTextFormatter.line("Inspected index: ");
+                    tempTextFormatter.indent();
+                    indexChoice.getInspectedIndexes().forEach(inspected -> tempTextFormatter.line(inspected.toString()));
+                    tempTextFormatter.unindent();
 
-                    formatter.line(SELECTED_INDEX_STRING);
+                    tempTextFormatter.line(SELECTED_INDEX_STRING);
                     if (indexChoice.isUnion()) {
-                        formatter.indent();
-                        formatter.line("Union:");
+                        tempTextFormatter.indent();
+                        tempTextFormatter.line("Union:");
                     }
 
-                    formatter.indent();
-                    indexChoice.getSelectedIndexes().forEach(selected -> formatter.line(selected.toString()));
-                    formatter.unindent();
+                    tempTextFormatter.indent();
+                    indexChoice.getSelectedIndexes().forEach(selected -> tempTextFormatter.line(selected.toString()));
+                    tempTextFormatter.unindent();
 
                     if (indexChoice.isUnion()) {
-                        formatter.unindent();
+                        tempTextFormatter.unindent();
                     }
-                    formatter.unindent();
+                    tempTextFormatter.unindent();
                 }
-                formatter.unindent();
+                tempTextFormatter.unindent();
             }
         }
 
+        tempTextFormatter.unindent();
+
+        if (visibleColumnsAndAliasMap != null) {
+            String columns = visibleColumnsAndAliasMap.entrySet().stream()
+                    .map(column -> column.getKey() + (notEmpty(column.getValue()) ? " as " + column.getValue() : ""))
+                    .collect(Collectors.joining(", "));
+            if (notEmpty(columns)) {
+                if (distinct) {
+                    formatter.line("Select Distinct: " + columns);
+                }
+                else {
+                    formatter.line("Select: " + columns);
+                }
+            }
+        }
+        formatter.concat(tempTextFormatter);
         formatter.unindent();
+
         return formatter.toString();
     }
 
@@ -204,9 +215,15 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
         return String.format("Tier%s: %s", (usedTiers.size() > 1 ? "s" : ""), String.join(", ", usedTiers));
     }
 
-    private void formatAggregators(List<Pair<String, String>> aggregators, TextReportFormatter formatter) {
+    private void formatAggregators(List<Pair<String, String>> aggregators, TextReportFormatter tempFormatter) {
+        distinct = false;
         for (Pair<String, String> aggregatorPair : aggregators) {
-            formatter.line(aggregatorPair.getFirst() + ": " + aggregatorPair.getSecond());
+            if(aggregatorPair.getFirst().equals("Distinct")){
+                distinct = true;
+            }
+            else {
+                tempFormatter.line(aggregatorPair.getFirst() + ": " + aggregatorPair.getSecond());
+            }
         }
     }
 

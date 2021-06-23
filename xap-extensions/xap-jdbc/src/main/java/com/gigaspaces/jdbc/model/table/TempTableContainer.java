@@ -46,7 +46,8 @@ public class TempTableContainer extends TableContainer {
             ExplainPlanQueryResult explainResult = ((ExplainPlanQueryResult) tableResult);
             SubqueryExplainPlan subquery = new SubqueryExplainPlan(getSelectedColumns(),
                     (alias == null ? config.getTempTableNameGenerator().generate() : alias),
-                    explainResult.getExplainPlanInfo(), getExprTree(), Collections.unmodifiableList(getOrderColumns()));
+                    explainResult.getExplainPlanInfo(), getExprTree(), Collections.unmodifiableList(getOrderColumns()),
+                    Collections.unmodifiableList(getGroupByColumns()), isDistinct());
             return new ExplainPlanQueryResult(getSelectedColumns(), subquery, this);
         }
         if (queryTemplatePacket != null) {

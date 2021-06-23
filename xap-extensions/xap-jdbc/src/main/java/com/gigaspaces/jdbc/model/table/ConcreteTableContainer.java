@@ -131,7 +131,20 @@ public class ConcreteTableContainer extends TableContainer {
                 for (int i = 0; i < visibleColumns.size(); i++) {
                     distinctColumnsArray[i] = visibleColumns.get(i).getName();
                 }
-                DistinctAggregator distinctAggregator = new DistinctAggregator().distinct(limit, distinctColumnsArray);
+                DistinctAggregator distinctAggregator = new DistinctAggregator().distinct(false, limit, distinctColumnsArray);
+                if (queryTemplatePacket.getAggregationSet() == null) {
+                    AggregationSet aggregationSet = new AggregationSet().distinct(distinctAggregator);
+                    queryTemplatePacket.setAggregationSet(aggregationSet);
+                } else {
+                    queryTemplatePacket.getAggregationSet().add(distinctAggregator);
+                }
+            }
+            if (hasAggregationFunctions()){
+                String[] distinctColumnsArray = new String[getAggregationColumns().size()];
+                for (int i = 0; i < getAggregationColumns().size(); i++) {
+                    distinctColumnsArray[i] = getAggregationColumns().get(i).getColumnName();
+                }
+                DistinctAggregator distinctAggregator = new DistinctAggregator().distinct(false, limit, distinctColumnsArray);
                 if (queryTemplatePacket.getAggregationSet() == null) {
                     AggregationSet aggregationSet = new AggregationSet().distinct(distinctAggregator);
                     queryTemplatePacket.setAggregationSet(aggregationSet);
@@ -165,7 +178,7 @@ public class ConcreteTableContainer extends TableContainer {
             }
             else {
                 //int limit = hasOrderColumns() ? Integer.MAX_VALUE : entriesLimit;
-                DistinctAggregator distinctAggregator = new DistinctAggregator().distinct(limit, groupByColumnsArray);
+                DistinctAggregator distinctAggregator = new DistinctAggregator().distinct(true, limit, groupByColumnsArray);
                 if (queryTemplatePacket.getAggregationSet() == null) {
                     AggregationSet aggregationSet = new AggregationSet().distinct(distinctAggregator);
                     queryTemplatePacket.setAggregationSet(aggregationSet);

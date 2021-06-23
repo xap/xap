@@ -49,6 +49,7 @@ public class DistinctAggregator<T> extends SpaceEntriesAggregator<DistinctResult
     private transient Map<DistinctPropertiesKey, RawEntry> map;
     private transient DistinctPropertiesKey key;
     private int limit = Integer.MAX_VALUE;
+    private boolean groupByAggregator;
 
     public DistinctAggregator() {
     }
@@ -61,8 +62,9 @@ public class DistinctAggregator<T> extends SpaceEntriesAggregator<DistinctResult
         return this;
     }
 
-    public DistinctAggregator distinct(Integer limit, String... paths) {
+    public DistinctAggregator distinct(boolean isGroupByAggregator, Integer limit, String... paths){
         this.limit = limit;
+        this.groupByAggregator = isGroupByAggregator;
         return distinct(paths);
     }
 
@@ -142,4 +144,15 @@ public class DistinctAggregator<T> extends SpaceEntriesAggregator<DistinctResult
         limit = in.readInt();
     }
 
+    public String[] getDistinctPaths() {
+        return distinctPaths;
+    }
+
+    public boolean isGroupByAggregator() {
+        return groupByAggregator;
+    }
+
+    public void setGroupByAggregator(boolean groupByAggregator) {
+        this.groupByAggregator = groupByAggregator;
+    }
 }

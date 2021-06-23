@@ -230,4 +230,8 @@ public class GroupByAggregator extends SpaceEntriesAggregator<GroupByResult> imp
     public List<SpaceEntriesAggregator> getAggregators() {
         return aggregators;
     }
+
+    public String[] getGroupByPaths() {
+        return groupByPaths;
+    }
 }

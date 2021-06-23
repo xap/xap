@@ -51,7 +51,7 @@ public class JoinQueryExecutor {
 
         JoinTablesIterator joinTablesIterator = new JoinTablesIterator(tables);
         if(config.isExplainPlan()) {
-            return explain(joinTablesIterator, orderColumns);
+            return explain(joinTablesIterator, orderColumns, groupByColumns, isDistinct);
         }
         QueryResult res = new JoinQueryResult(this.selectedQueryColumns);
         while (joinTablesIterator.hasNext()) {
@@ -77,7 +77,8 @@ public class JoinQueryExecutor {
         return res;
     }
 
-    private QueryResult explain(JoinTablesIterator joinTablesIterator, List<OrderColumn> orderColumns) {
+    private QueryResult explain(JoinTablesIterator joinTablesIterator, List<OrderColumn> orderColumns,
+                                List<ConcreteColumn> groupByColumns, boolean isDistinct) {
         Stack<TableContainer> stack = new Stack<>();
         TableContainer current = joinTablesIterator.getStartingPoint();
         stack.push(current);
@@ -96,6 +97,8 @@ public class JoinQueryExecutor {
         }
         joinExplainPlan.setSelectColumns(visibleColumns.stream().map(IQueryColumn::toString).collect(Collectors.toList()));
         joinExplainPlan.setOrderColumns(orderColumns);
+        joinExplainPlan.setGroupByColumns(groupByColumns);
+        joinExplainPlan.setDistinct(isDistinct);
         return new ExplainPlanQueryResult(visibleColumns, joinExplainPlan, null);
     }
 }

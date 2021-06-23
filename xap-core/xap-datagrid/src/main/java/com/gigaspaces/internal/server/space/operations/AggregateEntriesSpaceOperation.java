@@ -19,10 +19,7 @@ package com.gigaspaces.internal.server.space.operations;
 import com.gigaspaces.internal.client.spaceproxy.operations.AggregateEntriesSpaceOperationRequest;
 import com.gigaspaces.internal.client.spaceproxy.operations.AggregateEntriesSpaceOperationResult;
 import com.gigaspaces.internal.server.space.SpaceImpl;
-import com.gigaspaces.query.aggregators.AggregationInternalUtils;
-import com.gigaspaces.query.aggregators.OrderByAggregator;
-import com.gigaspaces.query.aggregators.OrderByPath;
-import com.gigaspaces.query.aggregators.SpaceEntriesAggregator;
+import com.gigaspaces.query.aggregators.*;
 import com.gigaspaces.security.authorities.SpaceAuthority;
 import com.gigaspaces.utils.CodeChangeUtilities;
 import com.j_spaces.core.AnswerHolder;
@@ -59,6 +56,27 @@ public class AggregateEntriesSpaceOperation extends AbstractSpaceOperation<Aggre
                         List<OrderByPath> orderByPaths = orderByAggregator.getOrderByPaths();
                         for (OrderByPath orderByPath : orderByPaths) {
                             answerHolder.getExplainPlan().addAggregatorsInfo("OrderBy", orderByPath.toString());
+                        }
+                    }
+                    else if (aggregator instanceof DistinctAggregator){
+                        DistinctAggregator distinctAggregator = (DistinctAggregator)aggregator;
+                        String[] distinctPaths = distinctAggregator.getDistinctPaths();
+                        if(distinctAggregator.isGroupByAggregator()){ //group by
+                            for(int i=0; i < distinctPaths.length ; i++) {
+                                answerHolder.getExplainPlan().addAggregatorsInfo("Group By", distinctPaths[i]);
+                            }
+                        }
+                        else{ //distinct
+                            for(int i=0; i < distinctPaths.length ; i++) {
+                                answerHolder.getExplainPlan().addAggregatorsInfo("Distinct", distinctPaths[i]);
+                            }
+                        }
+                    }
+                    else if (aggregator instanceof GroupByAggregator){
+                        GroupByAggregator groupByAggregator = (GroupByAggregator)aggregator;
+                        String[] groupByPaths = groupByAggregator.getGroupByPaths();
+                        for(int i=0; i < groupByPaths.length ; i++) {
+                            answerHolder.getExplainPlan().addAggregatorsInfo("Group By", groupByPaths[i]);
                         }
                     }
                 }
