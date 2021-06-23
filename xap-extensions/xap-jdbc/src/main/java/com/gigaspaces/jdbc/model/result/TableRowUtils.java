@@ -24,7 +24,7 @@ public class TableRowUtils {
         Object[] values = new Object[rowsColumns.length];
 
         for (IQueryColumn visibleColumn : visibleColumns) {
-            values[visibleColumn.getColumnOrdinal()] = tableRows.get(0).getPropertyValue( visibleColumn );//visibleColumn.getCurrentValue();
+            values[visibleColumn.getColumnOrdinal()] = tableRows.get(0).getPropertyValue( visibleColumn );
         }
 
         for (AggregationColumn aggregationColumn : aggregationColumns) {
@@ -114,5 +114,4 @@ public class TableRowUtils {
                     " doesn't implement Comparable, Serialization mode might be different than " + StorageType.OBJECT + ".", cce);
         }
     }
-
 }

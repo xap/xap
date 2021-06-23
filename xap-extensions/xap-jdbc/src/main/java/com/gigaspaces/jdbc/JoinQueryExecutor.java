@@ -33,14 +33,12 @@ public class JoinQueryExecutor {
     public QueryResult execute() {
         final List<OrderColumn> orderColumns = new ArrayList<>();
         final List<ConcreteColumn> groupByColumns = new ArrayList<>();
-        final List<AggregationColumn> aggregationColumns = new ArrayList<>();
         boolean isDistinct = false;
         for (TableContainer table : tables) {
             try {
                 table.executeRead(config);
                 orderColumns.addAll(table.getOrderColumns());
                 groupByColumns.addAll(table.getGroupByColumns());
-                aggregationColumns.addAll(table.getAggregationColumns());
                 isDistinct |= table.isDistinct();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -60,7 +58,7 @@ public class JoinQueryExecutor {
         }
 
         if( groupByColumns.isEmpty()) {
-            if( !this.aggregationColumns.isEmpty() ) {
+            if( !aggregationColumns.isEmpty() ) {
                 List<TableRow> aggregateRows = new ArrayList<>();
                 aggregateRows.add(TableRowUtils.aggregate(res.getRows(), selectedQueryColumns, this.aggregationColumns, visibleColumns));
                 res.setRows(aggregateRows);

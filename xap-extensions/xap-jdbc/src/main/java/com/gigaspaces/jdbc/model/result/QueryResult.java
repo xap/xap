@@ -32,7 +32,7 @@ public abstract class QueryResult {
     public void setRows(List<TableRow> rows) {
     }
 
-    public void setGroupByRowsResult( Map<TableRowGroupByKey,List<TableRow>> groupByRows) {
+    private void setGroupByRowsResult( Map<TableRowGroupByKey,List<TableRow>> groupByRows) {
         this.groupByRows = groupByRows;
     }
 
@@ -154,11 +154,7 @@ public abstract class QueryResult {
                 TableRowGroupByKey key = new TableRowGroupByKey( groupByValues );
                 tableRows.putIfAbsent( key, tableRow );
 
-                List<TableRow> tableRowsList = groupByTableRows.get(key);
-                if( tableRowsList == null ){
-                    tableRowsList = new ArrayList<>();
-                    groupByTableRows.put( key, tableRowsList );
-                }
+                List<TableRow> tableRowsList = groupByTableRows.computeIfAbsent(key, k -> new ArrayList<>());
                 tableRowsList.add( tableRow );
             }
         }
