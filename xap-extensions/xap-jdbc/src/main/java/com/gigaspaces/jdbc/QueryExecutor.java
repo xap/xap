@@ -102,12 +102,16 @@ public class QueryExecutor {
         return config;
     }
 
-    public void addColumn(IQueryColumn column) {
-        if (column.isVisible()) {
+    public void addColumn(IQueryColumn column, boolean isVisible) {
+        if (isVisible) {
             visibleColumns.add(column);
         } else {
             invisibleColumns.add(column);
         }
+    }
+
+    public void addColumn(IQueryColumn column) {
+        addColumn(column, column.isVisible());
     }
 
     public void addAggregationColumn(AggregationColumn aggregationColumn) {

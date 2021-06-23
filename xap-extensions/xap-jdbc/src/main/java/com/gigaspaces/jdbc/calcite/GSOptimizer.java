@@ -1,11 +1,13 @@
 package com.gigaspaces.jdbc.calcite;
 
+import com.google.common.collect.ImmutableList;
 import com.gigaspaces.jdbc.calcite.parser.GSSqlParserFactoryWrapper;
 import com.gigaspaces.jdbc.calcite.pg.PgCalciteSchema;
 import com.j_spaces.core.IJSpace;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.config.CalciteConnectionProperty;
+import org.apache.calcite.config.NullCollation;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.plan.Contexts;
@@ -17,7 +19,11 @@ import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.RelRoot;
+import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.fun.SqlLibrary;
@@ -29,9 +35,12 @@ import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.calcite.sql2rel.StandardConvertletTable;
 import org.apache.calcite.tools.Program;
+import org.apache.calcite.util.Pair;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import static org.apache.calcite.sql.validate.SqlConformanceEnum.LENIENT;
 
@@ -72,7 +81,7 @@ public class GSOptimizer {
         validator = SqlValidatorUtil.newValidator(
             SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(SqlLibrary.STANDARD, SqlLibrary.POSTGRESQL),
             catalogReader, typeFactory,
-            SqlValidator.Config.DEFAULT.withSqlConformance( LENIENT ));
+            SqlValidator.Config.DEFAULT.withSqlConformance( LENIENT ).withDefaultNullCollation(NullCollation.FIRST));
 
         planner = new VolcanoPlanner(RelOptCostImpl.FACTORY, Contexts.of(CONNECTION_CONFIG));
         planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
@@ -111,11 +120,11 @@ public class GSOptimizer {
     }
 
     public GSRelNode optimize(SqlNode validatedAst) {
-        RelNode logicalPlan = optimizeLogical(validatedAst, this.validator);
+        RelRoot logicalPlan = optimizeLogical(validatedAst, this.validator);
         return optimizePhysical(logicalPlan);
     }
 
-    private RelNode optimizeLogical(SqlNode validatedAst, SqlValidator validator) {
+    private RelRoot optimizeLogical(SqlNode validatedAst, SqlValidator validator) {
         SqlToRelConverter relConverter = new SqlToRelConverter(
             null,
             validator,
@@ -128,20 +137,55 @@ public class GSOptimizer {
                 .build());
 
         // TODO: Careful with RelRoot removal here - need to add the top-level project
-        return relConverter.convertQuery(validatedAst, false, true).rel;
+        return relConverter.convertQuery(validatedAst, false, true);
     }
 
-    private GSRelNode optimizePhysical(RelNode logicalPlan) {
+    private GSRelNode optimizePhysical(RelRoot logicalRoot) {
         Program program = GSOptimizerProgram.createProgram();
-
+        RelNode logicalPlan = logicalRoot.rel;
         RelNode res = program.run(
-            planner,
-            logicalPlan,
-            logicalPlan.getTraitSet().plus(GSConvention.INSTANCE),
-            Collections.emptyList(),
-            Collections.emptyList()
+                planner,
+                logicalPlan,
+                logicalPlan.getTraitSet().replace(logicalRoot.collation).replace(GSConvention.INSTANCE),
+                Collections.emptyList(),
+                Collections.emptyList()
         );
 
+        // An additional projection is required if RelRoot.project() return an object
+        // which is different from the top-level operator.
+        boolean requiresProject = logicalRoot.project() != logicalRoot.rel;
+        if (requiresProject) {
+            // Create logical project to deduce the return type and Calc program.
+            ImmutableList<Pair<Integer, String>> fields = logicalRoot.fields;
+            List<RexNode> projects = new ArrayList<>(fields.size());
+            RexBuilder rexBuilder = res.getCluster().getRexBuilder();
+            for (Pair<Integer, String> field : fields) {
+                projects.add(rexBuilder.makeInputRef(res, field.left));
+            }
+            LogicalProject project = LogicalProject.create(
+                    res,
+                    Collections.emptyList(),
+                    projects,
+                    Pair.right(fields)
+            );
+
+            // Create the Calc program, similarly to GSProjectToCalcRule.onMatch
+            RexProgram calcProgram = RexProgram.create(
+                    res.getRowType(),
+                    project.getProjects(),
+                    null,
+                    project.getRowType(),
+                    project.getCluster().getRexBuilder()
+            );
+            // Install the GSCalc on top of the optimized node.
+            res = new GSCalc(
+                    project.getCluster(),
+                    res.getCluster().traitSet().replace(GSConvention.INSTANCE),
+                    Collections.emptyList(),
+                    res,
+                    calcProgram
+            );
+        }
         return (GSRelNode) res;
     }
 

@@ -57,6 +57,7 @@ public class GSTable extends AbstractTable {
     @Override
     public RelDataType getRowType(RelDataTypeFactory typeFactory) {
         RelDataTypeFactory.Builder builder = new RelDataTypeFactory.Builder(typeFactory);
+
         for (PropertyInfo property : typeDesc.getProperties()) {
             builder.add(
                     property.getName(),

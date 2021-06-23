@@ -9,11 +9,16 @@ import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.table.*;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlFunction;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.sql.SqlKind;
 
 import java.util.ArrayList;
@@ -64,7 +69,15 @@ public class SelectHandler extends RelShuttleImpl {
         }
         if(other instanceof GSCalc){
             GSCalc calc = (GSCalc) other;
-            childToCalc.put(calc.getInput(), calc);
+            RelNode input = calc.getInput();
+            while (!(input instanceof GSJoin)
+                    && !(input instanceof GSTableScan)) {
+                if(input.getInputs().isEmpty()) {
+                    break;
+                }
+                input =  input.getInput(0);
+            }
+            childToCalc.putIfAbsent(input, calc);
         }
         RelNode result = super.visit(other);
         if(other instanceof GSJoin){
@@ -75,6 +88,9 @@ public class SelectHandler extends RelShuttleImpl {
             handleValues(gsValues);
         }
 
+        if(other instanceof GSSort){
+            handleSort((GSSort) other);
+        }
 //        else {
 //            throw new UnsupportedOperationException("RelNode of type " + other.getClass().getName() + " are not supported yet");
 //        }
@@ -112,6 +128,50 @@ public class SelectHandler extends RelShuttleImpl {
         }
     }
 
+    private void handleSort(GSSort sort) {
+        int columnCounter = 0;
+        for (RelFieldCollation relCollation : sort.getCollation().getFieldCollations()) {
+            int fieldIndex = relCollation.getFieldIndex();
+            RelFieldCollation.Direction direction = relCollation.getDirection();
+            RelFieldCollation.NullDirection nullDirection = relCollation.nullDirection;
+            String columnAlias = sort.getRowType().getFieldNames().get(fieldIndex);
+//            TableContainer table = queryExecutor.getTableByColumnIndex(fieldIndex);
+            String columnName = columnAlias;
+            boolean isVisible = false;
+            RelNode parent = this.stack.peek();
+            if(parent instanceof GSCalc) {
+                RexProgram program = ((GSCalc) parent).getProgram();
+                RelDataTypeField field = program.getOutputRowType().getField(columnAlias, true, false);
+                if(field != null) {
+                    isVisible = true;
+                    columnName = program.getInputRowType().getFieldNames().get(program.getSourceField(field.getIndex()));
+                }
+            }
+            //TODO: @sagiv not so sure about this, because 'columnName' can be alias from sub-query, or
+            // Ambiguous when using join for example..
+            TableContainer table = getTableByColumnName(columnName);
+            OrderColumn orderColumn = new OrderColumn(new ConcreteColumn(columnName,null, columnAlias,
+                    isVisible, table, columnCounter++), !direction.isDescending(),
+                    nullDirection == RelFieldCollation.NullDirection.LAST);
+            table.addOrderColumns(orderColumn);
+        }
+    }
+
+    private TableContainer getTableByColumnName(String name) {
+        TableContainer toReturn = null;
+        for(TableContainer tableContainer : this.queryExecutor.getTables()) {
+            if(tableContainer.hasColumn(name)) {
+                if (toReturn == null) {
+                    toReturn = tableContainer;
+                } else {
+                    throw new IllegalArgumentException("Ambiguous column name [" + name + "]");
+                }
+            }
+        }
+        return toReturn;
+    }
+
+
     private void handleJoin(GSJoin join) {
         RexCall rexCall = (RexCall) join.getCondition();
         if(rexCall.getKind() != SqlKind.EQUALS){
@@ -133,15 +193,16 @@ public class SelectHandler extends RelShuttleImpl {
                 rightContainer.setJoined(true);
             }
         }
-        if(!childToCalc.containsKey(join)) {
-            if(join.equals(root)) {
+        if(!childToCalc.containsKey(join)) { // it is SELECT *
+            if(join.equals(root)
+                    || ((root instanceof GSSort) && ((GSSort) root).getInput().equals(join))) { // root is GSSort and its child is join
                 for (TableContainer tableContainer : queryExecutor.getTables()) {
                     queryExecutor.getVisibleColumns().addAll(tableContainer.getVisibleColumns());
                 }
             }
         }
         else{
-            handleCalc(childToCalc.get(join), join);
+            handleCalcFromJoin(childToCalc.get(join));
         }
     }
 
@@ -160,7 +221,7 @@ public class SelectHandler extends RelShuttleImpl {
         }
     }
 
-    private void handleCalc(GSCalc other, GSJoin join) {
+    private void handleCalcFromJoin(GSCalc other) {
         RexProgram program = other.getProgram();
         List<String> inputFields = program.getInputRowType().getFieldNames();
         List<String> outputFields = program.getOutputRowType().getFieldNames();
