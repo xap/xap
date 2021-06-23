@@ -33,7 +33,7 @@ import java.util.List;
  */
 
 public class OrderByElement implements Externalizable {
-
+    static final long serialVersionUID = 6212805774245544178L;
     private List<RawEntry> rawEntries = new ArrayList<>();
     private OrderByValues orderByValues;
 

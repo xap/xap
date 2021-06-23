@@ -18,6 +18,7 @@ import java.util.Map;
  * @since 16.0
  */
 public class TieredStorageConfigurer implements SpaceCustomComponentFactoryBean, SmartExternalizable {
+    static final long serialVersionUID = 8399147971664655711L;
 
     private Map<String, TieredStorageTableConfig> tables = new HashMap<>();
 

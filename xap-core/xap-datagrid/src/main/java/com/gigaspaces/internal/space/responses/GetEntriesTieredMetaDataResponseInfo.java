@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GetEntriesTieredMetaDataResponseInfo extends AbstractSpaceResponseInfo {
+    static final long serialVersionUID = 663660777455511033L;
     private Map<Integer, Exception> exceptionMap = new HashMap<>();
     private Map<Object, EntryTieredMetaData> entryMetaDataMap = new HashMap<>();
 

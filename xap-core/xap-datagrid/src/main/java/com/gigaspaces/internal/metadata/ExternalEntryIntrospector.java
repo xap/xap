@@ -289,7 +289,7 @@ public class ExternalEntryIntrospector<T extends ExternalEntry> extends Abstract
     }
 
     private static class ExternalEntryFactory implements IConstructor<ExternalEntry> {
-
+        static final long serialVersionUID = 5121268238826294570L;
         @Override
         public ExternalEntry newInstance() {
             return new ExternalEntry();

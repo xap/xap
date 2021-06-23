@@ -264,7 +264,7 @@ public class VirtualEntryIntrospector<T extends VirtualEntry> extends AbstractTy
     }
 
     private static class SpaceDocumentFactory implements IConstructor<VirtualEntry> {
-
+        static final long serialVersionUID = -8268338904975063950L;
         @Override
         public SpaceDocument newInstance() {
             return new SpaceDocument();

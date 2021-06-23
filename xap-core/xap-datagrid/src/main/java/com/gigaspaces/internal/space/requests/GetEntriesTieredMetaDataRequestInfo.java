@@ -11,6 +11,7 @@ import java.util.List;
 
 @com.gigaspaces.api.InternalApi
 public class GetEntriesTieredMetaDataRequestInfo extends AbstractSpaceRequestInfo{
+    static final long serialVersionUID = 7159851750091653967L;
     private String typeName;
     private Object[] objectsIds;
 
