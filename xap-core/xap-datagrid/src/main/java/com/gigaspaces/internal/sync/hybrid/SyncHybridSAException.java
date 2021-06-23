@@ -15,6 +15,7 @@ import com.j_spaces.kernel.JSpaceUtilities;
  * @since 11.0.1
  */
 public class SyncHybridSAException extends SAException {
+    private static final long serialVersionUID = 8873735980686335039L;
     private final SyncHybridOperationDetails[] details;
     private SyncHybridExceptionOrigin exceptionOrigin;
 

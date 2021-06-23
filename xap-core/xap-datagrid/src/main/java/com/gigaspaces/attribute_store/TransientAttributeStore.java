@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @com.gigaspaces.api.InternalApi
 public class TransientAttributeStore implements AttributeStore, Serializable {
-
+    private static final long serialVersionUID = -7740891239839069999L;
     private final ConcurrentHashMap<String, String> store = new ConcurrentHashMap<String, String>();
 
     @Override

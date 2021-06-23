@@ -6,7 +6,7 @@ package com.gigaspaces.security.directory;
  * @Since 14.0
  */
 public class EmptyCredentialsProvider extends CredentialsProvider {
-
+    private static final long serialVersionUID = -7329291946468431770L;
     private static final EmptyCredentialsProvider singleton = new EmptyCredentialsProvider();
 
     //private constructor to avoid client applications to use constructor

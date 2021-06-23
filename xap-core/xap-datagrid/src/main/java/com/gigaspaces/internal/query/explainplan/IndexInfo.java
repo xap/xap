@@ -31,7 +31,7 @@ import java.io.ObjectOutput;
 @ExperimentalApi
 // NOTE: SmartExternalizable is not used here since explain plan relies on reference identity
 public class IndexInfo implements Externalizable {
-
+    private static final long serialVersionUID = -6754173754999682054L;
     private String name;
     private Integer size;
     private SpaceIndexType type;

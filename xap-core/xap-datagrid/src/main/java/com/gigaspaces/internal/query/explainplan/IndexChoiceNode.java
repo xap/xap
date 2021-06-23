@@ -32,7 +32,7 @@ import java.util.List;
  */
 @ExperimentalApi
 public class IndexChoiceNode implements SmartExternalizable {
-
+    private static final long serialVersionUID = 3571265564286482562L;
     private String name; // AND or OR
     private List<IndexInfo> options;
     private IndexInfo chosen;

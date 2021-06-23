@@ -11,7 +11,7 @@ import com.j_spaces.core.client.Modifiers;
  */
 @InternalApi
 public class InternalReadModifiers extends ReadModifiers {
-
+    static final long serialVersionUID = -7615654650885502826L;
     protected InternalReadModifiers(int code) {
         super(code);
 

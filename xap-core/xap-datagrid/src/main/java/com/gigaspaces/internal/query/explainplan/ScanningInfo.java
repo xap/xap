@@ -28,7 +28,7 @@ import java.io.ObjectOutput;
  */
 @ExperimentalApi
 public class ScanningInfo implements SmartExternalizable {
-
+    private static final long serialVersionUID = 7799080976017450924L;
     private Integer scanned;
     private Integer matched;
 
