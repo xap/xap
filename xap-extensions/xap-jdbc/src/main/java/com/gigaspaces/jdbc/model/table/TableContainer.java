@@ -84,6 +84,9 @@ public abstract class TableContainer {
 
     public void addGroupByColumns(ConcreteColumn groupByColumn) {
         this.groupByColumns.add(groupByColumn);
+        if( !groupByColumn.isVisible() ) {
+            this.getInvisibleColumns().add(groupByColumn);
+        }
     }
 
     public List<ConcreteColumn> getGroupByColumns() {
