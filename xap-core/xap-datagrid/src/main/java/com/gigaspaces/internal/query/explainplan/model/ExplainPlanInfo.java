@@ -26,6 +26,7 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
     private final Map<String, String> visibleColumnsAndAliasMap;
     private List<PartitionIndexInspectionDetail> indexInspectionsPerPartition = new ArrayList<>();
     private String filter;
+    private boolean distinct;
 
 
     public ExplainPlanInfo(ExplainPlanV3 explainPlan) {
@@ -33,6 +34,7 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
         tableAlias = explainPlan.getTableAlias();
         visibleColumnsAndAliasMap = explainPlan.getVisibleColumnsAndAliasMap();
         executionType = explainPlan.getExecutionType();
+        distinct = explainPlan.isDistinct();
     }
 
     @Override
@@ -54,7 +56,12 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
                     .map(column -> column.getKey() + (notEmpty(column.getValue()) ? " as " + column.getValue() : ""))
                     .collect(Collectors.joining(", "));
             if (notEmpty(columns)) {
-                formatter.line("Select: " + columns);
+                if (distinct) {
+                    formatter.line("Select Distinct: " + columns);
+                }
+                else {
+                    formatter.line("Select: " + columns);
+                }
             }
         }
 
@@ -171,6 +178,7 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
         }
 
         formatter.unindent();
+
         return formatter.toString();
     }
 
@@ -204,9 +212,15 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
         return String.format("Tier%s: %s", (usedTiers.size() > 1 ? "s" : ""), String.join(", ", usedTiers));
     }
 
-    private void formatAggregators(List<Pair<String, String>> aggregators, TextReportFormatter formatter) {
+    private void formatAggregators(List<Pair<String, String>> aggregators, TextReportFormatter tempFormatter) {
+        distinct = false;
         for (Pair<String, String> aggregatorPair : aggregators) {
-            formatter.line(aggregatorPair.getFirst() + ": " + aggregatorPair.getSecond());
+            if(aggregatorPair.getFirst().equals("Distinct")){
+                distinct = true;
+            }
+            else {
+                tempFormatter.line(aggregatorPair.getFirst() + ": " + aggregatorPair.getSecond());
+            }
         }
     }
 

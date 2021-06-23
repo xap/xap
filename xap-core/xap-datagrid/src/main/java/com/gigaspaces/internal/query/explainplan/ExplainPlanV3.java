@@ -19,12 +19,14 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
     private final String tableName;
     private final String tableAlias;
     private final Map<String, String> visibleColumnsAndAliasMap;
+    private boolean distinct;
 
-    public ExplainPlanV3(String tableName, String tableAlias, Map<String, String> visibleColumnsAndAliasMap) {
+    public ExplainPlanV3(String tableName, String tableAlias, Map<String, String> visibleColumnsAndAliasMap, boolean distinct) {
         super(null);
         this.tableName = tableName;
         this.tableAlias = tableAlias;
         this.visibleColumnsAndAliasMap = visibleColumnsAndAliasMap;
+        this.distinct = distinct;
     }
 
 
@@ -152,5 +154,9 @@ public class ExplainPlanV3 extends ExplainPlanImpl {
         }
 
         return Collections.singletonList( new IndexInfoDetail(getOptionDesc(indexInfo), indexInfo) );
+    }
+
+    public boolean isDistinct() {
+        return distinct;
     }
 }

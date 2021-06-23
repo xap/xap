@@ -4,6 +4,8 @@ import com.gigaspaces.internal.query.explainplan.TextReportFormatter;
 import com.gigaspaces.internal.query.explainplan.model.JdbcExplainPlan;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.Cursor;
+import com.gigaspaces.jdbc.model.table.ConcreteColumn;
+import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
 import com.gigaspaces.jdbc.model.table.OrderColumn;
 
 import java.util.List;
@@ -13,6 +15,8 @@ public class JoinExplainPlan extends JdbcExplainPlan {
     private final JoinInfo joinInfo;
     private List<String> selectColumns;
     private List<OrderColumn> orderColumns;
+    private List<ConcreteColumn> groupByColumns;
+    private boolean distinct;
     private final JdbcExplainPlan left;
     private final JdbcExplainPlan right;
 
@@ -30,6 +34,14 @@ public class JoinExplainPlan extends JdbcExplainPlan {
         this.orderColumns = orderColumns;
     }
 
+    public void setGroupByColumns(List<ConcreteColumn> groupByColumns) {
+        this.groupByColumns = groupByColumns;
+    }
+
+    public void setDistinct(boolean distinct) {
+        this.distinct = distinct;
+    }
+
     @Override
     public void format(TextReportFormatter formatter, boolean verbose) {
         JoinInfo.JoinAlgorithm joinAlgorithm = joinInfo.getRightColumn().getTableContainer().getQueryResult().getCursorType().equals(Cursor.Type.HASH) ? JoinInfo.JoinAlgorithm.Hash : JoinInfo.JoinAlgorithm.Nested;
@@ -37,9 +49,12 @@ public class JoinExplainPlan extends JdbcExplainPlan {
         formatter.line(String.format("%s Join (%s)", joinInfo.getJoinType(), joinAlgorithm));
         formatter.indent(() -> {
             if (selectColumns != null)
-                formatter.line(String.format("Select: %s", String.join(", ", selectColumns)));
+                formatter.line(String.format(distinct ? "Select Distinct: %s" : "Select: %s", String.join(", ", selectColumns)));
             if (orderColumns != null && !orderColumns.isEmpty()) {
                 formatter.line("OrderBy: " + orderColumns.stream().map(OrderColumn::toString).collect(Collectors.joining(", ")));
+            }
+            if (groupByColumns != null && !groupByColumns.isEmpty()) {
+                formatter.line("GroupBy: " + groupByColumns.stream().map(ConcreteColumn::toString).collect(Collectors.joining(", ")));
             }
             formatter.line(String.format("Join condition: (%s = %s)", joinInfo.getLeftColumn(), joinInfo.getRightColumn()));
             formatter.withPrefix("|", () -> {

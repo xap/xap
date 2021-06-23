@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc.explainplan;
 
 import com.gigaspaces.internal.query.explainplan.TextReportFormatter;
 import com.gigaspaces.internal.query.explainplan.model.JdbcExplainPlan;
+import com.gigaspaces.jdbc.model.table.ConcreteColumn;
 import com.gigaspaces.jdbc.model.table.IQueryColumn;
 import com.gigaspaces.jdbc.model.table.OrderColumn;
 import net.sf.jsqlparser.expression.Expression;
@@ -16,21 +17,26 @@ public class SubqueryExplainPlan extends JdbcExplainPlan {
     private final String tempViewName;
     private final Expression exprTree;
     private final List<OrderColumn> orderColumns;
+    private final List<ConcreteColumn> groupByColumns;
+    private final boolean distinct;
 
     public SubqueryExplainPlan(List<IQueryColumn> visibleColumns, String name, JdbcExplainPlan explainPlanInfo,
-                               Expression exprTree, List<OrderColumn> orderColumns) {
+                               Expression exprTree, List<OrderColumn> orderColumns, List<ConcreteColumn> groupByColumns,
+                               boolean isDistinct) {
         this.tempViewName = name;
         this.visibleColumnNames = visibleColumns.stream().map(IQueryColumn::getName).collect(Collectors.toList());
         this.plan = explainPlanInfo;
         this.exprTree = exprTree;
         this.orderColumns = orderColumns;
+        this.groupByColumns = groupByColumns;
+        this.distinct = isDistinct;
     }
 
     @Override
     public void format(TextReportFormatter formatter, boolean verbose) {
         formatter.line("Subquery scan on " + tempViewName); ////
         formatter.indent(() -> {
-            formatter.line(String.format("Select: %s", String.join(", ", visibleColumnNames)));
+            formatter.line(String.format(distinct ? "Select Distinct: %s" : "Select: %s", String.join(", ", visibleColumnNames)));
 //            formatter.line("Filter: <placeholder>"); //TODO EP
             if (exprTree != null) {
                 ExpressionDeParser expressionDeParser = new ExpressionTreeDeParser();
@@ -39,6 +45,9 @@ public class SubqueryExplainPlan extends JdbcExplainPlan {
             }
             if (orderColumns != null && !orderColumns.isEmpty()) {
                 formatter.line("OrderBy: " + orderColumns.stream().map(OrderColumn::toString).collect(Collectors.joining(", ")));
+            }
+            if (groupByColumns != null && !groupByColumns.isEmpty()) {
+                formatter.line("GroupBy: " + groupByColumns.stream().map(ConcreteColumn::toString).collect(Collectors.joining(", ")));
             }
             formatter.withFirstLine("->", () -> {
                 formatter.line(String.format("TempView: %s", tempViewName));
