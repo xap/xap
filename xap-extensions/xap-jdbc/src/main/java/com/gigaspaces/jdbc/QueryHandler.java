@@ -1,9 +1,9 @@
 package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.calcite.CalciteDefaults;
-import com.gigaspaces.jdbc.calcite.SelectHandler;
 import com.gigaspaces.jdbc.calcite.GSOptimizer;
 import com.gigaspaces.jdbc.calcite.GSRelNode;
+import com.gigaspaces.jdbc.calcite.SelectHandler;
 import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
@@ -37,6 +37,8 @@ import java.util.Collections;
 import java.util.Properties;
 import java.util.Set;
 
+import static com.gigaspaces.jdbc.calcite.CalciteDefaults.isCalcitePropertySet;
+
 public class QueryHandler {
 
     private final Feature[] allowedFeatures = new Feature[] {Feature.select, Feature.explain, Feature.exprLike,
@@ -47,7 +49,7 @@ public class QueryHandler {
         try {
             Properties customProperties = space.getURL().getCustomProperties();
             if (CalciteDefaults.isCalciteDriverPropertySet(customProperties)) {
-                GSRelNode calcitePlan = optimizeWithCalcite(query, space);
+                GSRelNode calcitePlan = optimizeWithCalcite(query, space, customProperties);
                 return executeStatement(space, calcitePlan, preparedValues);
             } else { //else jsql
                 Statement statement = CCJSqlParserUtil.parse(query);
@@ -122,8 +124,9 @@ public class QueryHandler {
         }
     }
 
-    private static GSRelNode optimizeWithCalcite(String query, IJSpace space) throws SQLException {
+    private static GSRelNode optimizeWithCalcite(String query, IJSpace space, Properties properties) throws SQLException {
         try {
+            query = prepareQueryForCalcite(query, properties);
             GSOptimizer optimizer = new GSOptimizer(space);
             SqlNode ast = optimizer.parse(query);
             SqlNode validatedAst = optimizer.validate(ast);
@@ -147,5 +150,25 @@ public class QueryHandler {
             }
             throw calciteException; //runtime
         }
+    }
+
+    /**
+     * Based on the system property or custom Space property, we parse the query
+     * and adapt it to calcite notation. We do this only if the property is set,
+     * in order to avoid performance penalty of String manipulation.
+     */
+    private static String prepareQueryForCalcite(String query, Properties properties) {
+        //support for ; at end of statement - more than one statement is not supported.
+        if (isCalcitePropertySet(CalciteDefaults.SUPPORT_SEMICOLON_SEPARATOR, properties)) {
+            if (query.endsWith(";")) {
+                query = query.replaceFirst(";", "");
+            }
+        }
+        //support for != instead of <>
+        if (isCalcitePropertySet(CalciteDefaults.SUPPORT_INEQUALITY, properties)) {
+            query = query.replaceAll("!=", "<>");
+        }
+
+        return query;
     }
 }
