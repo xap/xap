@@ -15,6 +15,7 @@ import java.io.ObjectOutput;
 import java.util.List;
 
 public class DeleteChunksTask extends SystemDistributedTask<SpaceResponseInfo> implements SmartExternalizable {
+    private static final long serialVersionUID = -1251693505937070466L;
     private DeleteChunksRequestInfo requestInfo;
 
     public DeleteChunksTask() {

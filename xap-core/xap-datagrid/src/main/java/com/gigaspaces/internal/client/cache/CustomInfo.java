@@ -23,6 +23,7 @@ import java.io.Serializable;
  * @since 11.0
  */
 public abstract class CustomInfo implements Serializable {
+    private static final long serialVersionUID = -6612902186668801754L;
     public CustomInfo() {
     }
 

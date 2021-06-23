@@ -13,6 +13,7 @@ import java.util.List;
 
 @com.gigaspaces.api.InternalApi
 public class GetEntriesTieredMetaDataTask extends SystemDistributedTask<GetEntriesTieredMetaDataResponseInfo>{
+    static final long serialVersionUID = -516199657333047744L;
     private GetEntriesTieredMetaDataRequestInfo _getEntriesTieredMetaDataRequestInfo;
 
     public GetEntriesTieredMetaDataTask() {

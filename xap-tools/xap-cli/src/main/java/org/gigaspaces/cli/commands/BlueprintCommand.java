@@ -35,6 +35,7 @@ public class BlueprintCommand extends CliCommand implements SubCommandContainer 
     }
 
     public static class BlueprintCompletionCandidates extends ArrayList<String> {
+        static final long serialVersionUID = -8864509507204226171L;
         private static final Collection<String> names = getNames();
 
         public BlueprintCompletionCandidates() {

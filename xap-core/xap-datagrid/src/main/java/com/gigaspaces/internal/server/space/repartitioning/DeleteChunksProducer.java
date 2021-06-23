@@ -18,7 +18,7 @@ import java.util.concurrent.BlockingQueue;
 public class DeleteChunksProducer extends SpaceEntriesAggregator<DeleteChunksResponseInfo> {
 
     public static Logger logger = LoggerFactory.getLogger("org.openspaces.admin.internal.pu.scale_horizontal.ScaleManager");
-
+    private static final long serialVersionUID = -3415904901778930639L;
     private ClusterTopology newMap;
     private Map<String, List<Object>> batchMap;
     private BlockingQueue<Batch> queue;

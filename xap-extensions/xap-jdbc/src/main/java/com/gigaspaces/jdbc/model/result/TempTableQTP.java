@@ -7,6 +7,7 @@ import com.j_spaces.jdbc.builder.range.SegmentRange;
 import java.util.function.Predicate;
 
 public class TempTableQTP extends QueryTemplatePacket {
+    static final long serialVersionUID = -1712260070401010981L;
     private Predicate<TableRow> predicate;
 
     public TempTableQTP() {

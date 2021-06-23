@@ -39,7 +39,7 @@ import java.util.*;
  */
 @ExperimentalApi
 public class SingleExplainPlan implements SmartExternalizable {
-
+    private static final long serialVersionUID = 2756216225619001564L;
     //    private static final long serialVersionUID =
     private String partitionId;
     private QueryOperationNode root;

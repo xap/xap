@@ -29,7 +29,7 @@ import java.util.List;
  */
 @ExperimentalApi
 public class UnionIndexInfo extends IndexInfo {
-
+    private static final long serialVersionUID = -4526394066353477719L;
     private List<IndexInfo> options;
 
     public UnionIndexInfo() {

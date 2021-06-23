@@ -26,6 +26,7 @@ import org.springframework.dao.DataAccessException;
  * @since 10.0
  */
 public class EntryLockedException extends DataAccessException {
+    private static final long serialVersionUID = 5818713902380517672L;
     public EntryLockedException(String msg, Throwable cause) {
         super(msg, cause);
     }

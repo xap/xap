@@ -9,7 +9,7 @@ import java.io.ObjectOutput;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class DeleteChunksResponseInfo implements SpaceResponseInfo {
-
+    private static final long serialVersionUID = 131713841051965917L;
     private int partitionId;
     private volatile IOException exception;
     private AtomicInteger deleted;

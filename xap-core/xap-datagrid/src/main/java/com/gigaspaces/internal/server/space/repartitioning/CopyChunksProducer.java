@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 public class CopyChunksProducer extends SpaceEntriesAggregator<CopyChunksResponseInfo> {
-
+    private static final long serialVersionUID = 2759306184206709756L;
     public static Logger logger = LoggerFactory.getLogger(CopyChunksProducer.class);
     private final static Integer BROADCAST_KEY = -1;
     private ClusterTopology newMap;

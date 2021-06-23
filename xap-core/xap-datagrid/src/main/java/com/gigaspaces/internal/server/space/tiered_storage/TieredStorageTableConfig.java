@@ -9,6 +9,7 @@ import java.io.ObjectOutput;
 import java.time.Duration;
 
 public class TieredStorageTableConfig implements SmartExternalizable {
+    static final long serialVersionUID = 9148050446035037648L;
     private String name;
     private String timeColumn;
     private Duration retention;

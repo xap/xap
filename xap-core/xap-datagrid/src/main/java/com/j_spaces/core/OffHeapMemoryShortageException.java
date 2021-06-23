@@ -5,6 +5,7 @@ package com.j_spaces.core;
  * @since 12.3
  */
 public class OffHeapMemoryShortageException extends MemoryShortageException {
+    private static final long serialVersionUID = -7899267111128359170L;
     /**
      * Constructor
      *
