@@ -89,7 +89,8 @@ public class GSOptimizerRules {
         GSTableScanRule.INSTANCE,
         GSFilterRule.INSTANCE,
         GSProjectRule.INSTANCE,
-        GSJoinRule.INSTANCE
+        GSJoinRule.INSTANCE,
+        GSSortRule.INSTANCE
     );
 
     public static final List<RelOptRule> GS_CALC_RULES = Arrays.asList(
