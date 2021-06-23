@@ -31,7 +31,7 @@ import java.util.Arrays;
  */
 
 public class OrderByValues implements Externalizable{
-
+    static final long serialVersionUID = 4898114069437778368L;
     private Object[] values;
 
     public OrderByValues() {

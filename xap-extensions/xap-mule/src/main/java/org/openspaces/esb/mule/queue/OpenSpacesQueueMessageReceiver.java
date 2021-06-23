@@ -51,7 +51,6 @@ import java.util.List;
  * @author kimchy
  */
 public class OpenSpacesQueueMessageReceiver extends TransactedPollingMessageReceiver {
-
     private static final MuleEvent voidEvent = new VoidMuleEvent() {
         // This override is required for org.mule.transport.TransactedPollingMessageReceiver$1.process(TransactedPollingMessageReceiver.java:161) ~[mule-core-3.7.0.jar:3.7.0]
         @Override
@@ -208,7 +207,7 @@ public class OpenSpacesQueueMessageReceiver extends TransactedPollingMessageRece
      * maximize throughput.
      */
     protected static class ReceiverWorker extends PollingReceiverWorker {
-
+        static final long serialVersionUID = 2838384288676282809L;
         public ReceiverWorker(OpenSpacesQueueMessageReceiver pollingMessageReceiver) {
             super(pollingMessageReceiver);
         }

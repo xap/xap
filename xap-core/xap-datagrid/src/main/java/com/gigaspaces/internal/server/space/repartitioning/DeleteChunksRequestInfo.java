@@ -11,7 +11,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public class DeleteChunksRequestInfo implements SpaceRequestInfo {
-
+    private static final long serialVersionUID = 4826314985077083352L;
     private ClusterTopology newMap;
     private QuiesceToken token;
 

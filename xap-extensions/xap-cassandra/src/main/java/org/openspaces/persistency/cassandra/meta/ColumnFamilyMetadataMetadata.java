@@ -33,6 +33,7 @@ import java.util.Map;
  * @since 9.1.1
  */
 public class ColumnFamilyMetadataMetadata extends ColumnFamilyMetadata {
+    static final long serialVersionUID = 7971805653493995831L;
     public static final ColumnFamilyMetadataMetadata INSTANCE = new ColumnFamilyMetadataMetadata();
 
     public static final String NAME = "__ColumnFamilyMetadata";

@@ -5,6 +5,7 @@ import com.j_spaces.core.cache.context.TieredState;
 import java.io.Serializable;
 
 public class EntryTieredMetaData implements Serializable {
+    static final long serialVersionUID = -2094966444743540360L;
     private TieredState tieredState;
     private boolean isIdenticalToCache;
 

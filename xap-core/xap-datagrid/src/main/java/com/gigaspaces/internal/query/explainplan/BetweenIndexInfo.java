@@ -29,6 +29,7 @@ import java.io.ObjectOutput;
  */
 @ExperimentalApi
 public class BetweenIndexInfo extends IndexInfo {
+    private static final long serialVersionUID = -4360120624992897015L;
     private Comparable min;
     private Comparable max;
     private boolean includeMin;

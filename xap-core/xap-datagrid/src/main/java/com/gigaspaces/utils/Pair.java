@@ -28,6 +28,7 @@ import java.io.ObjectOutput;
  * @since 12.0.1
  */
 public class Pair<T,V> implements SmartExternalizable {
+    private static final long serialVersionUID = 7177885854814770607L;
     private  T first;
     private  V second;
 

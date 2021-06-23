@@ -12,7 +12,7 @@ import java.util.Map;
 import static com.j_spaces.core.Constants.TieredStorage.SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME;
 
 public class TieredStorageConfig extends SpaceCustomComponent implements SmartExternalizable {
-
+    static final long serialVersionUID = -3215994702053002031L;
 
     private Map<String, TieredStorageTableConfig> tables;
 

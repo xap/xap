@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CopyChunksRequestInfo implements SpaceRequestInfo {
-
+    private static final long serialVersionUID = -2528169887249351498L;
     private SpaceContext context;
     private ClusterTopology newMap;
     private String spaceName;

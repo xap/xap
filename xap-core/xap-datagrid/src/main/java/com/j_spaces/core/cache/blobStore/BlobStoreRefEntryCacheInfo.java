@@ -76,7 +76,7 @@ import java.util.Collection;
 @com.gigaspaces.api.InternalApi
 public class BlobStoreRefEntryCacheInfo
         implements IEntryCacheInfo, IBlobStoreRefCacheInfo, IBlobStoreOffHeapInfo, ILockObject {
-
+    private static final long serialVersionUID = 2811319905571006636L;
     public static final long UNALLOCATED_OFFHEAP_MEMORY = -1;
 
     private static final Object DummyBlobStorePos = new Object();

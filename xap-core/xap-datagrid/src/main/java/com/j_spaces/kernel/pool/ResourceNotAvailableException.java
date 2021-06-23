@@ -23,7 +23,7 @@ package com.j_spaces.kernel.pool;
  * @since 12.3
  */
 class ResourceNotAvailableException extends RuntimeException{
-
+    private static final long serialVersionUID = -3477375040484595570L;
     ResourceNotAvailableException() {
         super();
     }
