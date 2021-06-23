@@ -1,6 +1,9 @@
 package com.gigaspaces.sql.aggregatornode.netty.query;
 
 public class StatementDescription {
+    public static final StatementDescription EMPTY =
+            new StatementDescription(ParametersDescription.EMPTY, RowDescription.EMPTY);
+
     private final ParametersDescription parametersDescription;
     private final RowDescription rowDescription;
 
