@@ -80,7 +80,7 @@ public class AggregationsUtil {
                 //group by as part of SQLQuery is basically just distinct
                 //group by+order by is not supported yet, so can't fetch limited result (will return wrong result)
                 int limit = orderColumns != null ? Integer.MAX_VALUE : entriesLimit;
-                return new AggregationSet().distinct(new DistinctAggregator().distinct(limit
+                return new AggregationSet().distinct(new DistinctAggregator().distinct(true, limit
                         , groupByColumnNames));
             }
         } else if (orderColumns != null) {

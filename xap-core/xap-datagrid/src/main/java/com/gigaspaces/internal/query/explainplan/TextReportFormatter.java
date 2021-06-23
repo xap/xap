@@ -84,4 +84,5 @@ public class TextReportFormatter {
         currentIndentation = orgIndentation;
 
     }
+
 }
