@@ -1,20 +1,20 @@
 package com.gigaspaces.sql.aggregatornode.netty.query;
 
+import com.gigaspaces.jdbc.calcite.GSOptimizer;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.validate.SqlValidator;
 
 class StatementImpl implements Statement {
     private final QueryProviderImpl queryProvider;
     private final String name;
     private final SqlNode query;
-    private final SqlValidator validator;
+    private final GSOptimizer optimizer;
     private final StatementDescription description;
 
-    public StatementImpl(QueryProviderImpl queryProvider, String name, SqlNode query, SqlValidator validator, StatementDescription description) {
+    public StatementImpl(QueryProviderImpl queryProvider, String name, SqlNode query, GSOptimizer optimizer, StatementDescription description) {
         this.queryProvider = queryProvider;
         this.name = name;
         this.query = query;
-        this.validator = validator;
+        this.optimizer = optimizer;
         this.description = description;
     }
 
@@ -29,8 +29,8 @@ class StatementImpl implements Statement {
     }
 
     @Override
-    public SqlValidator getValidator() {
-        return validator;
+    public GSOptimizer getOptimizer() {
+        return optimizer;
     }
 
     @Override

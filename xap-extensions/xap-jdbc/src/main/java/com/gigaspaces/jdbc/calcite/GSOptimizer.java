@@ -16,7 +16,6 @@ import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
@@ -44,18 +43,13 @@ public class GSOptimizer {
         .setUnquotedCasing(Casing.UNCHANGED)
         .setCaseSensitive(false).build();
 
-    private final IJSpace space;
-
-    private final JavaTypeFactoryImpl typeFactory;
     private final CalciteCatalogReader catalogReader;
     private final SqlValidator validator;
     private final VolcanoPlanner planner;
     private final RelOptCluster cluster;
 
     public GSOptimizer(IJSpace space) {
-        this.space = space;
-
-        typeFactory = new JavaTypeFactoryImpl();
+        JavaTypeFactoryImpl typeFactory = new JavaTypeFactoryImpl();
 
         catalogReader = new CalciteCatalogReader(
             createSchema(space),
@@ -76,12 +70,8 @@ public class GSOptimizer {
         cluster = RelOptCluster.create(planner, new RexBuilder(typeFactory));
     }
 
-    public SqlValidator validator() {
-        return validator;
-    }
-
     public SqlNode parse(String query) {
-        SqlParser parser = parser(query);
+        SqlParser parser = createParser(query);
 
         try {
             return parser.parseQuery();
@@ -90,12 +80,8 @@ public class GSOptimizer {
         }
     }
 
-    public SqlParser parser(String query) {
-        return SqlParser.create(query, PARSER_CONFIG);
-    }
-
     public SqlNodeList parseMultiline(String query) {
-        SqlParser parser = parser(query);
+        SqlParser parser = createParser(query);
 
         try {
             return parser.parseStmtList();
@@ -104,15 +90,24 @@ public class GSOptimizer {
         }
     }
 
-    public SqlNode validate(SqlNode ast) {
-        return validator.validate(ast);
+    private SqlParser createParser(String query) {
+        return SqlParser.create(query, PARSER_CONFIG);
     }
 
-    public RelNode createLogicalPlan(SqlNode validatedAst) {
-        return createLogicalPlan(validatedAst, this.validator);
+    public GSOptimizerValidationResult validate(SqlNode ast) {
+        SqlNode validatedAst = validator.validate(ast);
+        RelDataType rowType = validator.getValidatedNodeType(validatedAst);
+        RelDataType parameterRowType = validator.getParameterRowType(validatedAst);
+
+        return new GSOptimizerValidationResult(validatedAst, rowType, parameterRowType);
     }
 
-    public RelNode createLogicalPlan(SqlNode validatedAst, SqlValidator validator) {
+    public GSRelNode optimize(SqlNode validatedAst) {
+        RelNode logicalPlan = optimizeLogical(validatedAst, this.validator);
+        return optimizePhysical(logicalPlan);
+    }
+
+    private RelNode optimizeLogical(SqlNode validatedAst, SqlValidator validator) {
         SqlToRelConverter relConverter = new SqlToRelConverter(
             null,
             validator,
@@ -128,7 +123,7 @@ public class GSOptimizer {
         return relConverter.convertQuery(validatedAst, false, true).rel;
     }
 
-    public GSRelNode createPhysicalPlan(RelNode logicalPlan) {
+    private GSRelNode optimizePhysical(RelNode logicalPlan) {
         Program program = GSOptimizerProgram.createProgram();
 
         RelNode res = program.run(

@@ -4,18 +4,17 @@ import com.fasterxml.jackson.databind.util.ArrayIterator;
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.jdbc.QueryHandler;
 import com.gigaspaces.jdbc.calcite.GSOptimizer;
+import com.gigaspaces.jdbc.calcite.GSOptimizerValidationResult;
 import com.gigaspaces.jdbc.calcite.GSRelNode;
 import com.gigaspaces.jdbc.calcite.sql.extension.SqlShowOption;
 import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.utils.*;
 import com.j_spaces.jdbc.ResponsePacket;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.validate.SqlValidator;
 
 import java.nio.charset.Charset;
 import java.sql.SQLException;
@@ -48,8 +47,6 @@ public class QueryProviderImpl implements QueryProvider {
 
         try {
             statements.put(stmt, prepareStatement(stmt, qry, paramTypes));
-        } catch (ProtocolException e) {
-            throw e;
         } catch (Exception e) {
             throw new NonBreakingException(ErrorCodes.SYNTAX_ERROR,	"Failed to prepare statement", e);
         }
@@ -66,7 +63,7 @@ public class QueryProviderImpl implements QueryProvider {
             throw new NonBreakingException(ErrorCodes.INVALID_CURSOR_NAME, "Duplicate cursor name");
 
         try {
-            portals.put(portal, preparePortal(session, portal, statements.get(stmt), new GSOptimizer(space), params, formatCodes));
+            portals.put(portal, preparePortal(session, portal, statements.get(stmt), params, formatCodes));
         } catch (ProtocolException e) {
             throw e;
         } catch (Exception e) {
@@ -140,7 +137,7 @@ public class QueryProviderImpl implements QueryProvider {
             List<Portal<?>> result = new ArrayList<>();
             for (SqlNode node : nodes) {
                 StatementImpl statement = prepareStatement(Constants.EMPTY_STRING, optimizer, EMPTY_INT_ARRAY, node);
-                result.add(preparePortal(session, Constants.EMPTY_STRING, statement, optimizer, Constants.EMPTY_OBJECT_ARRAY, EMPTY_INT_ARRAY));
+                result.add(preparePortal(session, Constants.EMPTY_STRING, statement, Constants.EMPTY_OBJECT_ARRAY, EMPTY_INT_ARRAY));
             }
             return result;
         } catch (ProtocolException e) {
@@ -150,31 +147,31 @@ public class QueryProviderImpl implements QueryProvider {
         }
     }
 
-    private StatementImpl prepareStatement(String name, String query, int[] paramTypes) throws ProtocolException {
+    private StatementImpl prepareStatement(String name, String query, int[] paramTypes) {
         // TODO possibly it's worth to add SqlEmptyNode to sql parser
         if (query.trim().isEmpty()) {
             assert paramTypes.length == 0;
             return new StatementImpl(this, name, null, null, StatementDescription.EMPTY);
         }
-        return prepareStatement(name, new GSOptimizer(space), paramTypes, new GSOptimizer(space).parse(query));
+        GSOptimizer optimizer = new GSOptimizer(space);
+        return prepareStatement(name, optimizer, paramTypes, optimizer.parse(query));
     }
 
-    private StatementImpl prepareStatement(String name, GSOptimizer optimizer, int[] paramTypes, SqlNode query) throws ProtocolException {
-        if (SqlUtil.isCallTo(query, SqlShowOption.OPERATOR)) {
-            StatementDescription description = describeShow((SqlShowOption) query);
-            return new StatementImpl(this, Constants.EMPTY_STRING, query, null, description);
-        } else if (query.getKind() == SqlKind.SET_OPTION) {
+    private StatementImpl prepareStatement(String name, GSOptimizer optimizer, int[] paramTypes, SqlNode ast) {
+        if (SqlUtil.isCallTo(ast, SqlShowOption.OPERATOR)) {
+            StatementDescription description = describeShow((SqlShowOption) ast);
+            return new StatementImpl(this, Constants.EMPTY_STRING, ast, optimizer, description);
+        } else if (ast.getKind() == SqlKind.SET_OPTION) {
             // all parameters should be literals
-            return new StatementImpl(this, Constants.EMPTY_STRING, query, null, StatementDescription.EMPTY);
+            return new StatementImpl(this, Constants.EMPTY_STRING, ast, optimizer, StatementDescription.EMPTY);
         } else {
-            SqlValidator validator = optimizer.validator();
-            query = validator.validate(query);
+            GSOptimizerValidationResult validated = optimizer.validate(ast);
 
             ParametersDescription paramDesc;
             if (paramTypes.length > 0) {
                 paramDesc = new ParametersDescription(paramTypes);
             } else {
-                RelDataType paramType = validator.getParameterRowType(query);
+                RelDataType paramType = validated.getParameterRowType();
                 List<ParameterDescription> params = new ArrayList<>(paramType.getFieldCount());
                 for (RelDataTypeField field : paramType.getFieldList()) {
                     params.add(new ParameterDescription(TypeUtils.fromInternal(field.getType())));
@@ -182,7 +179,7 @@ public class QueryProviderImpl implements QueryProvider {
                 paramDesc = new ParametersDescription(params);
             }
 
-            RelDataType rowType = validator.getValidatedNodeType(query);
+            RelDataType rowType = validated.getRowType();
             List<ColumnDescription> columns = new ArrayList<>(rowType.getFieldCount());
             for (RelDataTypeField field : rowType.getFieldList()) {
                 columns.add(new ColumnDescription(field.getName(), TypeUtils.fromInternal(field.getType())));
@@ -190,7 +187,7 @@ public class QueryProviderImpl implements QueryProvider {
             RowDescription rowDesc = new RowDescription(columns);
 
             StatementDescription description = new StatementDescription(paramDesc, rowDesc);
-            return new StatementImpl(this, name, query, validator, description);
+            return new StatementImpl(this, name, validated.getValidatedAst(), optimizer, description);
         }
     }
 
@@ -221,7 +218,7 @@ public class QueryProviderImpl implements QueryProvider {
                 new RowDescription(singletonList(new ColumnDescription("COL1", type))));
     }
 
-    private Portal<?> preparePortal(Session session, String name, Statement statement, GSOptimizer optimizer, Object[] params, int[] formatCodes) throws ProtocolException {
+    private Portal<?> preparePortal(Session session, String name, Statement statement, Object[] params, int[] formatCodes) throws ProtocolException {
         SqlNode query = statement.getQuery();
 
         if (query == null)
@@ -232,7 +229,7 @@ public class QueryProviderImpl implements QueryProvider {
         }
 
         if (query.isA(SqlKind.QUERY)) {
-            return prepareQuery(name, statement, optimizer, params, formatCodes, query);
+            return prepareQuery(name, statement, params, formatCodes, query);
         }
 
         if (SqlUtil.isCallTo(query, SqlShowOption.OPERATOR)) {
@@ -299,15 +296,11 @@ public class QueryProviderImpl implements QueryProvider {
         }
     }
 
-    private Portal<?> prepareQuery(String name, Statement statement, GSOptimizer optimizer, Object[] params, int[] formatCodes, SqlNode query) throws ProtocolException {
+    private Portal<?> prepareQuery(String name, Statement statement, Object[] params, int[] formatCodes, SqlNode query) throws ProtocolException {
         try {
-            SqlValidator validator = statement.getValidator();
-            assert validator != null;
-
-            RelNode logicalPlan = optimizer.createLogicalPlan(query, validator);
-            GSRelNode physicalPlan = optimizer.createPhysicalPlan(logicalPlan);
             ThrowingSupplier<Iterator<Object[]>, ProtocolException> op = () -> {
                 try {
+                    GSRelNode physicalPlan = statement.getOptimizer().optimize(query);
                     ResponsePacket packet = handler.executeStatement(space, physicalPlan, params);
                     return new ArrayIterator<>(packet.getResultEntry().getFieldValues());
                 } catch (SQLException e) {

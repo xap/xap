@@ -9,6 +9,7 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSetOption;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class GSSqlParserImplTest {
@@ -84,6 +85,7 @@ public class GSSqlParserImplTest {
         Assert.assertEquals("CLIENT_ENCODING", name);
     }
 
+    @Ignore("Add infix CAST support")
     @Test
     public void testParseLiteral() throws Exception {
         String sql = "select 1::int2";
