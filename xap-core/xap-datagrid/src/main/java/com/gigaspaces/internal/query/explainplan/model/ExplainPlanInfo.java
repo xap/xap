@@ -34,6 +34,7 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
         tableAlias = explainPlan.getTableAlias();
         visibleColumnsAndAliasMap = explainPlan.getVisibleColumnsAndAliasMap();
         executionType = explainPlan.getExecutionType();
+        distinct = explainPlan.isDistinct();
     }
 
     @Override
@@ -50,14 +51,26 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
         }
         formatter.indent();
 
-        TextReportFormatter tempTextFormatter = new TextReportFormatter(formatter);
+        if (visibleColumnsAndAliasMap != null) {
+            String columns = visibleColumnsAndAliasMap.entrySet().stream()
+                    .map(column -> column.getKey() + (notEmpty(column.getValue()) ? " as " + column.getValue() : ""))
+                    .collect(Collectors.joining(", "));
+            if (notEmpty(columns)) {
+                if (distinct) {
+                    formatter.line("Select Distinct: " + columns);
+                }
+                else {
+                    formatter.line("Select: " + columns);
+                }
+            }
+        }
 
         if (notEmpty(filter)) {
-            tempTextFormatter.line("Filter: " + filter);
+            formatter.line("Filter: " + filter);
         }
 
         if (executionType != null && executionType.equals(SINGLE)) {
-            tempTextFormatter.line("Execution type: " + "Single Partition");
+            formatter.line("Execution type: " + "Single Partition");
         }
 
         if (!verbose) {
@@ -77,17 +90,17 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
                 }
                 String partitions = partitionAndSizes.stream().map(PartitionAndSizes::getPartitionId).collect(joining(", "));
                 if (partitions.contains(",")) {
-                    tempTextFormatter.line(String.format("Partitions: [%s]", partitions));
+                    formatter.line(String.format("Partitions: [%s]", partitions));
                 } else {
-                    tempTextFormatter.line(String.format("Partition: [%s]", partitions));
+                    formatter.line(String.format("Partition: [%s]", partitions));
                 }
-                tempTextFormatter.indent();
+                formatter.indent();
                 if (usedTieredStorage) {
-                    tempTextFormatter.line(getTiersFormatted(usedTiers));
+                    formatter.line(getTiersFormatted(usedTiers));
                 }
 
                 if (useAggregators) {
-                    formatAggregators(usedAggregators, tempTextFormatter);
+                    formatAggregators(usedAggregators, formatter);
                 }
 
                 List<String> selectedIndexesFormatted = new ArrayList<>();
@@ -99,19 +112,19 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
                     selectedIndexesFormatted.add(index.toStringNotVerbose(min, max));
                 }
                 if (!selectedIndexesFormatted.isEmpty()) {
-                    tempTextFormatter.line(SELECTED_INDEX_STRING);
+                    formatter.line(SELECTED_INDEX_STRING);
                     if (unionIndexChoice) {
-                        tempTextFormatter.indent();
-                        tempTextFormatter.line("Union:");
+                        formatter.indent();
+                        formatter.line("Union:");
                     }
-                    tempTextFormatter.indent();
-                    selectedIndexesFormatted.forEach(tempTextFormatter::line);
-                    tempTextFormatter.unindent();
+                    formatter.indent();
+                    selectedIndexesFormatted.forEach(formatter::line);
+                    formatter.unindent();
                     if (unionIndexChoice) {
-                        tempTextFormatter.unindent();
+                        formatter.unindent();
                     }
                 }
-                tempTextFormatter.unindent();
+                formatter.unindent();
             });
         } else {
             for (PartitionIndexInspectionDetail inspectionDetail : indexInspectionsPerPartition) {
@@ -121,65 +134,49 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
                     continue;
                 }
 
-                tempTextFormatter.line(String.format("Partition: [%s]", inspectionDetail.getPartition()));
-                tempTextFormatter.indent();
+                formatter.line(String.format("Partition: [%s]", inspectionDetail.getPartition()));
+                formatter.indent();
                 if (inspectionDetail.getUsedTiers() != null && inspectionDetail.getUsedTiers().size() != 0) {
-                    tempTextFormatter.line(getTiersFormatted(inspectionDetail.getUsedTiers()));
+                    formatter.line(getTiersFormatted(inspectionDetail.getUsedTiers()));
                 }
 
                 if (inspectionDetail.getAggregators() != null && inspectionDetail.getAggregators().size() != 0) {
-                    formatAggregators(inspectionDetail.getAggregators(), tempTextFormatter);
+                    formatAggregators(inspectionDetail.getAggregators(), formatter);
                 }
 
                 if (inspectionDetail.getIndexes() == null || inspectionDetail.getIndexes().isEmpty()) {
-                    tempTextFormatter.unindent();
+                    formatter.unindent();
                     continue;
                 }
 
                 for (int i = inspectionDetail.getIndexes().size() - 1; i >= 0; i--) {
                     IndexChoiceDetail indexChoice = inspectionDetail.getIndexes().get(i);
                     formatter.line(indexChoice.getOperator());
-                    tempTextFormatter.indent();
-                    tempTextFormatter.line("Inspected index: ");
-                    tempTextFormatter.indent();
-                    indexChoice.getInspectedIndexes().forEach(inspected -> tempTextFormatter.line(inspected.toString()));
-                    tempTextFormatter.unindent();
+                    formatter.indent();
+                    formatter.line("Inspected index: ");
+                    formatter.indent();
+                    indexChoice.getInspectedIndexes().forEach(inspected -> formatter.line(inspected.toString()));
+                    formatter.unindent();
 
-                    tempTextFormatter.line(SELECTED_INDEX_STRING);
+                    formatter.line(SELECTED_INDEX_STRING);
                     if (indexChoice.isUnion()) {
-                        tempTextFormatter.indent();
-                        tempTextFormatter.line("Union:");
+                        formatter.indent();
+                        formatter.line("Union:");
                     }
 
-                    tempTextFormatter.indent();
-                    indexChoice.getSelectedIndexes().forEach(selected -> tempTextFormatter.line(selected.toString()));
-                    tempTextFormatter.unindent();
+                    formatter.indent();
+                    indexChoice.getSelectedIndexes().forEach(selected -> formatter.line(selected.toString()));
+                    formatter.unindent();
 
                     if (indexChoice.isUnion()) {
-                        tempTextFormatter.unindent();
+                        formatter.unindent();
                     }
-                    tempTextFormatter.unindent();
+                    formatter.unindent();
                 }
-                tempTextFormatter.unindent();
+                formatter.unindent();
             }
         }
 
-        tempTextFormatter.unindent();
-
-        if (visibleColumnsAndAliasMap != null) {
-            String columns = visibleColumnsAndAliasMap.entrySet().stream()
-                    .map(column -> column.getKey() + (notEmpty(column.getValue()) ? " as " + column.getValue() : ""))
-                    .collect(Collectors.joining(", "));
-            if (notEmpty(columns)) {
-                if (distinct) {
-                    formatter.line("Select Distinct: " + columns);
-                }
-                else {
-                    formatter.line("Select: " + columns);
-                }
-            }
-        }
-        formatter.concat(tempTextFormatter);
         formatter.unindent();
 
         return formatter.toString();

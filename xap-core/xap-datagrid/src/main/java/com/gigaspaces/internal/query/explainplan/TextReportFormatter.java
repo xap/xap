@@ -38,12 +38,6 @@ public class TextReportFormatter {
         this.sb = sb;
     }
 
-    public TextReportFormatter(TextReportFormatter formatter) {
-        this();
-        this.currentIndentation = formatter.currentIndentation;
-        this.firstLinePrefix = formatter.firstLinePrefix;
-    }
-
     public String toString() {
         return sb.toString();
     }
@@ -91,7 +85,4 @@ public class TextReportFormatter {
 
     }
 
-    public void concat(TextReportFormatter textReportFormatter){
-        this.sb.append(textReportFormatter.toString());
-    }
 }

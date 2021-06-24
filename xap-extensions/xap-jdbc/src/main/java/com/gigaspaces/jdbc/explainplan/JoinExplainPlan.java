@@ -53,7 +53,7 @@ public class JoinExplainPlan extends JdbcExplainPlan {
             if (orderColumns != null && !orderColumns.isEmpty()) {
                 formatter.line("OrderBy: " + orderColumns.stream().map(OrderColumn::toString).collect(Collectors.joining(", ")));
             }
-            if (orderColumns != null && !groupByColumns.isEmpty()) {
+            if (groupByColumns != null && !groupByColumns.isEmpty()) {
                 formatter.line("GroupBy: " + groupByColumns.stream().map(ConcreteColumn::toString).collect(Collectors.joining(", ")));
             }
             formatter.line(String.format("Join condition: (%s = %s)", joinInfo.getLeftColumn(), joinInfo.getRightColumn()));
