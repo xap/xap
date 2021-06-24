@@ -63,7 +63,7 @@ public class AggregateEntriesSpaceOperation extends AbstractSpaceOperation<Aggre
                         String[] distinctPaths = distinctAggregator.getDistinctPaths();
                         if(distinctAggregator.isGroupByAggregator()){ //group by
                             for(int i=0; i < distinctPaths.length ; i++) {
-                                answerHolder.getExplainPlan().addAggregatorsInfo("Group By", distinctPaths[i]);
+                                answerHolder.getExplainPlan().addAggregatorsInfo("GroupBy", distinctPaths[i]);
                             }
                         }
                         else{ //distinct
@@ -76,7 +76,7 @@ public class AggregateEntriesSpaceOperation extends AbstractSpaceOperation<Aggre
                         GroupByAggregator groupByAggregator = (GroupByAggregator)aggregator;
                         String[] groupByPaths = groupByAggregator.getGroupByPaths();
                         for(int i=0; i < groupByPaths.length ; i++) {
-                            answerHolder.getExplainPlan().addAggregatorsInfo("Group By", groupByPaths[i]);
+                            answerHolder.getExplainPlan().addAggregatorsInfo("GroupBy", groupByPaths[i]);
                         }
                     }
                 }
