@@ -46,6 +46,7 @@ class GSSort extends Sort implements GSRelNode { //TODO: @sagiv extends Enumerab
         return new GSSort(cluster, traitSet, input, collation, offset, fetch);
     }
 
+
     @Override
     public Sort copy(RelTraitSet relTraitSet, RelNode relNode, RelCollation relCollation, RexNode offset, RexNode fetch) {
         return new GSSort(getCluster(), relTraitSet, relNode, relCollation, offset, fetch);

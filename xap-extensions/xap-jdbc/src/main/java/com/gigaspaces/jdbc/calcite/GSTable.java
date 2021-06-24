@@ -54,7 +54,22 @@ public class GSTable extends AbstractTable {
     @Override
     public RelDataType getRowType(RelDataTypeFactory typeFactory) {
         RelDataTypeFactory.Builder builder = new RelDataTypeFactory.Builder(typeFactory);
-        for (PropertyInfo property : typeDesc.getProperties()) {
+
+        int idPropertyIndex = typeDesc.getIdentifierPropertyId();
+        int index = 0;
+        int nonIdPropertyIndex = 1;
+        PropertyInfo[] propertyInfos = new PropertyInfo[typeDesc.getNumOfFixedProperties()];
+        while (index < propertyInfos.length) { // put the SPACE ID as the first column.
+            if (index == idPropertyIndex) {
+                propertyInfos[0] = typeDesc.getFixedProperty(index);
+            } else {
+                propertyInfos[nonIdPropertyIndex++] = typeDesc.getFixedProperty(index);
+            }
+            index++;
+        }
+
+        for (PropertyInfo property : propertyInfos) {
+//        for (PropertyInfo property : typeDesc.getProperties()) {
             builder.add(
                     property.getName(),
                     mapToSqlType(property.getType())

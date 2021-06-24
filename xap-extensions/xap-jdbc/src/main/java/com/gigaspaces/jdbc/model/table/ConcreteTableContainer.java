@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc.model.table;
 
 import com.gigaspaces.internal.client.QueryResultTypeInternal;
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.internal.query.explainplan.ExplainPlanV3;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ProjectionTemplate;
@@ -52,8 +53,21 @@ public class ConcreteTableContainer extends TableContainer {
         } catch (SQLException e) {
             throw new TypeNotFoundException("Unknown table [" + name + "]", e);
         }
+        int idPropertyIndex = typeDesc.getIdentifierPropertyId();
+        int index = 0;
+        int nonIdPropertyIndex = 1;
+        PropertyInfo[] propertyInfos = new PropertyInfo[typeDesc.getNumOfFixedProperties()];
+        while (index < propertyInfos.length) { // put the SPACE ID as the first column.
+            if (index == idPropertyIndex) {
+                propertyInfos[0] = typeDesc.getFixedProperty(index);
+            } else {
+                propertyInfos[nonIdPropertyIndex++] = typeDesc.getFixedProperty(index);
+            }
+            index++;
+        }
 
-        allColumnNamesSorted = Arrays.asList(typeDesc.getPropertiesNames());
+        allColumnNamesSorted = Arrays.stream(propertyInfos).map(PropertyInfo::getName).collect(Collectors.toList());
+//        allColumnNamesSorted = Arrays.asList(typeDesc.getPropertiesNames());
     }
 
     @Override

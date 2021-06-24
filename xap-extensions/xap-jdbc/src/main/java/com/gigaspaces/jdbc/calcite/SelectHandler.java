@@ -8,6 +8,7 @@ import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexProgram;
@@ -21,6 +22,7 @@ public class SelectHandler extends RelShuttleImpl {
     private final QueryExecutor queryExecutor;
     private final Map<RelNode, GSCalc> childToCalc = new HashMap<>();
     private RelNode root = null;
+    private boolean isAllColumnSelected = false;
 
     public SelectHandler(QueryExecutor queryExecutor) {
         this.queryExecutor = queryExecutor;
@@ -38,6 +40,7 @@ public class SelectHandler extends RelShuttleImpl {
             queryExecutor.addFieldCount(columns.size());
             for (String col : columns) {
                 //TODO: @sagiv arrive here only if has Select *.
+                this.isAllColumnSelected = true;
                 IQueryColumn qc = tableContainer.addQueryColumn(col, null, true, 0);//TODO: @sagiv columnOrdinal
                 queryExecutor.addColumn(qc); //TODO: @sagiv add the column to queryExecutor too?
             }
@@ -83,7 +86,7 @@ public class SelectHandler extends RelShuttleImpl {
             int fieldIndex = relCollation.getFieldIndex();
             RelFieldCollation.Direction direction = relCollation.getDirection();
             RelFieldCollation.NullDirection nullDirection = relCollation.nullDirection;
-            String columnName = sort.getInput().getRowType().getFieldNames().get(fieldIndex);
+            String columnName = sort.getRowType().getFieldNames().get(fieldIndex);
             TableContainer table = queryExecutor.getTableByColumnIndex(fieldIndex);
 //            table.addQueryColumn(columnName, null, false, -1);
             //TODO: @sagiv how do i know if it is visible?!
@@ -145,7 +148,9 @@ public class SelectHandler extends RelShuttleImpl {
         for (int i = 0; i < outputFields.size(); i++) {
             String alias = outputFields.get(i);
             String originalName = inputFields.get(program.getSourceField(i));
-            IQueryColumn qc = tableContainer.addQueryColumn(originalName, alias, true, i);
+//            IQueryColumn qc = tableContainer.addQueryColumn(originalName, alias, true, i);
+//            queryExecutor.addColumn(qc, false); //TODO: @sagiv add the column to queryExecutor too?
+            IQueryColumn qc = tableContainer.addQueryColumn(originalName, alias, isVisible(originalName), i);
             queryExecutor.addColumn(qc); //TODO: @sagiv add the column to queryExecutor too?
         }
         ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
@@ -156,15 +161,23 @@ public class SelectHandler extends RelShuttleImpl {
             }
         }
     }
+    private boolean isVisible(String column) {
+        if (root instanceof GSCalc) {
+            RexProgram program = ((GSCalc) root).getProgram();
+            RelDataType outputRowType = program.getOutputRowType();
+            return outputRowType.getField(column, true, false) != null;
+        }
+        return true;
+    }
 
     private void handleCalcFromJoin(GSCalc other) {
         RexProgram program = other.getProgram();
         List<String> inputFields = program.getInputRowType().getFieldNames();
         List<String> outputFields = program.getOutputRowType().getFieldNames();
-        for (int i = 0; i < outputFields.size(); i++) {
-            IQueryColumn qc = queryExecutor.getColumnByColumnIndex(program.getSourceField(i));
-            queryExecutor.addColumn(qc);
-        }
+//        for (int i = 0; i < outputFields.size(); i++) {
+//            IQueryColumn qc = queryExecutor.getColumnByColumnIndex(program.getSourceField(i));
+//            queryExecutor.addColumn(qc); //TODO: @sagiv needed?
+//        }
         if (program.getCondition() != null) {
             ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
             program.getCondition().accept(conditionHandler);
