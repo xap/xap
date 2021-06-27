@@ -29,9 +29,10 @@ public interface ProcessCpuSampler {
      *         user mode.
      */
     default double getCpuLoadCumulative(long totalCpuTime, long upTime) {
-        return totalCpuTime > 0 && upTime >= 0 ?
+        double cpuVal = totalCpuTime > 0 && upTime > 0 ?
                 ((double) totalCpuTime / upTime) / cores
                 : NA;
+        return cpuVal == Double.POSITIVE_INFINITY ? NA : cpuVal;
     }
 
     /**
