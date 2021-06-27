@@ -1,11 +1,14 @@
 package com.gigaspaces.jdbc.calcite;
 
 import com.gigaspaces.jdbc.QueryExecutor;
+import com.gigaspaces.jdbc.calcite.schema.GSSchemaTable;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
 import com.gigaspaces.jdbc.model.table.IQueryColumn;
+import com.gigaspaces.jdbc.model.table.SchemaTableContainer;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
@@ -31,8 +34,15 @@ public class SelectHandler extends RelShuttleImpl {
     // TODO check inserting of same table
     public RelNode visit(TableScan scan) {
         RelNode result = super.visit(scan);
-        GSTable table = scan.getTable().unwrap(GSTable.class);
-        TableContainer tableContainer = new ConcreteTableContainer(table.getTypeDesc().getTypeName(), null, queryExecutor.getSpace());
+        RelOptTable relOptTable = scan.getTable();
+        GSTable gsTable = relOptTable.unwrap(GSTable.class);
+        TableContainer tableContainer;
+        if (gsTable != null) {
+            tableContainer = new ConcreteTableContainer(gsTable.getName(), null, queryExecutor.getSpace());
+        } else {
+            GSSchemaTable schemaTable = relOptTable.unwrap(GSSchemaTable.class);
+            tableContainer = new SchemaTableContainer(schemaTable, queryExecutor.getSpace());
+        }
         queryExecutor.getTables().add(tableContainer);
         if (!childToCalc.containsKey(scan)) {
             List<String> columns = tableContainer.getAllColumnNames();
