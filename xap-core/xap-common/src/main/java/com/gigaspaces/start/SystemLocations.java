@@ -260,4 +260,11 @@ public class SystemLocations {
     public Path tools(String subpath, String ... more) {
         return tools.resolve(Paths.get(subpath, more));
     }
+    
+    public Path dataGatewayJar() {
+        return tools().resolve("data-gateway").resolve("xap-data-gateway.jar");
+    }
+
+
+
 }
