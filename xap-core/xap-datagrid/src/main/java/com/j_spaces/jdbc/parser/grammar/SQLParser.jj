@@ -27,7 +27,7 @@ import java.io.Reader;
 import com.j_spaces.core.client.TemplateMatchCodes;
 
 public class SqlParser {
-	
+	static final long serialVersionUID = -4014664818172002534L;
     private int conditionIndex = 0;
    
 	// TOKEN_EXTENDS=com.j_spaces.jdbc.parser.SerializableToken

@@ -1,7 +1,7 @@
 package org.gigaspaces.cli;
 
 public class CliCommandException extends Exception {
-    static final long serialVersionUID = 1883163668562380091L;
+    static final long serialVersionUID = 8072114836245841319L;
     public static final int CODE_GENERAL_ERROR = 1;
     public static final int CODE_INVALID_INPUT = 2;
     public static final int CODE_TIMEOUT = 6;
