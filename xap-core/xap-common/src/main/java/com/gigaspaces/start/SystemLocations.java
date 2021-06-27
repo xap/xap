@@ -260,4 +260,11 @@ public class SystemLocations {
     public Path tools(String subpath, String ... more) {
         return tools.resolve(Paths.get(subpath, more));
     }
+    
+    public Path dataBridge() {
+        return tools().resolve("databridge/xap-data-bridge.jar");
+    }
+
+
+
 }
