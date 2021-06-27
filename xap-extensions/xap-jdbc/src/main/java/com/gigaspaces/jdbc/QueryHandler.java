@@ -1,9 +1,9 @@
 package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.calcite.CalciteDefaults;
-import com.gigaspaces.jdbc.calcite.SelectHandler;
 import com.gigaspaces.jdbc.calcite.GSOptimizer;
 import com.gigaspaces.jdbc.calcite.GSRelNode;
+import com.gigaspaces.jdbc.calcite.SelectHandler;
 import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
@@ -22,7 +22,7 @@ import net.sf.jsqlparser.util.validation.ValidationContext;
 import net.sf.jsqlparser.util.validation.ValidationException;
 import net.sf.jsqlparser.util.validation.feature.FeaturesAllowed;
 import net.sf.jsqlparser.util.validation.validator.StatementValidator;
-import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.externalize.RelWriterImpl;
 import org.apache.calcite.runtime.CalciteException;
 import org.apache.calcite.sql.SqlExplainLevel;
@@ -127,7 +127,7 @@ public class QueryHandler {
             GSOptimizer optimizer = new GSOptimizer(space);
             SqlNode ast = optimizer.parse(query);
             SqlNode validatedAst = optimizer.validate(ast);
-            RelNode logicalPlan = optimizer.createLogicalPlan(validatedAst);
+            RelRoot logicalPlan = optimizer.createLogicalPlan(validatedAst);
             GSRelNode physicalPlan = optimizer.createPhysicalPlan(logicalPlan);
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);

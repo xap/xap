@@ -8,7 +8,7 @@ import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexProgram;
@@ -41,8 +41,8 @@ public class SelectHandler extends RelShuttleImpl {
             for (String col : columns) {
                 //TODO: @sagiv arrive here only if has Select *.
                 this.isAllColumnSelected = true;
-                IQueryColumn qc = tableContainer.addQueryColumn(col, null, true, 0);//TODO: @sagiv columnOrdinal
-                queryExecutor.addColumn(qc); //TODO: @sagiv add the column to queryExecutor too?
+                tableContainer.addQueryColumn(col, null, true, 0);//TODO: @sagiv columnOrdinal
+                //TODO: @sagiv add the column to queryExecutor too?
             }
         }
         else{
@@ -59,13 +59,14 @@ public class SelectHandler extends RelShuttleImpl {
         if(other instanceof GSCalc){
             GSCalc calc = (GSCalc) other;
             RelNode input = calc.getInput();
-            while (!(input instanceof GSJoin) && !(input instanceof GSTableScan)) {
+            while (!(input instanceof GSJoin)
+                    && !(input instanceof GSTableScan)) {
                 if(input.getInputs().isEmpty()) {
                     break;
                 }
                 input =  input.getInput(0);
             }
-            childToCalc.put(input, calc);
+            childToCalc.putIfAbsent(input, calc);
         }
         RelNode result = super.visit(other);
         if(other instanceof GSJoin){
@@ -86,26 +87,27 @@ public class SelectHandler extends RelShuttleImpl {
             int fieldIndex = relCollation.getFieldIndex();
             RelFieldCollation.Direction direction = relCollation.getDirection();
             RelFieldCollation.NullDirection nullDirection = relCollation.nullDirection;
-            String columnName = sort.getRowType().getFieldNames().get(fieldIndex);
+            String columnAlias = sort.getRowType().getFieldNames().get(fieldIndex);
             TableContainer table = queryExecutor.getTableByColumnIndex(fieldIndex);
 //            table.addQueryColumn(columnName, null, false, -1);
-            //TODO: @sagiv how do i know if it is visible?!
-            // TODO: @sagiv find column alias
-            OrderColumn orderColumn = new OrderColumn(new ConcreteColumn(columnName,null, null,
-                    isVisibleColumn(columnName), table, columnCounter++), !direction.isDescending(),
+            String columnName = columnAlias;
+            boolean isVisible = false;
+            RelNode parent = this.stack.peek();
+            if(parent instanceof GSCalc) {
+                RexProgram program = ((GSCalc) parent).getProgram();
+                RelDataTypeField field = program.getOutputRowType().getField(columnAlias, true, false);
+                if(field != null) {
+                    isVisible = true;
+                    columnName = program.getInputRowType().getFieldNames().get(program.getSourceField(field.getIndex()));
+                }
+            }
+            OrderColumn orderColumn = new OrderColumn(new ConcreteColumn(columnName,null, columnAlias,
+                    isVisible, table, columnCounter++), !direction.isDescending(),
                     nullDirection == RelFieldCollation.NullDirection.LAST);
             table.addOrderColumns(orderColumn);
-            //TODO: @sagiv else use stack.peek()
         }
     }
 
-
-    private boolean isVisibleColumn(String columnName) {
-        return this.queryExecutor.getVisibleColumns().stream().anyMatch(queryColumn -> queryColumn.getAlias().equals(columnName));
-    }
-
-//    private String getColumnAlias() { // TODO: @sagiv implement. see handleCalc(GSCalc other, TableContainer tableContainer)
-//    }
 
     private void handleJoin(GSJoin join) {
         RexCall rexCall = (RexCall) join.getCondition();
@@ -119,6 +121,7 @@ public class SelectHandler extends RelShuttleImpl {
         String rColumn = join.getRight().getRowType().getFieldNames().get(rightIndex - left);
         TableContainer rightContainer = queryExecutor.getTableByColumnIndex(rightIndex);
         TableContainer leftContainer = queryExecutor.getTableByColumnIndex(leftIndex);
+        //TODO: @sagiv needed?
         IQueryColumn rightColumn = rightContainer.addQueryColumn(rColumn, null, false, -1);
         IQueryColumn leftColumn = leftContainer.addQueryColumn(lColumn, null, false, -1);
         rightContainer.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinInfo.JoinType.getType(join.getJoinType())));
@@ -148,10 +151,8 @@ public class SelectHandler extends RelShuttleImpl {
         for (int i = 0; i < outputFields.size(); i++) {
             String alias = outputFields.get(i);
             String originalName = inputFields.get(program.getSourceField(i));
-//            IQueryColumn qc = tableContainer.addQueryColumn(originalName, alias, true, i);
-//            queryExecutor.addColumn(qc, false); //TODO: @sagiv add the column to queryExecutor too?
-            IQueryColumn qc = tableContainer.addQueryColumn(originalName, alias, isVisible(originalName), i);
-            queryExecutor.addColumn(qc); //TODO: @sagiv add the column to queryExecutor too?
+            tableContainer.addQueryColumn(originalName, alias, true, program.getOutputRowType().getFieldList().get(i).getIndex());
+            //TODO: @sagiv add the column to queryExecutor too?
         }
         ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
         if (program.getCondition() != null) {
@@ -161,23 +162,15 @@ public class SelectHandler extends RelShuttleImpl {
             }
         }
     }
-    private boolean isVisible(String column) {
-        if (root instanceof GSCalc) {
-            RexProgram program = ((GSCalc) root).getProgram();
-            RelDataType outputRowType = program.getOutputRowType();
-            return outputRowType.getField(column, true, false) != null;
-        }
-        return true;
-    }
 
     private void handleCalcFromJoin(GSCalc other) {
         RexProgram program = other.getProgram();
         List<String> inputFields = program.getInputRowType().getFieldNames();
         List<String> outputFields = program.getOutputRowType().getFieldNames();
-//        for (int i = 0; i < outputFields.size(); i++) {
-//            IQueryColumn qc = queryExecutor.getColumnByColumnIndex(program.getSourceField(i));
-//            queryExecutor.addColumn(qc); //TODO: @sagiv needed?
-//        }
+        for (int i = 0; i < outputFields.size(); i++) {
+            IQueryColumn qc = queryExecutor.getColumnByColumnIndex(program.getSourceField(i));
+            queryExecutor.addColumn(qc);
+        }
         if (program.getCondition() != null) {
             ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
             program.getCondition().accept(conditionHandler);
