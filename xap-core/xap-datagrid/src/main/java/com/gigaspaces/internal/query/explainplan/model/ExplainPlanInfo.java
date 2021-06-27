@@ -215,10 +215,7 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
     private void formatAggregators(List<Pair<String, String>> aggregators, TextReportFormatter tempFormatter) {
         distinct = false;
         for (Pair<String, String> aggregatorPair : aggregators) {
-            if(aggregatorPair.getFirst().equals("Distinct")){
-                distinct = true;
-            }
-            else {
+            if(!aggregatorPair.getFirst().equals("Distinct")){
                 tempFormatter.line(aggregatorPair.getFirst() + ": " + aggregatorPair.getSecond());
             }
         }
