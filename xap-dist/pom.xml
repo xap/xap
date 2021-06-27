@@ -174,7 +174,7 @@
         </dependency>
         <dependency>
             <groupId>org.gigaspaces</groupId>
-            <artifactId>xap-aggregator-node</artifactId>
+            <artifactId>xap-data-bridge</artifactId>
         </dependency>
         <!--end xap-datagrid runtime jars-->
         <dependency>
