@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>xap-aggregator-node</artifactId>
+    <artifactId>xap-data-bridge</artifactId>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -109,7 +109,7 @@
 
 
     <build>
-        <finalName>aggregator-node</finalName>
+        <finalName>data-bridge</finalName>
 
         <plugins>
             <plugin>
