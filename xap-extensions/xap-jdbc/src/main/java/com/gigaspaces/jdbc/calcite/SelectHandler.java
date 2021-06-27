@@ -23,6 +23,7 @@ public class SelectHandler extends RelShuttleImpl {
     private final Map<RelNode, GSCalc> childToCalc = new HashMap<>();
     private RelNode root = null;
     private boolean isAllColumnSelected = false;
+    private int columnOrdinalCounter = 0;
 
     public SelectHandler(QueryExecutor queryExecutor) {
         this.queryExecutor = queryExecutor;
@@ -36,13 +37,12 @@ public class SelectHandler extends RelShuttleImpl {
         TableContainer tableContainer = new ConcreteTableContainer(table.getTypeDesc().getTypeName(), null, queryExecutor.getSpace());
         queryExecutor.getTables().add(tableContainer);
         if (!childToCalc.containsKey(scan)) {
+            //TODO: @sagiv arrive here only if has Select *.
+            this.isAllColumnSelected = true;
             List<String> columns = tableContainer.getAllColumnNames();
             queryExecutor.addFieldCount(columns.size());
             for (String col : columns) {
-                //TODO: @sagiv arrive here only if has Select *.
-                this.isAllColumnSelected = true;
                 tableContainer.addQueryColumn(col, null, true, 0);//TODO: @sagiv columnOrdinal
-                //TODO: @sagiv add the column to queryExecutor too?
             }
         }
         else{
@@ -88,7 +88,7 @@ public class SelectHandler extends RelShuttleImpl {
             RelFieldCollation.Direction direction = relCollation.getDirection();
             RelFieldCollation.NullDirection nullDirection = relCollation.nullDirection;
             String columnAlias = sort.getRowType().getFieldNames().get(fieldIndex);
-            TableContainer table = queryExecutor.getTableByColumnIndex(fieldIndex);
+//            TableContainer table = queryExecutor.getTableByColumnIndex(fieldIndex);
 //            table.addQueryColumn(columnName, null, false, -1);
             String columnName = columnAlias;
             boolean isVisible = false;
@@ -101,11 +101,28 @@ public class SelectHandler extends RelShuttleImpl {
                     columnName = program.getInputRowType().getFieldNames().get(program.getSourceField(field.getIndex()));
                 }
             }
+            //TODO: @sagiv not so sure about this, because 'columnName' can be alias from sub-query, or
+            // Ambiguous when using join for example..
+            TableContainer table = getTableByColumnName(columnName);
             OrderColumn orderColumn = new OrderColumn(new ConcreteColumn(columnName,null, columnAlias,
                     isVisible, table, columnCounter++), !direction.isDescending(),
                     nullDirection == RelFieldCollation.NullDirection.LAST);
             table.addOrderColumns(orderColumn);
         }
+    }
+
+    private TableContainer getTableByColumnName(String name) {
+        TableContainer toReturn = null;
+        for(TableContainer tableContainer : this.queryExecutor.getTables()) {
+            if(tableContainer.hasColumn(name)) {
+                if (toReturn == null) {
+                    toReturn = tableContainer;
+                } else {
+                    throw new IllegalArgumentException("Ambiguous column name [" + name + "]");
+                }
+            }
+        }
+        return toReturn;
     }
 
 
@@ -121,7 +138,7 @@ public class SelectHandler extends RelShuttleImpl {
         String rColumn = join.getRight().getRowType().getFieldNames().get(rightIndex - left);
         TableContainer rightContainer = queryExecutor.getTableByColumnIndex(rightIndex);
         TableContainer leftContainer = queryExecutor.getTableByColumnIndex(leftIndex);
-        //TODO: @sagiv needed?
+        //TODO: @sagiv needed?- its already in the tables.
         IQueryColumn rightColumn = rightContainer.addQueryColumn(rColumn, null, false, -1);
         IQueryColumn leftColumn = leftContainer.addQueryColumn(lColumn, null, false, -1);
         rightContainer.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinInfo.JoinType.getType(join.getJoinType())));
@@ -131,8 +148,9 @@ public class SelectHandler extends RelShuttleImpl {
                 rightContainer.setJoined(true);
             }
         }
-        if(!childToCalc.containsKey(join)) {
-            if(join.equals(root)) {
+        if(!childToCalc.containsKey(join)) { // it is SELECT *
+            if(join.equals(root)
+                    || ((root instanceof GSSort) && ((GSSort) root).getInput().equals(join))) { // root is GSSort and its child is join
                 for (TableContainer tableContainer : queryExecutor.getTables()) {
                     queryExecutor.getVisibleColumns().addAll(tableContainer.getVisibleColumns());
                 }
@@ -151,8 +169,7 @@ public class SelectHandler extends RelShuttleImpl {
         for (int i = 0; i < outputFields.size(); i++) {
             String alias = outputFields.get(i);
             String originalName = inputFields.get(program.getSourceField(i));
-            tableContainer.addQueryColumn(originalName, alias, true, program.getOutputRowType().getFieldList().get(i).getIndex());
-            //TODO: @sagiv add the column to queryExecutor too?
+            tableContainer.addQueryColumn(originalName, alias, true, columnOrdinalCounter++);
         }
         ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
         if (program.getCondition() != null) {
