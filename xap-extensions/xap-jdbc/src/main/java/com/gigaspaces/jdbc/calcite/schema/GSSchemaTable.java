@@ -3,7 +3,9 @@ package com.gigaspaces.jdbc.calcite.schema;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.result.TableRow;
-import com.gigaspaces.jdbc.model.table.QueryColumn;
+import com.gigaspaces.jdbc.model.result.TempQueryResult;
+import com.gigaspaces.jdbc.model.table.ConcreteColumn;
+import com.gigaspaces.jdbc.model.table.SchemaTableContainer;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.admin.IRemoteJSpaceAdmin;
 import org.apache.calcite.rel.type.RelDataType;
@@ -39,9 +41,9 @@ public class GSSchemaTable extends AbstractTable {
         return this.systemTable.getProperties();
     }
 
-    public QueryResult execute(IJSpace space, List<QueryColumn> queryColumns) throws SQLException {
-        QueryResult queryResult = new QueryResult(queryColumns);
-        QueryColumn[] arr = queryColumns.toArray(new QueryColumn[0]);
+    public QueryResult execute(SchemaTableContainer schemaTableContainer, IJSpace space, List<ConcreteColumn> queryColumns) throws SQLException {
+        QueryResult queryResult = new TempQueryResult(schemaTableContainer);
+        ConcreteColumn[] arr = queryColumns.toArray(new ConcreteColumn[0]);
         switch (systemTable) {
             case pg_am:
             case pg_attrdef:
@@ -49,7 +51,7 @@ public class GSSchemaTable extends AbstractTable {
             case pg_tables:
                 getSpaceTables(space).forEach(table -> {
                     ITypeDesc typeDesc = space.getDirectProxy().getTypeManager().getTypeDescByName(table);
-                    queryResult.add(new TableRow(arr, table, !typeDesc.getIndexes().isEmpty()));
+                    queryResult.addRow(new TableRow(arr, table, !typeDesc.getIndexes().isEmpty()));
                 });
             default:
                 throw new UnsupportedOperationException("Unhandled system table " + systemTable.name());
