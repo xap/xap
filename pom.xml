@@ -31,6 +31,7 @@
         <calcite.version>1.25.0</calcite.version>
         <guava.version>23.0</guava.version>
         <xap.dep.scope>compile</xap.dep.scope>
+        <hsqldb.version>2.3.2</hsqldb.version>
     </properties>
 
     <scm>
