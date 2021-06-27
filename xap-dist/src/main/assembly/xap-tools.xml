@@ -26,9 +26,9 @@
         </dependencySet>
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
-            <outputDirectory>product/tools/aggrnode</outputDirectory>
+            <outputDirectory>product/tools/databridge</outputDirectory>
             <includes>
-                <include>org.gigaspaces:xap-aggregator-node</include>
+                <include>org.gigaspaces:xap-data-bridge</include>
             </includes>
             <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
         </dependencySet>

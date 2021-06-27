@@ -301,13 +301,13 @@
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
-                <artifactId>xap-aggregator-node</artifactId>
+                <artifactId>xap-data-bridge</artifactId>
                 <version>${project.version}</version>
                 <scope>${xap.dep.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>org.gigaspaces</groupId>
-                <artifactId>xap-aggregator-node</artifactId>
+                <artifactId>xap-data-bridge</artifactId>
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>
