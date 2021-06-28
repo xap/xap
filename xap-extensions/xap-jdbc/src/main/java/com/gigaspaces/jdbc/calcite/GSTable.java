@@ -58,7 +58,7 @@ public class GSTable extends AbstractTable {
             builder.add(
                     property.getName(),
                     mapToSqlType(property.getType())
-            );
+            ).nullable(!property.isPrimitive());
         }
         return builder.build();
     }

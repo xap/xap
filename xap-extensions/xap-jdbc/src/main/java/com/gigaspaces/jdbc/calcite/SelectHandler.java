@@ -69,7 +69,7 @@ public class SelectHandler extends RelShuttleImpl {
     private void handleJoin(GSJoin join) {
         RexCall rexCall = (RexCall) join.getCondition();
         if(rexCall.getKind() != SqlKind.EQUALS){
-            throw new UnsupportedOperationException("Only equi joins are supported");
+            throw new UnsupportedOperationException("Only equal joins are supported");
         }
         int left = join.getLeft().getRowType().getFieldCount();
         int leftIndex = ((RexInputRef) rexCall.getOperands().get(0)).getIndex();
