@@ -3317,11 +3317,13 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             _clusterFailureDetector = initClusterFailureDetector(_clusterPolicy);
             _engine = new SpaceEngine(this);
-            String persistent = attributeStore.get(ZNodePathFactory.space(_spaceName, "persistent"));
-            if(persistent == null){
-                final String isPersistent = String.valueOf(_engine.isTieredStorage() || _engine.isBlobStorePersistent());
-                attributeStore.set(ZNodePathFactory.space(_spaceName, "persistent"), isPersistent);
-                attributeStore.set(ZNodePathFactory.processingUnit(_puName, "persistent"), isPersistent);
+            if(attributeStore != null){
+                String persistent = attributeStore.get(ZNodePathFactory.space(_spaceName, "persistent"));
+                if(persistent == null){
+                    final String isPersistent = String.valueOf(_engine.isTieredStorage() || _engine.isBlobStorePersistent());
+                    attributeStore.set(ZNodePathFactory.space(_spaceName, "persistent"), isPersistent);
+                    attributeStore.set(ZNodePathFactory.processingUnit(_puName, "persistent"), isPersistent);
+                }
             }
 
             if (zookeeperTopologyHandler != null && _clusterInfo.isChunksRouting()) {
