@@ -43,7 +43,13 @@ public class ExplainPlanInfo extends JdbcExplainPlan {
     }
 
     public String toString(boolean verbose, TextReportFormatter formatter) {
-        String table = notEmpty(tableAlias) ? tableName + " as " + tableAlias : tableName;
+        String table;
+        //TODO - fix later - in calcite we'll use short table names by default for now
+        if ("calcite".equals(System.getProperty("com.gs.jdbc.v3.driver"))) {
+            table = tableAlias;
+        } else {
+            table = notEmpty(tableAlias) ? tableName + " as " + tableAlias : tableName;
+        }
         if (isIndexUsed()) {
             formatter.line("IndexScan: " + table);
         } else {

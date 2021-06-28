@@ -32,7 +32,7 @@ public class SelectHandler extends RelShuttleImpl {
     public RelNode visit(TableScan scan) {
         RelNode result = super.visit(scan);
         GSTable table = scan.getTable().unwrap(GSTable.class);
-        TableContainer tableContainer = new ConcreteTableContainer(table.getTypeDesc().getTypeName(), null, queryExecutor.getSpace());
+        TableContainer tableContainer = new ConcreteTableContainer(table.getTypeDesc().getTypeName(), table.getTypeDesc().getTypeSimpleName(), queryExecutor.getSpace());
         queryExecutor.getTables().add(tableContainer);
         if (!childToCalc.containsKey(scan)) {
             List<String> columns = tableContainer.getAllColumnNames();
@@ -78,8 +78,8 @@ public class SelectHandler extends RelShuttleImpl {
         String rColumn = join.getRight().getRowType().getFieldNames().get(rightIndex - left);
         TableContainer rightContainer = queryExecutor.getTableByColumnIndex(rightIndex);
         TableContainer leftContainer = queryExecutor.getTableByColumnIndex(leftIndex);
-        IQueryColumn rightColumn = rightContainer.addQueryColumn(rColumn, null, false, 0);
-        IQueryColumn leftColumn = leftContainer.addQueryColumn(lColumn, null, false, 0);
+        IQueryColumn rightColumn = rightContainer.addQueryColumn(rColumn, null, false, -1);
+        IQueryColumn leftColumn = leftContainer.addQueryColumn(lColumn, null, false, -1);
         rightContainer.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinInfo.JoinType.getType(join.getJoinType())));
         if (leftContainer.getJoinedTable() == null) {
             if (!rightContainer.isJoined()) {
