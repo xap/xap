@@ -25,6 +25,7 @@ import net.sf.jsqlparser.util.validation.validator.StatementValidator;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.externalize.RelWriterImpl;
 import org.apache.calcite.runtime.CalciteException;
+import org.apache.calcite.sql.SqlExplain;
 import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
@@ -41,7 +42,9 @@ import static com.gigaspaces.jdbc.calcite.CalciteDefaults.isCalcitePropertySet;
 
 public class QueryHandler {
 
-    private final Feature[] allowedFeatures = new Feature[] {Feature.select, Feature.explain, Feature.exprLike,
+    private static boolean explainPlan;
+
+    private final Feature[] allowedFeatures = new Feature[]{Feature.select, Feature.explain, Feature.exprLike,
             Feature.jdbcParameter, Feature.join, Feature.joinInner, Feature.joinLeft, Feature.orderBy,
             Feature.orderByNullOrdering, Feature.function, Feature.selectGroupBy, Feature.distinct};
 
@@ -62,16 +65,28 @@ public class QueryHandler {
             throw e.getException();
         } catch (GenericJdbcException | UnsupportedOperationException e) {
             throw new SQLException(e.getMessage(), e);
+        } finally {
+            explainPlan = false;
         }
     }
 
-    private ResponsePacket  executeStatement(IJSpace space, GSRelNode relNode, Object[] preparedValues) throws SQLException {
+    private ResponsePacket executeStatement(IJSpace space, GSRelNode relNode, Object[] preparedValues) throws SQLException {
         ResponsePacket packet = new ResponsePacket();
-        QueryExecutor qE = new QueryExecutor(space, preparedValues);
+        QueryExecutionConfig queryExecutionConfig;
+        if (explainPlan) {
+            queryExecutionConfig = new QueryExecutionConfig(true, false);
+        } else {
+            queryExecutionConfig = new QueryExecutionConfig();
+        }
+        QueryExecutor qE = new QueryExecutor(space, queryExecutionConfig, preparedValues);
         SelectHandler selectHandler = new SelectHandler(qE);
         relNode.accept(selectHandler);
         QueryResult queryResult = qE.execute();
-        packet.setResultEntry(queryResult.convertEntriesToResultArrays());
+        if (explainPlan) {
+            packet.setResultEntry(((ExplainPlanQueryResult) queryResult).convertEntriesToResultArrays(queryExecutionConfig));
+        } else {
+            packet.setResultEntry(queryResult.convertEntriesToResultArrays());
+        }
         return packet;
     }
 
@@ -129,6 +144,10 @@ public class QueryHandler {
             query = prepareQueryForCalcite(query, properties);
             GSOptimizer optimizer = new GSOptimizer(space);
             SqlNode ast = optimizer.parse(query);
+            if (ast instanceof SqlExplain) {
+                ast = ((SqlExplain) ast).getExplicandum();
+                explainPlan = true;
+            }
             SqlNode validatedAst = optimizer.validate(ast);
             RelNode logicalPlan = optimizer.createLogicalPlan(validatedAst);
             GSRelNode physicalPlan = optimizer.createPhysicalPlan(logicalPlan);

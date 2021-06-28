@@ -28,6 +28,11 @@ public class ExplainPlanQueryResult extends QueryResult {
         return this.tableContainer;
     }
 
+    @Override
+    public int size() {
+        return 1;
+    }
+
     public JdbcExplainPlan getExplainPlanInfo() {
         return jdbcExplainPlan;
     }
