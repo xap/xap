@@ -261,8 +261,8 @@ public class SystemLocations {
         return tools.resolve(Paths.get(subpath, more));
     }
     
-    public Path dataBridge() {
-        return tools().resolve("databridge/xap-data-bridge.jar");
+    public Path dataGatewayJar() {
+        return tools().resolve("data-gateway/xap-data-gateway.jar");
     }
 
 
