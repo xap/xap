@@ -39,9 +39,8 @@ public class InfluxDBHttpDispatcher extends InfluxDBDispatcher {
 
     public InfluxDBHttpDispatcher(InfluxDBReporterFactory factory) {
         this.url = toUrl("write", factory);
-        logger.info("InfluxDBHttpDispatcher created [url=" + url + "]");
-
-            logger.info("InfluxDBHttpDispatcher created [url=" + url + "]");
+        if (logger.isDebugEnabled())
+            logger.debug("InfluxDBHttpDispatcher created [url=" + url + "]");
     }
 
     public URL getUrl() {
@@ -79,7 +78,6 @@ public class InfluxDBHttpDispatcher extends InfluxDBDispatcher {
                 suffix = append(suffix, "epoch", "ms");
                 suffix = append(suffix, "q", encodedQuery);
             }
-            logger.info("==========================> suffix " +suffix );
             return new URL("http", factory.getHost(), factory.getPort(), suffix);
         } catch (MalformedURLException e) {
             throw new RuntimeException("Failed to create InfluxDB HTTP url", e);

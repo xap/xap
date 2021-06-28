@@ -39,7 +39,8 @@ public class InfluxDBUdpDispatcher extends InfluxDBDispatcher {
         } catch (SocketException e) {
             throw new RuntimeException("Failed to create InfluxDBUdpDispatcher", e);
         }
-            logger.info("InfluxDBUdpDispatcher created [host=" + factory.getHost() +
+        if (logger.isDebugEnabled())
+            logger.debug("InfluxDBUdpDispatcher created [host=" + factory.getHost() +
                     ", port=" + factory.getPort() + "]");
     }
 

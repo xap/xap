@@ -69,7 +69,6 @@ public class InfluxDBReporter extends MetricReporter {
     @Override
     protected void report(MetricRegistrySnapshot snapshot, MetricTagsSnapshot tags, String key, Object value) {
         // Save length before append:
-//        logger.info("====> report Influx");
         final int beforeAppend = buffer.length();
 
         // Append line (see https://influxdb.com/docs/v0.9/write_protocols/line.html)

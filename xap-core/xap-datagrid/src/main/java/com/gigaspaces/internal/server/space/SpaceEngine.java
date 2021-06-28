@@ -499,12 +499,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
                 return active;
             }
         });
-        dynamicTags.put("space_primary", new DynamicMetricTag() {
-            @Override
-            public Object getValue() {
-                return _spaceImpl.isPrimary() ? "Primary" : "Backup";
-            }
-        });
+        dynamicTags.put("space_primary", () -> _spaceImpl.isPrimary() ? "Primary" : "Backup");
         return (InternalMetricRegistrator) _metricManager.createRegistrator(MetricConstants.SPACE_METRIC_NAME, tags, dynamicTags);
     }
 

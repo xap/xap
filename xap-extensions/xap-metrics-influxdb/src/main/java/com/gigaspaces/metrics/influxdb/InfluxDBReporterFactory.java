@@ -51,7 +51,6 @@ public class InfluxDBReporterFactory extends MetricReporterFactory<MetricReporte
     @Override
     public void load(Properties properties) {
         super.load(properties);
-        System.out.println("influx Properties " + properties);
         setVersion(properties.getProperty("version", DEFAULT_VERSION));
         setProtocol(properties.getProperty("protocol", DEFAULT_PROTOCOL));
         setMaxReportLength(getIntProperty(properties, "max-report-length", DEFAULT_MAX_REPORT_LENGTH));
