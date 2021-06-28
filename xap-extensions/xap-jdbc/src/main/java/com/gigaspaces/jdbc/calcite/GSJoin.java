@@ -36,8 +36,6 @@ public class GSJoin extends Join implements GSRelNode {
 
     @Override
     public RelOptCost computeSelfCost(RelOptPlanner planner, RelMetadataQuery mq) {
-        RelOptCost relOptCost = super.computeSelfCost(planner, mq);
-        System.out.println("###MISHEL "+relOptCost);
-        return relOptCost;
+        return super.computeSelfCost(planner, mq);
     }
 }
