@@ -2,9 +2,9 @@ package com.gigaspaces.jdbc.calcite.schema;
 
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.jdbc.model.result.QueryResult;
+import com.gigaspaces.jdbc.model.result.SchemaQueryResult;
 import com.gigaspaces.jdbc.model.result.TableRow;
-import com.gigaspaces.jdbc.model.result.TempQueryResult;
-import com.gigaspaces.jdbc.model.table.ConcreteColumn;
+import com.gigaspaces.jdbc.model.table.IQueryColumn;
 import com.gigaspaces.jdbc.model.table.SchemaTableContainer;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.admin.IRemoteJSpaceAdmin;
@@ -41,9 +41,9 @@ public class GSSchemaTable extends AbstractTable {
         return this.systemTable.getProperties();
     }
 
-    public QueryResult execute(SchemaTableContainer schemaTableContainer, IJSpace space, List<ConcreteColumn> queryColumns) throws SQLException {
-        QueryResult queryResult = new TempQueryResult(schemaTableContainer);
-        ConcreteColumn[] arr = queryColumns.toArray(new ConcreteColumn[0]);
+    public QueryResult execute(SchemaTableContainer schemaTableContainer, IJSpace space, List<IQueryColumn> queryColumns) throws SQLException {
+        QueryResult queryResult = new SchemaQueryResult(schemaTableContainer, queryColumns);
+        IQueryColumn[] arr = schemaTableContainer.getSelectedColumns().toArray(new IQueryColumn[0]);
         switch (systemTable) {
             case pg_am:
             case pg_attrdef:
@@ -53,6 +53,7 @@ public class GSSchemaTable extends AbstractTable {
                     ITypeDesc typeDesc = space.getDirectProxy().getTypeManager().getTypeDescByName(table);
                     queryResult.addRow(new TableRow(arr, table, !typeDesc.getIndexes().isEmpty()));
                 });
+                break;
             default:
                 throw new UnsupportedOperationException("Unhandled system table " + systemTable.name());
         }

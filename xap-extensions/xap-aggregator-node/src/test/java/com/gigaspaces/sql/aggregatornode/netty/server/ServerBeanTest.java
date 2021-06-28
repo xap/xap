@@ -1,6 +1,7 @@
 package com.gigaspaces.sql.aggregatornode.netty.server;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.openspaces.core.GigaSpace;
@@ -49,6 +50,16 @@ class ServerBeanTest {
             assertTrue(conn.isValid(1000));
         }
     }
+
+    @Test
+    void testSystemTable() throws Exception {
+        try (Connection conn = connect(true)) {
+            final Statement statement = conn.createStatement();
+            ResultSet res = statement.executeQuery("select * FROM pg_tables");
+            assertEquals(2, DumpUtils.dump(res).size()); // asserts that we return 2 types from pg_tables (Object and MyPojo)
+        }
+    }
+
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
