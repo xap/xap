@@ -89,19 +89,22 @@ public class ConditionHandler extends RexShuttle {
             }
             case EQUALS:
             case NOT_EQUALS:
+            case LIKE:
             case LESS_THAN:
             case LESS_THAN_OR_EQUAL:
             case GREATER_THAN:
-            case GREATER_THAN_OR_EQUAL:
+            case GREATER_THAN_OR_EQUAL: {
                 RexNode leftOp = getNode((RexLocalRef) call.getOperands().get(0));
                 RexNode rightOp = getNode((RexLocalRef) call.getOperands().get(1));
                 handleTwoOperandsCall(leftOp, rightOp, call.getKind());
                 break;
+            }
             case IS_NULL:
             case IS_NOT_NULL:
-            case NOT:
+            case NOT: {
                 handleSingleOperandsCall(getNode((RexLocalRef) call.getOperands().get(0)), call.getKind());
                 break;
+            }
             default:
                 throw new UnsupportedOperationException(String.format("Queries with %s are not supported",call.getKind()));
         }
@@ -221,6 +224,10 @@ public class ConditionHandler extends RexShuttle {
                 break;
             case GREATER_THAN_OR_EQUAL:
                 range = new SegmentRange(column, (Comparable) value, true, null, false);
+                break;
+            case LIKE:
+                String regex = ((String) value).replaceAll("%", ".*").replaceAll("_", ".");
+                range = new RegexRange(column, regex);
                 break;
             default:
                 throw new UnsupportedOperationException(String.format("Queries with %s are not supported",sqlKind));
