@@ -989,7 +989,7 @@ public interface Constants {
         String RETRY_INTERVAL = PREFIX + "retry-interval";
         String RETRY_INTERVAL_DEFAULT = "100";
         String FULL_LEADER_SELECTOR_RETRY_INTERVAL = SPACE_CONFIG_PREFIX + RETRY_INTERVAL;
-
+        String ZK_PARTICIPANT_NAME_SEPARATOR = "~";
     }
 
     public interface TieredStorage {
