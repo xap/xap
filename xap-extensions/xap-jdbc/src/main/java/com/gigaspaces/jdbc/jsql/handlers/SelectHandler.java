@@ -139,7 +139,7 @@ public class SelectHandler extends SelectVisitorAdapter implements FromItemVisit
         SelectHandler physicalPlanHandler = new SelectHandler(subQueryExecutor);
         subQueryExecutor = physicalPlanHandler.prepareForExecution(subSelect.getSelectBody());
         try {
-            queryExecutor.getTables().add(new TempTableContainer(subQueryExecutor.execute(), subSelect.getAlias() == null ? null : subSelect.getAlias().getName()));
+            queryExecutor.getTables().add(new TempTableContainer(subSelect.getAlias() == null ? null : subSelect.getAlias().getName()).init(subQueryExecutor.execute()));
         } catch (SQLException e) {
             throw new SQLExceptionWrapper(e);
         }

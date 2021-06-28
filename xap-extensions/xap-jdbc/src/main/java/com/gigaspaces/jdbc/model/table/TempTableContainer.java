@@ -16,29 +16,34 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TempTableContainer extends TableContainer {
-    private final String alias;
-    private final QueryResult tableResult;
-    private TempTableQTP queryTemplatePacket;
-    private final List<IQueryColumn> visibleColumns = new ArrayList<>();
-    private final List<IQueryColumn> tableColumns = new ArrayList<>();
-    private final Set<IQueryColumn> invisibleColumns = new HashSet<>();
-    private final List<String> allColumnNamesSorted;
+    protected final String alias;
+    protected QueryResult tableResult;
+    protected TempTableQTP queryTemplatePacket;
+    protected final List<IQueryColumn> visibleColumns = new ArrayList<>();
+    protected final List<IQueryColumn> tableColumns = new ArrayList<>();
+    protected final Set<IQueryColumn> invisibleColumns = new HashSet<>();
+    protected final List<String> allColumnNamesSorted = new ArrayList<>();
     private TableContainer joinedTable;
 
-    public TempTableContainer(QueryResult tableResult, String alias) {
-        this.tableResult = tableResult;
+    public TempTableContainer(String alias) {
         this.alias = alias;
+    }
+
+    public TempTableContainer init(QueryResult tableResult) {
+        this.tableResult = tableResult;
         if (tableResult instanceof ExplainPlanQueryResult) {
             tableColumns.addAll(((ExplainPlanQueryResult) tableResult).getVisibleColumns());
         } else {
             tableColumns.addAll(tableResult.getSelectedColumns());
         }
 
-        allColumnNamesSorted = tableColumns.stream().map(IQueryColumn::getAlias).collect(Collectors.toList());
+        allColumnNamesSorted.addAll(tableColumns.stream().map(IQueryColumn::getAlias).collect(Collectors.toList()));
+
+        return this;
     }
 
     @Override
-    public QueryResult executeRead(QueryExecutionConfig config) {
+    public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
         if (config.isExplainPlan()) {
             ExplainPlanQueryResult explainResult = ((ExplainPlanQueryResult) tableResult);
             SubqueryExplainPlan subquery = new SubqueryExplainPlan(getSelectedColumns(),
