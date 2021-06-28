@@ -41,7 +41,7 @@ public class SelectHandler extends RelShuttleImpl {
             tableContainer = new ConcreteTableContainer(gsTable.getName(), null, queryExecutor.getSpace());
         } else {
             GSSchemaTable schemaTable = relOptTable.unwrap(GSSchemaTable.class);
-            tableContainer = new SchemaTableContainer(schemaTable, queryExecutor.getSpace());
+            tableContainer = new SchemaTableContainer(schemaTable, null, queryExecutor.getSpace());
         }
         queryExecutor.getTables().add(tableContainer);
         if (!childToCalc.containsKey(scan)) {
