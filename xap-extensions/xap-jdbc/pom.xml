@@ -127,11 +127,18 @@
                             <includes>
                                 <include>**/Parser.jj</include>
                             </includes>
-                            <lookAhead>2</lookAhead>
+                            <lookAhead>1</lookAhead>
                             <isStatic>false</isStatic>
                         </configuration>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>net.java.dev.javacc</groupId>
+                        <artifactId>javacc</artifactId>
+                        <version>4.0</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
