@@ -113,13 +113,21 @@ public class ConditionHandler extends RexShuttle {
     private void handleSingleOperandsCall(RexNode operand, SqlKind sqlKind){
         String column = null;
         Range range = null;
-        switch (operand.getKind()){
+        RexNode leftOp = null;
+        RexNode rightOp = null;
+        switch (operand.getKind().reverse()){
             case INPUT_REF:
                 column = fields.get(((RexInputRef) operand).getIndex());
                 break;
+            case EQUALS:
+            case NOT_EQUALS:
+            case LESS_THAN:
+            case LESS_THAN_OR_EQUAL:
+            case GREATER_THAN:
+            case GREATER_THAN_OR_EQUAL:
             case LIKE:
-                RexNode leftOp = getNode((RexLocalRef) ((RexCall) operand).getOperands().get(0));
-                RexNode rightOp = getNode((RexLocalRef) ((RexCall) operand).getOperands().get(1));
+                leftOp = getNode((RexLocalRef) ((RexCall) operand).getOperands().get(0));
+                rightOp = getNode((RexLocalRef) ((RexCall) operand).getOperands().get(1));
                 handleTwoOperandsCall(leftOp, rightOp, operand.getKind(), SqlKind.NOT.equals(sqlKind));
                 return;
             default:
@@ -169,7 +177,7 @@ public class ConditionHandler extends RexShuttle {
                 column = fields.get(((RexInputRef) leftOp).getIndex());
                 break;
             case CAST:
-                handleTwoOperandsCall(getNode((RexLocalRef) ((RexCall) leftOp).getOperands().get(0)), rightOp, sqlKind, false);
+                handleTwoOperandsCall(getNode((RexLocalRef) ((RexCall) leftOp).getOperands().get(0)), rightOp, sqlKind, isNot);
                 return; //return from recursion
             case DYNAMIC_PARAM:
                 value = queryExecutor.getPreparedValues()[((RexDynamicParam) leftOp).getIndex()];
@@ -188,7 +196,7 @@ public class ConditionHandler extends RexShuttle {
                 column = fields.get(((RexInputRef) rightOp).getIndex());
                 break;
             case CAST:
-                handleTwoOperandsCall(leftOp, getNode((RexLocalRef) ((RexCall) rightOp).getOperands().get(0)), sqlKind, false);
+                handleTwoOperandsCall(leftOp, getNode((RexLocalRef) ((RexCall) rightOp).getOperands().get(0)), sqlKind, isNot);
                 return; //return from recursion
             case DYNAMIC_PARAM:
                 value = queryExecutor.getPreparedValues()[((RexDynamicParam) rightOp).getIndex()];
@@ -211,6 +219,7 @@ public class ConditionHandler extends RexShuttle {
         } catch (SQLException e) {
             throw new SQLExceptionWrapper(e);//throw as runtime.
         }
+        sqlKind = isNot ? sqlKind.negateNullSafe() : sqlKind;
         switch (sqlKind) {
             case EQUALS:
                 range = new EqualValueRange(column, value);
