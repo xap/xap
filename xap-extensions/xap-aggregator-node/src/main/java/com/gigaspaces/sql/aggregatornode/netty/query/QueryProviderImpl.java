@@ -6,6 +6,7 @@ import com.gigaspaces.jdbc.QueryHandler;
 import com.gigaspaces.jdbc.calcite.GSOptimizer;
 import com.gigaspaces.jdbc.calcite.GSOptimizerValidationResult;
 import com.gigaspaces.jdbc.calcite.GSRelNode;
+import com.gigaspaces.jdbc.calcite.handlers.CalciteQueryHandler;
 import com.gigaspaces.jdbc.calcite.sql.extension.SqlShowOption;
 import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ParseException;
@@ -30,14 +31,14 @@ import static java.util.Collections.singletonList;
 public class QueryProviderImpl implements QueryProvider {
 
     private final ISpaceProxy space;
-    private final QueryHandler handler;
+    private final CalciteQueryHandler handler;
 
     private final Map<String, Statement> statements = new HashMap<>();
     private final Map<String, Portal<?>> portals = new HashMap<>();
 
     public QueryProviderImpl(ISpaceProxy space) {
         this.space = space;
-        this.handler = new QueryHandler();
+        this.handler = new CalciteQueryHandler();
     }
 
     @Override
