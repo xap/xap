@@ -96,7 +96,7 @@ public class ConditionHandler extends RexShuttle {
             case GREATER_THAN_OR_EQUAL: {
                 RexNode leftOp = getNode((RexLocalRef) call.getOperands().get(0));
                 RexNode rightOp = getNode((RexLocalRef) call.getOperands().get(1));
-                handleTwoOperandsCall(leftOp, rightOp, call.getKind());
+                handleTwoOperandsCall(leftOp, rightOp, call.getKind(), false);
                 break;
             }
             case IS_NULL:
@@ -117,6 +117,11 @@ public class ConditionHandler extends RexShuttle {
             case INPUT_REF:
                 column = fields.get(((RexInputRef) operand).getIndex());
                 break;
+            case LIKE:
+                RexNode leftOp = getNode((RexLocalRef) ((RexCall) operand).getOperands().get(0));
+                RexNode rightOp = getNode((RexLocalRef) ((RexCall) operand).getOperands().get(1));
+                handleTwoOperandsCall(leftOp, rightOp, operand.getKind(), SqlKind.NOT.equals(sqlKind));
+                return;
             default:
                 throw new UnsupportedOperationException(String.format("Queries with %s are not supported",operand.getKind()));
         }
@@ -153,7 +158,7 @@ public class ConditionHandler extends RexShuttle {
         qtpMap.put(table, table.createQueryTemplatePacketWithRange(range));
     }
 
-    private void handleTwoOperandsCall(RexNode leftOp, RexNode rightOp, SqlKind sqlKind){
+    private void handleTwoOperandsCall(RexNode leftOp, RexNode rightOp, SqlKind sqlKind, boolean isNot){
         String column = null;
         Object value = null;
         Range range = null;
@@ -164,7 +169,7 @@ public class ConditionHandler extends RexShuttle {
                 column = fields.get(((RexInputRef) leftOp).getIndex());
                 break;
             case CAST:
-                handleTwoOperandsCall(getNode((RexLocalRef) ((RexCall) leftOp).getOperands().get(0)), rightOp, sqlKind);
+                handleTwoOperandsCall(getNode((RexLocalRef) ((RexCall) leftOp).getOperands().get(0)), rightOp, sqlKind, false);
                 return; //return from recursion
             case DYNAMIC_PARAM:
                 value = queryExecutor.getPreparedValues()[((RexDynamicParam) leftOp).getIndex()];
@@ -183,7 +188,7 @@ public class ConditionHandler extends RexShuttle {
                 column = fields.get(((RexInputRef) rightOp).getIndex());
                 break;
             case CAST:
-                handleTwoOperandsCall(leftOp, getNode((RexLocalRef) ((RexCall) rightOp).getOperands().get(0)), sqlKind);
+                handleTwoOperandsCall(leftOp, getNode((RexLocalRef) ((RexCall) rightOp).getOperands().get(0)), sqlKind, false);
                 return; //return from recursion
             case DYNAMIC_PARAM:
                 value = queryExecutor.getPreparedValues()[((RexDynamicParam) rightOp).getIndex()];
@@ -227,7 +232,7 @@ public class ConditionHandler extends RexShuttle {
                 break;
             case LIKE:
                 String regex = ((String) value).replaceAll("%", ".*").replaceAll("_", ".");
-                range = new RegexRange(column, regex);
+                range = isNot ? new NotRegexRange(column, regex) : new RegexRange(column, regex);
                 break;
             default:
                 throw new UnsupportedOperationException(String.format("Queries with %s are not supported",sqlKind));
