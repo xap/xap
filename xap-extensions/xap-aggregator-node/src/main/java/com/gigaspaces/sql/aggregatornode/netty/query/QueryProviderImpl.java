@@ -8,12 +8,14 @@ import com.gigaspaces.jdbc.calcite.GSOptimizerValidationResult;
 import com.gigaspaces.jdbc.calcite.GSRelNode;
 import com.gigaspaces.jdbc.calcite.sql.extension.SqlShowOption;
 import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
+import com.gigaspaces.sql.aggregatornode.netty.exception.ParseException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.utils.*;
 import com.j_spaces.jdbc.ResponsePacket;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.nio.charset.Charset;
@@ -147,14 +149,18 @@ public class QueryProviderImpl implements QueryProvider {
         }
     }
 
-    private StatementImpl prepareStatement(String name, String query, int[] paramTypes) {
+    private StatementImpl prepareStatement(String name, String query, int[] paramTypes) throws ParseException {
         // TODO possibly it's worth to add SqlEmptyNode to sql parser
         if (query.trim().isEmpty()) {
             assert paramTypes.length == 0;
             return new StatementImpl(this, name, null, null, StatementDescription.EMPTY);
         }
         GSOptimizer optimizer = new GSOptimizer(space);
-        return prepareStatement(name, optimizer, paramTypes, optimizer.parse(query));
+        try {
+            return prepareStatement(name, optimizer, paramTypes, optimizer.parse(query));
+        } catch (SqlParseException e) {
+            throw new ParseException(e.getMessage(), e);
+        }
     }
 
     private StatementImpl prepareStatement(String name, GSOptimizer optimizer, int[] paramTypes, SqlNode ast) {
