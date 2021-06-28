@@ -23,6 +23,7 @@ import org.apache.calcite.rel.externalize.RelWriterImpl;
 import org.apache.calcite.runtime.CalciteException;
 import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.validate.SqlValidatorException;
 
 import java.io.PrintWriter;
@@ -141,6 +142,8 @@ public class QueryHandler {
                 }
             }
             throw calciteException; //runtime
+        } catch (SqlParseException sqlParseException) {
+            throw new SQLException("Query parsing failed.", sqlParseException);
         }
     }
 

@@ -70,14 +70,10 @@ public class GSOptimizer {
         cluster = RelOptCluster.create(planner, new RexBuilder(typeFactory));
     }
 
-    public SqlNode parse(String query) {
+    public SqlNode parse(String query) throws SqlParseException {
         SqlParser parser = createParser(query);
 
-        try {
-            return parser.parseQuery();
-        } catch (SqlParseException e) {
-            throw new RuntimeException("Failed to parse the query.");
-        }
+        return parser.parseQuery();
     }
 
     public SqlNodeList parseMultiline(String query) {
