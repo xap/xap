@@ -394,6 +394,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     }
 
     private HttpServer initWebServerIfNeeded() throws CreateException {
+        if (isPrivate())
+            return null;
         final String prefix = "com.gs.space.rest";
         boolean enabled = Boolean.getBoolean(prefix + ".enabled");
         if (!enabled)
