@@ -115,7 +115,7 @@ public class ConditionHandler extends RexShuttle {
         Range range = null;
         RexNode leftOp = null;
         RexNode rightOp = null;
-        switch (operand.getKind().reverse()){
+        switch (operand.getKind()){
             case INPUT_REF:
                 column = fields.get(((RexInputRef) operand).getIndex());
                 break;
