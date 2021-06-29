@@ -262,7 +262,7 @@ public class SystemLocations {
     }
     
     public Path dataGatewayJar() {
-        return tools().resolve("data-gateway/xap-data-gateway.jar");
+        return tools().resolve("data-gateway").resolve("xap-data-gateway.jar");
     }
 
 
