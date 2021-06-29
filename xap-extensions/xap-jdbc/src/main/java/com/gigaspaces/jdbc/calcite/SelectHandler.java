@@ -2,6 +2,8 @@ package com.gigaspaces.jdbc.calcite;
 
 import com.gigaspaces.jdbc.QueryExecutor;
 import com.gigaspaces.jdbc.calcite.schema.GSSchemaTable;
+import com.gigaspaces.jdbc.calcite.handlers.ConditionHandler;
+import com.gigaspaces.jdbc.calcite.handlers.SingleTableProjectionHandler;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
 import com.gigaspaces.jdbc.model.table.IQueryColumn;
@@ -12,9 +14,7 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rex.RexCall;
-import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexProgram;
+import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlKind;
 
 import java.util.HashMap;
@@ -114,11 +114,7 @@ public class SelectHandler extends RelShuttleImpl {
         List<String> inputFields = program.getInputRowType().getFieldNames();
         List<String> outputFields = program.getOutputRowType().getFieldNames();
         queryExecutor.addFieldCount(outputFields.size());
-        for (int i = 0; i < outputFields.size(); i++) {
-            String alias = outputFields.get(i);
-            String originalName = inputFields.get(program.getSourceField(i));
-            tableContainer.addQueryColumn(originalName, alias, true, 0);
-        }
+        new SingleTableProjectionHandler(program, tableContainer, other.equals(root)).project();
         ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
         if (program.getCondition() != null) {
             program.getCondition().accept(conditionHandler);

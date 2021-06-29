@@ -1,5 +1,7 @@
 package com.gigaspaces.jdbc.model.table;
 
+import com.gigaspaces.internal.transport.IEntryPacket;
+
 import java.util.Objects;
 
 public class ConcreteColumn implements IQueryColumn {
@@ -93,5 +95,18 @@ public class ConcreteColumn implements IQueryColumn {
     @Override
     public int compareTo(IQueryColumn other) {
         return Integer.compare(this.getColumnOrdinal(), other.getColumnOrdinal());
+    }
+
+    @Override
+    public Object getValue(IEntryPacket entryPacket) {
+        Object value;
+        if (isUUID()) {
+            value = entryPacket.getUID();
+        } else if (entryPacket.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(getName())) {
+            value = entryPacket.getID();
+        } else {
+            value = entryPacket.getPropertyValue(getName());
+        }
+        return value;
     }
 }
