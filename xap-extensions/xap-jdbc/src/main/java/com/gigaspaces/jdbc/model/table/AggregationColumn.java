@@ -1,6 +1,8 @@
 package com.gigaspaces.jdbc.model.table;
 
 
+import com.gigaspaces.internal.transport.IEntryPacket;
+
 import java.util.Locale;
 import java.util.Objects;
 
@@ -120,5 +122,10 @@ public class AggregationColumn implements IQueryColumn {
     @Override
     public int hashCode() {
         return Objects.hash(getType(), getAlias(), isVisible(), isAllColumns(), getQueryColumn(), getColumnOrdinal());
+    }
+
+    @Override
+    public Object getValue(IEntryPacket entryPacket) {
+        return queryColumn.getValue(entryPacket);
     }
 }
