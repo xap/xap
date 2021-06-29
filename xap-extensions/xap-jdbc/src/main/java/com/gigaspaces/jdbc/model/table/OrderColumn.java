@@ -1,5 +1,7 @@
 package com.gigaspaces.jdbc.model.table;
 
+import com.gigaspaces.internal.transport.IEntryPacket;
+
 public class OrderColumn implements IQueryColumn {
 
     private final boolean isAsc;
@@ -81,5 +83,10 @@ public class OrderColumn implements IQueryColumn {
     @Override
     public int compareTo(IQueryColumn other) {
         return this.queryColumn.compareTo(other);
+    }
+
+    @Override
+    public Object getValue(IEntryPacket entryPacket) {
+        return queryColumn.getValue(entryPacket);
     }
 }

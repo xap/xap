@@ -1,4 +1,4 @@
-package com.gigaspaces.jdbc.calcite;
+package com.gigaspaces.jdbc.calcite.handlers;
 
 import com.gigaspaces.jdbc.QueryExecutor;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
