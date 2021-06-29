@@ -22,7 +22,7 @@ public class SchemaTableContainer extends TempTableContainer {
     public SchemaTableContainer(GSSchemaTable table, String alias, IJSpace space) {
         super(alias);
         this.table = table;
-        this.tableColumns.addAll(Arrays.stream(table.getSchemas()).map(x -> new ConcreteColumn(x.getPropertyName(), x.getSqlTypeName().getDeclaringClass(), null, true, this, -1)).collect(Collectors.toList()));
+        this.tableColumns.addAll(Arrays.stream(table.getSchemas()).map(x -> new ConcreteColumn(x.getPropertyName(), x.getJavaType(), null, true, this, -1)).collect(Collectors.toList()));
         this.space = space;
 
         allColumnNamesSorted.addAll(tableColumns.stream().map(IQueryColumn::getAlias).collect(Collectors.toList()));
@@ -31,14 +31,11 @@ public class SchemaTableContainer extends TempTableContainer {
     @Override
     public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
         if (tableResult != null) return tableResult;
-
-        List<IQueryColumn> queryColumns = getVisibleColumns();
-        tableResult = table.execute(this, space, queryColumns);
+        tableResult = table.execute(this, space, tableColumns);
         if (queryTemplatePacket != null) {
             tableResult.filter(x -> queryTemplatePacket.eval(x));
         }
-        tableResult = new TempQueryResult(this);
-        return tableResult;
+        return tableResult = new TempQueryResult(this);
     }
 
     @Override

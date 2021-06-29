@@ -13,8 +13,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class TypeUtils {
     public static final PgType PG_TYPE_UNKNOWN = TypeUnknown.INSTANCE;
@@ -58,11 +57,13 @@ public class TypeUtils {
                     field.setAccessible(true);
                     PgType type = (PgType) field.get(null);
                     if (typeSet.add(type)) {
-                        TypeUtils.typeIdToType.put(type.id, type);
+                        typeIdToType.put(type.id, type);
                         if (type.arrayType != 0) {
-                            PgType arrayType = TypeUtils.arrayType(type);
-                            if (typeSet.add(arrayType))
-                                TypeUtils.elementToArray.put(type.id, arrayType);
+                            PgType arrayType = arrayType(type);
+                            if (typeSet.add(arrayType)) {
+                                typeIdToType.put(arrayType.id, arrayType);
+                                elementToArray.put(type.id, arrayType);
+                            }
                         }
                     }
                 }
@@ -82,6 +83,8 @@ public class TypeUtils {
 
     public static PgType fromInternal(RelDataType internalType) {
         SqlTypeName typeName = internalType.getSqlTypeName();
+        if (typeName == SqlTypeName.ARRAY)
+            return getArrayType(fromInternal(internalType.getComponentType()).id);
         switch (typeName) {
             case BOOLEAN:
                 return PG_TYPE_BOOL;
@@ -130,19 +133,15 @@ public class TypeUtils {
                 return PG_TYPE_TIMESTAMP;
             case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
                 return PG_TYPE_TIMESTAMPTZ;
-            case ARRAY:
-                return getArrayType(fromInternal(internalType.getComponentType()).arrayType);
             case CURSOR:
                 return PG_TYPE_CURSOR;
             case ANY:
                 return PG_TYPE_ANY;
-
+            case DISTINCT:
             case NULL:
             case SYMBOL:
             case MULTISET:
             case MAP:
-            case DISTINCT:
-            case STRUCTURED:
             case ROW:
             case OTHER:
             case COLUMN_LIST:
@@ -160,6 +159,14 @@ public class TypeUtils {
             return factory.createArrayType(toInternal(type1.elementType, factory), -1);
         } else if (PG_TYPE_BOOL.equals(type1)) {
             return factory.createSqlType(SqlTypeName.BOOLEAN);
+        } else if (PG_TYPE_REGPROC.equals(type1)) {
+            return factory.createSqlType(SqlTypeName.INTEGER);
+        } else if (PG_TYPE_OID.equals(type1)) {
+            return factory.createSqlType(SqlTypeName.INTEGER);
+        } else if (PG_TYPE_TEXT.equals(type1)) {
+            return factory.createSqlType(SqlTypeName.VARCHAR);
+        } else if (PG_TYPE_NAME.equals(type1)) {
+            return factory.createSqlType(SqlTypeName.VARCHAR);
         } else if (PG_TYPE_INT2.equals(type1)) {
             return factory.createSqlType(SqlTypeName.SMALLINT);
         } else if (PG_TYPE_INT4.equals(type1)) {
@@ -223,7 +230,7 @@ public class TypeUtils {
             return new PgTypeInt4Array();
 
         // TODO implement array type encoder/decoder
-        return new PgType(type.arrayType, type.name + "_array", -1, 0, type.id){};
+        return new PgType(type.arrayType, type.name + "_array", -1, 0, type.id);
     }
 
     protected static void checkType(Object value, Class<?> type) throws ProtocolException {

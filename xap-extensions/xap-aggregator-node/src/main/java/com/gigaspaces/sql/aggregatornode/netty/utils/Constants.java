@@ -23,7 +23,7 @@ public class Constants {
     public static final int[] EMPTY_INT_ARRAY = new int[0];
     public static final String EMPTY_STRING = "";
 
-    public static final String DELIMITER = ",";
+    public static final char DELIMITER = ',';
 
     private Constants() {}
 }

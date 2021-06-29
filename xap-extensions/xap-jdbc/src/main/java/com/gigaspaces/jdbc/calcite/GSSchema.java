@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc.calcite;
 
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.jdbc.calcite.schema.GSSchemaTablesHolder;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeUtils;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.SQLUtil;
 import org.apache.calcite.linq4j.tree.Expression;
@@ -46,12 +47,12 @@ public class GSSchema implements Schema {
 
     @Override
     public RelProtoDataType getType(String name) {
-        return null;
+        return TypeUtils.resolveType(name);
     }
 
     @Override
     public Set<String> getTypeNames() {
-        return Collections.emptySet();
+        return TypeUtils.typeNames();
     }
 
     @Override

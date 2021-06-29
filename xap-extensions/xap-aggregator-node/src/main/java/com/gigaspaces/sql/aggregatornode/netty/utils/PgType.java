@@ -5,7 +5,7 @@ import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.Session;
 import io.netty.buffer.ByteBuf;
 
-public abstract class PgType {
+public class PgType {
     protected final int id;
     protected final String name;
     protected final int length;
@@ -30,6 +30,10 @@ public abstract class PgType {
 
     public final int getLength() {
         return length;
+    }
+
+    public int getElementType() {
+        return elementType;
     }
 
     protected final void asText(Session session, ByteBuf dst, Object value) throws ProtocolException {
