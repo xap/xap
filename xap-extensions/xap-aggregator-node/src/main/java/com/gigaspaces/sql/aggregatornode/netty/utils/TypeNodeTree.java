@@ -4,34 +4,32 @@ import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.Session;
 import io.netty.buffer.ByteBuf;
 
-// TODO implement type encoder/decoder
-public class TypeRegproc extends PgType {
-    public static final PgType INSTANCE = new TypeRegproc();
+public class TypeNodeTree extends PgType {
+    public static final PgType INSTANCE = new TypeNodeTree();
 
-    public TypeRegproc() {
-        super(24, "regproc", 4, 1008, 0);
+    public TypeNodeTree() {
+        super(194, "pg_node_tree", -1, 0, 0);
     }
 
     @Override
     protected void asTextInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
-        TypeUtils.checkType(value, Integer.class);
+        TypeUtils.checkType(value, String.class);
         TypeUtils.writeText(session, dst, value.toString());
     }
 
     @Override
     protected <T> T fromTextInternal(Session session, ByteBuf src) {
-        return (T) Integer.valueOf(TypeUtils.readText(session, src));
+        return (T) TypeUtils.readText(session, src);
     }
 
     @Override
     protected void asBinaryInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
-        TypeUtils.checkType(value, Integer.class);
-        dst.writeInt(4).writeInt((Integer) value);
+        TypeUtils.checkType(value, String.class);
+        TypeUtils.writeText(session, dst, value.toString());
     }
 
     @Override
-    protected <T> T fromBinaryInternal(Session session, ByteBuf src) throws ProtocolException {
-        TypeUtils.checkLen(src, 4);
-        return (T) Integer.valueOf(src.readInt());
+    protected <T> T fromBinaryInternal(Session session, ByteBuf src) {
+        return (T) TypeUtils.readText(session, src);
     }
 }

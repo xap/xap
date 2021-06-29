@@ -28,7 +28,9 @@ import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.calcite.sql2rel.StandardConvertletTable;
 import org.apache.calcite.tools.Program;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class GSOptimizer {
     private static final CalciteConnectionConfig CONNECTION_CONFIG = CalciteConnectionConfig.DEFAULT
@@ -49,11 +51,15 @@ public class GSOptimizer {
     private final RelOptCluster cluster;
 
     public GSOptimizer(IJSpace space) {
+        this(space, Collections.emptyList(), null);
+    }
+
+    public GSOptimizer(IJSpace space, List<GSNamedSchema> secondary, GSTypeResolver typeResolver) {
         JavaTypeFactoryImpl typeFactory = new JavaTypeFactoryImpl();
 
         catalogReader = new CalciteCatalogReader(
-            createSchema(space),
-            Collections.singletonList("root"),
+            createSchema(space, secondary, typeResolver),
+            defaultSchemaNames(secondary),
             typeFactory,
             CONNECTION_CONFIG);
 
@@ -137,10 +143,21 @@ public class GSOptimizer {
         return (GSRelNode) res;
     }
 
-    private static CalciteSchema createSchema(IJSpace space) {
-        CalciteSchema res = CalciteSchema.createRootSchema(true, false);
-        res.add("root", new GSSchema(space));
-        res.add("pg_catalog", new GSSchema(space));
+    private static CalciteSchema createSchema(IJSpace space, List<GSNamedSchema> secondary, GSTypeResolver typeResolver) {
+        CalciteSchema res = CalciteSchema.createRootSchema(true, false, "root", new GSSchema(space, typeResolver));
+        for (GSNamedSchema schema : secondary) {
+            res.add(schema.getName(), schema);
+        }
         return res;
+    }
+
+    private static List<String> defaultSchemaNames(List<GSNamedSchema> secondary) {
+        ArrayList<String> names = new ArrayList<>(secondary.size() + 1);
+        names.add("root");
+        secondary.stream()
+            .filter(GSNamedSchema::isDefault)
+            .map(GSNamedSchema::getName)
+            .forEach(names::add);
+        return names;
     }
 }

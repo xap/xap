@@ -2,9 +2,6 @@ package com.gigaspaces.jdbc.calcite;
 
 import com.gigaspaces.jdbc.PhysicalPlanHandler;
 import com.gigaspaces.jdbc.QueryExecutor;
-import com.gigaspaces.jdbc.calcite.schema.GSSchemaTable;
-import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
-import com.gigaspaces.jdbc.model.table.SchemaTableContainer;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import org.apache.calcite.plan.RelOptTable;
@@ -36,7 +33,6 @@ public class RelNodePhysicalPlanHandler implements PhysicalPlanHandler<GSRelNode
                 // TODO: Extract type and column info, put to stack.
                 RelOptTable relOptTable = scan.getTable();
                 Object table = relOptTable.unwrap(GSTable.class);
-                if (table == null) table = relOptTable.unwrap(GSSchemaTable.class);
                 stack.push(table);
                 return scan;
             }
@@ -49,10 +45,8 @@ public class RelNodePhysicalPlanHandler implements PhysicalPlanHandler<GSRelNode
                     GSCalc calc = (GSCalc) other;
                     Object pop = stack.pop();
                     TableContainer tableContainer;
-                    if (pop instanceof GSSchemaTable) {
-                        tableContainer = new SchemaTableContainer(((GSSchemaTable) pop), queryExecutor.getSpace());
-                    } else if (pop instanceof GSTable) {
-                        tableContainer = new ConcreteTableContainer(((GSTable) pop).getName(), null, queryExecutor.getSpace());
+                    if (pop instanceof GSTable) {
+                        tableContainer = ((GSTable) pop).createTableContainer(queryExecutor.getSpace());
                     } else {
                         throw new UnsupportedOperationException("Got unsupported table type: " + pop);
                     }
@@ -81,6 +75,7 @@ public class RelNodePhysicalPlanHandler implements PhysicalPlanHandler<GSRelNode
                 return res;
             }
         });
+
         return queryExecutor;
     }
 }

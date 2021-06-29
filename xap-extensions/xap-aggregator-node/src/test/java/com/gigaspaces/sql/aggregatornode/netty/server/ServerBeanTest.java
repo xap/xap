@@ -72,9 +72,8 @@ class ServerBeanTest {
         }
     }
 
-    // TODO return test over extended query protocol after parameters support by SqlValidator implemented
     @ParameterizedTest
-    @ValueSource(booleans = {true/*, false */})
+    @ValueSource(booleans = {true, false})
     void testParametrized(boolean simple) throws Exception {
         try (Connection conn = connect(simple)) {
             final String qry = String.format("SELECT first_name, last_name, email, age FROM \"%s\" as T where T.last_name = ? OR T.first_name = ?", MyPojo.class.getName());
@@ -83,6 +82,68 @@ class ServerBeanTest {
             statement.setString(2, "Adam");
 
             assertTrue(statement.execute());
+
+            // TODO since runtime doesn't support dynamic parameters at now there is no results checking
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testAmTable(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = "SELECT * from pg_catalog.pg_am where 1 = 1";
+            final PreparedStatement statement = conn.prepareStatement(qry);
+            assertTrue(statement.execute());
+            ResultSet res = statement.getResultSet();
+            DumpUtils.dump(res);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testTypeTable(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = "SELECT * from pg_catalog.pg_type where 1 = 1";
+            final PreparedStatement statement = conn.prepareStatement(qry);
+            assertTrue(statement.execute());
+            ResultSet res = statement.getResultSet();
+            DumpUtils.dump(res);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testAttributeTable(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = "SELECT * from pg_catalog.pg_attribute where 1 = 1";
+            final PreparedStatement statement = conn.prepareStatement(qry);
+            assertTrue(statement.execute());
+            ResultSet res = statement.getResultSet();
+            DumpUtils.dump(res);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testNamespaceTable(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = "SELECT * from pg_catalog.pg_namespace where 1 = 1";
+            final PreparedStatement statement = conn.prepareStatement(qry);
+            assertTrue(statement.execute());
+            ResultSet res = statement.getResultSet();
+            DumpUtils.dump(res);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testClassTable(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = "SELECT * from pg_catalog.pg_class where 1 = 1";
+            final PreparedStatement statement = conn.prepareStatement(qry);
+            assertTrue(statement.execute());
+            ResultSet res = statement.getResultSet();
+            DumpUtils.dump(res);
         }
     }
 

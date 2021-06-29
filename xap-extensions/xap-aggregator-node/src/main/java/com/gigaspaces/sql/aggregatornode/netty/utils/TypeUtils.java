@@ -8,13 +8,19 @@ import com.gigaspaces.sql.aggregatornode.netty.query.Session;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.collection.IntObjectHashMap;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeComparability;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelProtoDataType;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlUtil;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.parser.SqlParserUtil;
+import org.apache.calcite.sql.type.ObjectSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class TypeUtils {
     public static final PgType PG_TYPE_UNKNOWN = TypeUnknown.INSTANCE;
@@ -43,14 +49,26 @@ public class TypeUtils {
     public static final PgType PG_TYPE_TIMETZ = TypeTimeTZ.INSTANCE;
     public static final PgType PG_TYPE_NUMERIC = TypeNumeric.INSTANCE;
     public static final PgType PG_TYPE_CURSOR = TypeCursor.INSTANCE;
+    public static final PgType PG_TYPE_ACLITEM = TypeAclitem.INSTANCE;
+    public static final PgType PG_TYPE_ANYARRAY = TypeAnyarray.INSTANCE;
+    public static final PgType PG_TYPE_NODE_TREE = TypeNodeTree.INSTANCE;
+
+    private static final ObjectSqlType ACL_SQL_TYPE = new ObjectSqlType(
+            SqlTypeName.STRUCTURED,
+            new SqlIdentifier(PG_TYPE_ACLITEM.name, SqlParserPos.ZERO),
+            true,
+            Collections.emptyList(),
+            RelDataTypeComparability.UNORDERED);
 
     private static final IntObjectHashMap<PgType> elementToArray;
     private static final IntObjectHashMap<PgType> typeIdToType;
+    private static final HashMap<String, PgType> typeNameToType;
 
     static {
         Field[] fields = TypeUtils.class.getDeclaredFields();
         elementToArray = new IntObjectHashMap<>(fields.length * 2);
         typeIdToType = new IntObjectHashMap<>(fields.length * 2);
+        typeNameToType = new HashMap<>();
         Set<PgType> typeSet = new HashSet<>();
         try {
             for (Field field : fields) {
@@ -58,11 +76,17 @@ public class TypeUtils {
                     field.setAccessible(true);
                     PgType type = (PgType) field.get(null);
                     if (typeSet.add(type)) {
-                        TypeUtils.typeIdToType.put(type.id, type);
+                        typeIdToType.put(type.id, type);
+                        typeNameToType.put(type.name, type);
+
                         if (type.arrayType != 0) {
-                            PgType arrayType = TypeUtils.arrayType(type);
-                            if (typeSet.add(arrayType))
-                                TypeUtils.elementToArray.put(type.id, arrayType);
+                            PgType arrayType = arrayType(type);
+                            if (typeSet.add(arrayType)) {
+                                typeIdToType.put(arrayType.id, arrayType);
+                                typeNameToType.put(arrayType.name, arrayType);
+
+                                elementToArray.put(type.id, arrayType);
+                            }
                         }
                     }
                 }
@@ -77,11 +101,22 @@ public class TypeUtils {
     }
 
     public static PgType getArrayType(int elementTypeId) {
+        if (PG_TYPE_ANY.id == elementTypeId)
+            return PG_TYPE_ANYARRAY;
         return elementToArray.getOrDefault(elementTypeId, PG_TYPE_UNKNOWN);
     }
 
     public static PgType fromInternal(RelDataType internalType) {
         SqlTypeName typeName = internalType.getSqlTypeName();
+        if (typeName == SqlTypeName.ARRAY)
+            return getArrayType(fromInternal(internalType.getComponentType()).id);
+        if (typeName == SqlTypeName.STRUCTURED)
+            return getUserType((ObjectSqlType) internalType);
+
+        return fromInternal(typeName);
+    }
+
+    public static PgType fromInternal(SqlTypeName typeName) {
         switch (typeName) {
             case BOOLEAN:
                 return PG_TYPE_BOOL;
@@ -130,19 +165,15 @@ public class TypeUtils {
                 return PG_TYPE_TIMESTAMP;
             case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
                 return PG_TYPE_TIMESTAMPTZ;
-            case ARRAY:
-                return getArrayType(fromInternal(internalType.getComponentType()).arrayType);
             case CURSOR:
                 return PG_TYPE_CURSOR;
             case ANY:
                 return PG_TYPE_ANY;
-
+            case DISTINCT:
             case NULL:
             case SYMBOL:
             case MULTISET:
             case MAP:
-            case DISTINCT:
-            case STRUCTURED:
             case ROW:
             case OTHER:
             case COLUMN_LIST:
@@ -154,44 +185,85 @@ public class TypeUtils {
         }
     }
 
+    private static PgType getUserType(ObjectSqlType type) {
+        if (type.getSqlIdentifier().isSimple()) {
+            String name = type.getSqlIdentifier().getSimple();
+            switch (name) {
+                case "aclitem":
+                    return PG_TYPE_ACLITEM;
+            }
+        }
+        return PG_TYPE_UNKNOWN;
+    }
+
+    public static RelProtoDataType resolveType(String typeName) {
+        PgType pgType = typeNameToType.get(typeName);
+        return pgType == null ? null : ((tf) -> toInternal(pgType, tf));
+    }
+
+    public static Set<String> typeNames() {
+        return typeNameToType.keySet();
+    }
+
+    public static Collection<PgType> types() {
+        return typeIdToType.values();
+    }
+
     public static RelDataType toInternal(int type, RelDataTypeFactory factory) {
-        PgType type1 = getType(type);
-        if (type1.elementType != 0) {
-            return factory.createArrayType(toInternal(type1.elementType, factory), -1);
-        } else if (PG_TYPE_BOOL.equals(type1)) {
+        return toInternal(getType(type), factory);
+    }
+
+    private static RelDataType toInternal(PgType type, RelDataTypeFactory factory) {
+        if (type.elementType != 0) {
+            return factory.createArrayType(toInternal(type.elementType, factory), -1);
+        } else if (PG_TYPE_BOOL.equals(type)) {
             return factory.createSqlType(SqlTypeName.BOOLEAN);
-        } else if (PG_TYPE_INT2.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.SMALLINT);
-        } else if (PG_TYPE_INT4.equals(type1)) {
+        } else if (PG_TYPE_REGPROC.equals(type)) {
             return factory.createSqlType(SqlTypeName.INTEGER);
-        } else if (PG_TYPE_INT8.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.BIGINT);
-        } else if (PG_TYPE_NUMERIC.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.DECIMAL);
-        } else if (PG_TYPE_FLOAT4.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.FLOAT);
-        } else if (PG_TYPE_FLOAT8.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.DOUBLE);
-        } else if (PG_TYPE_CHAR.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.CHAR);
-        } else if (PG_TYPE_VARCHAR.equals(type1)) {
+        } else if (PG_TYPE_OID.equals(type)) {
+            return factory.createSqlType(SqlTypeName.INTEGER);
+        } else if (PG_TYPE_TEXT.equals(type)) {
             return factory.createSqlType(SqlTypeName.VARCHAR);
-        } else if (PG_TYPE_BYTEA.equals(type1)) {
+        } else if (PG_TYPE_NODE_TREE.equals(type)) {
+            return factory.createSqlType(SqlTypeName.VARCHAR);
+        } else if (PG_TYPE_NAME.equals(type)) {
+            return factory.createSqlType(SqlTypeName.VARCHAR);
+        } else if (PG_TYPE_INT2.equals(type)) {
+            return factory.createSqlType(SqlTypeName.SMALLINT);
+        } else if (PG_TYPE_INT4.equals(type)) {
+            return factory.createSqlType(SqlTypeName.INTEGER);
+        } else if (PG_TYPE_INT8.equals(type)) {
+            return factory.createSqlType(SqlTypeName.BIGINT);
+        } else if (PG_TYPE_NUMERIC.equals(type)) {
+            return factory.createSqlType(SqlTypeName.DECIMAL);
+        } else if (PG_TYPE_FLOAT4.equals(type)) {
+            return factory.createSqlType(SqlTypeName.FLOAT);
+        } else if (PG_TYPE_FLOAT8.equals(type)) {
+            return factory.createSqlType(SqlTypeName.DOUBLE);
+        } else if (PG_TYPE_CHAR.equals(type)) {
+            return factory.createSqlType(SqlTypeName.CHAR);
+        } else if (PG_TYPE_VARCHAR.equals(type)) {
+            return factory.createSqlType(SqlTypeName.VARCHAR);
+        } else if (PG_TYPE_BYTEA.equals(type)) {
             return factory.createSqlType(SqlTypeName.BINARY);
-        } else if (PG_TYPE_DATE.equals(type1)) {
+        } else if (PG_TYPE_DATE.equals(type)) {
             return factory.createSqlType(SqlTypeName.DATE);
-        } else if (PG_TYPE_TIME.equals(type1)) {
+        } else if (PG_TYPE_TIME.equals(type)) {
             return factory.createSqlType(SqlTypeName.TIME);
-        } else if (PG_TYPE_TIMESTAMP.equals(type1)) {
+        } else if (PG_TYPE_TIMESTAMP.equals(type)) {
             return factory.createSqlType(SqlTypeName.TIMESTAMP);
-        } else if (PG_TYPE_TIMETZ.equals(type1)) {
+        } else if (PG_TYPE_TIMETZ.equals(type)) {
             return factory.createSqlType(SqlTypeName.TIME_WITH_LOCAL_TIME_ZONE);
-        } else if (PG_TYPE_TIMESTAMPTZ.equals(type1)) {
+        } else if (PG_TYPE_TIMESTAMPTZ.equals(type)) {
             return factory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE);
-        } else if (PG_TYPE_ANY.equals(type1)) {
+        } else if (PG_TYPE_ANY.equals(type)) {
             return factory.createSqlType(SqlTypeName.ANY);
-        } else if (PG_TYPE_CURSOR.equals(type1)) {
+        } else if (PG_TYPE_CURSOR.equals(type)) {
             return factory.createSqlType(SqlTypeName.CURSOR);
+        } else if (PG_TYPE_ACLITEM.equals(type)) {
+            // will canonize internally
+            return factory.copyType(ACL_SQL_TYPE);
+
         } else {
             return factory.createUnknownType();
         }
@@ -217,13 +289,13 @@ public class TypeUtils {
     }
 
     protected static PgType arrayType(PgType type) {
-        if (type == PG_TYPE_INT2)
-            return new PgTypeInt2Array();
-        if (type == PG_TYPE_INT4)
-            return new PgTypeInt4Array();
+        if (type == TypeInt2.INSTANCE)
+            return PgTypeInt2Array.INSTANCE;
+        if (type == TypeInt4.INSTANCE)
+            return PgTypeInt4Array.INSTANCE;
 
         // TODO implement array type encoder/decoder
-        return new PgType(type.arrayType, type.name + "_array", -1, 0, type.id){};
+        return new PgTypeArray<>(type.arrayType, type.name + "_array", -1, 0, type.id);
     }
 
     protected static void checkType(Object value, Class<?> type) throws ProtocolException {

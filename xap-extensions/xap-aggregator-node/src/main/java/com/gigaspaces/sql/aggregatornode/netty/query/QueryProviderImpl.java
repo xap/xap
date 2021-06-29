@@ -9,6 +9,7 @@ import com.gigaspaces.jdbc.calcite.GSRelNode;
 import com.gigaspaces.jdbc.calcite.sql.extension.SqlShowOption;
 import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
+import com.gigaspaces.sql.aggregatornode.netty.query.pgcatalog.*;
 import com.gigaspaces.sql.aggregatornode.netty.utils.*;
 import com.j_spaces.jdbc.ResponsePacket;
 import org.apache.calcite.rel.type.RelDataType;
@@ -26,6 +27,8 @@ import static java.util.Collections.singletonList;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class QueryProviderImpl implements QueryProvider {
+
+    private final IdGen idGen = new IdGen();
 
     private final ISpaceProxy space;
     private final QueryHandler handler;
@@ -130,7 +133,7 @@ public class QueryProviderImpl implements QueryProvider {
                 return Collections.singletonList(portal);
             }
 
-            GSOptimizer optimizer = new GSOptimizer(space);
+            GSOptimizer optimizer = createOptimizer();
 
             SqlNodeList nodes = optimizer.parseMultiline(query);
 
@@ -153,7 +156,7 @@ public class QueryProviderImpl implements QueryProvider {
             assert paramTypes.length == 0;
             return new StatementImpl(this, name, null, null, StatementDescription.EMPTY);
         }
-        GSOptimizer optimizer = new GSOptimizer(space);
+        GSOptimizer optimizer = createOptimizer();
         return prepareStatement(name, optimizer, paramTypes, optimizer.parse(query));
     }
 
@@ -318,5 +321,20 @@ public class QueryProviderImpl implements QueryProvider {
             throw new NonBreakingException(ErrorCodes.INVALID_PARAMETER_VALUE,
                     literal.getParserPosition(), "String literal is expected.");
         return literal.getValueAs(String.class);
+    }
+
+    private GSOptimizer createOptimizer() {
+        return new GSOptimizer(space, Collections.singletonList(new PgCatalogSchema(
+                new PgAmTable(space),
+                new PgAttributeTable(space, idGen),
+                new PgNamespaceTable(space),
+                new PgProcTable(space),
+                new PgTypeTable(space),
+                new PgClassTable(space, idGen),
+                new PgTriggerTable(space),
+                new PgIndexTable(space),
+                new PgConstraintTable(space),
+                new PgDatabaseTable(space)
+        )), PgTypeResolver.INSTANCE);
     }
 }
