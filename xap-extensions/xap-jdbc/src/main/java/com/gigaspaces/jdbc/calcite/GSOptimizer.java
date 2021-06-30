@@ -7,6 +7,7 @@ import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.config.NullCollation;
+import org.apache.calcite.config.NullCollation;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.plan.Contexts;
@@ -40,6 +41,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.apache.calcite.sql.validate.SqlConformanceEnum.LENIENT;
+
 public class GSOptimizer {
     private static final CalciteConnectionConfig CONNECTION_CONFIG = CalciteConnectionConfig.DEFAULT
         .set(CalciteConnectionProperty.PARSER_FACTORY, GSSqlParserFactoryWrapper.FACTORY_CLASS)
@@ -68,9 +71,9 @@ public class GSOptimizer {
             CONNECTION_CONFIG);
 
         validator = SqlValidatorUtil.newValidator(
-            SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(SqlLibrary.STANDARD, SqlLibrary.POSTGRESQL),
+            SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(SqlLibrary.STANDARD, SqlLibrary.POSTGRESQL, SqlLibrary.BIG_QUERY),
             catalogReader, typeFactory,
-            SqlValidator.Config.DEFAULT.withDefaultNullCollation(NullCollation.FIRST));
+            SqlValidator.Config.DEFAULT.withSqlConformance( LENIENT ).withDefaultNullCollation(NullCollation.FIRST));
 
         planner = new VolcanoPlanner(RelOptCostImpl.FACTORY, Contexts.of(CONNECTION_CONFIG));
         planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
