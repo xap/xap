@@ -18,6 +18,7 @@ import org.apache.calcite.sql.validate.SqlMonotonicity;
 import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.mapping.MappingType;
 import org.apache.calcite.util.mapping.Mappings;
+import org.apache.calcite.util.Pair;
 
 import java.util.ArrayList;
 import java.util.List;

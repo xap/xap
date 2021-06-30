@@ -5,8 +5,6 @@ import com.gigaspaces.query.sql.functions.SqlFunction;
 import com.gigaspaces.query.sql.functions.SqlFunctionExecutionContext;
 import com.j_spaces.jdbc.SQLFunctions;
 
-import java.lang.reflect.Array;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,7 +57,7 @@ public class FunctionCallColumn implements IQueryColumn{
 
     @Override
     public Object getCurrentValue() {
-        throw new UnsupportedOperationException("Unsupported method getName");
+        return getValue(null);
     }
 
     @Override

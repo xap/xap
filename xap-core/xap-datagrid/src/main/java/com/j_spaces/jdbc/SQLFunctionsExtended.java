@@ -17,11 +17,8 @@ public class SQLFunctionsExtended {
         functions.put("COALESCE", new CoalesceSqlFunction());
         functions.put("LCASE", new LowerSqlFunction());
         functions.put("UCASE", new UpperSqlFunction());
-        functions.put("current_date", new CurrentDateSqlFunction());
         functions.put("CURRENT_DATE", new CurrentDateSqlFunction());
-        functions.put("CURTIME", new CurrentDateSqlFunction());
-        functions.put("DAYNAME", new DayNameSqlFunction());
-
+        functions.put("CURRENT_TIME", new CurrentTimeSqlFunction());
     }
 
 
