@@ -16,7 +16,7 @@ public class LiteralColumn implements IQueryColumn{
 
     @Override
     public String getName() {
-        throw new UnsupportedOperationException("Unsupported method getName");
+        return "\'" + value + "\'";
     }
 
     @Override

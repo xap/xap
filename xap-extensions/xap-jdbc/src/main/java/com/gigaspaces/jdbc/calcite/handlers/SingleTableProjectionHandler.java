@@ -46,15 +46,18 @@ public class SingleTableProjectionHandler extends RexShuttle {
                         List<IQueryColumn> queryColumns = new ArrayList<>();
                         for (RexNode operand : call.getOperands()) {
                             if(operand.isA(SqlKind.LOCAL_REF)){
-                                RexInputRef rexInputRef = (RexInputRef) program.getExprList().get(((RexLocalRef) operand).getIndex());
-                                String column = inputFields.get(rexInputRef.getIndex());
-                                queryColumns.add(tableContainer.addQueryColumn(column, null, false, -1));
-                                System.out.println(rexInputRef);
+                                RexNode rexNode = program.getExprList().get(((RexLocalRef) operand).getIndex());
+                                if(rexNode.isA(SqlKind.INPUT_REF)){
+                                    RexInputRef rexInputRef = (RexInputRef) rexNode;
+                                    String column = inputFields.get(rexInputRef.getIndex());
+                                    queryColumns.add(tableContainer.addQueryColumn(column, null, false, -1));
+                                }
+                                if(rexNode.isA(SqlKind.LITERAL)){
+                                    RexLiteral literal = (RexLiteral) rexNode;
+                                    queryColumns.add(new LiteralColumn(literal.getValue2()));
+                                }
                             }
-                            if(operand.isA(SqlKind.LITERAL)){
-                                RexLiteral literal = (RexLiteral) operand;
-                                queryColumns.add(new LiteralColumn(literal.getValue2()));
-                            }
+
                         }
                         IQueryColumn functionCallColumn = new FunctionCallColumn(queryColumns, sqlFunction.toString(), sqlFunction.getName(), null, isRoot, -1);
                         if(isRoot)
