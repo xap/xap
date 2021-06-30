@@ -28,8 +28,7 @@ import java.util.Date;
 @com.gigaspaces.api.InternalApi
 public class CurrentDateSqlFunction extends SqlFunction {
 
-    private final String pattern = "yyyy-MM-dd";//""MM-dd-yyyy";
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd" );
 
     /**
      * @param context which contains one argument of type string.
