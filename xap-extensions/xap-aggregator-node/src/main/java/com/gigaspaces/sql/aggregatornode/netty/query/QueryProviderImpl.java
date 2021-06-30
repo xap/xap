@@ -1,7 +1,6 @@
 package com.gigaspaces.sql.aggregatornode.netty.query;
 
 import com.fasterxml.jackson.databind.util.ArrayIterator;
-import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.jdbc.calcite.GSOptimizer;
 import com.gigaspaces.jdbc.calcite.GSOptimizerValidationResult;
 import com.gigaspaces.jdbc.calcite.GSRelNode;
@@ -10,34 +9,17 @@ import com.gigaspaces.jdbc.calcite.sql.extension.SqlShowOption;
 import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ParseException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
-import com.gigaspaces.sql.aggregatornode.netty.utils.Constants;
-import com.gigaspaces.sql.aggregatornode.netty.utils.ErrorCodes;
-import com.gigaspaces.sql.aggregatornode.netty.utils.PgType;
-import com.gigaspaces.sql.aggregatornode.netty.utils.TypeInt4;
-import com.gigaspaces.sql.aggregatornode.netty.utils.TypeUnknown;
-import com.gigaspaces.sql.aggregatornode.netty.utils.TypeUtils;
-import com.gigaspaces.sql.aggregatornode.netty.utils.TypeVarchar;
+import com.gigaspaces.sql.aggregatornode.netty.utils.*;
 import com.j_spaces.jdbc.ResponsePacket;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlSetOption;
-import org.apache.calcite.sql.SqlUtil;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.nio.charset.Charset;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.gigaspaces.sql.aggregatornode.netty.utils.Constants.EMPTY_INT_ARRAY;
@@ -46,14 +28,12 @@ import static java.util.Collections.singletonList;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class QueryProviderImpl implements QueryProvider {
 
-    private final ISpaceProxy space;
     private final CalciteQueryHandler handler;
 
     private final Map<String, Statement> statements = new HashMap<>();
     private final Map<String, Portal<?>> portals = new HashMap<>();
 
-    public QueryProviderImpl(ISpaceProxy space) {
-        this.space = space;
+    public QueryProviderImpl() {
         this.handler = new CalciteQueryHandler();
     }
 
@@ -65,9 +45,9 @@ public class QueryProviderImpl implements QueryProvider {
             throw new NonBreakingException(ErrorCodes.INVALID_STATEMENT_NAME, "Duplicate statement name");
 
         try {
-            statements.put(stmt, prepareStatement(stmt, qry, paramTypes));
+            statements.put(stmt, prepareStatement(session, stmt, qry, paramTypes));
         } catch (Exception e) {
-            throw new NonBreakingException(ErrorCodes.SYNTAX_ERROR,	"Failed to prepare statement", e);
+            throw new NonBreakingException(ErrorCodes.SYNTAX_ERROR, "Failed to prepare statement", e);
         }
     }
 
@@ -149,13 +129,13 @@ public class QueryProviderImpl implements QueryProvider {
                 return Collections.singletonList(portal);
             }
 
-            GSOptimizer optimizer = new GSOptimizer(space);
+            GSOptimizer optimizer = new GSOptimizer(session.getSpace());
 
             SqlNodeList nodes = optimizer.parseMultiline(query);
 
             List<Portal<?>> result = new ArrayList<>();
             for (SqlNode node : nodes) {
-                StatementImpl statement = prepareStatement(Constants.EMPTY_STRING, optimizer, EMPTY_INT_ARRAY, node);
+                StatementImpl statement = prepareStatement(session, Constants.EMPTY_STRING, optimizer, EMPTY_INT_ARRAY, node);
                 result.add(preparePortal(session, Constants.EMPTY_STRING, statement, Constants.EMPTY_OBJECT_ARRAY, EMPTY_INT_ARRAY));
             }
             return result;
@@ -166,21 +146,21 @@ public class QueryProviderImpl implements QueryProvider {
         }
     }
 
-    private StatementImpl prepareStatement(String name, String query, int[] paramTypes) throws ParseException {
+    private StatementImpl prepareStatement(Session session, String name, String query, int[] paramTypes) throws ParseException {
         // TODO possibly it's worth to add SqlEmptyNode to sql parser
         if (query.trim().isEmpty()) {
             assert paramTypes.length == 0;
             return new StatementImpl(this, name, null, null, StatementDescription.EMPTY);
         }
-        GSOptimizer optimizer = new GSOptimizer(space);
+        GSOptimizer optimizer = new GSOptimizer(session.getSpace());
         try {
-            return prepareStatement(name, optimizer, paramTypes, optimizer.parse(query));
+            return prepareStatement(session, name, optimizer, paramTypes, optimizer.parse(query));
         } catch (SqlParseException e) {
             throw new ParseException(e.getMessage(), e);
         }
     }
 
-    private StatementImpl prepareStatement(String name, GSOptimizer optimizer, int[] paramTypes, SqlNode ast) {
+    private StatementImpl prepareStatement(Session session, String name, GSOptimizer optimizer, int[] paramTypes, SqlNode ast) {
         if (SqlUtil.isCallTo(ast, SqlShowOption.OPERATOR)) {
             StatementDescription description = describeShow((SqlShowOption) ast);
             return new StatementImpl(this, Constants.EMPTY_STRING, ast, optimizer, description);
@@ -252,7 +232,7 @@ public class QueryProviderImpl implements QueryProvider {
         }
 
         if (query.isA(SqlKind.QUERY)) {
-            return prepareQuery(name, statement, params, formatCodes, query);
+            return prepareQuery(session, name, statement, params, formatCodes, query);
         }
 
         if (SqlUtil.isCallTo(query, SqlShowOption.OPERATOR)) {
@@ -319,12 +299,12 @@ public class QueryProviderImpl implements QueryProvider {
         }
     }
 
-    private Portal<?> prepareQuery(String name, Statement statement, Object[] params, int[] formatCodes, SqlNode query) throws ProtocolException {
+    private Portal<?> prepareQuery(Session session, String name, Statement statement, Object[] params, int[] formatCodes, SqlNode query) throws ProtocolException {
         try {
             ThrowingSupplier<Iterator<Object[]>, ProtocolException> op = () -> {
                 try {
                     GSRelNode physicalPlan = statement.getOptimizer().optimize(query);
-                    ResponsePacket packet = handler.executeStatement(space, physicalPlan, params);
+                    ResponsePacket packet = handler.executeStatement(session.getSpace(), physicalPlan, params);
                     return new ArrayIterator<>(packet.getResultEntry().getFieldValues());
                 } catch (SQLException e) {
                     throw new NonBreakingException(ErrorCodes.INTERNAL_ERROR, "Failed to execute operation.", e);

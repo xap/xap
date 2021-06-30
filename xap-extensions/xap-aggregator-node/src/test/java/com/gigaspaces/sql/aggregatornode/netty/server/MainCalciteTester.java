@@ -9,13 +9,13 @@ import org.openspaces.core.space.SpaceProxyConfigurer;
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Properties;
 
 public class MainCalciteTester {
-    public static void main(String[] args) throws SQLException, ParseException {
-        GigaSpace space = createAndFillSpace(true, true);
+    public static void main(String[] args) throws ParseException {
+        String spaceName = "mySpace";
+        GigaSpace space = createAndFillSpace(spaceName, true);
 
-        try(ServerBean server = new ServerBean(space.getSpaceName())) {
+        try (ServerBean server = new ServerBean()) {
             server.init();
 
             try {
@@ -23,7 +23,7 @@ public class MainCalciteTester {
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
-            try (Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost/test?user=user&password=secret")) {
+            try (Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost/" + spaceName + "?user=user&password=secret")) {
                 Statement statement = connection.createStatement();
 
 //            execute(statement, String.format("SELECT * FROM %s where last_name = 'Bb' OR first_name = 'Eve'", "\"" + MyPojo.class.getName() + "\""));
@@ -49,8 +49,7 @@ public class MainCalciteTester {
 
     }
 
-    private static GigaSpace createAndFillSpace(boolean newDriver, boolean embedded) throws ParseException {
-        String spaceName = "demo" + (newDriver ? "new" : "old");
+    private static GigaSpace createAndFillSpace(String spaceName, boolean embedded) throws ParseException {
         AbstractSpaceConfigurer configurer = embedded ? new EmbeddedSpaceConfigurer(spaceName)
                 .addProperty("space-config.QueryProcessor.datetime_format", "yyyy-MM-dd HH:mm:ss.SSS")
 //                .tieredStorage(new TieredStorageConfigurer().addTable(new TieredStorageTableConfig().setName(MyPojo.class.getName()).setCriteria("age > 20")))

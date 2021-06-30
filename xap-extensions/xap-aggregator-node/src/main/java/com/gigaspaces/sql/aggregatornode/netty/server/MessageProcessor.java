@@ -130,6 +130,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
 
     private void onTerminate(ChannelHandlerContext ctx, ByteBuf msg) {
         ctx.close();
+        session.close();
     }
 
     private void onQuery(ChannelHandlerContext ctx, ByteBuf msg) throws ProtocolException {
@@ -302,6 +303,8 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
 
         try {
             queryProvider.bind(session, portal, stmt, params, outFc);
+        } catch (ProtocolException e) {
+            throw e;
         } catch (Exception e) {
             throw new NonBreakingException(ErrorCodes.INTERNAL_ERROR /* internal error */, "cannot bind statement", e);
         }
@@ -319,6 +322,8 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
             paramTypes[i] = msg.readInt();
         try {
             queryProvider.prepare(session, stmt, query, paramTypes);
+        } catch (ProtocolException e) {
+            throw e;
         } catch (Exception e) {
             throw new NonBreakingException(ErrorCodes.INTERNAL_ERROR, "cannot prepare statement", e);
         }
