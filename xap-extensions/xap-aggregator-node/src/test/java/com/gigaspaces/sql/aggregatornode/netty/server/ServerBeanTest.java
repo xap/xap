@@ -37,7 +37,7 @@ class ServerBeanTest {
         gigaSpace.write(new MyPojo("Eve Cc", 35, "UK", date3, new Time(date3.getTime()), new Timestamp(date3.getTime())));
         gigaSpace.write(new MyPojo("NoCountry Dd", 40, null, date4, new Time(date4.getTime()), new Timestamp(date4.getTime())));
 
-        server = new ServerBean(SPACE_NAME);
+        server = new ServerBean();
         server.init();
     }
 
@@ -183,7 +183,7 @@ class ServerBeanTest {
     }
 
     private Connection connect(boolean simple) throws Exception {
-        String url = "jdbc:postgresql://localhost/test?user=fred&password=secret";
+        String url = "jdbc:postgresql://localhost/"+SPACE_NAME+"?user=fred&password=secret";
         if (simple)
             url += "&preferQueryMode=simple";
 

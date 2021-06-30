@@ -1,9 +1,7 @@
 package com.gigaspaces.sql.aggregatornode.netty.server;
 
-import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
 import com.gigaspaces.sql.aggregatornode.netty.authentication.AuthenticationProvider;
 import com.gigaspaces.sql.aggregatornode.netty.query.QueryProviderImpl;
-import com.j_spaces.core.client.SpaceFinder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -21,9 +19,6 @@ public final class ServerBean implements AutoCloseable {
     static final boolean SSL = System.getProperty("ssl") != null;
     static final int PORT = Integer.parseInt(System.getProperty("port", "5432"));
 
-    private String spaceName;
-    private ISpaceProxy space;
-
     AuthenticationProvider authProvider;
 
     private EventLoopGroup bossGroup;
@@ -32,14 +27,8 @@ public final class ServerBean implements AutoCloseable {
     public ServerBean() {
     }
 
-    public ServerBean(String spaceName) {
-        this.spaceName = spaceName;
-    }
-
     @PostConstruct
     public void init() throws Exception {
-        space = (ISpaceProxy) SpaceFinder.find("jini://*/*/" + spaceName);
-
         // TODO use real authentication provider
         authProvider = AuthenticationProvider.NO_OP_PROVIDER;
 
@@ -58,7 +47,7 @@ public final class ServerBean implements AutoCloseable {
                      ch.pipeline().addLast("ssl_processor", new SslProcessor());
                  pipeline
                          .addLast("msg_delimiter", new MessageDelimiter())
-                         .addLast("msg_processor", new MessageProcessor(new QueryProviderImpl(space), authProvider));
+                         .addLast("msg_processor", new MessageProcessor(new QueryProviderImpl(), authProvider));
              }
          });
 

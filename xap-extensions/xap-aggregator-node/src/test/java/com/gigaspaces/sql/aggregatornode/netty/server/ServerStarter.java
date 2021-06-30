@@ -13,8 +13,8 @@ import java.text.SimpleDateFormat;
 
 public class ServerStarter {
     public static void main(String[] args) throws Exception {
-        GigaSpace space = createAndFillSpace(true, true);
-        try (ServerBean server = new ServerBean(space.getSpaceName())) {
+//        GigaSpace space = createAndFillSpace(true, true);
+        try (ServerBean server = new ServerBean()) {
             server.init();
             Thread.sleep(Long.MAX_VALUE);
         }
