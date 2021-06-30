@@ -1,22 +1,21 @@
 package com.gigaspaces.jdbc.calcite;
 
 import com.gigaspaces.jdbc.QueryExecutor;
-import com.gigaspaces.jdbc.calcite.schema.GSSchemaTable;
 import com.gigaspaces.jdbc.calcite.handlers.ConditionHandler;
 import com.gigaspaces.jdbc.calcite.handlers.SingleTableProjectionHandler;
+import com.gigaspaces.jdbc.calcite.schema.GSSchemaTable;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
-import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
-import com.gigaspaces.jdbc.model.table.IQueryColumn;
-import com.gigaspaces.jdbc.model.table.SchemaTableContainer;
-import com.gigaspaces.jdbc.model.table.TableContainer;
+import com.gigaspaces.jdbc.model.table.*;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rex.*;
+import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlKind;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +69,21 @@ public class SelectHandler extends RelShuttleImpl {
         if(other instanceof GSJoin){
             handleJoin((GSJoin) other);
         }
+        if( other instanceof GSValues ){
+            GSValues gsValues = (GSValues) other;
+            GSCalc gsCalc = childToCalc.get(gsValues);
+            RexProgram program = gsCalc.getProgram();
+
+            List<RexLocalRef> projectList = program.getProjectList();
+            for( RexLocalRef project : projectList ){
+                RexNode node = program.getExprList().get(project.getIndex());
+                if(node instanceof RexCall){
+                    SqlFunction sqlFunction = (SqlFunction) ((RexCall) node).op;
+                    queryExecutor.addColumn(new FunctionCallColumn(Collections.emptyList(), null, sqlFunction.getName(), null, true, -1));
+                }
+            }
+        }
+
 //        else {
 //            throw new UnsupportedOperationException("RelNode of type " + other.getClass().getName() + " are not supported yet");
 //        }

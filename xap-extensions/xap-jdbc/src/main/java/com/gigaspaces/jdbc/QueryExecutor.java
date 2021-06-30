@@ -1,8 +1,12 @@
 package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.result.LocalSingleRowQueryResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
+import com.gigaspaces.jdbc.model.result.TableRow;
+import com.gigaspaces.jdbc.model.result.TableRowFactory;
 import com.gigaspaces.jdbc.model.table.AggregationColumn;
+import com.gigaspaces.jdbc.model.table.FunctionCallColumn;
 import com.gigaspaces.jdbc.model.table.IQueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.core.IJSpace;
@@ -34,13 +38,32 @@ public class QueryExecutor {
 
     public QueryResult execute() throws SQLException {
         if (tables.size() == 0) {
-            throw new SQLException("No tables has been detected");
+            if( hasOnlyFunctions() ) {
+                List<IQueryColumn> visibleColumns = getVisibleColumns();
+                TableRow row = TableRowFactory.createTableRowFromSpecificColumns(visibleColumns, Collections.emptyList(), Collections.emptyList());
+                return new LocalSingleRowQueryResult(visibleColumns, row);
+            }
+            else {
+                throw new SQLException("No tables has been detected");
+            }
         }
         if (tables.size() == 1) { //Simple Query
             return tables.get(0).executeRead(config);
         }
         JoinQueryExecutor joinE = new JoinQueryExecutor(this);
         return joinE.execute();
+    }
+
+    private boolean hasOnlyFunctions() {
+        if( !visibleColumns.isEmpty() ){
+            for( IQueryColumn column : visibleColumns ){
+                if( !( column instanceof FunctionCallColumn) ){
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     public List<TableContainer> getTables() {
