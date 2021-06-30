@@ -31,6 +31,8 @@ import org.apache.calcite.tools.Program;
 
 import java.util.Collections;
 
+import static org.apache.calcite.sql.validate.SqlConformanceEnum.LENIENT;
+
 public class GSOptimizer {
     private static final CalciteConnectionConfig CONNECTION_CONFIG = CalciteConnectionConfig.DEFAULT
         .set(CalciteConnectionProperty.PARSER_FACTORY, GSSqlParserFactoryWrapper.FACTORY_CLASS)
@@ -59,9 +61,9 @@ public class GSOptimizer {
             CONNECTION_CONFIG);
 
         validator = SqlValidatorUtil.newValidator(
-            SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(SqlLibrary.STANDARD, SqlLibrary.POSTGRESQL),
+            SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(SqlLibrary.STANDARD, SqlLibrary.POSTGRESQL, SqlLibrary.BIG_QUERY),
             catalogReader, typeFactory,
-            SqlValidator.Config.DEFAULT);
+            SqlValidator.Config.DEFAULT.withSqlConformance( LENIENT ));
 
         planner = new VolcanoPlanner(RelOptCostImpl.FACTORY, Contexts.of(CONNECTION_CONFIG));
         planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
