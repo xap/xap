@@ -71,7 +71,7 @@ public class GSOptimizer {
             CONNECTION_CONFIG);
 
         validator = SqlValidatorUtil.newValidator(
-            SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(SqlLibrary.STANDARD, SqlLibrary.POSTGRESQL, SqlLibrary.BIG_QUERY),
+            SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(SqlLibrary.STANDARD, SqlLibrary.POSTGRESQL),
             catalogReader, typeFactory,
             SqlValidator.Config.DEFAULT.withSqlConformance( LENIENT ).withDefaultNullCollation(NullCollation.FIRST));
 
