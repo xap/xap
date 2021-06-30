@@ -17,7 +17,6 @@
 package com.gigaspaces.query.sql.functions;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
 /**
  * Returns current date formatted
@@ -26,7 +25,7 @@ import java.util.Date;
  * @since 16.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class DayOfMonthSqlFunction extends SqlFunction {
+public class DayOfMonthSqlFunction extends AbstractDateRelatedSqlFunction {
 
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("d");
 
@@ -36,11 +35,23 @@ public class DayOfMonthSqlFunction extends SqlFunction {
      */
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
-
-        return simpleDateFormat.format( new Date() );
+        return simpleDateFormat.format( verifyArgumentsAndGetDate("DayOfMonth", context) );
     }
 
     public static void main( String[] args ){
-        System.out.println( ( new DayOfMonthSqlFunction() ).apply(null) );
+
+        SqlFunctionExecutionContext context = new SqlFunctionExecutionContext() {
+            @Override
+            public int getNumberOfArguments() {
+                return 1;
+            }
+
+            @Override
+            public Object getArgument(int index) {
+                return index == 0 ? "2021-06-30" : null;
+            }
+        };
+
+        System.out.println( ( new DayOfMonthSqlFunction() ).apply(context) );
     }
 }

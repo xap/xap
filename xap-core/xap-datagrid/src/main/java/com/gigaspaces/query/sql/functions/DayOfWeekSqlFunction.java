@@ -17,7 +17,6 @@
 package com.gigaspaces.query.sql.functions;
 
 import java.util.Calendar;
-import java.util.Date;
 
 /**
  * Returns current date formatted
@@ -26,7 +25,7 @@ import java.util.Date;
  * @since 16.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class DayOfWeekSqlFunction extends SqlFunction {
+public class DayOfWeekSqlFunction extends AbstractDateRelatedSqlFunction {
 
     private final Calendar calendar = Calendar.getInstance();
 
@@ -37,11 +36,23 @@ public class DayOfWeekSqlFunction extends SqlFunction {
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
 
-        calendar.setTime( new Date() );
+        calendar.setTime( verifyArgumentsAndGetDate("DayOfWeek", context) );
         return calendar.get(Calendar.DAY_OF_WEEK);
     }
 
     public static void main( String[] args ){
-        System.out.println( ( new DayOfWeekSqlFunction() ).apply(null) );
+        SqlFunctionExecutionContext context = new SqlFunctionExecutionContext() {
+            @Override
+            public int getNumberOfArguments() {
+                return 1;
+            }
+
+            @Override
+            public Object getArgument(int index) {
+                return index == 0 ? "2021-06-25" : null;
+            }
+        };
+
+        System.out.println( ( new DayOfWeekSqlFunction() ).apply( context ) );
     }
 }

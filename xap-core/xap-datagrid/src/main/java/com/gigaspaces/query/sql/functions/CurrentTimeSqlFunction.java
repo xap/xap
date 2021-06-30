@@ -28,8 +28,7 @@ import java.util.Date;
 @com.gigaspaces.api.InternalApi
 public class CurrentTimeSqlFunction extends SqlFunction {
 
-    private final String pattern = "hh:mm:ss.mmm";
-    private final SimpleDateFormat simpleTimeFormat = new SimpleDateFormat(pattern);
+    private final SimpleDateFormat simpleTimeFormat = new SimpleDateFormat( "hh:mm:ss.mmm" );
 
     /**
      * @param context which contains one argument of type string.
