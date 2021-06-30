@@ -1,10 +1,8 @@
 package com.j_spaces.jdbc;
 
-import com.gigaspaces.query.sql.functions.CeilSqlFunction;
-import com.gigaspaces.query.sql.functions.LowerSqlFunction;
-import com.gigaspaces.query.sql.functions.SqlFunction;
-import com.gigaspaces.query.sql.functions.UpperSqlFunction;
-import com.gigaspaces.query.sql.functions.extended.*;
+import com.gigaspaces.query.sql.functions.*;
+import com.gigaspaces.query.sql.functions.extended.ChrSqlFunction;
+import com.gigaspaces.query.sql.functions.extended.CoalesceSqlFunction;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +17,10 @@ public class SQLFunctionsExtended {
         functions.put("COALESCE", new CoalesceSqlFunction());
         functions.put("LCASE", new LowerSqlFunction());
         functions.put("UCASE", new UpperSqlFunction());
+        functions.put("current_date", new CurrentDateSqlFunction());
+        functions.put("CURRENT_DATE", new CurrentDateSqlFunction());
+        functions.put("CURTIME", new CurrentDateSqlFunction());
+        functions.put("DAYNAME", new DayNameSqlFunction());
 
     }
 
