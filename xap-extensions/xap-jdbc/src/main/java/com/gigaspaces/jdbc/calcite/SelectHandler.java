@@ -15,10 +15,7 @@ import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlKind;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SelectHandler extends RelShuttleImpl {
     private final QueryExecutor queryExecutor;
@@ -71,23 +68,44 @@ public class SelectHandler extends RelShuttleImpl {
         }
         if( other instanceof GSValues ){
             GSValues gsValues = (GSValues) other;
-            GSCalc gsCalc = childToCalc.get(gsValues);
-            RexProgram program = gsCalc.getProgram();
-
-            List<RexLocalRef> projectList = program.getProjectList();
-            for( RexLocalRef project : projectList ){
-                RexNode node = program.getExprList().get(project.getIndex());
-                if(node instanceof RexCall){
-                    SqlFunction sqlFunction = (SqlFunction) ((RexCall) node).op;
-                    queryExecutor.addColumn(new FunctionCallColumn(Collections.emptyList(), null, sqlFunction.getName(), null, true, -1));
-                }
-            }
+            handleValues(gsValues);
         }
 
 //        else {
 //            throw new UnsupportedOperationException("RelNode of type " + other.getClass().getName() + " are not supported yet");
 //        }
         return result;
+    }
+
+    private void handleValues(GSValues gsValues) {
+        if (childToCalc.containsKey(gsValues)) {
+            GSCalc gsCalc = childToCalc.get(gsValues);
+            RexProgram program = gsCalc.getProgram();
+
+            List<RexLocalRef> projectList = program.getProjectList();
+            for (RexLocalRef project : projectList) {
+                RexNode node = program.getExprList().get(project.getIndex());
+                if (node instanceof RexCall) {
+                    RexCall rexCall = (RexCall) node;
+                    SqlFunction sqlFunction = (SqlFunction) rexCall.op;
+                    List<IQueryColumn> params = new ArrayList();
+                    for (RexNode operand : rexCall.getOperands()) {
+                        if (operand.isA(SqlKind.LOCAL_REF)) {
+                            RexNode funcArgument = program.getExprList().get(((RexLocalRef) operand).getIndex());
+                            if (funcArgument.isA(SqlKind.LITERAL)) {
+                                RexLiteral literal = (RexLiteral) funcArgument;
+                                params.add(new LiteralColumn(literal.getValue2()));
+                            }
+                        }
+
+                    }
+                    queryExecutor.addColumn(new FunctionCallColumn(params, null, sqlFunction.getName(), null, true, -1));
+                }
+            }
+        }
+        else{
+//            queryExecutor.addColumn(new LiteralColumn(gsValues.get));
+        }
     }
 
     private void handleJoin(GSJoin join) {
