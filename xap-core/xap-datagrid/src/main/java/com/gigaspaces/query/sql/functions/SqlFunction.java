@@ -45,4 +45,28 @@ public abstract class SqlFunction {
             throw new RuntimeException("wrong number of arguments - expected: " + expected + " ,but actual number of arguments is: " + context.getNumberOfArguments());
         }
     }
+
+    /**
+     * Validate the number of arguments a function receives is in a given range.
+     *
+     * @param minExpected minimum number of arguments, according to every function inner logic.
+     * @param maxExpected maximum number of arguments, according to every function inner logic.
+     * @param context  the actual received arguments, which are contained in the context.
+     * @throws RuntimeException if expected doesn't match actual number of arguments in context
+     */
+    protected void assertNumberOfArguments(int minExpected, int maxExpected, SqlFunctionExecutionContext context) {
+        if (context.getNumberOfArguments() < minExpected || context.getNumberOfArguments() > maxExpected) {
+            throw new RuntimeException("wrong number of arguments - expected between: " + minExpected + " and " + maxExpected + " ,but actual number of arguments is: " + context.getNumberOfArguments());
+        }
+    }
+
+    protected boolean isInteger(Object object){
+        return object instanceof Number && !(object instanceof Float) && !(object instanceof Double);
+    }
+
+    protected boolean isString(Object object){
+        return object instanceof String;
+    }
+
+
 }

@@ -3,6 +3,8 @@ package com.j_spaces.jdbc;
 import com.gigaspaces.query.sql.functions.*;
 import com.gigaspaces.query.sql.functions.extended.ChrSqlFunction;
 import com.gigaspaces.query.sql.functions.extended.CoalesceSqlFunction;
+import com.gigaspaces.query.sql.functions.*;
+import com.gigaspaces.query.sql.functions.extended.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +19,11 @@ public class SQLFunctionsExtended {
         functions.put("COALESCE", new CoalesceSqlFunction());
         functions.put("LCASE", new LowerSqlFunction());
         functions.put("UCASE", new UpperSqlFunction());
+        functions.put("LEFT", new LeftSqlFunction());
+        functions.put("RIGHT", new RightSqlFunction());
+//        functions.put("SUBSTR", new SubstrSqlFunction());
+//        functions.put("CAST", new CastSqlFunction());
+
         functions.put("CURRENT_DATE", new CurrentDateSqlFunction());
         functions.put("CURRENT_TIME", new CurrentTimeSqlFunction());
     }
