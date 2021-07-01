@@ -1,21 +1,15 @@
 package com.gigaspaces.jdbc.calcite;
 
 import com.gigaspaces.internal.metadata.ITypeDesc;
+import com.gigaspaces.jdbc.exceptions.TypeNotFoundException;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.SQLUtil;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.rel.type.RelProtoDataType;
-import org.apache.calcite.schema.Function;
-import org.apache.calcite.schema.Schema;
-import org.apache.calcite.schema.SchemaPlus;
-import org.apache.calcite.schema.SchemaVersion;
-import org.apache.calcite.schema.Table;
+import org.apache.calcite.schema.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.sql.SQLException;
+import java.util.*;
 
 public class GSSchema implements Schema {
 
@@ -34,8 +28,8 @@ public class GSSchema implements Schema {
                 ITypeDesc typeDesc = SQLUtil.checkTableExistence(name, space);
                 table = new GSTable(typeDesc);
                 tableMap.put(name, table);
-            } catch (Exception e) {
-                return null;
+            } catch (SQLException e) {
+                throw new TypeNotFoundException("Unknown table [" + name + "]", e);
             }
         }
         return table;

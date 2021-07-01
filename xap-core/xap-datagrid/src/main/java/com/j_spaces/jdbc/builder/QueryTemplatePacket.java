@@ -171,7 +171,7 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
         //the following are used for compound indexes
         Map<Range, IQueryIndexScanner> usedByRanges = null;
         Map<String, Range> possibleCompoundSegments = typeDesc.anyCompoundIndex() && _ranges != null ? new HashMap<String, Range>() : null;
-
+        //TODO: @sagiv we should use _typeDesc?
 
         if (_ranges != null) {
             if (customQueries == null)

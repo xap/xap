@@ -2,27 +2,27 @@ package com.gigaspaces.jdbc.calcite;
 
 import com.gigaspaces.jdbc.QueryExecutor;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
-import com.gigaspaces.jdbc.model.table.*;
+import com.gigaspaces.jdbc.model.table.ConcreteColumn;
+import com.gigaspaces.jdbc.model.table.IQueryColumn;
+import com.gigaspaces.jdbc.model.table.OrderColumn;
+import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.sql.SqlKind;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SelectHandler extends RelShuttleImpl {
-    private final QueryExecutor queryExecutor;
+    protected final Stack<ISQLOperator> gstack = new Stack<>();
     private final Map<RelNode, GSCalc> childToCalc = new HashMap<>();
+    private final QueryExecutor queryExecutor;
     private RelNode root = null;
-    private boolean isAllColumnSelected = false;
     private int columnOrdinalCounter = 0;
 
     public SelectHandler(QueryExecutor queryExecutor) {
@@ -32,103 +32,105 @@ public class SelectHandler extends RelShuttleImpl {
     @Override
     // TODO check inserting of same table
     public RelNode visit(TableScan scan) {
-        RelNode result = super.visit(scan);
-        GSTable table = scan.getTable().unwrap(GSTable.class);
-        TableContainer tableContainer = new ConcreteTableContainer(table.getTypeDesc().getTypeName(), null, queryExecutor.getSpace());
-        queryExecutor.getTables().add(tableContainer);
-        if (!childToCalc.containsKey(scan)) {
-            //TODO: @sagiv arrive here only if has Select *.
-            this.isAllColumnSelected = true;
-            List<String> columns = tableContainer.getAllColumnNames();
-            queryExecutor.addFieldCount(columns.size());
-            for (String col : columns) {
-                tableContainer.addQueryColumn(col, null, true, 0);//TODO: @sagiv columnOrdinal
-            }
+        if (scan instanceof GSTableScan) {
+            handleTableScan((GSTableScan) scan);
         }
-        else{
-            handleCalc(childToCalc.get(scan), tableContainer);
+        return super.visit(scan);
+    }
+
+    private void handleTableScan(GSTableScan tableScan) {
+        GSTable table = tableScan.getTable().unwrap(GSTable.class);
+        TableScanOperator tableScanOperator = new TableScanOperator(
+                new QueryTemplatePacketsHolder(queryExecutor.getPreparedValues(), queryExecutor.getSpace()), table.getTypeDesc());
+        gstack.push(tableScanOperator);
+    }
+
+    private void handleCalc(GSCalc calc) {
+        RexProgram program = calc.getProgram();
+        List<String> projection = new ArrayList<>();
+        Map<String, String> columnNameToAliasMap = new HashMap<>();// TODO: @sagiv use later
+
+        List<String> inputFields = program.getInputRowType().getFieldNames();
+        List<String> outputFields = program.getOutputRowType().getFieldNames();
+        for (int i = 0; i < outputFields.size(); i++) {
+            String columnAlias = outputFields.get(i);
+            String columnOriginalName = inputFields.get(program.getSourceField(i));
+            columnNameToAliasMap.put(columnOriginalName, columnAlias);
+            projection.add(columnOriginalName);
         }
-        return result;
+        ISQLOperator iSqlOperator = gstack.pop();
+        QueryTemplatePacketsHolder qtpHolder = iSqlOperator.build();
+        WhereHandler whereHandler = new WhereHandler(program, qtpHolder, program.getInputRowType().getFieldList());
+        if (program.getCondition() != null) {
+            program.getCondition().accept(whereHandler);
+            Map<String, QueryTemplatePacket> qtpMap = whereHandler.getQTPMap();
+            qtpMap.forEach((k, v) -> qtpHolder.addQueryTemplatePacket(v));
+        }
+        CalcOperator calcOperator = new CalcOperator(qtpHolder, projection);
+        gstack.push(calcOperator);
     }
 
     @Override
     public RelNode visit(RelNode other) {
-        if(root == null){
+        if (root == null) {
             root = other;
         }
-        if(other instanceof GSCalc){
-            GSCalc calc = (GSCalc) other;
-            RelNode input = calc.getInput();
-            while (!(input instanceof GSJoin)
-                    && !(input instanceof GSTableScan)) {
-                if(input.getInputs().isEmpty()) {
-                    break;
-                }
-                input =  input.getInput(0);
-            }
-            childToCalc.putIfAbsent(input, calc);
-        }
         RelNode result = super.visit(other);
-        if(other instanceof GSJoin){
+//        if (other instanceof GSTableScan) {
+//            handleTableScan((GSTableScan) other);
+//        }
+        if (other instanceof GSCalc) {
+            handleCalc((GSCalc) other);
+        }
+        if (other instanceof GSJoin) {
             handleJoin((GSJoin) other);
         }
-        if(other instanceof GSSort){
+        if (other instanceof GSSort) {
             handleSort((GSSort) other);
         }
-//        else {
-//            throw new UnsupportedOperationException("RelNode of type " + other.getClass().getName() + " are not supported yet");
-//        }
         return result;
     }
 
+
     private void handleSort(GSSort sort) {
         int columnCounter = 0;
+        List<OrderColumn> orderColumns = new ArrayList<>();
+        ISQLOperator iSqlOperator = gstack.pop();
+        QueryTemplatePacketsHolder qtpHolder = iSqlOperator.build();
         for (RelFieldCollation relCollation : sort.getCollation().getFieldCollations()) {
             int fieldIndex = relCollation.getFieldIndex();
             RelFieldCollation.Direction direction = relCollation.getDirection();
             RelFieldCollation.NullDirection nullDirection = relCollation.nullDirection;
             String columnAlias = sort.getRowType().getFieldNames().get(fieldIndex);
 //            TableContainer table = queryExecutor.getTableByColumnIndex(fieldIndex);
-//            table.addQueryColumn(columnName, null, false, -1);
             String columnName = columnAlias;
             boolean isVisible = false;
-            RelNode parent = this.stack.peek();
-            if(parent instanceof GSCalc) {
-                RexProgram program = ((GSCalc) parent).getProgram();
-                RelDataTypeField field = program.getOutputRowType().getField(columnAlias, true, false);
-                if(field != null) {
-                    isVisible = true;
-                    columnName = program.getInputRowType().getFieldNames().get(program.getSourceField(field.getIndex()));
-                }
-            }
+//            RelNode parent = this.stack.peek(); //TODO: @sagiv needed?
+//            if (parent instanceof GSCalc) {
+//                RexProgram program = ((GSCalc) parent).getProgram();
+//                RelDataTypeField field = program.getOutputRowType().getField(columnAlias, true, false);
+//                if (field != null) {
+//                    isVisible = true;
+//                    columnName = program.getInputRowType().getFieldNames().get(program.getSourceField(field.getIndex()));
+//                }
+//            }
             //TODO: @sagiv not so sure about this, because 'columnName' can be alias from sub-query, or
             // Ambiguous when using join for example..
-            TableContainer table = getTableByColumnName(columnName);
-            OrderColumn orderColumn = new OrderColumn(new ConcreteColumn(columnName,null, columnAlias,
-                    isVisible, table, columnCounter++), !direction.isDescending(),
+//            TableContainer table = getTableByColumnName(columnName);
+            //TODO: @sagiv need to inject the table at the 'init' method in 'queryExecutor'!
+            OrderColumn orderColumn = new OrderColumn(new ConcreteColumn(columnName, null, columnAlias,
+                    isVisible, null, columnCounter++), !direction.isDescending(),
                     nullDirection == RelFieldCollation.NullDirection.LAST);
-            table.addOrderColumns(orderColumn);
+            orderColumns.add(orderColumn);
         }
-    }
-
-    private TableContainer getTableByColumnName(String name) {
-        TableContainer toReturn = null;
-        for(TableContainer tableContainer : this.queryExecutor.getTables()) {
-            if(tableContainer.hasColumn(name)) {
-                if (toReturn == null) {
-                    toReturn = tableContainer;
-                } else {
-                    throw new IllegalArgumentException("Ambiguous column name [" + name + "]");
-                }
-            }
-        }
-        return toReturn;
+        SortOperator sortOperator = new SortOperator(qtpHolder, orderColumns);
+        gstack.push(sortOperator);
     }
 
 
     private void handleJoin(GSJoin join) {
         RexCall rexCall = (RexCall) join.getCondition();
-        if(rexCall.getKind() != SqlKind.EQUALS){
+        if (rexCall.getKind() != SqlKind.EQUALS) {
             throw new UnsupportedOperationException("Only equi joins are supported");
         }
         int left = join.getLeft().getRowType().getFieldCount();
@@ -148,35 +150,15 @@ public class SelectHandler extends RelShuttleImpl {
                 rightContainer.setJoined(true);
             }
         }
-        if(!childToCalc.containsKey(join)) { // it is SELECT *
-            if(join.equals(root)
+        if (!childToCalc.containsKey(join)) { // it is SELECT *
+            if (join.equals(root)
                     || ((root instanceof GSSort) && ((GSSort) root).getInput().equals(join))) { // root is GSSort and its child is join
                 for (TableContainer tableContainer : queryExecutor.getTables()) {
                     queryExecutor.getVisibleColumns().addAll(tableContainer.getVisibleColumns());
                 }
             }
-        }
-        else{
+        } else {
             handleCalcFromJoin(childToCalc.get(join));
-        }
-    }
-
-    private void handleCalc(GSCalc other, TableContainer tableContainer) {
-        RexProgram program = other.getProgram();
-        List<String> inputFields = program.getInputRowType().getFieldNames();
-        List<String> outputFields = program.getOutputRowType().getFieldNames();
-        queryExecutor.addFieldCount(outputFields.size());
-        for (int i = 0; i < outputFields.size(); i++) {
-            String alias = outputFields.get(i);
-            String originalName = inputFields.get(program.getSourceField(i));
-            tableContainer.addQueryColumn(originalName, alias, true, columnOrdinalCounter++);
-        }
-        ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
-        if (program.getCondition() != null) {
-            program.getCondition().accept(conditionHandler);
-            for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : conditionHandler.getQTPMap().entrySet()) {
-                tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
-            }
         }
     }
 
@@ -195,5 +177,9 @@ public class SelectHandler extends RelShuttleImpl {
                 tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
             }
         }
+    }
+
+    public Stack<ISQLOperator> getGStack() {
+        return gstack;
     }
 }

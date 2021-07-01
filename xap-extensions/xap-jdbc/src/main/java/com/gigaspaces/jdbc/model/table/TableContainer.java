@@ -31,7 +31,7 @@ public abstract class TableContainer {
 
     public abstract Set<IQueryColumn> getInvisibleColumns();
 
-    public List<IQueryColumn> getAllQueryColumns() {
+    public List<IQueryColumn> getAllQueryColumns() {// TODO: @sagiv add .distinct()?
         return Stream.concat(getVisibleColumns().stream(), getInvisibleColumns().stream()).collect(Collectors.toList());
     }
 

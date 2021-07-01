@@ -1,9 +1,6 @@
 package com.gigaspaces.jdbc;
 
-import com.gigaspaces.jdbc.calcite.CalciteDefaults;
-import com.gigaspaces.jdbc.calcite.GSOptimizer;
-import com.gigaspaces.jdbc.calcite.GSRelNode;
-import com.gigaspaces.jdbc.calcite.SelectHandler;
+import com.gigaspaces.jdbc.calcite.*;
 import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
@@ -68,6 +65,8 @@ public class QueryHandler {
         QueryExecutor qE = new QueryExecutor(space, preparedValues);
         SelectHandler selectHandler = new SelectHandler(qE);
         relNode.accept(selectHandler);
+        ISQLOperator isqlOperator = selectHandler.getGStack().pop();
+        qE.init(isqlOperator.build());
         QueryResult queryResult = qE.execute();
         packet.setResultEntry(queryResult.convertEntriesToResultArrays());
         return packet;

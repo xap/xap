@@ -1,11 +1,15 @@
 package com.gigaspaces.jdbc;
 
+import com.gigaspaces.internal.metadata.PropertyInfo;
+import com.gigaspaces.jdbc.calcite.QueryTemplatePacketsHolder;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.table.AggregationColumn;
+import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
 import com.gigaspaces.jdbc.model.table.IQueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.core.IJSpace;
+import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -120,5 +124,47 @@ public class QueryExecutor {
     public void addFieldCount(int size) {
         int columnCount = fieldCountList.isEmpty() ?  size: fieldCountList.getLast() + size;
         fieldCountList.add(columnCount);
+    }
+
+    public void init(QueryTemplatePacketsHolder qtpHolder) {
+        for (QueryTemplatePacket qtp : qtpHolder.getQueryTemplatePackets().values()) {
+            ConcreteTableContainer tableContainer = new ConcreteTableContainer(qtp.getTypeName(), null,
+                    qtpHolder.getSpace());
+            tableContainer.setQueryTemplatePacket(qtp);
+            tableContainer.setLimit(qtpHolder.getLimit());
+            List<IQueryColumn> columns = new ArrayList<>();
+            int columnOrdinalCount = 0;
+            if(qtp.getProjectionTemplate() == null) { // is select *
+                int idPropertyIndex = qtp.getTypeDescriptor().getIdentifierPropertyId();
+                int index = 0;
+                int nonIdPropertyIndex = 1;
+                PropertyInfo[] allColumnInfo = new PropertyInfo[qtp.getTypeDescriptor().getNumOfFixedProperties()];
+                while (index < allColumnInfo.length) { // put the SPACE ID as the first column.
+                    if (index == idPropertyIndex) {
+                        allColumnInfo[0] = qtp.getTypeDescriptor().getFixedProperty(index);
+                    } else {
+                        allColumnInfo[nonIdPropertyIndex++] = qtp.getTypeDescriptor().getFixedProperty(index);
+                    }
+                    index++;
+                }
+                for (PropertyInfo propertyInfo : allColumnInfo) {
+                    //TODO: @sagiv what with the alias!?
+                    tableContainer.addQueryColumn(propertyInfo.getName(), null, true, columnOrdinalCount++);
+//                    columns.add(new ConcreteColumn(propertyInfo.getName(), propertyInfo.getType(), null, true, tableContainer, columnOrdinalCount++));
+                }
+            } else {
+                int[] propertyIds = qtp.getProjectionTemplate().getFixedPropertiesIndexes();
+                for (int propertyId : propertyIds) {
+                    PropertyInfo propertyInfo = qtp.getTypeDescriptor().getFixedProperty(propertyId);
+                    //TODO: @sagiv what with the alias!?
+                    tableContainer.addQueryColumn(propertyInfo.getName(), null, true, columnOrdinalCount++);
+                }
+            }
+            if(!qtpHolder.getOrderColumns().isEmpty()) {
+                qtpHolder.getOrderColumns().forEach(tableContainer::addOrderColumns);
+            }
+
+            addTable(tableContainer);
+        }
     }
 }
