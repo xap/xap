@@ -1,233 +1,238 @@
 package com.gigaspaces.jdbc.calcite.schema;
 
 import com.gigaspaces.jdbc.calcite.schema.type.PgType;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeBool;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeBytea;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeChar;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeFloat4;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeInt2;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeInt2Vector;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeInt4;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeName;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeNodeTree;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeOid;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeOidVector;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeRegproc;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeText;
+import com.gigaspaces.jdbc.calcite.schema.type.TypeUnknown;
 import com.gigaspaces.jdbc.calcite.schema.type.TypeUtils;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelProtoDataType;
 import org.apache.calcite.sql.type.SqlTypeName;
 
-import java.math.BigDecimal;
-import java.sql.Date;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 
 import static com.gigaspaces.jdbc.calcite.schema.GSSchemaTable.SchemaProperty;
 
 public enum PGSystemTable {
     pg_am(
-        "oid", "oid",
-        "amname", "name",
-        "amhandler", "regproc",
-        "amtype", "char"
+        column("oid", TypeOid.INSTANCE),
+        column("amname", TypeName.INSTANCE),
+        column("amhandler", TypeRegproc.INSTANCE),
+        column("amtype", TypeChar.INSTANCE)
     ),
     pg_attribute(
-        "attrelid", "oid",
-        "attname", "name",
-        "atttypid", "oid",
-        "attstattarget", "int4",
-        "attlen", "int2",
-        "attnum", "int2",
-        "attndims", "int4",
-        "attcacheoff", "int4",
-        "atttypmod", "int4",
-        "attbyval", "bool",
-        "attstorage", "char",
-        "attalign", "char",
-        "attnotnull", "bool",
-        "atthasdef", "bool",
-        "attisdropped", "bool",
-        "attislocal", "bool",
-        "attinhcount", "int4"
+        column("attrelid", TypeOid.INSTANCE),
+        column("attname", TypeName.INSTANCE),
+        column("atttypid", TypeOid.INSTANCE),
+        column("attstattarget", TypeInt4.INSTANCE),
+        column("attlen", TypeInt2.INSTANCE),
+        column("attnum", TypeInt2.INSTANCE),
+        column("attndims", TypeInt4.INSTANCE),
+        column("attcacheoff", TypeInt4.INSTANCE),
+        column("atttypmod", TypeInt4.INSTANCE),
+        column("attbyval", TypeBool.INSTANCE),
+        column("attstorage", TypeChar.INSTANCE),
+        column("attalign", TypeChar.INSTANCE),
+        column("attnotnull", TypeBool.INSTANCE),
+        column("atthasdef", TypeBool.INSTANCE),
+        column("attisdropped", TypeBool.INSTANCE),
+        column("attislocal", TypeBool.INSTANCE),
+        column("attinhcount", TypeInt4.INSTANCE)
     ),
     pg_class(
-        "oid", "oid",
-        "relname", "name",
-        "relnamespace", "oid",
-        "reltype", "oid",
-        "relowner", "oid",
-        "relam", "oid",
-        "relfilenode", "oid",
-        "reltablespace", "oid",
-        "relpages", "int4",
-        "reltuples", "float4",
-        "reltoastrelid", "oid",
-        "relhasindex", "bool",
-        "relisshared", "bool",
-        "relkind", "char",
-        "relnatts", "int2",
-        "relchecks", "int2",
-        "reltriggers", "int2",
-        "relhasrules", "bool",
-        "relhastriggers", "bool",
-        "relhassubclass", "bool",
-        "relacl", "aclitem_array",
-        "reloptions", "text_array"
+        column("oid", TypeOid.INSTANCE),
+        column("relname", TypeName.INSTANCE),
+        column("relnamespace", TypeOid.INSTANCE),
+        column("reltype", TypeOid.INSTANCE),
+        column("relowner", TypeOid.INSTANCE),
+        column("relam", TypeOid.INSTANCE),
+        column("relfilenode", TypeOid.INSTANCE),
+        column("reltablespace", TypeOid.INSTANCE),
+        column("relpages", TypeInt4.INSTANCE),
+        column("reltuples", TypeFloat4.INSTANCE),
+        column("reltoastrelid", TypeOid.INSTANCE),
+        column("relhasindex", TypeBool.INSTANCE),
+        column("relisshared", TypeBool.INSTANCE),
+        column("relkind", TypeChar.INSTANCE),
+        column("relnatts", TypeInt2.INSTANCE),
+        column("relchecks", TypeInt2.INSTANCE),
+        column("reltriggers", TypeInt2.INSTANCE),
+        column("relhasrules", TypeBool.INSTANCE),
+        column("relhastriggers", TypeBool.INSTANCE),
+        column("relhassubclass", TypeBool.INSTANCE),
+        column("relacl", TypeUnknown.INSTANCE),
+        column("reloptions", TypeText.INSTANCE.asArray())
     ),
     pg_constraint(
-        "oid", "oid",
-        "conname", "name",
-        "connamespace", "oid",
-        "contype", "char",
-        "condeferrable", "bool",
-        "condeferred", "bool",
-        "convalidated", "bool",
-        "conrelid", "oid",
-        "contypid", "oid",
-        "conindid", "oid",
-        "conparentid", "oid",
-        "confrelid", "oid",
-        "confupdtype", "oid",
-        "confdeltype", "oid",
-        "confmatchtype", "char",
-        "conislocal", "char",
-        "coninhcount", "char",
-        "connoinherit", "bool",
-        "conkey", "int2_array",
-        "confkey", "int2_array",
-        "conpfeqop", "oid_array",
-        "conppeqop", "oid_array",
-        "conffeqop", "oid_array",
-        "conexclop", "oid_array",
-        "conbin", "pg_node_tree"
+        column("oid", TypeOid.INSTANCE),
+        column("conname", TypeName.INSTANCE),
+        column("connamespace", TypeOid.INSTANCE),
+        column("contype", TypeChar.INSTANCE),
+        column("condeferrable", TypeBool.INSTANCE),
+        column("condeferred", TypeBool.INSTANCE),
+        column("convalidated", TypeBool.INSTANCE),
+        column("conrelid", TypeOid.INSTANCE),
+        column("contypid", TypeOid.INSTANCE),
+        column("conindid", TypeOid.INSTANCE),
+        column("conparentid", TypeOid.INSTANCE),
+        column("confrelid", TypeOid.INSTANCE),
+        column("confupdtype", TypeOid.INSTANCE),
+        column("confdeltype", TypeOid.INSTANCE),
+        column("confmatchtype", TypeChar.INSTANCE),
+        column("conislocal", TypeChar.INSTANCE),
+        column("coninhcount", TypeChar.INSTANCE),
+        column("connoinherit", TypeBool.INSTANCE),
+        column("conkey", TypeInt2.INSTANCE.asArray()),
+        column("confkey", TypeInt2.INSTANCE.asArray()),
+        column("conpfeqop", TypeOid.INSTANCE.asArray()),
+        column("conppeqop", TypeOid.INSTANCE.asArray()),
+        column("conffeqop", TypeOid.INSTANCE.asArray()),
+        column("conexclop", TypeOid.INSTANCE.asArray()),
+        column("conbin", TypeNodeTree.INSTANCE)
     ),
     pg_database(
-        "oid", "oid",
-        "datname", "name",
-        "datdba", "oid",
-        "encoding", "int4",
-        "datcollate", "name",
-        "datctype", "name",
-        "datistemplate", "bool",
-        "datallowconn", "bool",
-        "datconnlimit", "int4",
-        "datlastsysoid", "oid",
-        "datfrozenxid", "xid",
-        "datminmxid", "xid",
-        "dattablespace", "oid",
-        "datacl", "aclitem_array"
+        column("oid", TypeOid.INSTANCE),
+        column("datname", TypeName.INSTANCE),
+        column("datdba", TypeOid.INSTANCE),
+        column("encoding", TypeInt4.INSTANCE),
+        column("datcollate", TypeName.INSTANCE),
+        column("datctype", TypeName.INSTANCE),
+        column("datistemplate", TypeBool.INSTANCE),
+        column("datallowconn", TypeBool.INSTANCE),
+        column("datconnlimit", TypeInt4.INSTANCE),
+        column("datlastsysoid", TypeOid.INSTANCE),
+        column("datfrozenxid", TypeUnknown.INSTANCE),
+        column("datminmxid", TypeUnknown.INSTANCE),
+        column("dattablespace", TypeOid.INSTANCE),
+        column("datacl", TypeUnknown.INSTANCE)
     ),
     pg_index(
-        "oid", "oid",
-        "indexrelid", "oid",
-        "indrelid", "oid",
-        "indnatts", "int2",
-        "indnkeyatts", "int2",
-        "indisunique", "bool",
-        "indisprimary", "bool",
-        "indisexclusion", "bool",
-        "indimmediate", "bool",
-        "indisclustered", "bool",
-        "indisvalid", "bool",
-        "indcheckxmin", "bool",
-        "indisready", "bool",
-        "indislive", "bool",
-        "indisreplident", "bool",
-        "indkey", "int2vector",
-        "indcollation", "oidvector",
-        "indclass", "oidvector",
-        "indoption", "int2vector",
-        "indexprs", "pg_node_tree",
-        "indpred", "pg_node_tree"
+        column("oid", TypeOid.INSTANCE),
+        column("indexrelid", TypeOid.INSTANCE),
+        column("indrelid", TypeOid.INSTANCE),
+        column("indnatts", TypeInt2.INSTANCE),
+        column("indnkeyatts", TypeInt2.INSTANCE),
+        column("indisunique", TypeBool.INSTANCE),
+        column("indisprimary", TypeBool.INSTANCE),
+        column("indisexclusion", TypeBool.INSTANCE),
+        column("indimmediate", TypeBool.INSTANCE),
+        column("indisclustered", TypeBool.INSTANCE),
+        column("indisvalid", TypeBool.INSTANCE),
+        column("indcheckxmin", TypeBool.INSTANCE),
+        column("indisready", TypeBool.INSTANCE),
+        column("indislive", TypeBool.INSTANCE),
+        column("indisreplident", TypeBool.INSTANCE),
+        column("indkey", TypeInt2Vector.INSTANCE),
+        column("indcollation", TypeOidVector.INSTANCE),
+        column("indclass", TypeOidVector.INSTANCE),
+        column("indoption", TypeInt2Vector.INSTANCE),
+        column("indexprs", TypeNodeTree.INSTANCE),
+        column("indpred", TypeNodeTree.INSTANCE)
     ),
     pg_namespace(
-        "oid", "oid",
-        "nspname", "name",
-        "nspowner", "oid",
-        "nspacl", "aclitem_array"
+        column("oid", TypeOid.INSTANCE),
+        column("nspname", TypeName.INSTANCE),
+        column("nspowner", TypeOid.INSTANCE),
+        column("nspacl", TypeUnknown.INSTANCE)
     ),
     pg_proc(
-        "oid", "oid",
-        "proname", "name",
-        "pronamespace", "oid",
-        "proowner", "oid",
-        "prolang", "oid",
-        "procost", "float4",
-        "prorows", "float4",
-        "provariadic", "oid",
-        "prosupport", "regproc",
-        "prokind", "char",
-        "prosecdef", "bool",
-        "proleakproof", "bool",
-        "proisstrict", "bool",
-        "proretset", "bool",
-        "provolatile", "char",
-        "proparallel", "char",
-        "pronargs", "int2",
-        "pronargdefaults", "int2",
-        "prorettype", "oid",
-        "proargtypes", "oidvector",
-        "proallargtypes", "oid_array",
-        "proargmodes", "char_array",
-        "proargnames", "text_array",
-        "proargdefaults", "pg_node_tree",
-        "protrftypes", "oid_array",
-        "prosrc", "text",
-        "probin", "text",
-        "proconfig", "text_array",
-        "proacl", "aclitem_array"
+        column("oid", TypeOid.INSTANCE),
+        column("proname", TypeName.INSTANCE),
+        column("pronamespace", TypeOid.INSTANCE),
+        column("proowner", TypeOid.INSTANCE),
+        column("prolang", TypeOid.INSTANCE),
+        column("procost", TypeFloat4.INSTANCE),
+        column("prorows", TypeFloat4.INSTANCE),
+        column("provariadic", TypeOid.INSTANCE),
+        column("prosupport", TypeRegproc.INSTANCE),
+        column("prokind", TypeChar.INSTANCE),
+        column("prosecdef", TypeBool.INSTANCE),
+        column("proleakproof", TypeBool.INSTANCE),
+        column("proisstrict", TypeBool.INSTANCE),
+        column("proretset", TypeBool.INSTANCE),
+        column("provolatile", TypeChar.INSTANCE),
+        column("proparallel", TypeChar.INSTANCE),
+        column("pronargs", TypeInt2.INSTANCE),
+        column("pronargdefaults", TypeInt2.INSTANCE),
+        column("prorettype", TypeOid.INSTANCE),
+        column("proargtypes", TypeOidVector.INSTANCE),
+        column("proallargtypes", TypeOid.INSTANCE.asArray()),
+        column("proargmodes", TypeChar.INSTANCE.asArray()),
+        column("proargnames", TypeText.INSTANCE.asArray()),
+        column("proargdefaults", TypeNodeTree.INSTANCE),
+        column("protrftypes", TypeOid.INSTANCE.asArray()),
+        column("prosrc", TypeText.INSTANCE),
+        column("probin", TypeText.INSTANCE),
+        column("proconfig", TypeText.INSTANCE.asArray()),
+        column("proacl", TypeUnknown.INSTANCE)
     ),
     pg_trigger(
-        "oid", "oid",
-        "tgrelid", "oid",
-        "tgparentid", "oid",
-        "tgname", "name",
-        "tgfoid", "oid",
-        "tgtype", "int2",
-        "tgenabled", "char",
-        "tgisinternal", "bool",
-        "tgconstrrelid", "oid",
-        "tgconstrindid", "oid",
-        "tgconstraint", "oid",
-        "tgdeferrable", "bool",
-        "tginitdeferred", "bool",
-        "tgnargs", "int2",
-        "tgattr", "int2vector",
-        "tgargs", "bytea",
-        "tgqual", "pg_node_tree",
-        "tgoldtable", "name",
-        "tgnewtable", "name"
+        column("oid", TypeOid.INSTANCE),
+        column("tgrelid", TypeOid.INSTANCE),
+        column("tgparentid", TypeOid.INSTANCE),
+        column("tgname", TypeName.INSTANCE),
+        column("tgfoid", TypeOid.INSTANCE),
+        column("tgtype", TypeInt2.INSTANCE),
+        column("tgenabled", TypeChar.INSTANCE),
+        column("tgisinternal", TypeBool.INSTANCE),
+        column("tgconstrrelid", TypeOid.INSTANCE),
+        column("tgconstrindid", TypeOid.INSTANCE),
+        column("tgconstraint", TypeOid.INSTANCE),
+        column("tgdeferrable", TypeBool.INSTANCE),
+        column("tginitdeferred", TypeBool.INSTANCE),
+        column("tgnargs", TypeInt2.INSTANCE),
+        column("tgattr", TypeInt2Vector.INSTANCE),
+        column("tgargs", TypeBytea.INSTANCE),
+        column("tgqual", TypeNodeTree.INSTANCE),
+        column("tgoldtable", TypeName.INSTANCE),
+        column("tgnewtable", TypeName.INSTANCE)
     ),
     pg_type(
-        "oid", "oid",
-        "typname", "name",
-        "typnamespace", "oid",
-        "typowner", "oid",
-        "typlen", "int2",
-        "typbyval", "bool",
-        "typtype", "char",
-        "typisdefined", "bool",
-        "typdelim", "char",
-        "typrelid", "oid",
-        "typelem", "oid",
-        "typinput", "regproc",
-        "typoutput", "regproc",
-        "typreceive", "regproc",
-        "typsend", "regproc",
-        "typanalyze", "regproc",
-        "typalign", "char",
-        "typstorage", "char",
-        "typnotnull", "bool",
-        "typbasetype", "oid",
-        "typtypmod", "int4",
-        "typndims", "int4",
-        "typdefaultbin", "pg_node_tree",
-        "typdefault", "text"
+        column("oid", TypeOid.INSTANCE),
+        column("typname", TypeName.INSTANCE),
+        column("typnamespace", TypeOid.INSTANCE),
+        column("typowner", TypeOid.INSTANCE),
+        column("typlen", TypeInt2.INSTANCE),
+        column("typbyval", TypeBool.INSTANCE),
+        column("typtype", TypeChar.INSTANCE),
+        column("typisdefined", TypeBool.INSTANCE),
+        column("typdelim", TypeChar.INSTANCE),
+        column("typrelid", TypeOid.INSTANCE),
+        column("typelem", TypeOid.INSTANCE),
+        column("typinput", TypeRegproc.INSTANCE),
+        column("typoutput", TypeRegproc.INSTANCE),
+        column("typreceive", TypeRegproc.INSTANCE),
+        column("typsend", TypeRegproc.INSTANCE),
+        column("typanalyze", TypeRegproc.INSTANCE),
+        column("typalign", TypeChar.INSTANCE),
+        column("typstorage", TypeChar.INSTANCE),
+        column("typnotnull", TypeBool.INSTANCE),
+        column("typbasetype", TypeOid.INSTANCE),
+        column("typtypmod", TypeInt4.INSTANCE),
+        column("typndims", TypeInt4.INSTANCE),
+        column("typdefaultbin", TypeNodeTree.INSTANCE),
+        column("typdefault", TypeText.INSTANCE)
     );
     private final SchemaProperty[] properties;
 
-    PGSystemTable(String... columns) {
+    PGSystemTable(Column... columns) {
         ArrayList<SchemaProperty> properties = new ArrayList<>();
-        for (int i = 0; i < columns.length;) {
-            String name = columns[i++];
-            String typeName = columns[i++];
-            PgType type = TypeUtils.typeByName(typeName);
-            SqlTypeName sqlTypeName = TypeUtils.sqlTypeName(type);
-            RelProtoDataType protoType = TypeUtils.protoType(type);
-            properties.add(new SchemaProperty(name, sqlTypeName, protoType));
+        for (Column column : columns) {
+            SqlTypeName sqlTypeName = TypeUtils.sqlTypeName(column.type);
+            RelProtoDataType protoType = TypeUtils.protoType(column.type);
+            properties.add(new SchemaProperty(column.name, sqlTypeName, protoType));
         }
         this.properties = properties.toArray(new SchemaProperty[0]);
     }
@@ -242,5 +247,19 @@ public enum PGSystemTable {
             b.add(p.getPropertyName(), p.getProtoDataType().apply(typeFactory));
         }
         return b.build();
+    }
+
+    private static Column column(String name, PgType type) {
+        return new Column(name, type);
+    }
+
+    private static class Column {
+        private final String name;
+        private final PgType type;
+
+        private Column(String name, PgType type) {
+            this.name = name;
+            this.type = type;
+        }
     }
 }

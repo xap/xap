@@ -31,6 +31,10 @@ public class PgType {
         return elementType;
     }
 
+    public PgType asArray() {
+        return new PgType(arrayType, name + "_array", -1, 0, id);
+    }
+
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;

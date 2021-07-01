@@ -55,7 +55,7 @@ public class TypeUtils {
                         typeNameToType.put(type.name, type);
 
                         if (type.arrayType != 0) {
-                            PgType arrayType = arrayType(type);
+                            PgType arrayType = type.asArray();
                             if (typeSet.add(arrayType)) {
                                 typeIdToType.put(arrayType.id, arrayType);
                                 typeNameToType.put(arrayType.name, arrayType);
@@ -221,9 +221,5 @@ public class TypeUtils {
         }
 
         return factory.createSqlType(typeName);
-     }
-
-    public static PgType arrayType(PgType type) {
-        return new PgType(type.arrayType, type.name + "_array", -1, 0, type.id);
     }
 }
