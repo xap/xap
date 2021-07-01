@@ -1,5 +1,6 @@
 package com.gigaspaces.sql.aggregatornode.netty.utils;
 
+import com.gigaspaces.jdbc.calcite.pg.PgTypeDescriptor;
 import com.gigaspaces.sql.aggregatornode.netty.exception.BreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.Session;
@@ -28,7 +29,7 @@ public class TypeBytea extends PgType {
     }
 
     public TypeBytea() {
-        super(17, "bytea", -1, 1001, 0);
+        super(PgTypeDescriptor.BYTEA);
     }
 
     @Override
