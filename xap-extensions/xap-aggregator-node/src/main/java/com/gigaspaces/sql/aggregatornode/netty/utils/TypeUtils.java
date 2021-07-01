@@ -8,7 +8,6 @@ import com.gigaspaces.sql.aggregatornode.netty.query.Session;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.collection.IntObjectHashMap;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.lang.reflect.Field;
@@ -22,18 +21,12 @@ public class TypeUtils {
     public static final PgType PG_TYPE_BOOL = TypeBool.INSTANCE;
     public static final PgType PG_TYPE_BYTEA = TypeBytea.INSTANCE;
     public static final PgType PG_TYPE_CHAR = TypeChar.INSTANCE;
-    public static final PgType PG_TYPE_NAME = TypeName.INSTANCE;
     public static final PgType PG_TYPE_INT8 = TypeInt8.INSTANCE;
     public static final PgType PG_TYPE_INT2 = TypeInt2.INSTANCE;
-    public static final PgType PG_TYPE_INT2VECTOR = TypeInt2vector.INSTANCE;
     public static final PgType PG_TYPE_INT4 = TypeInt4.INSTANCE;
-    public static final PgType PG_TYPE_REGPROC = TypeRegproc.INSTANCE;
-    public static final PgType PG_TYPE_TEXT = TypeText.INSTANCE;
     public static final PgType PG_TYPE_OID = TypeOid.INSTANCE;
-    public static final PgType PG_TYPE_OIDVECTOR = TypeOidVector.INSTANCE;
     public static final PgType PG_TYPE_FLOAT4 = TypeFloat4.INSTANCE;
     public static final PgType PG_TYPE_FLOAT8 = TypeFloat8.INSTANCE;
-    public static final PgType PG_TYPE_BPCHAR = TypeBpchar.INSTANCE;
     public static final PgType PG_TYPE_VARCHAR = TypeVarchar.INSTANCE;
     public static final PgType PG_TYPE_DATE = TypeDate.INSTANCE;
     public static final PgType PG_TYPE_TIME = TypeTime.INSTANCE;
@@ -151,57 +144,6 @@ public class TypeUtils {
 
             default:
                 return PG_TYPE_UNKNOWN;
-        }
-    }
-
-    public static RelDataType toInternal(int type, RelDataTypeFactory factory) {
-        PgType type1 = getType(type);
-        if (type1.elementType != 0) {
-            return factory.createArrayType(toInternal(type1.elementType, factory), -1);
-        } else if (PG_TYPE_BOOL.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.BOOLEAN);
-        } else if (PG_TYPE_REGPROC.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.INTEGER);
-        } else if (PG_TYPE_OID.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.INTEGER);
-        } else if (PG_TYPE_TEXT.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.VARCHAR);
-        } else if (PG_TYPE_NAME.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.VARCHAR);
-        } else if (PG_TYPE_INT2.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.SMALLINT);
-        } else if (PG_TYPE_INT4.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.INTEGER);
-        } else if (PG_TYPE_INT8.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.BIGINT);
-        } else if (PG_TYPE_NUMERIC.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.DECIMAL);
-        } else if (PG_TYPE_FLOAT4.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.FLOAT);
-        } else if (PG_TYPE_FLOAT8.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.DOUBLE);
-        } else if (PG_TYPE_CHAR.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.CHAR);
-        } else if (PG_TYPE_VARCHAR.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.VARCHAR);
-        } else if (PG_TYPE_BYTEA.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.BINARY);
-        } else if (PG_TYPE_DATE.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.DATE);
-        } else if (PG_TYPE_TIME.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.TIME);
-        } else if (PG_TYPE_TIMESTAMP.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.TIMESTAMP);
-        } else if (PG_TYPE_TIMETZ.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.TIME_WITH_LOCAL_TIME_ZONE);
-        } else if (PG_TYPE_TIMESTAMPTZ.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE);
-        } else if (PG_TYPE_ANY.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.ANY);
-        } else if (PG_TYPE_CURSOR.equals(type1)) {
-            return factory.createSqlType(SqlTypeName.CURSOR);
-        } else {
-            return factory.createUnknownType();
         }
     }
 

@@ -76,5 +76,4 @@ public class PgTypeDescriptor {
     public final int hashCode() {
         return id;
     }
-
 }

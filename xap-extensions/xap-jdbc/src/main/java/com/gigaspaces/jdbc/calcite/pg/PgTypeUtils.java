@@ -1,8 +1,5 @@
 package com.gigaspaces.jdbc.calcite.pg;
 
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelProtoDataType;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.lang.reflect.Field;
@@ -14,15 +11,11 @@ import java.util.Set;
 
 public class PgTypeUtils {
 
-    private static final HashMap<Integer, PgTypeDescriptor> elementToArray;
     private static final HashMap<Integer, PgTypeDescriptor> typeIdToType;
-    private static final HashMap<String, PgTypeDescriptor> typeNameToType;
 
     static {
         Field[] fields = PgTypeUtils.class.getDeclaredFields();
-        elementToArray = new HashMap<>(fields.length * 2);
         typeIdToType = new HashMap<>(fields.length * 2);
-        typeNameToType = new HashMap<>();
         Set<PgTypeDescriptor> typeSet = new HashSet<>();
         try {
             for (Field field : fields) {
@@ -31,15 +24,11 @@ public class PgTypeUtils {
                     PgTypeDescriptor type = (PgTypeDescriptor) field.get(null);
                     if (typeSet.add(type)) {
                         typeIdToType.put(type.id, type);
-                        typeNameToType.put(type.name, type);
 
                         if (type.arrayType != 0) {
                             PgTypeDescriptor arrayType = type.asArray();
                             if (typeSet.add(arrayType)) {
                                 typeIdToType.put(arrayType.id, arrayType);
-                                typeNameToType.put(arrayType.name, arrayType);
-
-                                elementToArray.put(type.id, arrayType);
                             }
                         }
                     }
@@ -50,15 +39,15 @@ public class PgTypeUtils {
         }
     }
 
-    public static PgTypeDescriptor getType(int id) {
+    public static PgTypeDescriptor getTypeById(int id) {
         return typeIdToType.getOrDefault(id, PgTypeDescriptor.UNKNOWN);
     }
 
-    public static PgTypeDescriptor getArrayType(int elementTypeId) {
-        return elementToArray.getOrDefault(elementTypeId, PgTypeDescriptor.UNKNOWN);
+    public static Collection<PgTypeDescriptor> getTypes() {
+        return typeIdToType.values();
     }
-    
-    public static PgTypeDescriptor fromInternal(SqlTypeName typeName) {
+
+    public static PgTypeDescriptor fromSqlTypeName(SqlTypeName typeName) {
         switch (typeName) {
             case BOOLEAN:
                 return PgTypeDescriptor.BOOL;
@@ -112,32 +101,7 @@ public class PgTypeUtils {
         }
     }
 
-    public static PgTypeDescriptor typeByName(String typeName) {
-        return typeNameToType.getOrDefault(typeName, PgTypeDescriptor.UNKNOWN);
-    }
-
-    public static RelProtoDataType resolveType(String typeName) {
-        PgTypeDescriptor pgType = typeByName(typeName);
-        return pgType == PgTypeDescriptor.UNKNOWN ? null : protoType(pgType);
-    }
-
-    public static RelProtoDataType protoType(PgTypeDescriptor pgType) {
-        return ((tf) -> toInternal(pgType, tf));
-    }
-
-    public static Set<String> typeNames() {
-        return typeNameToType.keySet();
-    }
-
-    public static Collection<PgTypeDescriptor> types() {
-        return typeIdToType.values();
-    }
-
-    public static RelDataType toInternal(int type, RelDataTypeFactory factory) {
-        return toInternal(getType(type), factory);
-    }
-
-    public static SqlTypeName sqlTypeName(PgTypeDescriptor type) {
+    public static SqlTypeName toSqlTypeName(PgTypeDescriptor type) {
         if (PgTypeDescriptor.BOOL.equals(type)) {
             return SqlTypeName.BOOLEAN;
         } else if (PgTypeDescriptor.REGPROC.equals(type)) {
@@ -179,18 +143,5 @@ public class PgTypeUtils {
         } else {
             return SqlTypeName.NULL;
         }
-    }
-
-    private static RelDataType toInternal(PgTypeDescriptor type, RelDataTypeFactory factory) {
-        if (type.elementType != 0) {
-            return factory.createArrayType(toInternal(type.elementType, factory), -1);
-        }
-
-        SqlTypeName typeName = sqlTypeName(type);
-        if (typeName == SqlTypeName.OTHER) {
-            return factory.createUnknownType();
-        }
-
-        return factory.createSqlType(typeName);
     }
 }

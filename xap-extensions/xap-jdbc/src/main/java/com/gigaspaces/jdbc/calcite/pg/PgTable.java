@@ -214,8 +214,8 @@ public enum PgTable {
     PgTable(Column... columns) {
         ArrayList<SchemaProperty> properties = new ArrayList<>();
         for (Column column : columns) {
-            SqlTypeName sqlTypeName = PgTypeUtils.sqlTypeName(column.type);
-            RelProtoDataType protoType = PgTypeUtils.protoType(column.type);
+            SqlTypeName sqlTypeName = PgTypeUtils.toSqlTypeName(column.type);
+            RelProtoDataType protoType = toRelProtoDataType(column.type);
             properties.add(new SchemaProperty(column.name, sqlTypeName, protoType));
         }
         this.properties = properties.toArray(new SchemaProperty[0]);
@@ -231,6 +231,23 @@ public enum PgTable {
             b.add(p.getPropertyName(), p.getProtoDataType().apply(typeFactory));
         }
         return b.build();
+    }
+
+    private static RelProtoDataType toRelProtoDataType(PgTypeDescriptor type) {
+        return ((factory) -> toRelDataType(type, factory));
+    }
+
+    private static RelDataType toRelDataType(PgTypeDescriptor type, RelDataTypeFactory factory) {
+        if (type.elementType != 0) {
+            return factory.createArrayType(toRelDataType(PgTypeUtils.getTypeById(type.elementType), factory), -1);
+        }
+
+        SqlTypeName typeName = PgTypeUtils.toSqlTypeName(type);
+        if (typeName == SqlTypeName.OTHER) {
+            return factory.createUnknownType();
+        }
+
+        return factory.createSqlType(typeName);
     }
 
     private static Column column(String name, PgTypeDescriptor type) {
