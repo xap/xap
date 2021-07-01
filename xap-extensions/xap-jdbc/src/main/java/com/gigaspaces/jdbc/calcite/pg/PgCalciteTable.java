@@ -25,13 +25,14 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class PgCalciteTable extends AbstractTable {
 
-    private static final Map<String, PgCalciteTable> TABLES = new HashMap<>();
+    private static final Map<String, PgCalciteTable> TABLES = new LinkedHashMap<>();
 
     static {
         for (PgTable pgTable : PgTable.values()) {
@@ -41,9 +42,11 @@ public class PgCalciteTable extends AbstractTable {
     }
 
     public static PgCalciteTable getTable(String name) {
-        if (name.startsWith("pg_catalog."))
-            name = name.substring(("pg_catalog.").length());
         return TABLES.get(name);
+    }
+
+    public static Set<String> getTableNames() {
+        return TABLES.keySet();
     }
 
     private final PgTable systemTable;

@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc.calcite;
 
 import com.gigaspaces.jdbc.calcite.parser.GSSqlParserFactoryWrapper;
+import com.gigaspaces.jdbc.calcite.pg.PgCalciteSchema;
 import com.j_spaces.core.IJSpace;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.config.CalciteConnectionConfig;
@@ -29,11 +30,15 @@ import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.calcite.sql2rel.StandardConvertletTable;
 import org.apache.calcite.tools.Program;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.apache.calcite.sql.validate.SqlConformanceEnum.LENIENT;
 
 public class GSOptimizer {
+
+    public static final String ROOT_SCHEMA_NAME = "root";
+
     private static final CalciteConnectionConfig CONNECTION_CONFIG = CalciteConnectionConfig.DEFAULT
         .set(CalciteConnectionProperty.PARSER_FACTORY, GSSqlParserFactoryWrapper.FACTORY_CLASS)
         .set(CalciteConnectionProperty.CASE_SENSITIVE, "false")
@@ -54,9 +59,13 @@ public class GSOptimizer {
     public GSOptimizer(IJSpace space) {
         JavaTypeFactoryImpl typeFactory = new JavaTypeFactoryImpl();
 
-        catalogReader = new CalciteCatalogReader(
+        catalogReader = new GSCalciteCatalogReader(
             createSchema(space),
-            Collections.singletonList("root"),
+            Arrays.asList(
+                Collections.singletonList(ROOT_SCHEMA_NAME),
+                Collections.singletonList(PgCalciteSchema.NAME),
+                Collections.emptyList()
+            ),
             typeFactory,
             CONNECTION_CONFIG);
 
@@ -138,8 +147,8 @@ public class GSOptimizer {
 
     private static CalciteSchema createSchema(IJSpace space) {
         CalciteSchema res = CalciteSchema.createRootSchema(true, false);
-        res.add("root", new GSSchema(space));
-        res.add("pg_catalog", new GSSchema(space));
+        res.add(ROOT_SCHEMA_NAME, new GSSchema(space));
+        res.add(PgCalciteSchema.NAME, PgCalciteSchema.INSTANCE);
         return res;
     }
 }

@@ -150,6 +150,18 @@ class ServerBeanTest {
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
+    void testClassTableNoFqn(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = "SELECT * from pg_class where 1 = 1";
+            final PreparedStatement statement = conn.prepareStatement(qry);
+            assertTrue(statement.execute());
+            ResultSet res = statement.getResultSet();
+            DumpUtils.dump(res);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
     void testMultiline(boolean simple) throws Exception {
         try (Connection conn = connect(simple)) {
             final String qry = String.format("" +
