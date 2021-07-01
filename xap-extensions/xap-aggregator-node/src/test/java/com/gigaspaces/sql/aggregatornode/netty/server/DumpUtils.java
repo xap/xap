@@ -4,14 +4,14 @@ package com.gigaspaces.sql.aggregatornode.netty.server;
 
 import com.gigaspaces.sql.aggregatornode.netty.server.output.ConsoleOutput;
 import com.gigaspaces.sql.aggregatornode.netty.server.output.Output;
+import org.junit.Assert;
 
+import java.io.BufferedReader;
+import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DumpUtils {
@@ -31,6 +31,70 @@ public class DumpUtils {
         ConsoleOutput.newline();
         ConsoleOutput.println(out);
 
+        return result;
+    }
+
+    public static void checkResult(ResultSet rs, String expected) throws Exception {
+        List<Row> result = new ArrayList<>();
+        ResultSetMetaData metaData = rs.getMetaData();
+        Output out = new Output();
+        String[] columnNames = getHeader(metaData);
+        out.addColumns(columnNames);
+
+        while (rs.next()) {
+            Object[] rowValues = getRow(rs, metaData);
+            out.addRow(Arrays.stream(rowValues).map(String::valueOf).collect(Collectors.toList()));
+            result.add(new Row(columnNames, rowValues));
+        }
+
+        ConsoleOutput.newline();
+        ConsoleOutput.println(out);
+
+        BufferedReader reader = new BufferedReader(new StringReader(expected));
+        List<String> lines = reader.lines().collect(Collectors.toList());
+        assert lines.size() >= 2;
+
+        checkColumns(lines.get(0), columnNames);
+        Assert.assertEquals("Unexpected rows count", lines.size() - 2, result.size());
+
+        for (int i = 0; i < result.size(); i++)
+            checkValues(lines.get(i + 2), result.get(i), i + 1);
+    }
+
+    private static void checkColumns(String header, String[] columnNames) {
+        List<String> expected = splitValues(header);
+        Assert.assertEquals("Unexpected columns count", expected.size(), columnNames.length);
+        for (int i = 0; i < columnNames.length; i++)
+            Assert.assertEquals("Unexpected column at position " + (i + 1), expected.get(i), columnNames[i]);
+    }
+
+    private static void checkValues(String line, Row row, int lineNum) {
+        List<String> expected = splitValues(line);
+        assert expected.size() == row.columnValues.length;
+        Object[] columnValues = row.columnValues;
+        for (int i = 0; i < columnValues.length; i++) {
+            Assert.assertEquals("Unexpected value at line " + lineNum + " column " + (i + 1), expected.get(i), String.valueOf(columnValues[i]));
+        }
+    }
+
+    private static List<String> splitValues(String line) {
+        List<String> result = new ArrayList<>();
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < line.length(); i++) {
+            if (Character.isWhitespace(line.charAt(i)))
+                continue;
+
+            if ('|' == line.charAt(i)) {
+                if (b.length() == 0)
+                    continue;
+                result.add(b.toString());
+                b.setLength(0);
+
+                continue;
+            }
+
+            b.append(line.charAt(i));
+        }
         return result;
     }
 

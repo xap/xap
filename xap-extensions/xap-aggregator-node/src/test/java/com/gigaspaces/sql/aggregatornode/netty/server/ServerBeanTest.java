@@ -3,30 +3,15 @@ package com.gigaspaces.sql.aggregatornode.netty.server;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.openspaces.core.GigaSpace;
-import org.openspaces.core.GigaSpaceConfigurer;
-import org.openspaces.core.space.EmbeddedSpaceConfigurer;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ServerBeanTest {
-    public static final String SPACE_NAME = "mySpace";
-
-    private static GigaSpace gigaSpace;
-    private static ServerBean server;
-
+class ServerBeanTest extends AbstractServerTest{
     @BeforeAll
     static void setUp() throws Exception {
-        Class.forName("org.postgresql.Driver");
-
-        gigaSpace = new GigaSpaceConfigurer(
-                new EmbeddedSpaceConfigurer(SPACE_NAME)
-                        .addProperty("space-config.QueryProcessor.datetime_format", "yyyy-MM-dd HH:mm:ss.SSS")
-        ).gigaSpace();
-
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS");
         java.util.Date date1 = simpleDateFormat.parse("10/09/2001 05:20:00.231");
         java.util.Date date2 = simpleDateFormat.parse("11/09/2001 10:20:00.250");
@@ -36,9 +21,6 @@ class ServerBeanTest {
         gigaSpace.write(new MyPojo("Adam Bb", 30, "Israel", date2, new Time(date2.getTime()), new Timestamp(date2.getTime())));
         gigaSpace.write(new MyPojo("Eve Cc", 35, "UK", date3, new Time(date3.getTime()), new Timestamp(date3.getTime())));
         gigaSpace.write(new MyPojo("NoCountry Dd", 40, null, date4, new Time(date4.getTime()), new Timestamp(date4.getTime())));
-
-        server = new ServerBean(SPACE_NAME);
-        server.init();
     }
 
     @ParameterizedTest
@@ -96,7 +78,10 @@ class ServerBeanTest {
             final PreparedStatement statement = conn.prepareStatement(qry);
             assertTrue(statement.execute());
             ResultSet res = statement.getResultSet();
-            DumpUtils.dump(res);
+            String expected = "" +
+"| oid | amname | amhandler | amtype |\n" +
+"| --- | ------ | --------- | ------ |\n";
+            DumpUtils.checkResult(res, expected);
         }
     }
 
@@ -108,7 +93,60 @@ class ServerBeanTest {
             final PreparedStatement statement = conn.prepareStatement(qry);
             assertTrue(statement.execute());
             ResultSet res = statement.getResultSet();
-            DumpUtils.dump(res);
+            String expected = "" +
+"| oid  | typname           | typnamespace | typowner | typlen | typbyval | typtype | typisdefined | typdelim | typrelid | typelem | typinput | typoutput | typreceive | typsend | typanalyze | typalign | typstorage | typnotnull | typbasetype | typtypmod | typndims | typdefaultbin | typdefault |\n" +
+"| ---- | ----------------- | ------------ | -------- | ------ | -------- | ------- | ------------ | -------- | -------- | ------- | -------- | --------- | ---------- | ------- | ---------- | -------- | ---------- | ---------- | ----------- | --------- | -------- | ------------- | ---------- |\n" +
+"| 1028 | oid_array         | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 26      | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 16   | bool              | -1000        | 0        | 1      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 17   | bytea             | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 1042 | bpchar            | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 18   | char              | -1000        | 0        | 1      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 19   | name              | -1000        | 0        | 63     | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 1043 | varchar           | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 20   | int8              | -1000        | 0        | 8      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 21   | int2              | -1000        | 0        | 2      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 22   | int2vector        | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 21      | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 23   | int4              | -1000        | 0        | 4      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 24   | regproc           | -1000        | 0        | 4      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 2201 | refcursor_array   | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 1790    | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 25   | text              | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 26   | oid               | -1000        | 0        | 4      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 1182 | date_array        | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 1082    | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 30   | oidvector         | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 26      | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1183 | time_array        | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 1083    | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1184 | timestamptz       | -1000        | 0        | 8      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 1185 | timestamptz_array | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 1184    | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1186 | interval          | -1000        | 0        | 16     | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 1187 | interval_array    | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 1186    | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1700 | numeric           | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 1082 | date              | -1000        | 0        | 4      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 1083 | time              | -1000        | 0        | 8      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 700  | float4            | -1000        | 0        | 4      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 701  | float8            | -1000        | 0        | 8      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 705  | unknown           | -1000        | 0        | -2     | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 194  | pg_node_tree      | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 1231 | numeric_array     | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 1700    | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1114 | timestamp         | -1000        | 0        | 8      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 1115 | timestamp_array   | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 1114    | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 2276 | any               | -1000        | 0        | 4      | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 1000 | bool_array        | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 16      | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1001 | bytea_array       | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 17      | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1002 | char_array        | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 18      | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1003 | name_array        | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 19      | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1005 | int2_array        | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 21      | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1006 | int2vector_array  | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 22      | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1007 | int4_array        | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 23      | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1008 | regproc_array     | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 24      | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1009 | text_array        | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 25      | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1266 | timetz            | -1000        | 0        | 12     | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 1014 | bpchar_array      | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 1042    | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1270 | timetz_array      | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 1266    | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1015 | varchar_array     | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 1043    | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1016 | int8_array        | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 20      | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1021 | float4_array      | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 700     | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n" +
+"| 1790 | refcursor         | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 0       | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 0        | null          | null       |\n" +
+"| 1022 | float8_array      | -1000        | 0        | -1     | null     | b       | true         | ,        | 0        | 701     | 0        | 0         | 0          | 0       | 0          | c        | p          | false      | 0           | -1        | 1        | null          | null       |\n";
+            DumpUtils.checkResult(res, expected);
         }
     }
 
@@ -120,7 +158,21 @@ class ServerBeanTest {
             final PreparedStatement statement = conn.prepareStatement(qry);
             assertTrue(statement.execute());
             ResultSet res = statement.getResultSet();
-            DumpUtils.dump(res);
+            String expected = "" +
+"| attrelid | attname    | atttypid | attstattarget | attlen | attnum | attndims | attcacheoff | atttypmod | attbyval | attstorage | attalign | attnotnull | atthasdef | attisdropped | attislocal | attinhcount |\n" +
+"| -------- | ---------- | -------- | ------------- | ------ | ------ | -------- | ----------- | --------- | -------- | ---------- | -------- | ---------- | --------- | ------------ | ---------- | ----------- |\n" +
+"| 2        | age        | 23       | 0             | 4      | 1      | 0        | -1          | -1        | null     | p          | c        | false      | false     | false        | false      | 0           |\n" +
+"| 2        | birthDate  | 1082     | 0             | 4      | 2      | 0        | -1          | -1        | null     | p          | c        | false      | false     | false        | false      | 0           |\n" +
+"| 2        | birthLong  | 20       | 0             | 8      | 3      | 0        | -1          | -1        | null     | p          | c        | false      | false     | false        | false      | 0           |\n" +
+"| 2        | birthTime  | 1266     | 0             | 12     | 4      | 0        | -1          | -1        | null     | p          | c        | false      | false     | false        | false      | 0           |\n" +
+"| 2        | country    | 1043     | 0             | -1     | 5      | 0        | -1          | -1        | null     | p          | c        | false      | false     | false        | false      | 0           |\n" +
+"| 2        | email      | 1043     | 0             | -1     | 6      | 0        | -1          | -1        | null     | p          | c        | false      | false     | false        | false      | 0           |\n" +
+"| 2        | first_name | 1043     | 0             | -1     | 7      | 0        | -1          | -1        | null     | p          | c        | false      | false     | false        | false      | 0           |\n" +
+"| 2        | id         | 1043     | 0             | -1     | 8      | 0        | -1          | -1        | null     | p          | c        | false      | false     | false        | false      | 0           |\n" +
+"| 2        | last_name  | 1043     | 0             | -1     | 9      | 0        | -1          | -1        | null     | p          | c        | false      | false     | false        | false      | 0           |\n" +
+"| 2        | name       | 1043     | 0             | -1     | 10     | 0        | -1          | -1        | null     | p          | c        | false      | false     | false        | false      | 0           |\n" +
+"| 2        | timestamp  | 1114     | 0             | 8      | 11     | 0        | -1          | -1        | null     | p          | c        | false      | false     | false        | false      | 0           |\n";
+            DumpUtils.checkResult(res, expected);
         }
     }
 
@@ -132,7 +184,12 @@ class ServerBeanTest {
             final PreparedStatement statement = conn.prepareStatement(qry);
             assertTrue(statement.execute());
             ResultSet res = statement.getResultSet();
-            DumpUtils.dump(res);
+            String expected = "" +
+"| oid   | nspname    | nspowner | nspacl |\n" +
+"| ----- | ---------- | -------- | ------ |\n" +
+"| 0     | PUBLIC     | 0        | null   |\n" +
+"| -1000 | PG_CATALOG | 0        | null   |\n";
+            DumpUtils.checkResult(res, expected);
         }
     }
 
@@ -144,7 +201,12 @@ class ServerBeanTest {
             final PreparedStatement statement = conn.prepareStatement(qry);
             assertTrue(statement.execute());
             ResultSet res = statement.getResultSet();
-            DumpUtils.dump(res);
+            String expected = "" +
+"| oid | relname                                               | relnamespace | reltype | relowner | relam | relfilenode | reltablespace | relpages | reltuples | reltoastrelid | relhasindex | relisshared | relkind | relnatts | relchecks | reltriggers | relhasrules | relhastriggers | relhassubclass | relacl | reloptions |\n" +
+"| --- | ----------------------------------------------------- | ------------ | ------- | -------- | ----- | ----------- | ------------- | -------- | --------- | ------------- | ----------- | ----------- | ------- | -------- | --------- | ----------- | ----------- | -------------- | -------------- | ------ | ---------- |\n" +
+"| 1   | java.lang.Object                                      | 0            | 0       | 0        | 0     | 0           | 0             | 0        | 100.0     | 0             | false       | false       | r       | 0        | 0         | 0           | false       | false          | false          | null   | null       |\n" +
+"| 2   | com.gigaspaces.sql.aggregatornode.netty.server.MyPojo | 0            | 0       | 0        | 0     | 0           | 0             | 0        | 100.0     | 0             | false       | false       | r       | 11       | 0         | 0           | false       | false          | false          | null   | null       |\n";
+            DumpUtils.checkResult(res, expected);
         }
     }
 
@@ -156,7 +218,12 @@ class ServerBeanTest {
             final PreparedStatement statement = conn.prepareStatement(qry);
             assertTrue(statement.execute());
             ResultSet res = statement.getResultSet();
-            DumpUtils.dump(res);
+            String expected = "" +
+"| oid | relname                                               | relnamespace | reltype | relowner | relam | relfilenode | reltablespace | relpages | reltuples | reltoastrelid | relhasindex | relisshared | relkind | relnatts | relchecks | reltriggers | relhasrules | relhastriggers | relhassubclass | relacl | reloptions |\n" +
+"| --- | ----------------------------------------------------- | ------------ | ------- | -------- | ----- | ----------- | ------------- | -------- | --------- | ------------- | ----------- | ----------- | ------- | -------- | --------- | ----------- | ----------- | -------------- | -------------- | ------ | ---------- |\n" +
+"| 1   | java.lang.Object                                      | 0            | 0       | 0        | 0     | 0           | 0             | 0        | 100.0     | 0             | false       | false       | r       | 0        | 0         | 0           | false       | false          | false          | null   | null       |\n" +
+"| 2   | com.gigaspaces.sql.aggregatornode.netty.server.MyPojo | 0            | 0       | 0        | 0     | 0           | 0             | 0        | 100.0     | 0             | false       | false       | r       | 11       | 0         | 0           | false       | false          | false          | null   | null       |\n";
+            DumpUtils.checkResult(res, expected);
         }
     }
 
@@ -172,24 +239,22 @@ class ServerBeanTest {
             final Statement statement = conn.createStatement();
             assertTrue(statement.execute(qry));
             ResultSet res = statement.getResultSet();
-            DumpUtils.dump(res);
+            String expected = "" +
+"| first_name | last_name | email         | age |\n" +
+"| ---------- | --------- | ------------- | --- |\n" +
+"| Adler      | Aa        | Adler@msn.com | 20  |\n" +
+"| Adam       | Bb        | Adam@msn.com  | 30  |\n";
+            DumpUtils.checkResult(res, expected);
             statement.getMoreResults();
             int updateCount = statement.getUpdateCount();
             assertEquals(1, updateCount);
             statement.getMoreResults();
             res = statement.getResultSet();
-            DumpUtils.dump(res);
+            expected = "" +
+"| COL1           |\n" +
+"| -------------- |\n" +
+"| READ_COMMITTED |\n";
+            DumpUtils.checkResult(res, expected);
         }
-    }
-
-    private Connection connect(boolean simple) throws Exception {
-        String url = "jdbc:postgresql://localhost/test?user=fred&password=secret";
-        if (simple)
-            url += "&preferQueryMode=simple";
-
-        final Connection conn = DriverManager.getConnection(url);
-        assertFalse(conn.isClosed());
-        assertTrue(conn.isValid(1000));
-        return conn;
     }
 }

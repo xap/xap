@@ -45,7 +45,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf msg0 = (ByteBuf) msg;
         try {
             onMessage(ctx, initRead ? (char) msg0.readByte() : 0, msg0.skipBytes(4));
@@ -59,68 +59,79 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         ctx.flush();
     }
 
-    void onMessage(ChannelHandlerContext ctx, char type, ByteBuf msg) {
-        try {
-            switch (type) {
-                case 0:
-                    onInit(ctx, msg);
-                    break;
-    
-                case 'p':
-                    onPassword(ctx, msg);
-                    break;
-    
-                case 'P':
-                    onParse(ctx, msg);
-                    break;
-    
-                case 'B':
-                    onBind(ctx, msg);
-                    break;
-    
-                case 'D':
-                    onDescribe(ctx, msg);
-                    break;
-    
-                case 'E':
-                    onExecute(ctx, msg);
-                    break;
+    void onMessage(ChannelHandlerContext ctx, char type, ByteBuf msg) throws Exception {
+        switch (type) {
+            case 0:
+                onInit(ctx, msg);
+                break;
 
-                case 'C':
-                    onClose(ctx, msg);
-                    break;
+            case 'p':
+                onPassword(ctx, msg);
+                break;
 
-                case 'H':
-                    onFlush(ctx, msg);
-                    break;
+            case 'P':
+                onParse(ctx, msg);
+                break;
 
-                case 'Q':
-                    onQuery(ctx, msg);
-                    break;
+            case 'B':
+                onBind(ctx, msg);
+                break;
 
-                case 'X':
-                    onTerminate(ctx, msg);
-                    break;
+            case 'D':
+                onDescribe(ctx, msg);
+                break;
 
-                case 'S':
-                    onSync(ctx, msg);
-                    break;
-    
-                default:
-                    throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION /* protocol violation */, "unexpected message type");
-            }
-        } catch (ProtocolException e) {
-            e.printStackTrace(System.err);
-            log.error("CODE " + e.getCode() + ": " + e.getMessage(), e);
-            ByteBuf buf = ctx.alloc().ioBuffer();
-            writeError(buf, e.getCode(), e.getMessage());
-            if (e.closeSession()) {
-                ctx.write(buf);
-                ctx.close();
-            } else {
-                writeReadyForQuery(buf);
-                ctx.write(buf);
-            }
+            case 'E':
+                onExecute(ctx, msg);
+                break;
+
+            case 'C':
+                onClose(ctx, msg);
+                break;
+
+            case 'H':
+                onFlush(ctx, msg);
+                break;
+
+            case 'Q':
+                onQuery(ctx, msg);
+                break;
+
+            case 'X':
+                onTerminate(ctx, msg);
+                break;
+
+            case 'S':
+                onSync(ctx, msg);
+                break;
+
+            default:
+                throw new BreakingException(ErrorCodes.PROTOCOL_VIOLATION /* protocol violation */, "unexpected message type");
+        }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        // TODO log exception properly
+        cause.printStackTrace();
+
+        String code;
+        boolean close;
+        if (cause instanceof ProtocolException) {
+            code = ((ProtocolException) cause).getCode();
+            close = ((ProtocolException) cause).closeSession();
+        } else {
+            code = ErrorCodes.INTERNAL_ERROR;
+            close = true;
+        }
+        ByteBuf buf = ctx.alloc().ioBuffer();
+        writeError(buf, code, cause.getMessage());
+        if (close) {
+            ctx.write(buf);
+            ctx.close();
+        } else {
+            writeReadyForQuery(buf);
+            ctx.write(buf);
         }
     }
 
