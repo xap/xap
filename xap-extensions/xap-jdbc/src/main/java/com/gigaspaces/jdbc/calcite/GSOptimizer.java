@@ -19,6 +19,7 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.calcite.sql.util.ChainedSqlOperatorTable;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -53,7 +54,7 @@ public class GSOptimizer {
             typeFactory,
             config);
 
-        validator = SqlValidatorUtil.newValidator(SqlStdOperatorTable.instance(), catalogReader, typeFactory,
+        validator = SqlValidatorUtil.newValidator(ChainedSqlOperatorTable.of(SqlStdOperatorTable.instance()), catalogReader, typeFactory,
             SqlValidator.Config.DEFAULT);
 
         planner = new VolcanoPlanner(RelOptCostImpl.FACTORY, Contexts.of(config));

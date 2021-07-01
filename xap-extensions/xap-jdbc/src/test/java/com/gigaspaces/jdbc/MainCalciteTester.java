@@ -37,11 +37,14 @@ public class MainCalciteTester {
             Statement statement = connection.createStatement();
 
             //Simple select
-            execute(statement, String.format("SELECT * FROM %s", "\"" + MyPojo.class.getName() + "\""));
+//            execute(statement, String.format("SELECT * FROM %s", "\"" + MyPojo.class.getName() + "\""));
             // select with one projection
-            execute(statement, String.format("SELECT first_name FROM %s", "\"" + MyPojo.class.getName() + "\""));
+            execute(statement, String.format("SELECT age FROM %s GROUP BY age", "\"" + MyPojo.class.getName() + "\""));
+
+            execute(statement, String.format("SELECT MAX(age) FROM %s", "\"" + MyPojo.class.getName() + "\""));
+
             // select with one aliased projection
-            execute(statement, String.format("SELECT first_name as first FROM %s", "\"" + MyPojo.class.getName() + "\""));
+            execute(statement, String.format("SELECT CONCAT(first_name,last_name) as first FROM %s", "\"" + MyPojo.class.getName() + "\""));
             // select all with one filter
             execute(statement, String.format("SELECT * FROM %s where last_name = 'Aa'", "\"" + MyPojo.class.getName() + "\""));
             // select all with one projection + one filter
@@ -94,11 +97,15 @@ public class MainCalciteTester {
         }
     }
 
-    private static void execute(Statement statement, String sql) throws SQLException {
+    private static void execute(Statement statement, String sql) {
         System.out.println();
         System.out.println("Executing: " + sql);
-        ResultSet res = statement.executeQuery(sql);
-        DumpUtils.dump(res);
+        try {
+            ResultSet res = statement.executeQuery(sql);
+        } catch (SQLException throwables) {
+//            throwables.printStackTrace();
+        }
+//        DumpUtils.dump(res);
 
     }
 

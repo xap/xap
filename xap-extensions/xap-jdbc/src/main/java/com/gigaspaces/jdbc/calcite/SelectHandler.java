@@ -60,10 +60,20 @@ public class SelectHandler extends RelShuttleImpl {
         if(other instanceof GSJoin){
             handleJoin((GSJoin) other);
         }
+        if(other instanceof GSAggregate){
+            handleAggregate((GSAggregate) other);
+        }
 //        else {
 //            throw new UnsupportedOperationException("RelNode of type " + other.getClass().getName() + " are not supported yet");
 //        }
         return result;
+    }
+
+    private void handleAggregate(GSAggregate gsAggregate) {
+        RelNode input = gsAggregate.getInput();
+        if(input instanceof GSTableScan){
+
+        }
     }
 
     private void handleJoin(GSJoin join) {
