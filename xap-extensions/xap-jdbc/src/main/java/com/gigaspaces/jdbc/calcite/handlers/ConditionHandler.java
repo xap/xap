@@ -172,7 +172,7 @@ public class ConditionHandler extends RexShuttle {
         Range range = null;
         switch (leftOp.getKind()){
             case LITERAL:
-                value = getValue((RexLiteral) leftOp);
+                value = CalciteUtils.getValue((RexLiteral) leftOp);
             case INPUT_REF:
                 column = fields.get(((RexInputRef) leftOp).getIndex());
                 break;
@@ -190,7 +190,7 @@ public class ConditionHandler extends RexShuttle {
         }
         switch (rightOp.getKind()){
             case LITERAL:
-                value = getValue((RexLiteral) rightOp);
+                value = CalciteUtils.getValue((RexLiteral) rightOp);
                 break;
             case INPUT_REF:
                 column = fields.get(((RexInputRef) rightOp).getIndex());
@@ -268,35 +268,6 @@ public class ConditionHandler extends RexShuttle {
                 throw new UnsupportedOperationException("rowNum supports less than / less than or equal, but was " +
                         "[" + sqlKind + "]");
 
-        }
-    }
-
-    private Object getValue(RexLiteral literal) {
-        if (literal == null) {
-            return null;
-        }
-        switch (literal.getType().getSqlTypeName()) {
-            case BOOLEAN:
-                return RexLiteral.booleanValue(literal);
-            case CHAR:
-            case VARCHAR:
-                return literal.getValueAs(String.class);
-            case REAL:
-            case TINYINT:
-            case SMALLINT:
-            case INTEGER:
-            case BIGINT:
-            case FLOAT:
-            case DOUBLE:
-            case DECIMAL:
-                return literal.getValue3();
-            case DATE:
-            case TIMESTAMP:
-            case TIME_WITH_LOCAL_TIME_ZONE:
-            case TIME:
-                return literal.toString(); // we use our parsers with AbstractParser.parse
-            default:
-                throw new UnsupportedOperationException("Unsupported type: " + literal.getType().getSqlTypeName());
         }
     }
 

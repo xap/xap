@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc.calcite;
 
 import com.gigaspaces.jdbc.QueryExecutor;
+import com.gigaspaces.jdbc.calcite.handlers.CalciteUtils;
 import com.gigaspaces.jdbc.calcite.handlers.ConditionHandler;
 import com.gigaspaces.jdbc.calcite.handlers.SingleTableProjectionHandler;
 import com.gigaspaces.jdbc.calcite.schema.GSSchemaTable;
@@ -15,7 +16,10 @@ import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlKind;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SelectHandler extends RelShuttleImpl {
     private final QueryExecutor queryExecutor;
@@ -94,7 +98,7 @@ public class SelectHandler extends RelShuttleImpl {
                             RexNode funcArgument = program.getExprList().get(((RexLocalRef) operand).getIndex());
                             if (funcArgument.isA(SqlKind.LITERAL)) {
                                 RexLiteral literal = (RexLiteral) funcArgument;
-                                params.add(new LiteralColumn(literal.getValue2()));
+                                params.add(new LiteralColumn(CalciteUtils.getValue(literal)));
                             }
                         }
 
