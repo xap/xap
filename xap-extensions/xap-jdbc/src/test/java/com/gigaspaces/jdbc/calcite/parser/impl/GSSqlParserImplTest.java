@@ -3,14 +3,13 @@ package com.gigaspaces.jdbc.calcite.parser.impl;
 import com.gigaspaces.jdbc.calcite.parser.GSSqlParserFactoryWrapper;
 import com.gigaspaces.jdbc.calcite.sql.extension.SqlShowOption;
 import org.apache.calcite.avatica.util.Casing;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlSetOption;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.calcite.sql.util.SqlShuttle;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 public class GSSqlParserImplTest {
     @Test
@@ -85,16 +84,31 @@ public class GSSqlParserImplTest {
         Assert.assertEquals("CLIENT_ENCODING", name);
     }
 
-    @Ignore("Add infix CAST support")
     @Test
     public void testParseLiteral() throws Exception {
         String sql = "select 1::int2";
         SqlNode parseResult = parse(sql);
         Assert.assertNotNull(parseResult);
-        Assert.assertTrue(parseResult instanceof SqlShowOption);
-        SqlShowOption show = (SqlShowOption) parseResult;
-        String name = show.getName().toString();
-        Assert.assertEquals("CLIENT_ENCODING", name);
+    }
+
+    @Test
+    public void testParsePgParameter() throws Exception {
+        String sql = "select * from test where id = $2";
+        SqlNode parseResult = parse(sql);
+        Assert.assertNotNull(parseResult);
+
+        AtomicReference<SqlDynamicParam> valueContainer = new AtomicReference<>();
+        parseResult.accept(
+            new SqlShuttle() {
+                @Override public SqlNode visit(SqlDynamicParam param) {
+                    valueContainer.set(param);
+                    return param;
+                }
+            });
+
+        SqlDynamicParam param = valueContainer.get();
+        Assert.assertNotNull(param);
+        Assert.assertEquals(param.getIndex(), 1);
     }
 
     private SqlNode parse(String sql) throws Exception {

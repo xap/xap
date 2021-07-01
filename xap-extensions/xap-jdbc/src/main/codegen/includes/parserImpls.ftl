@@ -84,3 +84,32 @@ SqlSetOption SqlSetOptionAlt() :
         }
     )
 }
+
+void InfixCast(List<Object> list, ExprContext exprContext, Span s) :
+{
+    final SqlDataTypeSpec dt;
+}
+{
+    <INFIX_CAST> {
+        checkNonQueryExpression(exprContext);
+    }
+    dt = DataType() {
+        list.add(
+            new SqlParserUtil.ToTreeListItem(SqlLibraryOperators.INFIX_CAST,
+                s.pos()));
+        list.add(dt);
+    }
+}
+
+/**
+ * Parses a dynamic parameter marker.
+ */
+SqlDynamicParam PgDynamicParam() :
+{
+}
+{
+    <PG_DYNAMIC_PARAM> {
+        int ordinal = Integer.parseInt(token.image.substring(1)) - 1;
+        return new SqlDynamicParam(ordinal, getPos());
+    }
+}
