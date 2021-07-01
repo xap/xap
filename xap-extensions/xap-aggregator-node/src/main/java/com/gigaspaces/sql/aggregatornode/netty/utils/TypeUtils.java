@@ -77,9 +77,9 @@ public class TypeUtils {
 
     public static PgType fromInternal(RelDataType internalType) {
         SqlTypeName typeName = internalType.getSqlTypeName();
-        if (typeName == SqlTypeName.ARRAY)
-            return getArrayType(fromInternal(internalType.getComponentType()).id);
         switch (typeName) {
+            case ARRAY:
+                return getArrayType(fromInternal(internalType.getComponentType()).id);
             case BOOLEAN:
                 return PG_TYPE_BOOL;
             case TINYINT:
