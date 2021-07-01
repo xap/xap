@@ -19,7 +19,7 @@ public class GSTable extends AbstractTable {
         this.typeDesc = typeDesc;
     }
 
-    private static SqlTypeName mapToSqlType(Class<?> clazz) {
+    public static SqlTypeName mapToSqlType(Class<?> clazz) {
         if (clazz == Short.class) {
             return SqlTypeName.SMALLINT;
         } else if (clazz == Integer.class) {

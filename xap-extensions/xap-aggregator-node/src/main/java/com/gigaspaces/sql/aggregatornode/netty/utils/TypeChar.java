@@ -1,5 +1,6 @@
 package com.gigaspaces.sql.aggregatornode.netty.utils;
 
+import com.gigaspaces.jdbc.calcite.pg.PgTypeDescriptor;
 import com.gigaspaces.sql.aggregatornode.netty.exception.BreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.Session;
@@ -9,7 +10,7 @@ public class TypeChar extends PgType {
     public static final PgType INSTANCE = new TypeChar();
 
     public TypeChar() {
-        super(18, "char", 1, 1002, 0);
+        super(PgTypeDescriptor.CHAR);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.gigaspaces.sql.aggregatornode.netty.utils;
 
+import com.gigaspaces.jdbc.calcite.pg.PgTypeDescriptor;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.Session;
 import io.netty.buffer.ByteBuf;
@@ -8,7 +9,7 @@ public class TypeOid extends PgType {
     public static final PgType INSTANCE = new TypeOid();
 
     public TypeOid() {
-        super(26, "oid", 4, 1028, 0);
+        super(PgTypeDescriptor.OID);
     }
 
     @Override

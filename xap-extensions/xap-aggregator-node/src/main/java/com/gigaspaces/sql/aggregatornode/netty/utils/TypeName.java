@@ -1,5 +1,6 @@
 package com.gigaspaces.sql.aggregatornode.netty.utils;
 
+import com.gigaspaces.jdbc.calcite.pg.PgTypeDescriptor;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.Session;
 import io.netty.buffer.ByteBuf;
@@ -8,7 +9,7 @@ public class TypeName extends PgType {
     public static final PgType INSTANCE = new TypeName();
 
     public TypeName() {
-        super(19, "name", 63, 1003, 0);
+        super(PgTypeDescriptor.NAME);
     }
 
     @Override
