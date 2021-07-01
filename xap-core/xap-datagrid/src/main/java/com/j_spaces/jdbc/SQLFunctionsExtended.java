@@ -21,8 +21,9 @@ public class SQLFunctionsExtended {
         functions.put("UCASE", new UpperSqlFunction());
         functions.put("LEFT", new LeftSqlFunction());
         functions.put("RIGHT", new RightSqlFunction());
+        functions.put("CAST", new CastSqlFunction());
+        functions.put("REPEAT", new RepeatSqlFunction());
 //        functions.put("SUBSTR", new SubstrSqlFunction());
-//        functions.put("CAST", new CastSqlFunction());
 
         functions.put("CURRENT_DATE", new CurrentDateSqlFunction());
         functions.put("CURRENT_TIME", new CurrentTimeSqlFunction());
