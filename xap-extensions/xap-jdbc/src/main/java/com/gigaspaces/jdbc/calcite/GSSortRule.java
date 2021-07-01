@@ -6,7 +6,7 @@ import org.apache.calcite.rel.convert.ConverterRule;
 import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.logical.LogicalSort;
 
-public class GSSortRule extends ConverterRule { //TODO: @sagiv extends EnumerableSortRule?
+public class GSSortRule extends ConverterRule {
     private static final Config DEFAULT_CONFIG = Config.INSTANCE
             .withConversion(
                     LogicalSort.class,
