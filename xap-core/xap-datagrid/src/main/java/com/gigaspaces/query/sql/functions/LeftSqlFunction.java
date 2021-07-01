@@ -10,7 +10,7 @@ public class LeftSqlFunction extends SqlFunction{
         Object numObj = context.getArgument(1);
         if (!isString(strObj))
             throw new RuntimeException("Left function - 1st argument must be a String:" + strObj);
-        if (!isInteger(numObj))
+        if (!isWholeNumber(numObj))
             throw new RuntimeException("Left function - 2nd argument must be an Intger:" + numObj);
         String str = (String)strObj;
         int num = ((Number)numObj).intValue();
