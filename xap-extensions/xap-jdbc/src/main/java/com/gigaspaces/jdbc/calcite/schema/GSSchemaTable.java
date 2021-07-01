@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc.calcite.schema;
 
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
+import com.gigaspaces.jdbc.calcite.GSTable;
 import com.gigaspaces.jdbc.calcite.schema.type.PgType;
 import com.gigaspaces.jdbc.calcite.schema.type.TypeUtils;
 import com.gigaspaces.jdbc.model.result.QueryResult;
@@ -59,7 +60,7 @@ public class GSSchemaTable extends AbstractTable {
                     ITypeDesc typeDesc = SQLUtil.checkTableExistence(name, space);
                     short idx = 0;
                     for (PropertyInfo property : typeDesc.getProperties()) {
-                        SqlTypeName sqlTypeName = mapToSqlType(property.getType());
+                        SqlTypeName sqlTypeName = GSTable.mapToSqlType(property.getType());
                         PgType pgType = TypeUtils.fromInternal(sqlTypeName);
                         result.addRow(new TableRow(queryColumns,
                                 oid, // attrelid
@@ -170,41 +171,6 @@ public class GSSchemaTable extends AbstractTable {
         } catch (RemoteException e) {
             throw new SQLException("Failed to get runtime info from space", e);
         }
-    }
-
-    private static SqlTypeName mapToSqlType(Class<?> clazz) {
-        if (clazz == Short.class) {
-            return SqlTypeName.SMALLINT;
-        } else if (clazz == Integer.class) {
-            return SqlTypeName.INTEGER;
-        } else if (clazz == Long.class) {
-            return SqlTypeName.BIGINT;
-        } else if (clazz == Float.class) {
-            return SqlTypeName.FLOAT;
-        } else if (clazz == Double.class) {
-            return SqlTypeName.DOUBLE;
-        } else if (clazz == BigDecimal.class) {
-            return SqlTypeName.DECIMAL;
-        } else if (clazz == Boolean.class) {
-            return SqlTypeName.BOOLEAN;
-        } else if (clazz == String.class) {
-            return SqlTypeName.VARCHAR;
-        } else if (clazz == java.util.Date.class
-                || clazz == java.sql.Date.class) {
-            return SqlTypeName.DATE;
-        } else if (clazz == java.sql.Time.class
-                || clazz == java.time.Instant.class) {
-            return SqlTypeName.TIME_WITH_LOCAL_TIME_ZONE;
-        } else if (clazz == java.sql.Timestamp.class) {
-            return SqlTypeName.TIMESTAMP;
-        } else if (clazz == java.time.LocalDateTime.class
-                || clazz == java.time.LocalTime.class
-                || clazz == java.time.LocalDate.class) {
-            return SqlTypeName.TIME;
-        }
-
-
-        throw new UnsupportedOperationException("Unsupported type: " + clazz);
     }
 
     public static class SchemaProperty {
