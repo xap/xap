@@ -391,6 +391,7 @@ data: {
     # Return type of method implementation should be "SqlNode".
     # Example: ParseJsonLiteral().
     literalParserMethods: [
+      "PgDynamicParam()"
     ]
 
     # List of methods for parsing custom data types.
@@ -423,10 +424,13 @@ data: {
 
     # Binary operators tokens
     binaryOperatorsTokens: [
+      "< INFIX_CAST: \"::\" >"
+      "< PG_DYNAMIC_PARAM: \"$\" ([\"1\"-\"9\"])+ >"
     ]
 
     # Binary operators initialization
     extraBinaryExpressions: [
+      "InfixCast"
     ]
 
     # List of files in @includes directory that have parser method
