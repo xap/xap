@@ -4,7 +4,6 @@ import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.Session;
 import io.netty.buffer.ByteBuf;
 
-// TODO implement type encoder/decoder
 public class TypeRegproc extends PgType {
     public static final PgType INSTANCE = new TypeRegproc();
 

@@ -54,115 +54,127 @@ public class GSSchemaTable extends AbstractTable {
         IQueryColumn[] queryColumns = tableColumns.toArray(new IQueryColumn[0]);
         switch (systemTable) {
             case pg_attribute: {
-                for (String name : getSpaceTables(space)) {
-                    String fqn = "public." + name;
-                    int oid = IdGen.INSTANCE.oid(fqn);
-                    ITypeDesc typeDesc = SQLUtil.checkTableExistence(name, space);
-                    short idx = 0;
-                    for (PropertyInfo property : typeDesc.getProperties()) {
-                        SqlTypeName sqlTypeName = GSTable.mapToSqlType(property.getType());
-                        PgType pgType = TypeUtils.fromInternal(sqlTypeName);
-                        result.addRow(new TableRow(queryColumns,
-                                oid, // attrelid
-                                property.getName(), // attname
-                                pgType.getId(), // atttypid
-                                0, // attstattarget
-                                (short)pgType.getLength(), // attlen
-                                ++idx,// attnum
-                                (pgType.getElementType() != 0 ? 1 : 0), // attndims
-                                -1, // attcacheoff
-                                -1, // atttypmod
-                                null, // attbyval
-                                'p', // attstorage
-                                'c', // attalign
-                                false, // attnotnull
-                                false, // atthasdef
-                                false, // attisdropped
-                                false, // attislocal
-                                0// attinhcount
-                        ));
-                    }
-                }
-
+                executePgAttribute(result, space, queryColumns);
                 break;
             }
             case pg_class: {
-                for (String name : getSpaceTables(space)) {
-                    String fqn = "public." + name;
-                    int oid = IdGen.INSTANCE.oid(fqn);
-                    ITypeDesc typeDesc = SQLUtil.checkTableExistence(name, space);
-                    result.addRow(new TableRow(queryColumns,
-                            oid,//    oid
-                            name,//    relname
-                            0,//    relnamespace
-                            0,//    reltype
-                            0,//    relowner
-                            0,//    relam
-                            0,//    relfilenode
-                            0,//    reltablespace
-                            0,//    relpages
-                            100.0f,//    reltuples
-                            0,//    reltoastrelid
-                            false,//    relhasindex
-                            false,//    relisshared
-                            'r',//    relkind
-                            (short) typeDesc.getProperties().length, //    relnatts
-                            (short) 0,//    relchecks
-                            (short) 0,//    reltriggers
-                            false, //    relhasrules
-                            false, //    relhastriggers
-                            false, //    relhassubclass
-                            null, // relacl
-                            null//    reloptions
-                    ));
-                }
-
+                executePgClass(result, space, queryColumns);
                 break;
             }
             case pg_namespace: {
-                result.addRow(new TableRow(queryColumns, 0, "PUBLIC", 0, null));
-                result.addRow(new TableRow(queryColumns, -1000, "PG_CATALOG", 0, null));
-
+                executePgNamespace(result, queryColumns);
                 break;
             }
             case pg_type: {
-                for (PgType type : TypeUtils.types()) {
-                    TableRow row = new TableRow(queryColumns,
-                            type.getId(), //            oid
-                            type.getName(), //            typname
-                            -1000, //            typnamespace
-                            0,//            typowner
-                            (short) type.getLength(),//            typlen
-                            null,//            typbyval
-                            'b',//            typtype
-                            true, //            typisdefined
-                            ',', //            typdelim
-                            0, //            typrelid
-                            type.getElementType() , //            typelem
-                            0, //            typinput
-                            0, //            typoutput
-                            0, //            typreceive
-                            0, //            typsend
-                            0, //            typanalyze
-                            'c', //            typalign
-                            'p', //            typstorage
-                            false, //            typnotnull
-                            0, //            typbasetype
-                            -1, //            typtypmod
-                            (type.getElementType() != 0 ? 1 : 0), //            typndims
-                            null, //            typdefaultbin
-                            null//            typdefault
-                    );
-
-                    result.addRow(row);
-                }
-
+                executePgType(result, queryColumns);
                 break;
             }
             default:
                 break; // will return empty result
         }
         return result;
+    }
+
+    private void executePgAttribute(QueryResult result, IJSpace space, IQueryColumn[] queryColumns) throws SQLException {
+        for (String name : getSpaceTables(space)) {
+            String fqn = "public." + name;
+            int oid = IdGen.INSTANCE.oid(fqn);
+            ITypeDesc typeDesc = SQLUtil.checkTableExistence(name, space);
+            short idx = 0;
+            for (PropertyInfo property : typeDesc.getProperties()) {
+                SqlTypeName sqlTypeName = GSTable.mapToSqlType(property.getType());
+                PgType pgType = TypeUtils.fromInternal(sqlTypeName);
+                result.addRow(new TableRow(queryColumns,
+                        oid,                                    // attrelid
+                        property.getName(),                     // attname
+                        pgType.getId(),                         // atttypid
+                        0,                                      // attstattarget
+                        (short)pgType.getLength(),              // attlen
+                        ++idx,                                  // attnum
+                        (pgType.getElementType() != 0 ? 1 : 0), // attndims
+                        -1,                                     // attcacheoff
+                        -1,                                     // atttypmod
+                        null,                                   // attbyval
+                        'p',                                    // attstorage
+                        'c',                                    // attalign
+                        false,                                  // attnotnull
+                        false,                                  // atthasdef
+                        false,                                  // attisdropped
+                        false,                                  // attislocal
+                        0                                       // attinhcount
+                ));
+            }
+        }
+    }
+
+    private void executePgClass(QueryResult result, IJSpace space, IQueryColumn[] queryColumns) throws SQLException {
+        for (String name : getSpaceTables(space)) {
+            String fqn = "public." + name;
+            int oid = IdGen.INSTANCE.oid(fqn);
+            ITypeDesc typeDesc = SQLUtil.checkTableExistence(name, space);
+            result.addRow(new TableRow(queryColumns,
+                    oid,                                     // oid
+                    name,                                    // relname
+                    0,                                       // relnamespace
+                    0,                                       // reltype
+                    0,                                       // relowner
+                    0,                                       // relam
+                    0,                                       // relfilenode
+                    0,                                       // reltablespace
+                    0,                                       // relpages
+                    100.0f,                                  // reltuples
+                    0,                                       // reltoastrelid
+                    false,                                   // relhasindex
+                    false,                                   // relisshared
+                    'r',                                     // relkind
+                    (short) typeDesc.getProperties().length, // relnatts
+                    (short) 0,                               // relchecks
+                    (short) 0,                               // reltriggers
+                    false,                                   // relhasrules
+                    false,                                   // relhastriggers
+                    false,                                   // relhassubclass
+                    null,                                    // relacl
+                    null                                     // reloptions
+            ));
+        }
+    }
+
+    private void executePgNamespace(QueryResult result, IQueryColumn[] queryColumns) {
+        result.addRow(new TableRow(queryColumns, 0, "PUBLIC", 0, null));
+        result.addRow(new TableRow(queryColumns, -1000, "PG_CATALOG", 0, null));
+    }
+
+    private void executePgType(QueryResult result, IQueryColumn[] queryColumns) {
+        for (PgType type : TypeUtils.types()) {
+            TableRow row = new TableRow(queryColumns,
+                    type.getId(),                         // oid
+                    type.getName(),                       // typname
+                    -1000,                                // typnamespace
+                    0,                                    // typowner
+                    (short) type.getLength(),             // typlen
+                    null,                                 // typbyval
+                    'b',                                  // typtype
+                    true,                                 // typisdefined
+                    ',',                                  // typdelim
+                    0,                                    // typrelid
+                    type.getElementType() ,               // typelem
+                    0,                                    // typinput
+                    0,                                    // typoutput
+                    0,                                    // typreceive
+                    0,                                    // typsend
+                    0,                                    // typanalyze
+                    'c',                                  // typalign
+                    'p',                                  // typstorage
+                    false,                                // typnotnull
+                    0,                                    // typbasetype
+                    -1,                                   // typtypmod
+                    (type.getElementType() != 0 ? 1 : 0), // typndims
+                    null,                                 // typdefaultbin
+                    null                                  // typdefault
+            );
+
+            result.addRow(row);
+        }
     }
 
     private List<String> getSpaceTables(IJSpace space) throws SQLException {

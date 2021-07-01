@@ -32,10 +32,6 @@ public class PgType {
         return length;
     }
 
-    public int getElementType() {
-        return elementType;
-    }
-
     protected final void asText(Session session, ByteBuf dst, Object value) throws ProtocolException {
         if (TypeUtils.writeNull(dst, value))
             return;

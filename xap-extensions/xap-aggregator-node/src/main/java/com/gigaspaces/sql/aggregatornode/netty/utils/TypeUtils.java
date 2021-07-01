@@ -13,7 +13,8 @@ import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TypeUtils {
     public static final PgType PG_TYPE_UNKNOWN = TypeUnknown.INSTANCE;
