@@ -17,6 +17,22 @@ public class GSTable extends AbstractTable {
         this.typeDesc = typeDesc;
     }
 
+    /**
+     * java.sql.Date -> DATE
+     * java.time.LocalDate -> DATE
+     *
+     * java.sql.Time -> TIME
+     * java.time.LocalTime -> TIME
+     *
+     * java.sql.Timestamp -> TIMESTAMP
+     * java.time.LocalDateTime -> TIMESTAMP
+     *
+     * java.util.Date -> TIMESTAMP WITH TIME ZONE
+     * java.util.Calendar -> TIMESTAMP WITH TIME ZONE
+     * java.time.OffsetDateTime -> TIMESTAMP WITH TIME ZONE
+     * java.time.ZonedDateTime -> TIMESTAMP WITH TIME ZONE
+     * java.time.Instant -> TIMESTAMP WITH TIME ZONE
+     */
     private static SqlTypeName mapToSqlType(Class<?> clazz) {
         if (clazz == Short.class) {
             return SqlTypeName.SMALLINT;
@@ -34,18 +50,21 @@ public class GSTable extends AbstractTable {
             return SqlTypeName.BOOLEAN;
         } else if (clazz == String.class) {
             return SqlTypeName.VARCHAR;
-        } else if (clazz == java.util.Date.class
-                || clazz == java.sql.Date.class) {
+        } else if (clazz == java.sql.Date.class
+                || clazz == java.time.LocalDate.class) {
             return SqlTypeName.DATE;
         } else if (clazz == java.sql.Time.class
-                || clazz == java.time.Instant.class) {
-            return SqlTypeName.TIME_WITH_LOCAL_TIME_ZONE;
-        } else if (clazz == java.sql.Timestamp.class) {
-            return SqlTypeName.TIMESTAMP;
-        } else if (clazz == java.time.LocalDateTime.class
-                || clazz == java.time.LocalTime.class
-                || clazz == java.time.LocalDate.class) {
+                || clazz == java.time.LocalTime.class) {
             return SqlTypeName.TIME;
+        } else if (clazz == java.sql.Timestamp.class
+                || clazz == java.time.LocalDateTime.class) {
+            return SqlTypeName.TIMESTAMP;
+        } else if (clazz == java.util.Date.class
+                || clazz == java.util.Calendar.class
+                || clazz == java.time.OffsetDateTime.class
+                || clazz == java.time.ZonedDateTime.class
+                || clazz == java.time.Instant.class) {
+            return SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE;
         }
 
         throw new UnsupportedOperationException("Unsupported type: " + clazz);
