@@ -3,7 +3,7 @@ package com.gigaspaces.jdbc.calcite;
 import com.gigaspaces.jdbc.QueryExecutor;
 import com.gigaspaces.jdbc.calcite.handlers.ConditionHandler;
 import com.gigaspaces.jdbc.calcite.handlers.SingleTableProjectionHandler;
-import com.gigaspaces.jdbc.calcite.schema.GSSchemaTable;
+import com.gigaspaces.jdbc.calcite.pg.PgCalciteTable;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.table.*;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
@@ -36,7 +36,7 @@ public class SelectHandler extends RelShuttleImpl {
         if (gsTable != null) {
             tableContainer = new ConcreteTableContainer(gsTable.getName(), null, queryExecutor.getSpace());
         } else {
-            GSSchemaTable schemaTable = relOptTable.unwrap(GSSchemaTable.class);
+            PgCalciteTable schemaTable = relOptTable.unwrap(PgCalciteTable.class);
             tableContainer = new SchemaTableContainer(schemaTable, null, queryExecutor.getSpace());
         }
         queryExecutor.getTables().add(tableContainer);

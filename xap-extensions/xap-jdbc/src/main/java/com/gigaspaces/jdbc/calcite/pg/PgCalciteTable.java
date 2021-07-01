@@ -1,10 +1,8 @@
-package com.gigaspaces.jdbc.calcite.schema;
+package com.gigaspaces.jdbc.calcite.pg;
 
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.metadata.PropertyInfo;
 import com.gigaspaces.jdbc.calcite.GSTable;
-import com.gigaspaces.jdbc.calcite.schema.type.PgType;
-import com.gigaspaces.jdbc.calcite.schema.type.TypeUtils;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.result.SchemaQueryResult;
 import com.gigaspaces.jdbc.model.result.TableRow;
@@ -27,12 +25,30 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class GSSchemaTable extends AbstractTable {
-    private final PGSystemTable systemTable;
+public class PgCalciteTable extends AbstractTable {
 
-    public GSSchemaTable(PGSystemTable systemTable) {
+    private static final Map<String, PgCalciteTable> TABLES = new HashMap<>();
+
+    static {
+        for (PgTable pgTable : PgTable.values()) {
+            PgCalciteTable pgCalciteTable = new PgCalciteTable(pgTable);
+            TABLES.put(pgCalciteTable.getName(), pgCalciteTable);
+        }
+    }
+
+    public static PgCalciteTable getTable(String name) {
+        if (name.startsWith("pg_catalog."))
+            name = name.substring(("pg_catalog.").length());
+        return TABLES.get(name);
+    }
+
+    private final PgTable systemTable;
+
+    public PgCalciteTable(PgTable systemTable) {
         this.systemTable = systemTable;
     }
 
@@ -78,12 +94,12 @@ public class GSSchemaTable extends AbstractTable {
     private void executePgAttribute(QueryResult result, IJSpace space, IQueryColumn[] queryColumns) throws SQLException {
         for (String name : getSpaceTables(space)) {
             String fqn = "public." + name;
-            int oid = IdGen.INSTANCE.oid(fqn);
+            int oid = PgOidGenerator.INSTANCE.oid(fqn);
             ITypeDesc typeDesc = SQLUtil.checkTableExistence(name, space);
             short idx = 0;
             for (PropertyInfo property : typeDesc.getProperties()) {
                 SqlTypeName sqlTypeName = GSTable.mapToSqlType(property.getType());
-                PgType pgType = TypeUtils.fromInternal(sqlTypeName);
+                PgType pgType = PgTypeUtils.fromInternal(sqlTypeName);
                 result.addRow(new TableRow(queryColumns,
                         oid,                                    // attrelid
                         property.getName(),                     // attname
@@ -110,7 +126,7 @@ public class GSSchemaTable extends AbstractTable {
     private void executePgClass(QueryResult result, IJSpace space, IQueryColumn[] queryColumns) throws SQLException {
         for (String name : getSpaceTables(space)) {
             String fqn = "public." + name;
-            int oid = IdGen.INSTANCE.oid(fqn);
+            int oid = PgOidGenerator.INSTANCE.oid(fqn);
             ITypeDesc typeDesc = SQLUtil.checkTableExistence(name, space);
             result.addRow(new TableRow(queryColumns,
                     oid,                                     // oid
@@ -145,7 +161,7 @@ public class GSSchemaTable extends AbstractTable {
     }
 
     private void executePgType(QueryResult result, IQueryColumn[] queryColumns) {
-        for (PgType type : TypeUtils.types()) {
+        for (PgType type : PgTypeUtils.types()) {
             TableRow row = new TableRow(queryColumns,
                     type.getId(),                         // oid
                     type.getName(),                       // typname
