@@ -1,5 +1,6 @@
 package com.gigaspaces.sql.aggregatornode.netty.utils;
 
+import com.gigaspaces.jdbc.calcite.pg.PgTypeDescriptor;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.Session;
 import io.netty.buffer.ByteBuf;
@@ -8,7 +9,7 @@ public class TypeText extends PgType {
     public static final PgType INSTANCE = new TypeText();
 
     public TypeText() {
-        super(25, "text", -1, 1009, 0);
+        super(PgTypeDescriptor.TEXT);
     }
 
     @Override

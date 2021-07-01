@@ -1,5 +1,6 @@
 package com.gigaspaces.sql.aggregatornode.netty.utils;
 
+import com.gigaspaces.jdbc.calcite.pg.PgTypeDescriptor;
 import com.gigaspaces.sql.aggregatornode.netty.exception.BreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
@@ -11,11 +12,11 @@ import java.util.Locale;
 
 import static com.gigaspaces.sql.aggregatornode.netty.utils.Constants.DELIMITER;
 
-public class PgTypeInt2Array extends PgType {
-    public static final PgType INSTANCE = new PgTypeInt2Array();
+public class TypeInt2Array extends PgType {
+    public static final PgType INSTANCE = new TypeInt2Array();
 
-    public PgTypeInt2Array() {
-        super(TypeUtils.PG_TYPE_INT2.arrayType, TypeUtils.PG_TYPE_INT2.name + "_array", -1, 0, TypeUtils.PG_TYPE_INT2.id);
+    public TypeInt2Array() {
+        super(PgTypeDescriptor.INT2.asArray());
     }
 
     @Override
@@ -151,7 +152,7 @@ public class PgTypeInt2Array extends PgType {
 
         dst.writeInt(1); // dimensions
         dst.writeInt(TypeUtils.countNulls(values)); // nulls
-        dst.writeInt(elementType); // element type
+        dst.writeInt(getElementType()); // element type
         dst.writeInt(values.length); // length
         dst.writeInt(1); // base
         for (Object value0 : values) {
@@ -167,7 +168,7 @@ public class PgTypeInt2Array extends PgType {
         if (src.readInt() != 1)
             throw new NonBreakingException(ErrorCodes.UNSUPPORTED_FEATURE, "Multidimensional arrays are unsupported");
         src.skipBytes(4); // null element count
-        if (src.readInt() != elementType)
+        if (src.readInt() != getElementType())
             throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "unexpected element type");
         int length = src.readInt();
         ArrayList<Short> values = new ArrayList<>(length);

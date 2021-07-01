@@ -1,5 +1,6 @@
 package com.gigaspaces.sql.aggregatornode.netty.utils;
 
+import com.gigaspaces.jdbc.calcite.pg.PgTypeDescriptor;
 import com.gigaspaces.sql.aggregatornode.netty.exception.BreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.NonBreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
@@ -15,7 +16,7 @@ public class TypeOidVector extends PgType {
     public static final PgType INSTANCE = new TypeOidVector();
 
     public TypeOidVector() {
-        super(30, "oidvector", -1, 0, TypeUtils.PG_TYPE_OID.id);
+        super(PgTypeDescriptor.OID_VECTOR);
     }
 
     @Override
@@ -151,7 +152,7 @@ public class TypeOidVector extends PgType {
 
         dst.writeInt(1); // dimensions
         dst.writeInt(TypeUtils.countNulls(values)); // nulls
-        dst.writeInt(elementType); // element type
+        dst.writeInt(getElementType()); // element type
         dst.writeInt(values.length); // length
         dst.writeInt(1); // base
         for (Object value0 : values) {
@@ -167,7 +168,7 @@ public class TypeOidVector extends PgType {
         if (src.readInt() != 1)
             throw new NonBreakingException(ErrorCodes.UNSUPPORTED_FEATURE, "Multidimensional arrays are unsupported");
         src.skipBytes(4); // null element count
-        if (src.readInt() != elementType)
+        if (src.readInt() != getElementType())
             throw new NonBreakingException(ErrorCodes.PROTOCOL_VIOLATION, "unexpected element type");
         int length = src.readInt();
         ArrayList<Short> values = new ArrayList<>(length);

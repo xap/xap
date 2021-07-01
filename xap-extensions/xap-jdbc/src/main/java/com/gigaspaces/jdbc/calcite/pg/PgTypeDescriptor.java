@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc.calcite.pg;
 
 public class PgTypeDescriptor {
+    public static final PgTypeDescriptor ANY = new PgTypeDescriptor(2276, "any", 4, 0, 0);
     public static final PgTypeDescriptor BOOL = new PgTypeDescriptor(16, "bool", 1, 1000, 0);
     public static final PgTypeDescriptor BPCHAR = new PgTypeDescriptor(1042, "bpchar", -1, 1014, 0);
     public static final PgTypeDescriptor BYTEA = new PgTypeDescriptor(17, "bytea", -1, 1001, 0);
@@ -52,6 +53,10 @@ public class PgTypeDescriptor {
 
     public final int getLength() {
         return length;
+    }
+
+    public int getArrayType() {
+        return arrayType;
     }
 
     public int getElementType() {

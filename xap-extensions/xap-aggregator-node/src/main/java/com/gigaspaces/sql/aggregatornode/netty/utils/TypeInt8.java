@@ -1,5 +1,6 @@
 package com.gigaspaces.sql.aggregatornode.netty.utils;
 
+import com.gigaspaces.jdbc.calcite.pg.PgTypeDescriptor;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.Session;
 import io.netty.buffer.ByteBuf;
@@ -8,7 +9,7 @@ public class TypeInt8 extends PgType {
     public static final PgType INSTANCE = new TypeInt8();
 
     public TypeInt8() {
-        super(20, "int8", 8, 1016, 0);
+        super(PgTypeDescriptor.INT8);
     }
 
     @Override

@@ -1,35 +1,41 @@
 package com.gigaspaces.sql.aggregatornode.netty.utils;
 
+import com.gigaspaces.jdbc.calcite.pg.PgTypeDescriptor;
 import com.gigaspaces.sql.aggregatornode.netty.exception.BreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.Session;
 import io.netty.buffer.ByteBuf;
 
 public class PgType {
-    protected final int id;
-    protected final String name;
-    protected final int length;
-    protected final int arrayType;
-    protected final int elementType;
 
-    protected PgType(int id, String name, int length, int arrayType, int elementType) {
-        this.id = id;
-        this.name = name;
-        this.length = length;
-        this.arrayType = arrayType;
-        this.elementType = elementType;
+    private final PgTypeDescriptor descriptor;
+
+    protected PgType(PgTypeDescriptor descriptor) {
+        this.descriptor = descriptor;
+    }
+
+    public PgTypeDescriptor getDescriptor() {
+        return descriptor;
     }
 
     public final int getId() {
-        return id;
+        return descriptor.getId();
     }
 
     public final String getName() {
-        return name;
+        return descriptor.getName();
     }
 
     public final int getLength() {
-        return length;
+        return descriptor.getLength();
+    }
+
+    public final int getArrayType() {
+        return descriptor.getArrayType();
+    }
+
+    public int getElementType() {
+        return descriptor.getElementType();
     }
 
     protected final void asText(Session session, ByteBuf dst, Object value) throws ProtocolException {
@@ -64,27 +70,27 @@ public class PgType {
 
         PgType pgType = (PgType) o;
 
-        return id == pgType.id;
+        return descriptor.equals(pgType.descriptor);
     }
 
     @Override
     public final int hashCode() {
-        return id;
+        return descriptor.hashCode();
     }
 
     protected void asTextInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
-        throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unsupported data type: " + id);
+        throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unsupported data type: " + descriptor.getId());
     }
 
     protected <T> T fromTextInternal(Session session, ByteBuf src) throws ProtocolException {
-        throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unsupported data type: " + id);
+        throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unsupported data type: " + descriptor.getId());
     }
 
     protected void asBinaryInternal(Session session, ByteBuf dst, Object value) throws ProtocolException {
-        throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unsupported data type: " + id);
+        throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unsupported data type: " + descriptor.getId());
     }
 
     protected <T> T fromBinaryInternal(Session session, ByteBuf src) throws ProtocolException {
-        throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unsupported data type: " + id);
+        throw new BreakingException(ErrorCodes.INTERNAL_ERROR, "Unsupported data type: " + descriptor.getId());
     }
 }

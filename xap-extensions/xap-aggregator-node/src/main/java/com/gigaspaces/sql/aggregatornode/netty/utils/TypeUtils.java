@@ -51,12 +51,12 @@ public class TypeUtils {
                     field.setAccessible(true);
                     PgType type = (PgType) field.get(null);
                     if (typeSet.add(type)) {
-                        typeIdToType.put(type.id, type);
-                        if (type.arrayType != 0) {
+                        typeIdToType.put(type.getId(), type);
+                        if (type.getArrayType() != 0) {
                             PgType arrayType = arrayType(type);
                             if (typeSet.add(arrayType)) {
-                                typeIdToType.put(arrayType.id, arrayType);
-                                elementToArray.put(type.id, arrayType);
+                                typeIdToType.put(arrayType.getId(), arrayType);
+                                elementToArray.put(type.getId(), arrayType);
                             }
                         }
                     }
@@ -79,7 +79,7 @@ public class TypeUtils {
         SqlTypeName typeName = internalType.getSqlTypeName();
         switch (typeName) {
             case ARRAY:
-                return getArrayType(fromInternal(internalType.getComponentType()).id);
+                return getArrayType(fromInternal(internalType.getComponentType()).getId());
             case BOOLEAN:
                 return PG_TYPE_BOOL;
             case TINYINT:
@@ -168,12 +168,12 @@ public class TypeUtils {
 
     protected static PgType arrayType(PgType type) {
         if (type == PG_TYPE_INT2)
-            return new PgTypeInt2Array();
+            return new TypeInt2Array();
         if (type == PG_TYPE_INT4)
-            return new PgTypeInt4Array();
+            return new TypeInt4Array();
 
         // TODO implement array type encoder/decoder
-        return new PgType(type.arrayType, type.name + "_array", -1, 0, type.id);
+        return new PgType(type.getDescriptor().asArray());
     }
 
     protected static void checkType(Object value, Class<?> type) throws ProtocolException {

@@ -1,5 +1,6 @@
 package com.gigaspaces.sql.aggregatornode.netty.utils;
 
+import com.gigaspaces.jdbc.calcite.pg.PgTypeDescriptor;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.Session;
 import io.netty.buffer.ByteBuf;
@@ -8,7 +9,7 @@ public class TypeRegproc extends PgType {
     public static final PgType INSTANCE = new TypeRegproc();
 
     public TypeRegproc() {
-        super(24, "regproc", 4, 1008, 0);
+        super(PgTypeDescriptor.REGPROC);
     }
 
     @Override
