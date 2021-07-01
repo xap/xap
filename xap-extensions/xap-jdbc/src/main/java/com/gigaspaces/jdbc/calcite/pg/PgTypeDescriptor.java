@@ -62,8 +62,6 @@ public class PgTypeDescriptor {
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Failed to collect defined descriptors.", e);
         }
-
-        System.out.println("DONE");
     }
 
     public PgTypeDescriptor(int id, String name, int length, int arrayType, int elementType) {
