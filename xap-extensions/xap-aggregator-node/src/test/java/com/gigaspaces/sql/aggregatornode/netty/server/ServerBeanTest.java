@@ -90,7 +90,7 @@ class ServerBeanTest {
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
-    void testAmTable(boolean simple) throws Exception {
+    void testEmptyTable(boolean simple) throws Exception {
         try (Connection conn = connect(simple)) {
             final String qry = "SELECT * from pg_catalog.pg_am where 1 = 1";
             final PreparedStatement statement = conn.prepareStatement(qry);

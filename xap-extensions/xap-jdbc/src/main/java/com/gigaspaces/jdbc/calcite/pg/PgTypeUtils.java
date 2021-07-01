@@ -2,8 +2,6 @@ package com.gigaspaces.jdbc.calcite.pg;
 
 import org.apache.calcite.sql.type.SqlTypeName;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,40 +9,31 @@ import java.util.Set;
 
 public class PgTypeUtils {
 
-    private static final HashMap<Integer, PgTypeDescriptor> typeIdToType;
+    private static final HashMap<Integer, PgTypeDescriptor> TYPE_ID_TO_TYPE;
 
     static {
-        Field[] fields = PgTypeUtils.class.getDeclaredFields();
-        typeIdToType = new HashMap<>(fields.length * 2);
+        TYPE_ID_TO_TYPE = new HashMap<>();
         Set<PgTypeDescriptor> typeSet = new HashSet<>();
-        try {
-            for (Field field : fields) {
-                if (PgTypeDescriptor.class.isAssignableFrom(field.getType()) && Modifier.isStatic(field.getModifiers())) {
-                    field.setAccessible(true);
-                    PgTypeDescriptor type = (PgTypeDescriptor) field.get(null);
-                    if (typeSet.add(type)) {
-                        typeIdToType.put(type.id, type);
+        for (PgTypeDescriptor type : PgTypeDescriptor.ALL_DESCRIPTORS) {
+            if (typeSet.add(type)) {
+                TYPE_ID_TO_TYPE.put(type.id, type);
 
-                        if (type.arrayType != 0) {
-                            PgTypeDescriptor arrayType = type.asArray();
-                            if (typeSet.add(arrayType)) {
-                                typeIdToType.put(arrayType.id, arrayType);
-                            }
-                        }
+                if (type.arrayType != 0) {
+                    PgTypeDescriptor arrayType = type.asArray();
+                    if (typeSet.add(arrayType)) {
+                        TYPE_ID_TO_TYPE.put(arrayType.id, arrayType);
                     }
                 }
             }
-        } catch (Throwable e) {
-            throw new AssertionError(e);
         }
     }
 
     public static PgTypeDescriptor getTypeById(int id) {
-        return typeIdToType.getOrDefault(id, PgTypeDescriptor.UNKNOWN);
+        return TYPE_ID_TO_TYPE.getOrDefault(id, PgTypeDescriptor.UNKNOWN);
     }
 
     public static Collection<PgTypeDescriptor> getTypes() {
-        return typeIdToType.values();
+        return TYPE_ID_TO_TYPE.values();
     }
 
     public static PgTypeDescriptor fromSqlTypeName(SqlTypeName typeName) {

@@ -1,5 +1,10 @@
 package com.gigaspaces.jdbc.calcite.pg;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
+
 public class PgTypeDescriptor {
     public static final PgTypeDescriptor ANY = new PgTypeDescriptor(2276, "any", 4, 0, 0);
     public static final PgTypeDescriptor BOOL = new PgTypeDescriptor(16, "bool", 1, 1000, 0);
@@ -29,11 +34,37 @@ public class PgTypeDescriptor {
     public static final PgTypeDescriptor VARCHAR = new PgTypeDescriptor(1043, "varchar", -1, 1015, 0);
     public static final PgTypeDescriptor UNKNOWN = new PgTypeDescriptor(705, "unknown", -2, 0, 0);
 
+    public static final List<PgTypeDescriptor> ALL_DESCRIPTORS;
+
     protected final int id;
     protected final String name;
     protected final int length;
     protected final int arrayType;
     protected final int elementType;
+
+    static {
+        ALL_DESCRIPTORS = new ArrayList<>();
+
+        try {
+            for (Field field : PgTypeDescriptor.class.getDeclaredFields()) {
+                if (field.getType() != PgTypeDescriptor.class) {
+                    continue;
+                }
+
+                int modifiers = field.getModifiers();
+                if (!Modifier.isPublic(modifiers) || !Modifier.isStatic(modifiers)) {
+                    continue;
+                }
+
+                PgTypeDescriptor descriptor = (PgTypeDescriptor) field.get(null);
+                ALL_DESCRIPTORS.add(descriptor);
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to collect defined descriptors.", e);
+        }
+
+        System.out.println("DONE");
+    }
 
     public PgTypeDescriptor(int id, String name, int length, int arrayType, int elementType) {
         this.id = id;
