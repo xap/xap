@@ -22,7 +22,6 @@ public class SelectHandler extends RelShuttleImpl {
     private final QueryExecutor queryExecutor;
     private final Map<RelNode, GSCalc> childToCalc = new HashMap<>();
     private RelNode root = null;
-    private int columnOrdinalCounter = 0;
 
     public SelectHandler(QueryExecutor queryExecutor) {
         this.queryExecutor = queryExecutor;
@@ -39,7 +38,7 @@ public class SelectHandler extends RelShuttleImpl {
             List<String> columns = tableContainer.getAllColumnNames();
             queryExecutor.addFieldCount(columns.size());
             for (String col : columns) {
-                tableContainer.addQueryColumn(col, null, true, 0);//TODO: @sagiv columnOrdinal
+                tableContainer.addQueryColumn(col, null, true, 0);
             }
         }
         else{
@@ -86,7 +85,6 @@ public class SelectHandler extends RelShuttleImpl {
             RelFieldCollation.NullDirection nullDirection = relCollation.nullDirection;
             String columnAlias = sort.getRowType().getFieldNames().get(fieldIndex);
 //            TableContainer table = queryExecutor.getTableByColumnIndex(fieldIndex);
-//            table.addQueryColumn(columnName, null, false, -1);
             String columnName = columnAlias;
             boolean isVisible = false;
             RelNode parent = this.stack.peek();
@@ -151,6 +149,8 @@ public class SelectHandler extends RelShuttleImpl {
                 for (TableContainer tableContainer : queryExecutor.getTables()) {
                     queryExecutor.getVisibleColumns().addAll(tableContainer.getVisibleColumns());
                 }
+            } else {
+                throw new UnsupportedOperationException("unsupported root type, root is [" + root.getClass() + "]");
             }
         }
         else{
@@ -166,7 +166,7 @@ public class SelectHandler extends RelShuttleImpl {
         for (int i = 0; i < outputFields.size(); i++) {
             String alias = outputFields.get(i);
             String originalName = inputFields.get(program.getSourceField(i));
-            tableContainer.addQueryColumn(originalName, alias, true, 0);//TODO: @sagiv columnOrdinal
+            tableContainer.addQueryColumn(originalName, alias, true, 0);
         }
         ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
         if (program.getCondition() != null) {
@@ -183,7 +183,7 @@ public class SelectHandler extends RelShuttleImpl {
         List<String> outputFields = program.getOutputRowType().getFieldNames();
         for (int i = 0; i < outputFields.size(); i++) {
             IQueryColumn qc = queryExecutor.getColumnByColumnIndex(program.getSourceField(i));
-            queryExecutor.addColumn(qc);
+            queryExecutor.getVisibleColumns().add(qc);
         }
         if (program.getCondition() != null) {
             ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
