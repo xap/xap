@@ -149,8 +149,6 @@ public class SelectHandler extends RelShuttleImpl {
                 for (TableContainer tableContainer : queryExecutor.getTables()) {
                     queryExecutor.getVisibleColumns().addAll(tableContainer.getVisibleColumns());
                 }
-            } else {
-                throw new UnsupportedOperationException("unsupported root type, root is [" + root.getClass() + "]");
             }
         }
         else{
