@@ -22,7 +22,6 @@ public class SelectHandler extends RelShuttleImpl {
     private final QueryExecutor queryExecutor;
     private final Map<RelNode, GSCalc> childToCalc = new HashMap<>();
     private RelNode root = null;
-    private boolean isAllColumnSelected = false;
     private int columnOrdinalCounter = 0;
 
     public SelectHandler(QueryExecutor queryExecutor) {
@@ -37,8 +36,6 @@ public class SelectHandler extends RelShuttleImpl {
         TableContainer tableContainer = new ConcreteTableContainer(table.getTypeDesc().getTypeName(), null, queryExecutor.getSpace());
         queryExecutor.getTables().add(tableContainer);
         if (!childToCalc.containsKey(scan)) {
-            //TODO: @sagiv arrive here only if has Select *.
-            this.isAllColumnSelected = true;
             List<String> columns = tableContainer.getAllColumnNames();
             queryExecutor.addFieldCount(columns.size());
             for (String col : columns) {
@@ -169,7 +166,7 @@ public class SelectHandler extends RelShuttleImpl {
         for (int i = 0; i < outputFields.size(); i++) {
             String alias = outputFields.get(i);
             String originalName = inputFields.get(program.getSourceField(i));
-            tableContainer.addQueryColumn(originalName, alias, true, columnOrdinalCounter++);
+            tableContainer.addQueryColumn(originalName, alias, true, 0);//TODO: @sagiv columnOrdinal
         }
         ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
         if (program.getCondition() != null) {
