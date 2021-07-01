@@ -60,8 +60,8 @@ public abstract class SqlFunction {
         }
     }
 
-    protected boolean isInteger(Object object){
-        return object instanceof Number && !(object instanceof Float) && !(object instanceof Double);
+    protected boolean isWholeNumber(Object object){
+        return object instanceof Integer || object instanceof Long || object instanceof Short;
     }
 
     protected boolean isString(Object object){

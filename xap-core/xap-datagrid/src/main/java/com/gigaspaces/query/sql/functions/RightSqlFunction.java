@@ -11,7 +11,7 @@ public class RightSqlFunction extends SqlFunction{
         Object numObj = context.getArgument(1);
         if (!(strObj instanceof String))
             throw new RuntimeException("Right function - 1st argument must be a String:" + strObj);
-        if (!isInteger(numObj))
+        if (!isWholeNumber(numObj))
             throw new RuntimeException("Right function - 2nd argument must be an Integer:" + numObj);
         String str = (String)strObj;
         int num = ((Number)numObj).intValue();

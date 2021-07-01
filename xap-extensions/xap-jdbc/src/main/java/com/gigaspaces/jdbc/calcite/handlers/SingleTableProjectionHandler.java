@@ -1,13 +1,11 @@
 package com.gigaspaces.jdbc.calcite.handlers;
 
 import com.gigaspaces.jdbc.QueryExecutor;
-import com.gigaspaces.jdbc.model.table.FunctionCallColumn;
-import com.gigaspaces.jdbc.model.table.IQueryColumn;
-import com.gigaspaces.jdbc.model.table.LiteralColumn;
-import com.gigaspaces.jdbc.model.table.TableContainer;
+import com.gigaspaces.jdbc.model.table.*;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.fun.SqlCastFunction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,30 +38,26 @@ public class SingleTableProjectionHandler extends RexShuttle {
             }
             else if(node instanceof RexCall){
                 RexCall call = (RexCall) node;
+                SqlFunction sqlFunction;
+                List<IQueryColumn> queryColumns = new ArrayList<>();
                 switch (call.getKind()) {
                     case OTHER_FUNCTION:
-                        SqlFunction sqlFunction = (SqlFunction) call.op;
-                        List<IQueryColumn> queryColumns = new ArrayList<>();
-                        for (RexNode operand : call.getOperands()) {
-                            if(operand.isA(SqlKind.LOCAL_REF)){
-                                RexNode rexNode = program.getExprList().get(((RexLocalRef) operand).getIndex());
-                                if(rexNode.isA(SqlKind.INPUT_REF)){
-                                    RexInputRef rexInputRef = (RexInputRef) rexNode;
-                                    String column = inputFields.get(rexInputRef.getIndex());
-                                    queryColumns.add(tableContainer.addQueryColumn(column, null, false, -1));
-                                }
-                                if(rexNode.isA(SqlKind.LITERAL)){
-                                    RexLiteral literal = (RexLiteral) rexNode;
-                                    queryColumns.add(new LiteralColumn(CalciteUtils.getValue(literal)));
-                                }
-                            }
-
-                        }
+                        sqlFunction = (SqlFunction) call.op;
+                        addQueryColumns(call, queryColumns);
                         IQueryColumn functionCallColumn = new FunctionCallColumn(queryColumns, sqlFunction.toString(), sqlFunction.getName(), null, isRoot, -1);
                         if(isRoot)
                             tableContainer.getVisibleColumns().add(functionCallColumn);
                         else
                             tableContainer.getInvisibleColumns().add(functionCallColumn);
+                        break;
+                    case CAST:
+                        sqlFunction = (SqlCastFunction) call.op;
+                        addQueryColumns(call, queryColumns);
+                        IQueryColumn functionCallColumn2 = new CastFunctionCallColumn(queryColumns, sqlFunction.toString(), sqlFunction.getName(), null, isRoot, -1, call.getType().getFullTypeString());
+                        if(isRoot)
+                            tableContainer.getVisibleColumns().add(functionCallColumn2);
+                        else
+                            tableContainer.getInvisibleColumns().add(functionCallColumn2);
                         break;
                     default:
                         throw new UnsupportedOperationException("call of kind " + call.getKind() + " is not supported");
@@ -72,6 +66,24 @@ public class SingleTableProjectionHandler extends RexShuttle {
             }
             else if(node.isA(SqlKind.LITERAL)){
                 RexLiteral literal = (RexLiteral) node;
+            }
+
+        }
+    }
+
+    private void addQueryColumns(RexCall call, List<IQueryColumn> queryColumns) {
+        for (RexNode operand : call.getOperands()) {
+            if (operand.isA(SqlKind.LOCAL_REF)) {
+                RexNode rexNode = program.getExprList().get(((RexLocalRef) operand).getIndex());
+                if (rexNode.isA(SqlKind.INPUT_REF)) {
+                    RexInputRef rexInputRef = (RexInputRef) rexNode;
+                    String column = inputFields.get(rexInputRef.getIndex());
+                    queryColumns.add(tableContainer.addQueryColumn(column, null, false, -1));
+                }
+                if (rexNode.isA(SqlKind.LITERAL)) {
+                    RexLiteral literal = (RexLiteral) rexNode;
+                    queryColumns.add(new LiteralColumn(CalciteUtils.getValue(literal)));
+                }
             }
 
         }

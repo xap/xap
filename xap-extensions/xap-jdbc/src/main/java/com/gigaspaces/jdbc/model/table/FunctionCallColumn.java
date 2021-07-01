@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class FunctionCallColumn implements IQueryColumn{
-    private final List<IQueryColumn> params;
-    private final String columnName;
-    private final String functionName;
-    private final String columnAlias;
-    private final boolean isVisible;
-    private final int columnOrdinal;
+    protected final List<IQueryColumn> params;
+    protected final String columnName;
+    protected final String functionName;
+    protected final String columnAlias;
+    protected final boolean isVisible;
+    protected final int columnOrdinal;
 
     public FunctionCallColumn(List<IQueryColumn> params, String columnName, String functionName, String columnAlias, boolean isVisible, int columnOrdinal) {
         this.params = params;
