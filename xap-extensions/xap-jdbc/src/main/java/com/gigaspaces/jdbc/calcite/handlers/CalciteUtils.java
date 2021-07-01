@@ -14,11 +14,13 @@ public class CalciteUtils {
             case CHAR:
             case VARCHAR:
                 return literal.getValueAs(String.class);
-            case REAL:
             case TINYINT:
             case SMALLINT:
             case INTEGER:
             case BIGINT:
+                //avoid returning BigDecimal
+                return literal.getValue2();
+            case REAL:
             case FLOAT:
             case DOUBLE:
             case DECIMAL:
