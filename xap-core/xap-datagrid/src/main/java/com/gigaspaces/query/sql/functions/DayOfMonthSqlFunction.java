@@ -19,7 +19,7 @@ package com.gigaspaces.query.sql.functions;
 import java.text.SimpleDateFormat;
 
 /**
- * Returns current date formatted
+ * Returns day of month
  *
  * @author Evgeny Fisher
  * @since 16.0.0

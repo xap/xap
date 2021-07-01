@@ -19,7 +19,7 @@ package com.gigaspaces.query.sql.functions;
 import java.util.Calendar;
 
 /**
- * Returns current date formatted
+ * Returns day of week
  *
  * @author Evgeny Fisher
  * @since 16.0.0
