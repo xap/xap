@@ -54,7 +54,7 @@ public class SingleTableProjectionHandler extends RexShuttle {
                                 }
                                 if(rexNode.isA(SqlKind.LITERAL)){
                                     RexLiteral literal = (RexLiteral) rexNode;
-                                    queryColumns.add(new LiteralColumn(literal.getValue2()));
+                                    queryColumns.add(new LiteralColumn(CalciteUtils.getValue(literal)));
                                 }
                             }
 
