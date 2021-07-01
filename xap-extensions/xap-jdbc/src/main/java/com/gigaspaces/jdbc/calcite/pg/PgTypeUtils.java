@@ -14,27 +14,27 @@ import java.util.Set;
 
 public class PgTypeUtils {
 
-    private static final HashMap<Integer, PgType> elementToArray;
-    private static final HashMap<Integer, PgType> typeIdToType;
-    private static final HashMap<String, PgType> typeNameToType;
+    private static final HashMap<Integer, PgTypeDescriptor> elementToArray;
+    private static final HashMap<Integer, PgTypeDescriptor> typeIdToType;
+    private static final HashMap<String, PgTypeDescriptor> typeNameToType;
 
     static {
         Field[] fields = PgTypeUtils.class.getDeclaredFields();
         elementToArray = new HashMap<>(fields.length * 2);
         typeIdToType = new HashMap<>(fields.length * 2);
         typeNameToType = new HashMap<>();
-        Set<PgType> typeSet = new HashSet<>();
+        Set<PgTypeDescriptor> typeSet = new HashSet<>();
         try {
             for (Field field : fields) {
-                if (PgType.class.isAssignableFrom(field.getType()) && Modifier.isStatic(field.getModifiers())) {
+                if (PgTypeDescriptor.class.isAssignableFrom(field.getType()) && Modifier.isStatic(field.getModifiers())) {
                     field.setAccessible(true);
-                    PgType type = (PgType) field.get(null);
+                    PgTypeDescriptor type = (PgTypeDescriptor) field.get(null);
                     if (typeSet.add(type)) {
                         typeIdToType.put(type.id, type);
                         typeNameToType.put(type.name, type);
 
                         if (type.arrayType != 0) {
-                            PgType arrayType = type.asArray();
+                            PgTypeDescriptor arrayType = type.asArray();
                             if (typeSet.add(arrayType)) {
                                 typeIdToType.put(arrayType.id, arrayType);
                                 typeNameToType.put(arrayType.name, arrayType);
@@ -50,39 +50,39 @@ public class PgTypeUtils {
         }
     }
 
-    public static PgType getType(int id) {
-        return typeIdToType.getOrDefault(id, PgType.UNKNOWN);
+    public static PgTypeDescriptor getType(int id) {
+        return typeIdToType.getOrDefault(id, PgTypeDescriptor.UNKNOWN);
     }
 
-    public static PgType getArrayType(int elementTypeId) {
-        return elementToArray.getOrDefault(elementTypeId, PgType.UNKNOWN);
+    public static PgTypeDescriptor getArrayType(int elementTypeId) {
+        return elementToArray.getOrDefault(elementTypeId, PgTypeDescriptor.UNKNOWN);
     }
     
-    public static PgType fromInternal(SqlTypeName typeName) {
+    public static PgTypeDescriptor fromInternal(SqlTypeName typeName) {
         switch (typeName) {
             case BOOLEAN:
-                return PgType.BOOL;
+                return PgTypeDescriptor.BOOL;
             case TINYINT:
             case SMALLINT:
-                return PgType.INT2;
+                return PgTypeDescriptor.INT2;
             case INTEGER:
-                return PgType.INT4;
+                return PgTypeDescriptor.INT4;
             case BIGINT:
-                return PgType.INT8;
+                return PgTypeDescriptor.INT8;
             case DECIMAL:
-                return PgType.NUMERIC;
+                return PgTypeDescriptor.NUMERIC;
             case FLOAT:
             case REAL:
-                return PgType.FLOAT4;
+                return PgTypeDescriptor.FLOAT4;
             case DOUBLE:
-                return PgType.FLOAT8;
+                return PgTypeDescriptor.FLOAT8;
             case CHAR:
-                return PgType.CHAR;
+                return PgTypeDescriptor.CHAR;
             case VARCHAR:
-                return PgType.VARCHAR;
+                return PgTypeDescriptor.VARCHAR;
             case BINARY:
             case VARBINARY:
-                return PgType.BYTEA;
+                return PgTypeDescriptor.BYTEA;
             case INTERVAL_YEAR:
             case INTERVAL_YEAR_MONTH:
             case INTERVAL_MONTH:
@@ -96,32 +96,32 @@ public class PgTypeUtils {
             case INTERVAL_MINUTE:
             case INTERVAL_MINUTE_SECOND:
             case INTERVAL_SECOND:
-                return PgType.INTERVAL;
+                return PgTypeDescriptor.INTERVAL;
             case DATE:
-                return PgType.DATE;
+                return PgTypeDescriptor.DATE;
             case TIME:
-                return PgType.TIME;
+                return PgTypeDescriptor.TIME;
             case TIME_WITH_LOCAL_TIME_ZONE:
-                return PgType.TIME_WITH_TIME_ZONE;
+                return PgTypeDescriptor.TIME_WITH_TIME_ZONE;
             case TIMESTAMP:
-                return PgType.TIMESTAMP;
+                return PgTypeDescriptor.TIMESTAMP;
             case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-                return PgType.TIMESTAMP_WITH_TIME_ZONE;
+                return PgTypeDescriptor.TIMESTAMP_WITH_TIME_ZONE;
             default:
-                return PgType.UNKNOWN;
+                return PgTypeDescriptor.UNKNOWN;
         }
     }
 
-    public static PgType typeByName(String typeName) {
-        return typeNameToType.getOrDefault(typeName, PgType.UNKNOWN);
+    public static PgTypeDescriptor typeByName(String typeName) {
+        return typeNameToType.getOrDefault(typeName, PgTypeDescriptor.UNKNOWN);
     }
 
     public static RelProtoDataType resolveType(String typeName) {
-        PgType pgType = typeByName(typeName);
-        return pgType == PgType.UNKNOWN ? null : protoType(pgType);
+        PgTypeDescriptor pgType = typeByName(typeName);
+        return pgType == PgTypeDescriptor.UNKNOWN ? null : protoType(pgType);
     }
 
-    public static RelProtoDataType protoType(PgType pgType) {
+    public static RelProtoDataType protoType(PgTypeDescriptor pgType) {
         return ((tf) -> toInternal(pgType, tf));
     }
 
@@ -129,7 +129,7 @@ public class PgTypeUtils {
         return typeNameToType.keySet();
     }
 
-    public static Collection<PgType> types() {
+    public static Collection<PgTypeDescriptor> types() {
         return typeIdToType.values();
     }
 
@@ -137,51 +137,51 @@ public class PgTypeUtils {
         return toInternal(getType(type), factory);
     }
 
-    public static SqlTypeName sqlTypeName(PgType type) {
-        if (PgType.BOOL.equals(type)) {
+    public static SqlTypeName sqlTypeName(PgTypeDescriptor type) {
+        if (PgTypeDescriptor.BOOL.equals(type)) {
             return SqlTypeName.BOOLEAN;
-        } else if (PgType.REGPROC.equals(type)) {
+        } else if (PgTypeDescriptor.REGPROC.equals(type)) {
             return SqlTypeName.INTEGER;
-        } else if (PgType.OID.equals(type)) {
+        } else if (PgTypeDescriptor.OID.equals(type)) {
             return SqlTypeName.INTEGER;
-        } else if (PgType.TEXT.equals(type)) {
+        } else if (PgTypeDescriptor.TEXT.equals(type)) {
             return SqlTypeName.VARCHAR;
-        } else if (PgType.NAME.equals(type)) {
+        } else if (PgTypeDescriptor.NAME.equals(type)) {
             return SqlTypeName.VARCHAR;
-        } else if (PgType.INT2.equals(type)) {
+        } else if (PgTypeDescriptor.INT2.equals(type)) {
             return SqlTypeName.SMALLINT;
-        } else if (PgType.INT4.equals(type)) {
+        } else if (PgTypeDescriptor.INT4.equals(type)) {
             return SqlTypeName.INTEGER;
-        } else if (PgType.INT8.equals(type)) {
+        } else if (PgTypeDescriptor.INT8.equals(type)) {
             return SqlTypeName.BIGINT;
-        } else if (PgType.NUMERIC.equals(type)) {
+        } else if (PgTypeDescriptor.NUMERIC.equals(type)) {
             return SqlTypeName.DECIMAL;
-        } else if (PgType.FLOAT4.equals(type)) {
+        } else if (PgTypeDescriptor.FLOAT4.equals(type)) {
             return SqlTypeName.FLOAT;
-        } else if (PgType.FLOAT8.equals(type)) {
+        } else if (PgTypeDescriptor.FLOAT8.equals(type)) {
             return SqlTypeName.DOUBLE;
-        } else if (PgType.CHAR.equals(type)) {
+        } else if (PgTypeDescriptor.CHAR.equals(type)) {
             return SqlTypeName.CHAR;
-        } else if (PgType.VARCHAR.equals(type)) {
+        } else if (PgTypeDescriptor.VARCHAR.equals(type)) {
             return SqlTypeName.VARCHAR;
-        } else if (PgType.BYTEA.equals(type)) {
+        } else if (PgTypeDescriptor.BYTEA.equals(type)) {
             return SqlTypeName.BINARY;
-        } else if (PgType.DATE.equals(type)) {
+        } else if (PgTypeDescriptor.DATE.equals(type)) {
             return SqlTypeName.DATE;
-        } else if (PgType.TIME.equals(type)) {
+        } else if (PgTypeDescriptor.TIME.equals(type)) {
             return SqlTypeName.TIME;
-        } else if (PgType.TIMESTAMP.equals(type)) {
+        } else if (PgTypeDescriptor.TIMESTAMP.equals(type)) {
             return SqlTypeName.TIMESTAMP;
-        } else if (PgType.TIME_WITH_TIME_ZONE.equals(type)) {
+        } else if (PgTypeDescriptor.TIME_WITH_TIME_ZONE.equals(type)) {
             return SqlTypeName.TIME_WITH_LOCAL_TIME_ZONE;
-        } else if (PgType.TIMESTAMP_WITH_TIME_ZONE.equals(type)) {
+        } else if (PgTypeDescriptor.TIMESTAMP_WITH_TIME_ZONE.equals(type)) {
             return SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE;
         } else {
             return SqlTypeName.NULL;
         }
     }
 
-    private static RelDataType toInternal(PgType type, RelDataTypeFactory factory) {
+    private static RelDataType toInternal(PgTypeDescriptor type, RelDataTypeFactory factory) {
         if (type.elementType != 0) {
             return factory.createArrayType(toInternal(type.elementType, factory), -1);
         }

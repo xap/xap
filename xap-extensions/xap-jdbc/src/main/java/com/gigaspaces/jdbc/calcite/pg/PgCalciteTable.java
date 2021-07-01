@@ -99,7 +99,7 @@ public class PgCalciteTable extends AbstractTable {
             short idx = 0;
             for (PropertyInfo property : typeDesc.getProperties()) {
                 SqlTypeName sqlTypeName = GSTable.mapToSqlType(property.getType());
-                PgType pgType = PgTypeUtils.fromInternal(sqlTypeName);
+                PgTypeDescriptor pgType = PgTypeUtils.fromInternal(sqlTypeName);
                 result.addRow(new TableRow(queryColumns,
                         oid,                                    // attrelid
                         property.getName(),                     // attname
@@ -161,7 +161,7 @@ public class PgCalciteTable extends AbstractTable {
     }
 
     private void executePgType(QueryResult result, IQueryColumn[] queryColumns) {
-        for (PgType type : PgTypeUtils.types()) {
+        for (PgTypeDescriptor type : PgTypeUtils.types()) {
             TableRow row = new TableRow(queryColumns,
                     type.getId(),                         // oid
                     type.getName(),                       // typname
