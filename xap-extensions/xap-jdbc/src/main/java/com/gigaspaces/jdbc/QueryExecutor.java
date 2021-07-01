@@ -127,13 +127,13 @@ public class QueryExecutor {
     }
 
     public void init(QueryTemplatePacketsHolder qtpHolder) {
+        int columnOrdinalCount = 0;
         for (QueryTemplatePacket qtp : qtpHolder.getQueryTemplatePackets().values()) {
             ConcreteTableContainer tableContainer = new ConcreteTableContainer(qtp.getTypeName(), null,
                     qtpHolder.getSpace());
             tableContainer.setQueryTemplatePacket(qtp);
             tableContainer.setLimit(qtpHolder.getLimit());
             List<IQueryColumn> columns = new ArrayList<>();
-            int columnOrdinalCount = 0;
             if(qtp.getProjectionTemplate() == null) { // is select *
                 int idPropertyIndex = qtp.getTypeDescriptor().getIdentifierPropertyId();
                 int index = 0;

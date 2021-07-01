@@ -133,11 +133,22 @@ public class SelectHandler extends RelShuttleImpl {
         if (rexCall.getKind() != SqlKind.EQUALS) {
             throw new UnsupportedOperationException("Only equi joins are supported");
         }
+        List<IQueryColumn> joinColumns = new ArrayList<>();
+        ISQLOperator leftIsqlOperator = gstack.pop(); //TODO: validate first pop is left child?
+        ISQLOperator rightIsqlOperator = gstack.pop();
+
+        QueryTemplatePacketsHolder rightQtpHolder = rightIsqlOperator.build();
+        QueryTemplatePacketsHolder leftQtpHolder = leftIsqlOperator.build();
+        //TODO: @sagiv! we stop here!, need to continue from this point.... create JoinOperator.
+
         int left = join.getLeft().getRowType().getFieldCount();
         int leftIndex = ((RexInputRef) rexCall.getOperands().get(0)).getIndex();
         int rightIndex = ((RexInputRef) rexCall.getOperands().get(1)).getIndex();
         String lColumn = join.getLeft().getRowType().getFieldNames().get(leftIndex);
         String rColumn = join.getRight().getRowType().getFieldNames().get(rightIndex - left);
+        joinColumns.add(new ConcreteColumn(rColumn, null, null, false, null, -1));
+        joinColumns.add(new ConcreteColumn(lColumn, null, null, false, null, -1));
+
         TableContainer rightContainer = queryExecutor.getTableByColumnIndex(rightIndex);
         TableContainer leftContainer = queryExecutor.getTableByColumnIndex(leftIndex);
         //TODO: @sagiv needed?- its already in the tables.
