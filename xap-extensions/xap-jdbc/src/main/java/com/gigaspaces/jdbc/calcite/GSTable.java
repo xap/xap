@@ -36,7 +36,7 @@ public class GSTable extends AbstractTable {
      * java.time.ZonedDateTime -> TIMESTAMP WITH TIME ZONE
      * java.time.Instant -> TIMESTAMP WITH TIME ZONE
      */
-    private static SqlTypeName mapToSqlType(Class<?> clazz) {
+    public static SqlTypeName mapToSqlType(Class<?> clazz) {
         if (clazz == Short.class) {
             return SqlTypeName.SMALLINT;
         } else if (clazz == Integer.class) {

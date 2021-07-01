@@ -1,5 +1,6 @@
 package com.gigaspaces.sql.aggregatornode.netty.utils;
 
+import com.gigaspaces.jdbc.calcite.pg.PgTypeDescriptor;
 import com.gigaspaces.sql.aggregatornode.netty.exception.BreakingException;
 import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.Session;
@@ -9,7 +10,7 @@ public class TypeBool extends PgType {
     public static final PgType INSTANCE = new TypeBool();
 
     public TypeBool() {
-        super(16, "bool", 1, 1000, 0);
+        super(PgTypeDescriptor.BOOL);
     }
 
     @Override

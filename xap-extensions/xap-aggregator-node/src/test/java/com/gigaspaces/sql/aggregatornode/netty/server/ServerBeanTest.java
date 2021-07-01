@@ -1,7 +1,6 @@
 package com.gigaspaces.sql.aggregatornode.netty.server;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.openspaces.core.GigaSpace;
@@ -51,16 +50,6 @@ class ServerBeanTest {
         }
     }
 
-    @Test
-    void testSystemTable() throws Exception {
-        try (Connection conn = connect(true)) {
-            final Statement statement = conn.createStatement();
-            ResultSet res = statement.executeQuery("select * FROM pg_tables");
-            assertEquals(2, DumpUtils.dump(res).size()); // asserts that we return 2 types from pg_tables (Object and MyPojo)
-        }
-    }
-
-
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void testSet(boolean simple) throws Exception {
@@ -94,6 +83,80 @@ class ServerBeanTest {
             statement.setString(2, "Adam");
 
             assertTrue(statement.execute());
+
+            // TODO since runtime doesn't support dynamic parameters at now there is no results checking
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testEmptyTable(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = "SELECT * from pg_catalog.pg_am where 1 = 1";
+            final PreparedStatement statement = conn.prepareStatement(qry);
+            assertTrue(statement.execute());
+            ResultSet res = statement.getResultSet();
+            DumpUtils.dump(res);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testTypeTable(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = "SELECT * from pg_catalog.pg_type where 1 = 1";
+            final PreparedStatement statement = conn.prepareStatement(qry);
+            assertTrue(statement.execute());
+            ResultSet res = statement.getResultSet();
+            DumpUtils.dump(res);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testAttributeTable(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = "SELECT * from pg_catalog.pg_attribute where 1 = 1";
+            final PreparedStatement statement = conn.prepareStatement(qry);
+            assertTrue(statement.execute());
+            ResultSet res = statement.getResultSet();
+            DumpUtils.dump(res);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testNamespaceTable(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = "SELECT * from pg_catalog.pg_namespace where 1 = 1";
+            final PreparedStatement statement = conn.prepareStatement(qry);
+            assertTrue(statement.execute());
+            ResultSet res = statement.getResultSet();
+            DumpUtils.dump(res);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testClassTable(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = "SELECT * from pg_catalog.pg_class where 1 = 1";
+            final PreparedStatement statement = conn.prepareStatement(qry);
+            assertTrue(statement.execute());
+            ResultSet res = statement.getResultSet();
+            DumpUtils.dump(res);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testClassTableNoFqn(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = "SELECT * from pg_class where 1 = 1";
+            final PreparedStatement statement = conn.prepareStatement(qry);
+            assertTrue(statement.execute());
+            ResultSet res = statement.getResultSet();
+            DumpUtils.dump(res);
         }
     }
 
