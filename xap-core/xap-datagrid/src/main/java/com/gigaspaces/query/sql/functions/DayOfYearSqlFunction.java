@@ -19,7 +19,7 @@ package com.gigaspaces.query.sql.functions;
 import java.text.SimpleDateFormat;
 
 /**
- * Returns current date formatted
+ * Returns day of year
  *
  * @author Evgeny Fisher
  * @since 16.0.0

@@ -3,8 +3,6 @@ package com.j_spaces.jdbc;
 import com.gigaspaces.query.sql.functions.*;
 import com.gigaspaces.query.sql.functions.extended.ChrSqlFunction;
 import com.gigaspaces.query.sql.functions.extended.CoalesceSqlFunction;
-import com.gigaspaces.query.sql.functions.*;
-import com.gigaspaces.query.sql.functions.extended.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +25,7 @@ public class SQLFunctionsExtended {
 
         functions.put("CURRENT_DATE", new CurrentDateSqlFunction());
         functions.put("CURRENT_TIME", new CurrentTimeSqlFunction());
+        functions.put("TRUNCATE", new TruncSqlFunction());
     }
 
 
