@@ -91,6 +91,9 @@ public class SelectHandler extends RelShuttleImpl {
         if(other instanceof GSSort){
             handleSort((GSSort) other);
         }
+        if(other instanceof GSAggregate){
+            handleAggregate((GSAggregate) other);
+        }
 //        else {
 //            throw new UnsupportedOperationException("RelNode of type " + other.getClass().getName() + " are not supported yet");
 //        }
@@ -171,6 +174,13 @@ public class SelectHandler extends RelShuttleImpl {
         return toReturn;
     }
 
+
+    private void handleAggregate(GSAggregate gsAggregate) {
+        RelNode input = gsAggregate.getInput();
+        if(input instanceof GSTableScan){
+
+        }
+    }
 
     private void handleJoin(GSJoin join) {
         RexCall rexCall = (RexCall) join.getCondition();
