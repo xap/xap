@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc.calcite.experimental.model;
 
 
+import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.calcite.experimental.ResultSupplier;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 
@@ -114,5 +115,10 @@ public class AggregationColumn implements IQueryColumn {
     @Override
     public int hashCode() {
         return Objects.hash(getType(), getAlias(), isAllColumns(), getQueryColumn(), getColumnOrdinal());
+    }
+
+    @Override
+    public Object getValue(IEntryPacket entryPacket) {
+        return queryColumn.getValue(entryPacket);
     }
 }

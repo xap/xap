@@ -1,5 +1,6 @@
 package com.gigaspaces.jdbc.calcite.experimental.model;
 
+import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.calcite.experimental.ResultSupplier;
 
 public class OrderColumn implements IQueryColumn {
@@ -78,5 +79,10 @@ public class OrderColumn implements IQueryColumn {
     @Override
     public int compareTo(IQueryColumn other) {
         return this.queryColumn.compareTo(other);
+    }
+
+    @Override
+    public Object getValue(IEntryPacket entryPacket) {
+        return queryColumn.getValue(entryPacket);
     }
 }

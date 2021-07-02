@@ -65,14 +65,14 @@ public class TableRow implements Comparable<TableRow> {
             this.columns = allQueryColumns.toArray(new IQueryColumn[0]);
             this.values = new Object[this.columns.length];
             for (int i = 0; i < this.columns.length; i++) {
-                values[i] = getEntryPacketValue(entryPacket, allQueryColumns.get(i));
+                values[i] = allQueryColumns.get(i).getValue(entryPacket);
             }
         }
 
         this.orderColumns = orderColumns.toArray(new OrderColumn[0]);
         orderValues = new Object[this.orderColumns.length];
         for (int i = 0; i < orderColumns.size(); i++) {
-            orderValues[i] = getEntryPacketValue(entryPacket, orderColumns.get(i));
+            orderValues[i] = orderColumns.get(i).getValue(entryPacket);
         }
 
         this.groupByColumns = groupByColumns.toArray(new ConcreteColumn[0]);
@@ -80,7 +80,7 @@ public class TableRow implements Comparable<TableRow> {
         groupByValues = new Object[ typeDescriptor != null ? this.groupByColumns.length : 0];
         if( !isQueryEntryPacket ) {
             for (int i = 0; i < groupByColumns.size(); i++) {
-                groupByValues[i] = getEntryPacketValue(entryPacket, groupByColumns.get(i));
+                groupByValues[i] = groupByColumns.get(i).getValue(entryPacket);
             }
         }
     }
@@ -223,17 +223,5 @@ public class TableRow implements Comparable<TableRow> {
             }
         }
         return results;
-    }
-
-    private Object getEntryPacketValue(IEntryPacket entryPacket, IQueryColumn queryColumn) {
-        Object value;
-        if (queryColumn.isUUID()) {
-            value = entryPacket.getUID();
-        } else if (entryPacket.getTypeDescriptor().getIdPropertyName().equalsIgnoreCase(queryColumn.getName())) {
-            value = entryPacket.getID();
-        } else {
-            value = entryPacket.getPropertyValue(queryColumn.getName());
-        }
-        return value;
     }
 }

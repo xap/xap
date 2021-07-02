@@ -1,5 +1,6 @@
 package com.gigaspaces.jdbc.calcite.experimental.model;
 
+import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.calcite.experimental.ResultSupplier;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 
@@ -21,4 +22,6 @@ public interface IQueryColumn extends Comparable<IQueryColumn> {
     Class<?> getReturnType();
 
     IQueryColumn create(String columnName, String columnAlias, int columnOrdinal);
+
+    Object getValue(IEntryPacket entryPacket);
 }
