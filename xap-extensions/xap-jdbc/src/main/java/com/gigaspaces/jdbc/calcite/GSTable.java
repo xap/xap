@@ -70,4 +70,8 @@ public class GSTable extends AbstractTable {
     public String getName() {
         return name;
     }
+
+    public ITypeDesc getTypeDesc() {
+        return typeDesc;
+    }
 }

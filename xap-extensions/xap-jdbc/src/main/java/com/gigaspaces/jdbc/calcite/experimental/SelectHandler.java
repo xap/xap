@@ -27,6 +27,10 @@ public class SelectHandler extends RelShuttleImpl {
         this.preparedValues = preparedValues;
     }
 
+    public SelectHandler(IJSpace space, Object[] preparedValues) {
+        this(space, new QueryExecutionConfig(), preparedValues);
+    }
+
     @Override
     public RelNode visit(TableScan scan) {
         RelNode result = super.visit(scan);
