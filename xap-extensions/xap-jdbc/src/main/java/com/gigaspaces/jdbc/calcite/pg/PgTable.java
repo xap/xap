@@ -35,6 +35,12 @@ public enum PgTable {
         column("attislocal", PgTypeDescriptor.BOOL),
         column("attinhcount", PgTypeDescriptor.INT4)
     ),
+    pg_attrdef(
+        column("adrelid", PgTypeDescriptor.OID),
+        column("adnum", PgTypeDescriptor.INT2),
+        column("adbin", PgTypeDescriptor.TEXT),
+        column("adsrc", PgTypeDescriptor.TEXT)
+    ),
     pg_class(
         column("oid", PgTypeDescriptor.OID),
         column("relname", PgTypeDescriptor.NAME),
