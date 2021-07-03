@@ -12,7 +12,7 @@ public class ConcreteQueryResult extends QueryResult {
     private List<TableRow> rows;
 
     public ConcreteQueryResult(IQueryResultSet<IEntryPacket> res, SingleResultSupplier singleResultSupplier) {
-        super(singleResultSupplier.getSelectedColumns());
+        super(singleResultSupplier.getProjectedColumns());
         this.singleResultSupplier = singleResultSupplier;
         this.rows = res.stream().map(x -> TableRowFactory.createTableRowFromIEntryPacket(x, singleResultSupplier)).collect(Collectors.toList());
     }

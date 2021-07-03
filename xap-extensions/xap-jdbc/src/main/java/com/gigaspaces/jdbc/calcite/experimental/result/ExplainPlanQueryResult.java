@@ -5,7 +5,7 @@ import com.gigaspaces.internal.query.explainplan.model.JdbcExplainPlan;
 import com.gigaspaces.jdbc.calcite.experimental.ResultSupplier;
 import com.gigaspaces.jdbc.calcite.experimental.SingleResultSupplier;
 
-import com.gigaspaces.jdbc.calcite.experimental.model.ExplainPlanConcreteColumn;
+import com.gigaspaces.jdbc.calcite.experimental.model.ExplainPlanPhysicalColumn;
 import com.gigaspaces.jdbc.calcite.experimental.model.IQueryColumn;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.j_spaces.jdbc.ResultEntry;
@@ -19,7 +19,7 @@ public class ExplainPlanQueryResult extends QueryResult {
     private final SingleResultSupplier tableContainer;
 
     public ExplainPlanQueryResult(List<IQueryColumn> visibleColumns, JdbcExplainPlan jdbcExplainPlan, SingleResultSupplier tableContainer) {
-        super(Collections.singletonList(new ExplainPlanConcreteColumn()));
+        super(Collections.singletonList(new ExplainPlanPhysicalColumn()));
         this.jdbcExplainPlan = jdbcExplainPlan;
         this.visibleColumns = visibleColumns;
         this.tableContainer = tableContainer;
@@ -45,8 +45,8 @@ public class ExplainPlanQueryResult extends QueryResult {
 
     public ResultEntry convertEntriesToResultArrays(QueryExecutionConfig config) {
         // Column (field) names and labels (aliases)
-        String[] fieldNames = new String[]{config.isExplainPlanVerbose() ? ExplainPlanConcreteColumn.EXPLAIN_PLAN_VERBOSE_COL_NAME : ExplainPlanConcreteColumn.EXPLAIN_PLAN_COL_NAME};
-        String[] columnLabels = new String[]{config.isExplainPlanVerbose() ? ExplainPlanConcreteColumn.EXPLAIN_PLAN_VERBOSE_COL_NAME : ExplainPlanConcreteColumn.EXPLAIN_PLAN_COL_NAME};
+        String[] fieldNames = new String[]{config.isExplainPlanVerbose() ? ExplainPlanPhysicalColumn.EXPLAIN_PLAN_VERBOSE_COL_NAME : ExplainPlanPhysicalColumn.EXPLAIN_PLAN_COL_NAME};
+        String[] columnLabels = new String[]{config.isExplainPlanVerbose() ? ExplainPlanPhysicalColumn.EXPLAIN_PLAN_VERBOSE_COL_NAME : ExplainPlanPhysicalColumn.EXPLAIN_PLAN_COL_NAME};
 
 
         //the field values for the result

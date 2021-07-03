@@ -1,10 +1,9 @@
 package com.gigaspaces.jdbc.calcite.experimental;
 
-import com.gigaspaces.jdbc.calcite.experimental.model.ConcreteColumn;
-import com.gigaspaces.jdbc.calcite.experimental.model.IQueryColumn;
-import com.gigaspaces.jdbc.calcite.experimental.model.OrderColumn;
+import com.gigaspaces.jdbc.calcite.experimental.model.*;
 import com.gigaspaces.jdbc.calcite.experimental.model.join.JoinInfo;
 import com.gigaspaces.jdbc.calcite.experimental.result.QueryResult;
+import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 
 
@@ -31,11 +30,11 @@ public interface ResultSupplier {
 
     boolean hasAggregationFunctions();
 
-    List<ConcreteColumn> getGroupByColumns();
+    List<PhysicalColumn> getGroupByColumns();
 
     String getTableNameOrAlias();
 
-    List<IQueryColumn> getSelectedColumns();
+    List<IQueryColumn> getProjectedColumns();
 
     List<IQueryColumn> getAllQueryColumns();
 
@@ -44,4 +43,22 @@ public interface ResultSupplier {
     boolean isDistinct();
 
     void setDistinct(boolean distinct);
+
+    IQueryColumn getColumnByName(String column) throws ColumnNotFoundException;
+
+    boolean hasColumn(String column);
+
+    void addProjection(IQueryColumn projection);
+
+    IQueryColumn getOrCreatePhysicalColumn(String physicalColumn) throws ColumnNotFoundException;
+
+    void addAggregationColumn(AggregationColumn aggregationColumn);
+
+    void addOrderColumn(OrderColumn orderColumn);
+
+    void addFunctionColumn(FunctionColumn functionColumn);
+
+    Class<?> getReturnType(String columnName) throws SQLException;
+
+    ResultSupplier getJoinedSupplier();
 }

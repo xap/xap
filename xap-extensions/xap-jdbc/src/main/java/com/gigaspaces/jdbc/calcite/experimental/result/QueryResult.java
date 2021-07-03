@@ -57,23 +57,23 @@ public abstract class QueryResult {
     }
 
     public boolean next() {
-//        if (getTableContainer() == null || getTableContainer().getJoinedTable() == null) {
-//            return getCursor().next();
-//        }
-//        QueryResult joinedResult = getTableContainer().getJoinedTable().getQueryResult();
-//        if (joinedResult == null) {
-//            return getCursor().next();
-//        }
-//        while (hasNext()) {
-//            if (joinedResult.next()) {
-//                return true;
-//            }
-//            if (getCursor().next()) {
-//                joinedResult.reset();
-//            } else {
-//                return false;
-//            }
-//        }
+        if (getSingleResultSupplier() == null || getSingleResultSupplier().getJoinedSupplier() == null) {
+            return getCursor().next();
+        }
+        QueryResult joinedResult = getSingleResultSupplier().getJoinedSupplier().getQueryResult();
+        if (joinedResult == null) {
+            return getCursor().next();
+        }
+        while (hasNext()) {
+            if (joinedResult.next()) {
+                return true;
+            }
+            if (getCursor().next()) {
+                joinedResult.reset();
+            } else {
+                return false;
+            }
+        }
         return false;
     }
 
@@ -89,13 +89,13 @@ public abstract class QueryResult {
 
     public void reset() {
         getCursor().reset();
-//        if (getTableContainer() == null || getTableContainer().getJoinedTable() == null) {
-//            return;
-//        }
-//        QueryResult joinedResult = getTableContainer().getJoinedTable().getQueryResult();
-//        if (joinedResult != null) {
-//            joinedResult.reset();
-//        }
+        if (getSingleResultSupplier() == null || getSingleResultSupplier().getJoinedSupplier() == null) {
+            return;
+        }
+        QueryResult joinedResult = getSingleResultSupplier().getJoinedSupplier().getQueryResult();
+        if (joinedResult != null) {
+            joinedResult.reset();
+        }
     }
 
     public Cursor<TableRow> getCursor() {

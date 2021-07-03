@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc;
 
 import com.gigaspaces.jdbc.calcite.CalciteDefaults;
 import com.gigaspaces.jdbc.calcite.handlers.CalciteQueryHandler;
+import com.gigaspaces.jdbc.calcite.handlers.ExpCalciteQueryHandler;
 import com.gigaspaces.jdbc.exceptions.GenericJdbcException;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
 import com.gigaspaces.jdbc.jsql.handlers.JsqlQueryHandler;
@@ -18,7 +19,13 @@ public class QueryHandler {
         try {
             Properties customProperties = space.getURL().getCustomProperties();
             if (CalciteDefaults.isCalciteDriverPropertySet(customProperties)) {
-                return new CalciteQueryHandler().handle(query, space, preparedValues);
+                boolean exp = true;
+                if(exp){
+                    return new ExpCalciteQueryHandler().handle(query, space, preparedValues);
+                }
+                else{
+                    return new CalciteQueryHandler().handle(query, space, preparedValues);
+                }
             } else { //else jsql
                 return new JsqlQueryHandler().handle(query, space, preparedValues);
             }

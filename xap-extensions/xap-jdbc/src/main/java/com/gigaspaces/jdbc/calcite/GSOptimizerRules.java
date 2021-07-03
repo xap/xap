@@ -91,7 +91,7 @@ public class GSOptimizerRules {
         GSProjectRule.INSTANCE,
         GSJoinRule.INSTANCE,
         GSValuesRule.INSTANCE,
-            GSSortRule.INSTANCE
+            GSSortRule.INSTANCE,
         GSJoinRule.INSTANCE,
         GSAggregateRule.INSTANCE
     );

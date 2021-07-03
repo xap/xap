@@ -1,8 +1,11 @@
 package com.gigaspaces.jdbc.calcite.handlers;
 
-import com.gigaspaces.jdbc.QueryExecutor;
-import com.gigaspaces.jdbc.calcite.*;
-import com.gigaspaces.jdbc.model.result.QueryResult;
+import com.gigaspaces.jdbc.calcite.CalciteDefaults;
+import com.gigaspaces.jdbc.calcite.GSOptimizer;
+import com.gigaspaces.jdbc.calcite.GSOptimizerValidationResult;
+import com.gigaspaces.jdbc.calcite.GSRelNode;
+import com.gigaspaces.jdbc.calcite.experimental.SelectHandler;
+import com.gigaspaces.jdbc.calcite.experimental.result.QueryResult;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.ResponsePacket;
 import org.apache.calcite.rel.externalize.RelWriterImpl;
@@ -19,7 +22,7 @@ import java.util.Properties;
 
 import static com.gigaspaces.jdbc.calcite.CalciteDefaults.isCalcitePropertySet;
 
-public class CalciteQueryHandler {
+public class ExpCalciteQueryHandler {
 
     public ResponsePacket handle(String query, IJSpace space, Object[] preparedValues) throws SQLException {
         Properties customProperties = space.getURL().getCustomProperties();
@@ -29,10 +32,9 @@ public class CalciteQueryHandler {
 
     public ResponsePacket executeStatement(IJSpace space, GSRelNode relNode, Object[] preparedValues) throws SQLException {
         ResponsePacket packet = new ResponsePacket();
-        QueryExecutor qE = new QueryExecutor(space, preparedValues);
-        SelectHandler selectHandler = new SelectHandler(qE);
+        SelectHandler selectHandler = new SelectHandler(space, preparedValues);
         relNode.accept(selectHandler);
-        QueryResult queryResult = qE.execute();
+        QueryResult queryResult = selectHandler.execute();
         packet.setResultEntry(queryResult.convertEntriesToResultArrays());
         return packet;
     }
@@ -84,3 +86,4 @@ public class CalciteQueryHandler {
         return query;
     }
 }
+

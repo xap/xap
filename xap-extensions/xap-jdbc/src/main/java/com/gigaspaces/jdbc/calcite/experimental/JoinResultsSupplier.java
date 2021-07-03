@@ -1,11 +1,9 @@
 package com.gigaspaces.jdbc.calcite.experimental;
 
-import com.gigaspaces.jdbc.calcite.experimental.model.AggregationColumn;
-import com.gigaspaces.jdbc.calcite.experimental.model.ConcreteColumn;
-import com.gigaspaces.jdbc.calcite.experimental.model.IQueryColumn;
-import com.gigaspaces.jdbc.calcite.experimental.model.OrderColumn;
+import com.gigaspaces.jdbc.calcite.experimental.model.*;
 import com.gigaspaces.jdbc.calcite.experimental.model.join.JoinInfo;
 import com.gigaspaces.jdbc.calcite.experimental.result.QueryResult;
+import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 
 
@@ -15,6 +13,8 @@ import com.j_spaces.jdbc.builder.range.Range;
 
 import java.sql.SQLException;
 import java.util.*;
+
+import static java.lang.String.format;
 
 public class JoinResultsSupplier implements ResultSupplier{
     private final ResultSupplier left;
@@ -90,8 +90,14 @@ public class JoinResultsSupplier implements ResultSupplier{
 //        }
     }
 
+    @Override
     public void addAggregationColumn(AggregationColumn aggregationColumn) {
-        this.aggregationColumns.add(aggregationColumn);
+
+    }
+
+    @Override
+    public void addOrderColumn(OrderColumn orderColumn) {
+
     }
 
     public void addFieldCount(int size) {
@@ -130,7 +136,7 @@ public class JoinResultsSupplier implements ResultSupplier{
     }
 
     @Override
-    public List<ConcreteColumn> getGroupByColumns() {
+    public List<PhysicalColumn> getGroupByColumns() {
         return null;
     }
 
@@ -140,7 +146,7 @@ public class JoinResultsSupplier implements ResultSupplier{
     }
 
     @Override
-    public List<IQueryColumn> getSelectedColumns() {
+    public List<IQueryColumn> getProjectedColumns() {
         return null;
     }
 
@@ -162,5 +168,44 @@ public class JoinResultsSupplier implements ResultSupplier{
     @Override
     public void setDistinct(boolean distinct) {
 
+    }
+
+    @Override
+    public IQueryColumn getColumnByName(String column) throws ColumnNotFoundException {
+        if(left.hasColumn(column))
+            return left.getColumnByName(column);
+        if(right.hasColumn(column))
+            return right.getColumnByName(column);
+        throw new ColumnNotFoundException(format("Column %s was not found", column));
+    }
+
+    @Override
+    public boolean hasColumn(String column) {
+        return left.hasColumn(column) || right.hasColumn(column);
+    }
+
+    @Override
+    public void addProjection(IQueryColumn projection) {
+
+    }
+
+    @Override
+    public IQueryColumn getOrCreatePhysicalColumn(String physicalColumn) {
+        return null;
+    }
+
+    @Override
+    public void addFunctionColumn(FunctionColumn functionColumn) {
+
+    }
+
+    @Override
+    public Class<?> getReturnType(String columnName) throws SQLException {
+        return null;
+    }
+
+    @Override
+    public ResultSupplier getJoinedSupplier() {
+        return null;
     }
 }

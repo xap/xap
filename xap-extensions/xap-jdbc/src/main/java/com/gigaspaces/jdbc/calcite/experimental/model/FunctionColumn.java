@@ -10,26 +10,19 @@ import com.j_spaces.jdbc.SQLFunctions;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class FunctionCallColumn implements IQueryColumn {
+public class FunctionColumn implements IQueryColumn {
     protected final List<IQueryColumn> params;
     protected final String columnName;
     protected final String functionName;
     protected final String columnAlias;
     protected final boolean isVisible;
-    protected final int columnOrdinal;
 
-    public FunctionCallColumn(List<IQueryColumn> params, String columnName, String functionName, String columnAlias, boolean isVisible, int columnOrdinal) {
+    public FunctionColumn(List<IQueryColumn> params, String columnName, String functionName, String columnAlias, boolean isVisible) {
         this.params = params;
         this.columnName = columnName;
         this.functionName = functionName;
         this.columnAlias = columnAlias;
         this.isVisible = isVisible;
-        this.columnOrdinal = columnOrdinal;
-    }
-
-    @Override
-    public int getColumnOrdinal() {
-        return columnOrdinal;
     }
 
     @Override
@@ -62,10 +55,6 @@ public class FunctionCallColumn implements IQueryColumn {
         return Object.class;
     }
 
-    @Override
-    public IQueryColumn create(String columnName, String columnAlias, int columnOrdinal) {
-        return null;
-    }
 
     @Override
     public int compareTo(IQueryColumn o) {

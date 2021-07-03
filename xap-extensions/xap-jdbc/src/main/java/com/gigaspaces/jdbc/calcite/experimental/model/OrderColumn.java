@@ -24,11 +24,6 @@ public class OrderColumn implements IQueryColumn {
     }
 
     @Override
-    public int getColumnOrdinal() {
-        return this.queryColumn.getColumnOrdinal();
-    }
-
-    @Override
     public String getName() {
         return this.queryColumn.getName();
     }
@@ -61,11 +56,11 @@ public class OrderColumn implements IQueryColumn {
         return this.queryColumn.getReturnType();
     }
 
-    @Override
-    public IQueryColumn create(String columnName, String columnAlias, int columnOrdinal) {
-        return new OrderColumn(new ConcreteColumn(columnName, getReturnType(), columnAlias,
-                getResultSupplier(), columnOrdinal), isAsc(), isNullsLast());
-    }
+//    @Override
+//    public IQueryColumn create(String columnName, String columnAlias, int columnOrdinal) {
+//        return new OrderColumn(new ConcreteColumn(columnName, getReturnType(), columnAlias,
+//                getResultSupplier(), columnOrdinal), isAsc(), isNullsLast());
+//    }
 
     public IQueryColumn getQueryColumn() {
         return queryColumn;

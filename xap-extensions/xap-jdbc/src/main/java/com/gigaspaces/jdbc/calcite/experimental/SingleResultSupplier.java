@@ -5,37 +5,40 @@ import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.query.explainplan.ExplainPlanV3;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.internal.transport.ProjectionTemplate;
-import com.gigaspaces.jdbc.calcite.experimental.model.ConcreteColumn;
-import com.gigaspaces.jdbc.calcite.experimental.model.IQueryColumn;
-import com.gigaspaces.jdbc.calcite.experimental.model.OrderColumn;
+import com.gigaspaces.jdbc.calcite.experimental.model.*;
 import com.gigaspaces.jdbc.calcite.experimental.model.join.JoinInfo;
 import com.gigaspaces.jdbc.calcite.experimental.result.ConcreteQueryResult;
 import com.gigaspaces.jdbc.calcite.experimental.result.ExplainPlanQueryResult;
 import com.gigaspaces.jdbc.calcite.experimental.result.QueryResult;
+import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
+import com.j_spaces.jdbc.SQLUtil;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.range.Range;
 import com.j_spaces.jdbc.query.IQueryResultSet;
 import com.j_spaces.jdbc.query.QueryTableData;
 
 import java.sql.SQLException;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class SingleResultSupplier implements ResultSupplier{
     private final ITypeDesc typeDesc;
     private final IJSpace space;
     private QueryTemplatePacket queryTemplatePacket;
     private QueryResult queryResult;
-    private Integer limit;
+    private Integer limit = Integer.MAX_VALUE;;
     private boolean distinct;
+    private final Map<String, IQueryColumn> physicalColumns = new HashMap<>();
+    private final List<IQueryColumn> projectionColumns = new ArrayList<>();
+    private final List<OrderColumn> orderColumns = new ArrayList<>();
+    private final List<AggregationColumn> aggregationColumns = new ArrayList<>();
+    private final List<FunctionColumn> functionColumns = new ArrayList<>();
+
 
     public SingleResultSupplier(ITypeDesc typeDesc, IJSpace space) {
         this.typeDesc = typeDesc;
@@ -44,7 +47,6 @@ public class SingleResultSupplier implements ResultSupplier{
 
     @Override
     public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
-        System.out.println("Executing Single " + typeDesc.getTypeName());
         if (queryResult != null)
             return queryResult;
 
@@ -62,7 +64,7 @@ public class SingleResultSupplier implements ResultSupplier{
             ExplainPlanV3 explainPlanImpl = null;
             if (config.isExplainPlan()) {
                 // Using LinkedHashMap to keep insertion order from the ArrayList
-                final Map<String, String> visibleColumnsAndAliasMap = getSelectedColumns().stream().collect(Collectors.toMap
+                final Map<String, String> visibleColumnsAndAliasMap = getProjectedColumns().stream().collect(Collectors.toMap
                         (IQueryColumn::getName, queryColumn ->
                                         queryColumn.getAlias().equals(queryColumn.getName()) ? "" : queryColumn.getAlias()
                                 , (oldValue, newValue) -> newValue, LinkedHashMap::new));
@@ -81,7 +83,7 @@ public class SingleResultSupplier implements ResultSupplier{
 
             IQueryResultSet<IEntryPacket> res = queryTemplatePacket.readMultiple(space.getDirectProxy(), null, limit, modifiers);
             if (explainPlanImpl != null) {
-                queryResult = new ExplainPlanQueryResult(getSelectedColumns(), explainPlanImpl.getExplainPlanInfo(), this);
+                queryResult = new ExplainPlanQueryResult(getProjectedColumns(), explainPlanImpl.getExplainPlanInfo(), this);
             } else {
                 queryResult = new ConcreteQueryResult(res, this);
 //                if( hasGroupByColumns() && hasOrderColumns() ){
@@ -101,8 +103,10 @@ public class SingleResultSupplier implements ResultSupplier{
     }
 
     private String[] createProjectionTable() {
-        return new String[0];
-//        return Stream.concat(visibleColumns.stream(), invisibleColumns.stream()).map(IQueryColumn::getName).distinct().toArray(String[]::new);
+        if(projectionColumns.isEmpty()){
+            return typeDesc.getPropertiesNames();
+        }
+        return physicalColumns.values().stream().map(IQueryColumn::getName).toArray(String[]::new);
     }
 
     @Override
@@ -129,12 +133,12 @@ public class SingleResultSupplier implements ResultSupplier{
 
     @Override
     public QueryResult getQueryResult() {
-        return null;
+        return queryResult;
     }
 
     @Override
     public List<OrderColumn> getOrderColumns() {
-        return null;
+        return Collections.unmodifiableList(orderColumns);
     }
 
     @Override
@@ -143,8 +147,8 @@ public class SingleResultSupplier implements ResultSupplier{
     }
 
     @Override
-    public List<ConcreteColumn> getGroupByColumns() {
-        return null;
+    public List<PhysicalColumn> getGroupByColumns() {
+        return Collections.emptyList();
     }
 
     @Override
@@ -153,13 +157,19 @@ public class SingleResultSupplier implements ResultSupplier{
     }
 
     @Override
-    public List<IQueryColumn> getSelectedColumns() {
-        return null;
+    public List<IQueryColumn> getProjectedColumns() {
+        if(projectionColumns.isEmpty()){
+            return Arrays.stream(typeDesc.getPropertiesNames()).map(p -> new PhysicalColumn(p, null, this)).collect(Collectors.toList());
+        }
+        return projectionColumns;
     }
 
     @Override
     public List<IQueryColumn> getAllQueryColumns() {
-        return null;
+        if(projectionColumns.isEmpty()){
+            return Arrays.stream(typeDesc.getPropertiesNames()).map(p -> new PhysicalColumn(p, null, this)).collect(Collectors.toList());
+        }
+        return projectionColumns;
     }
 
     @Override
@@ -173,6 +183,60 @@ public class SingleResultSupplier implements ResultSupplier{
 
     public void setDistinct(boolean distinct) {
         this.distinct = distinct;
+    }
+
+    @Override
+    public IQueryColumn getColumnByName(String column) throws ColumnNotFoundException {
+        throw new ColumnNotFoundException("");
+    }
+
+    @Override
+    public boolean hasColumn(String column) {
+        return false;
+    }
+
+    @Override
+    public void addProjection(IQueryColumn projection) {
+        projectionColumns.add(projection);
+        if(projection.isPhysical()){
+            physicalColumns.putIfAbsent(projection.getName(), projection);
+        }
+    }
+
+    @Override
+    public IQueryColumn getOrCreatePhysicalColumn(String physicalColumn) throws ColumnNotFoundException{
+        if (!physicalColumn.equalsIgnoreCase(com.gigaspaces.jdbc.model.table.IQueryColumn.UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(physicalColumn) == -1) {
+            throw new ColumnNotFoundException("Could not find column with name [" + physicalColumn + "]");
+        }
+        if(!physicalColumns.containsKey(physicalColumn)){
+            physicalColumns.put(physicalColumn, new PhysicalColumn(physicalColumn, null, this));
+        }
+        return physicalColumns.get(physicalColumn);
+    }
+
+    @Override
+    public void addAggregationColumn(AggregationColumn aggregationColumn) {
+        aggregationColumns.add(aggregationColumn);
+    }
+
+    @Override
+    public void addOrderColumn(OrderColumn orderColumn) {
+        orderColumns.add(orderColumn);
+    }
+
+    @Override
+    public void addFunctionColumn(FunctionColumn functionColumn) {
+        functionColumns.add(functionColumn);
+    }
+
+    @Override
+    public Class<?> getReturnType(String columnName) throws SQLException {
+        return SQLUtil.getPropertyType(typeDesc, columnName);
+    }
+
+    @Override
+    public ResultSupplier getJoinedSupplier() {
+        return null;
     }
 
     /*private final List<OrderColumn> orderColumns = new ArrayList<>();

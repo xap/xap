@@ -2,7 +2,7 @@ package com.gigaspaces.jdbc.calcite.experimental.result;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.calcite.experimental.SingleResultSupplier;
-import com.gigaspaces.jdbc.calcite.experimental.model.ConcreteColumn;
+import com.gigaspaces.jdbc.calcite.experimental.model.PhysicalColumn;
 import com.gigaspaces.jdbc.calcite.experimental.model.IQueryColumn;
 import com.gigaspaces.jdbc.calcite.experimental.model.OrderColumn;
 
@@ -13,7 +13,7 @@ public class TableRowFactory {
 
     public static TableRow createTableRowFromSpecificColumns(List<IQueryColumn> columns,
                                                              List<OrderColumn> orderColumns,
-                                                             List<ConcreteColumn> groupByColumns) {
+                                                             List<PhysicalColumn> groupByColumns) {
         return new TableRow(columns, orderColumns, groupByColumns);
     }
 

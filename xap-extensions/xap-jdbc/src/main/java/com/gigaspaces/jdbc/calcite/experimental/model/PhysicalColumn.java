@@ -3,28 +3,26 @@ package com.gigaspaces.jdbc.calcite.experimental.model;
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.jdbc.calcite.experimental.ResultSupplier;
 
+import java.sql.SQLException;
 import java.util.Objects;
 
-public class ConcreteColumn implements IQueryColumn {
+public class PhysicalColumn implements IQueryColumn {
     protected final ResultSupplier resultSupplier;
     private final String columnName;
     private final String columnAlias;
     private final boolean isUUID;
-    private final Class<?> returnType;
-    private final int columnOrdinal;
+    private Class<?> returnType;
 
-    public ConcreteColumn(String columnName, Class<?> returnType, String columnAlias, ResultSupplier resultSupplier, int columnOrdinal) {
+    public PhysicalColumn(String columnName, String columnAlias, ResultSupplier resultSupplier) {
         this.columnName = columnName;
         this.columnAlias = columnAlias == null ? columnName : columnAlias;
         this.isUUID = columnName.equalsIgnoreCase(UUID_COLUMN);
         this.resultSupplier = resultSupplier;
-        this.returnType = returnType;
-        this.columnOrdinal = columnOrdinal;
-    }
-
-    @Override
-    public int getColumnOrdinal() {
-        return columnOrdinal;
+        try {
+            this.returnType = resultSupplier.getReturnType(columnName);
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
     }
 
     @Override
@@ -59,10 +57,10 @@ public class ConcreteColumn implements IQueryColumn {
         return returnType;
     }
 
-    @Override
-    public IQueryColumn create(String columnName, String columnAlias, int columnOrdinal) {
-        return new ConcreteColumn(columnName, getReturnType(), columnAlias, getResultSupplier(), columnOrdinal);
-    }
+//    @Override
+//    public IQueryColumn create(String columnName, String columnAlias) {
+//        return new ConcreteColumn(columnName, columnAlias, getResultSupplier(), columnOrdinal);
+//    }
 
     @Override
     public String toString() {
@@ -72,7 +70,7 @@ public class ConcreteColumn implements IQueryColumn {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ConcreteColumn)) return false;
+        if (!(o instanceof PhysicalColumn)) return false;
         IQueryColumn that = (IQueryColumn) o;
         return isUUID() == that.isUUID()
                 && Objects.equals(getResultSupplier(), that.getResultSupplier())
@@ -86,11 +84,6 @@ public class ConcreteColumn implements IQueryColumn {
     }
 
     @Override
-    public int compareTo(IQueryColumn other) {
-        return Integer.compare(this.getColumnOrdinal(), other.getColumnOrdinal());
-    }
-
-    @Override
     public Object getValue(IEntryPacket entryPacket) {
         Object value;
         if (isUUID()) {
@@ -101,5 +94,10 @@ public class ConcreteColumn implements IQueryColumn {
             value = entryPacket.getPropertyValue(getName());
         }
         return value;
+    }
+
+    @Override
+    public boolean isPhysical() {
+        return true;
     }
 }
