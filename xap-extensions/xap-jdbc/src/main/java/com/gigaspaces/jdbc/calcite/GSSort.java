@@ -33,7 +33,7 @@ import java.util.List;
  *
  * @author Sagiv Michael
  */
-class GSSort extends Sort implements GSRelNode {
+public class GSSort extends Sort implements GSRelNode {
 
     public GSSort(RelOptCluster cluster, RelTraitSet traitSet, RelNode input, RelCollation collation, RexNode offset,
                   RexNode fetch) {

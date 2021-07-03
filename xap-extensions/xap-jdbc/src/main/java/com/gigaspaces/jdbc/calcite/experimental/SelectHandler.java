@@ -1,17 +1,18 @@
 package com.gigaspaces.jdbc.calcite.experimental;
 
-import com.gigaspaces.jdbc.calcite.GSAggregate;
-import com.gigaspaces.jdbc.calcite.GSCalc;
-import com.gigaspaces.jdbc.calcite.GSJoin;
-import com.gigaspaces.jdbc.calcite.GSTable;
+import com.gigaspaces.jdbc.calcite.*;
 import com.gigaspaces.jdbc.calcite.experimental.result.QueryResult;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.table.ConcreteColumn;
+import com.gigaspaces.jdbc.model.table.OrderColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
+import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexProgram;
 
 import java.sql.SQLException;
@@ -55,6 +56,9 @@ public class SelectHandler extends RelShuttleImpl {
         if(other instanceof GSAggregate){
             handleAggregate((GSAggregate) other);
         }
+        if(other instanceof GSSort){
+            handleSort((GSSort) other);
+        }
         return result;
     }
 
@@ -69,6 +73,13 @@ public class SelectHandler extends RelShuttleImpl {
             }
         }
         new ProjectionHandler(rexProgram, resultSupplier).project();
+        stack.push(resultSupplier);
+    }
+
+    private void handleSort(GSSort sort) {
+        ResultSupplier resultSupplier = stack.pop();
+        OrderByHandler orderByHandler = new OrderByHandler(resultSupplier, sort);
+        orderByHandler.apply();
         stack.push(resultSupplier);
     }
 

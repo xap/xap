@@ -1,7 +1,8 @@
 package com.gigaspaces.jdbc.calcite.experimental;
 
+import com.gigaspaces.jdbc.calcite.experimental.model.IQueryColumn;
 import com.gigaspaces.jdbc.calcite.experimental.model.PhysicalColumn;
-import com.gigaspaces.jdbc.model.table.IQueryColumn;
+
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlKind;
@@ -24,6 +25,7 @@ public class ProjectionHandler extends RexShuttle {
 
     public void project(){
         List<RexLocalRef> projects = program.getProjectList();
+        boolean hasProjections = resultSupplier.clearProjections();
         for (int i = 0; i < projects.size(); i++) {
             RexLocalRef localRef = projects.get(i);
             RexNode node = program.getExprList().get(localRef.getIndex());
@@ -31,7 +33,13 @@ public class ProjectionHandler extends RexShuttle {
                 RexInputRef inputRef = (RexInputRef) node;
                 String alias = outputFields.get(i);
                 String originalName = inputFields.get(inputRef.getIndex());
-                PhysicalColumn physicalColumn = new PhysicalColumn(originalName, alias, resultSupplier);
+                IQueryColumn physicalColumn;
+                if(hasProjections){
+                    physicalColumn = resultSupplier.getOrCreatePhysicalColumn(originalName);
+                }
+                else{
+                    physicalColumn = new PhysicalColumn(originalName, alias, resultSupplier);
+                }
                 resultSupplier.addProjection(physicalColumn);
             }
             else if(node instanceof RexCall){

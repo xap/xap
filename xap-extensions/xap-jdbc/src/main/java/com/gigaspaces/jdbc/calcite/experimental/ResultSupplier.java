@@ -63,4 +63,10 @@ public interface ResultSupplier {
     ResultSupplier getJoinedSupplier();
 
     void setQueryTemplatePacket(QueryTemplatePacket queryTemplatePacket);
+
+    List<AggregationColumn> getAggregationColumns();
+
+    void addGroupByColumn(PhysicalColumn physicalColumn);
+
+    boolean clearProjections();
 }

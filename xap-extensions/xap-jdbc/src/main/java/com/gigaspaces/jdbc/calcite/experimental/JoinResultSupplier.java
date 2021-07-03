@@ -42,7 +42,6 @@ public class JoinResultSupplier implements ResultSupplier{
     }
 
     public QueryResult executeRead(QueryExecutionConfig config) throws SQLException {
-        System.out.println("Executing Join");
         return merge(left.executeRead(config), right.executeRead(config));
     }
 
@@ -70,6 +69,7 @@ public class JoinResultSupplier implements ResultSupplier{
         this.isAllColumnsSelected = isAllColumnsSelected;
     }
 
+    @Override
     public List<AggregationColumn> getAggregationColumns() {
         return aggregationColumns;
     }
@@ -212,5 +212,15 @@ public class JoinResultSupplier implements ResultSupplier{
     @Override
     public void setQueryTemplatePacket(QueryTemplatePacket queryTemplatePacket) {
 
+    }
+
+    @Override
+    public void addGroupByColumn(PhysicalColumn physicalColumn) {
+
+    }
+
+    @Override
+    public boolean clearProjections() {
+        return false;
     }
 }

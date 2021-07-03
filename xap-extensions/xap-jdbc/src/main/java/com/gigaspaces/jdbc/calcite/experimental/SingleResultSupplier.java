@@ -13,6 +13,8 @@ import com.gigaspaces.jdbc.calcite.experimental.result.QueryResult;
 import com.gigaspaces.jdbc.exceptions.ColumnNotFoundException;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 
+import com.gigaspaces.jdbc.model.table.ConcreteColumn;
+import com.gigaspaces.query.aggregators.*;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.core.client.Modifiers;
 import com.j_spaces.core.client.ReadModifiers;
@@ -39,6 +41,7 @@ public class SingleResultSupplier implements ResultSupplier{
     private final List<AggregationColumn> aggregationColumns = new ArrayList<>();
     private final List<FunctionColumn> functionColumns = new ArrayList<>();
     private final Object[] preparedValues;
+    private final List<PhysicalColumn> groupByColumns = new ArrayList<>();
 
 
     public SingleResultSupplier(ITypeDesc typeDesc, IJSpace space, Object[] preparedValues) {
@@ -79,7 +82,7 @@ public class SingleResultSupplier implements ResultSupplier{
 
 //            validate();
 
-//            setAggregations(config.isJoinUsed());
+            setAggregations(config.isJoinUsed());
 
             queryTemplatePacket.prepareForSpace(typeDesc);
 
@@ -88,14 +91,22 @@ public class SingleResultSupplier implements ResultSupplier{
                 queryResult = new ExplainPlanQueryResult(getProjectedColumns(), explainPlanImpl.getExplainPlanInfo(), this);
             } else {
                 queryResult = new ConcreteQueryResult(res, this);
-//                if( hasGroupByColumns() && hasOrderColumns() ){
-//                    queryResult.sort();
-//                }
+                if( hasGroupByColumns() && hasOrderColumns() ){
+                    queryResult.sort();
+                }
             }
             return queryResult;
         } catch (Exception e) {
             throw new SQLException("Failed to get results from space", e);
         }
+    }
+
+    private boolean hasOrderColumns() {
+        return !this.orderColumns.isEmpty();
+    }
+
+    private boolean hasGroupByColumns() {
+        return !this.groupByColumns.isEmpty();
     }
 
     private QueryTemplatePacket createEmptyQueryTemplatePacket() {
@@ -150,7 +161,7 @@ public class SingleResultSupplier implements ResultSupplier{
 
     @Override
     public List<PhysicalColumn> getGroupByColumns() {
-        return Collections.emptyList();
+        return Collections.unmodifiableList(groupByColumns);
     }
 
     @Override
@@ -161,7 +172,7 @@ public class SingleResultSupplier implements ResultSupplier{
     @Override
     public List<IQueryColumn> getProjectedColumns() {
         if(projectionColumns.isEmpty()){
-            return Arrays.stream(typeDesc.getPropertiesNames()).map(p -> new PhysicalColumn(p, null, this)).collect(Collectors.toList());
+            return Arrays.stream(typeDesc.getPropertiesNames()).map(p -> physicalColumns.containsKey(p) ? physicalColumns.get(p) : new PhysicalColumn(p, null, this)).collect(Collectors.toList());
         }
         return projectionColumns;
     }
@@ -244,6 +255,164 @@ public class SingleResultSupplier implements ResultSupplier{
     @Override
     public void setQueryTemplatePacket(QueryTemplatePacket queryTemplatePacket) {
         this.queryTemplatePacket = queryTemplatePacket;
+    }
+
+    @Override
+    public List<AggregationColumn> getAggregationColumns() {
+        return aggregationColumns;
+    }
+
+    @Override
+    public void addGroupByColumn(PhysicalColumn physicalColumn) {
+        this.groupByColumns.add(physicalColumn);
+    }
+
+    @Override
+    public boolean clearProjections() {
+        if(projectionColumns.isEmpty()){
+            return false;
+        }
+        projectionColumns.clear();
+        return true;
+    }
+
+    private void setAggregations(boolean isJoinUsed) {
+        // When we use join, we aggregate the results on the client side instead of on the server.
+        if(!isJoinUsed) {
+            if( !hasGroupByColumns() ){
+                setOrderByAggregation();
+            }
+            setAggregationFunctions();
+            setGroupByAggregation();
+        }
+        setDistinctAggregation();
+    }
+
+    private void setOrderByAggregation() {
+        if(hasOrderColumns()){
+            OrderByAggregator orderByAggregator = new OrderByAggregator();
+            for (OrderColumn column : getOrderColumns()) {
+                orderByAggregator.orderBy(column.getName(), column.isAsc() ? OrderBy.ASC : OrderBy.DESC, column.isNullsLast());
+            }
+
+            if( queryTemplatePacket.getAggregationSet() == null ) {
+                AggregationSet aggregationSet = new AggregationSet().orderBy( orderByAggregator );
+                queryTemplatePacket.setAggregationSet(aggregationSet);
+            }
+            else{
+                queryTemplatePacket.getAggregationSet().add(orderByAggregator);
+            }
+        }
+    }
+
+    private void setAggregationFunctions() {
+        if(!hasAggregationFunctions()) {
+            return;
+        }
+
+        AggregationSet aggregationSet;
+        if( queryTemplatePacket.getAggregationSet() == null ) {
+            aggregationSet = new AggregationSet();
+            queryTemplatePacket.setAggregationSet(aggregationSet);
+        }
+        else{
+            aggregationSet = queryTemplatePacket.getAggregationSet();
+        }
+
+        for (AggregationColumn aggregationColumn : getAggregationColumns()) {
+            String columnName = aggregationColumn.getColumnName();
+            switch (aggregationColumn.getType()) {
+                case COUNT:
+                    if (aggregationColumn.isAllColumns()) {
+                        aggregationSet.count();
+                    } else {
+                        aggregationSet.count(columnName);
+                    }
+                    break;
+                case MAX:
+                    aggregationSet.maxValue(columnName);
+                    break;
+                case MIN:
+                    aggregationSet.minValue(columnName);
+                    break;
+                case AVG:
+                    aggregationSet.average(columnName);
+                    break;
+                case SUM:
+                    aggregationSet.sum(columnName);
+                    break;
+            }
+        }
+
+        for(IQueryColumn projectedColumn : getProjectedColumns() ){
+            aggregationSet = aggregationSet.add(new SingleValueAggregator().setPath(projectedColumn.getName()));
+        }
+    }
+
+    private void setGroupByAggregation() {
+        //groupBy in server
+        List<PhysicalColumn> groupByColumns = getGroupByColumns();
+        if(!groupByColumns.isEmpty()){
+            int groupByColumnsCount = groupByColumns.size();
+            String[] groupByColumnsArray = new String[ groupByColumnsCount ];
+            for ( int i=0; i < groupByColumnsCount; i++) {
+                groupByColumnsArray[ i ] = groupByColumns.get( i ).getName();
+            }
+
+            if( hasAggregationFunctions() ){
+
+                GroupByAggregator groupByAggregator = new GroupByAggregator().groupBy(groupByColumnsArray);
+                List<SpaceEntriesAggregator> aggregators = AggregationInternalUtils.getAggregators(queryTemplatePacket.getAggregationSet());
+                if (!aggregators.isEmpty()) {
+                    groupByAggregator = groupByAggregator.select(aggregators.toArray(new SpaceEntriesAggregator[]{}));
+                }
+
+                queryTemplatePacket.setAggregationSet( new AggregationSet().groupBy(groupByAggregator) );
+            }
+            else {
+                //int limit = hasOrderColumns() ? Integer.MAX_VALUE : entriesLimit;
+                DistinctAggregator distinctAggregator = new DistinctAggregator().distinct(true, limit, groupByColumnsArray);
+                if (queryTemplatePacket.getAggregationSet() == null) {
+                    AggregationSet aggregationSet = new AggregationSet().distinct(distinctAggregator);
+                    queryTemplatePacket.setAggregationSet(aggregationSet);
+                } else {
+                    queryTemplatePacket.getAggregationSet().add(distinctAggregator);
+                }
+            }
+        }
+    }
+
+    private void setDistinctAggregation() {
+        //distinct in server
+        if (isDistinct()) {
+            if (!projectionColumns.isEmpty()) {
+                String[] distinctColumnsArray = new String[projectionColumns.size()];
+                for (int i = 0; i < projectionColumns.size(); i++) {
+                    distinctColumnsArray[i] = projectionColumns.get(i).getName();
+                }
+                DistinctAggregator distinctAggregator = new DistinctAggregator().distinct(false, limit, distinctColumnsArray);
+                if (queryTemplatePacket.getAggregationSet() == null) {
+                    AggregationSet aggregationSet = new AggregationSet().distinct(distinctAggregator);
+                    queryTemplatePacket.setAggregationSet(aggregationSet);
+                } else {
+                    queryTemplatePacket.getAggregationSet().add(distinctAggregator);
+                }
+            }
+            if (hasAggregationFunctions()){
+                String[] distinctColumnsArray = new String[getAggregationColumns().size()];
+                for (int i = 0; i < getAggregationColumns().size(); i++) {
+                    distinctColumnsArray[i] = getAggregationColumns().get(i).getColumnName();
+                }
+                DistinctAggregator distinctAggregator = new DistinctAggregator().distinct(false, limit, distinctColumnsArray);
+                if (queryTemplatePacket.getAggregationSet() == null) {
+                    AggregationSet aggregationSet = new AggregationSet().distinct(distinctAggregator);
+                    queryTemplatePacket.setAggregationSet(aggregationSet);
+                } else {
+                    queryTemplatePacket.getAggregationSet().add(distinctAggregator);
+                }
+            }
+        }
+
     }
 
     /*private final List<OrderColumn> orderColumns = new ArrayList<>();
