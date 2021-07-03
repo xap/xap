@@ -38,11 +38,13 @@ public class SingleResultSupplier implements ResultSupplier{
     private final List<OrderColumn> orderColumns = new ArrayList<>();
     private final List<AggregationColumn> aggregationColumns = new ArrayList<>();
     private final List<FunctionColumn> functionColumns = new ArrayList<>();
+    private final Object[] preparedValues;
 
 
-    public SingleResultSupplier(ITypeDesc typeDesc, IJSpace space) {
+    public SingleResultSupplier(ITypeDesc typeDesc, IJSpace space, Object[] preparedValues) {
         this.typeDesc = typeDesc;
         this.space = space;
+        this.preparedValues = preparedValues;
     }
 
     @Override
@@ -111,7 +113,7 @@ public class SingleResultSupplier implements ResultSupplier{
 
     @Override
     public Object[] getPreparedValues() {
-        return new Object[0];
+        return preparedValues;
     }
 
     @Override
@@ -128,7 +130,7 @@ public class SingleResultSupplier implements ResultSupplier{
 
     @Override
     public Object getColumnValue(String column, Object value) throws SQLException{
-        return null;
+        return SQLUtil.cast(typeDesc, column, value, false);
     }
 
     @Override
@@ -237,6 +239,11 @@ public class SingleResultSupplier implements ResultSupplier{
     @Override
     public ResultSupplier getJoinedSupplier() {
         return null;
+    }
+
+    @Override
+    public void setQueryTemplatePacket(QueryTemplatePacket queryTemplatePacket) {
+        this.queryTemplatePacket = queryTemplatePacket;
     }
 
     /*private final List<OrderColumn> orderColumns = new ArrayList<>();

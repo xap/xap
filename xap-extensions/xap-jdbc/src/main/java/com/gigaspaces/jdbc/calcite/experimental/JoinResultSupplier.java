@@ -16,7 +16,7 @@ import java.util.*;
 
 import static java.lang.String.format;
 
-public class JoinResultsSupplier implements ResultSupplier{
+public class JoinResultSupplier implements ResultSupplier{
     private final ResultSupplier left;
     private final ResultSupplier right;
     private final Set<IQueryColumn> invisibleColumns = new HashSet<>();
@@ -29,7 +29,7 @@ public class JoinResultsSupplier implements ResultSupplier{
     private final LinkedList<Integer> fieldCountList = new LinkedList<>();
 
 
-    public JoinResultsSupplier(ResultSupplier left, ResultSupplier right, IJSpace space, QueryExecutionConfig config, Object[] preparedValues) {
+    public JoinResultSupplier(ResultSupplier left, ResultSupplier right, IJSpace space, QueryExecutionConfig config, Object[] preparedValues) {
         this.left = left;
         this.right = right;
         this.space = space;
@@ -37,7 +37,7 @@ public class JoinResultsSupplier implements ResultSupplier{
         this.preparedValues = preparedValues;
     }
 
-    public JoinResultsSupplier(ResultSupplier left, ResultSupplier right, IJSpace space, Object[] preparedValues) {
+    public JoinResultSupplier(ResultSupplier left, ResultSupplier right, IJSpace space, Object[] preparedValues) {
         this(left, right, space, new QueryExecutionConfig(), preparedValues);
     }
 
@@ -207,5 +207,10 @@ public class JoinResultsSupplier implements ResultSupplier{
     @Override
     public ResultSupplier getJoinedSupplier() {
         return null;
+    }
+
+    @Override
+    public void setQueryTemplatePacket(QueryTemplatePacket queryTemplatePacket) {
+
     }
 }

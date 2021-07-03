@@ -6,13 +6,16 @@ import com.gigaspaces.jdbc.calcite.GSJoin;
 import com.gigaspaces.jdbc.calcite.GSTable;
 import com.gigaspaces.jdbc.calcite.experimental.result.QueryResult;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
+import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.core.IJSpace;
+import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rex.RexProgram;
 
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Stack;
 
 public class SelectHandler extends RelShuttleImpl {
@@ -35,7 +38,7 @@ public class SelectHandler extends RelShuttleImpl {
     public RelNode visit(TableScan scan) {
         RelNode result = super.visit(scan);
         GSTable table = scan.getTable().unwrap(GSTable.class);
-        ResultSupplier resultSupplier = new SingleResultSupplier(table.getTypeDesc(), space);
+        ResultSupplier resultSupplier = new SingleResultSupplier(table.getTypeDesc(), space, preparedValues);
         stack.push(resultSupplier);
         return result;
     }
@@ -61,6 +64,9 @@ public class SelectHandler extends RelShuttleImpl {
         if(rexProgram.getCondition() != null){
             ConditionHandler conditionHandler = new ConditionHandler(rexProgram, resultSupplier);
             rexProgram.getCondition().accept(conditionHandler);
+            for (Map.Entry<ResultSupplier, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : conditionHandler.getQTPMap().entrySet()) {
+                tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
+            }
         }
         new ProjectionHandler(rexProgram, resultSupplier).project();
         stack.push(resultSupplier);
@@ -74,7 +80,7 @@ public class SelectHandler extends RelShuttleImpl {
     private void handleJoin(GSJoin join) {
         ResultSupplier rightSupplier = stack.pop();
         ResultSupplier leftSupplier = stack.pop();
-        ResultSupplier joinResultSupplier = new JoinResultsSupplier(leftSupplier, rightSupplier, space, preparedValues);
+        ResultSupplier joinResultSupplier = new JoinResultSupplier(leftSupplier, rightSupplier, space, preparedValues);
         stack.push(joinResultSupplier);
         /*RexCall rexCall = (RexCall) join.getCondition();
         if(rexCall.getKind() != SqlKind.EQUALS){

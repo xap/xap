@@ -61,4 +61,6 @@ public interface ResultSupplier {
     Class<?> getReturnType(String columnName) throws SQLException;
 
     ResultSupplier getJoinedSupplier();
+
+    void setQueryTemplatePacket(QueryTemplatePacket queryTemplatePacket);
 }
