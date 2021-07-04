@@ -28,7 +28,7 @@ import java.util.Date;
 @com.gigaspaces.api.InternalApi
 public class CurrentDateSqlFunction extends SqlFunction {
 
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd" );
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd" );
 
     /**
      * @param context which contains one argument of type string.
@@ -37,10 +37,6 @@ public class CurrentDateSqlFunction extends SqlFunction {
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
 
-        return simpleDateFormat.format( new Date() );
-    }
-
-    public static void main( String[] args ){
-        System.out.println( ( new CurrentDateSqlFunction() ).apply(null) );
+        return dateFormat.format( new Date() );
     }
 }

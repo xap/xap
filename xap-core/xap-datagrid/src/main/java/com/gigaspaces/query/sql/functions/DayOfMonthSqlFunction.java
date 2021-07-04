@@ -16,7 +16,7 @@
 
 package com.gigaspaces.query.sql.functions;
 
-import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 /**
  * Returns day of month
@@ -27,31 +27,13 @@ import java.text.SimpleDateFormat;
 @com.gigaspaces.api.InternalApi
 public class DayOfMonthSqlFunction extends AbstractDateRelatedSqlFunction {
 
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("d");
-
     /**
      * @param context which contains one argument of type string.
      * @return Returns the string context.getArgument(0) with all characters changed to uppercase.
      */
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
-        return simpleDateFormat.format( verifyArgumentsAndGetDate("DayOfMonth", context) );
-    }
-
-    public static void main( String[] args ){
-
-        SqlFunctionExecutionContext context = new SqlFunctionExecutionContext() {
-            @Override
-            public int getNumberOfArguments() {
-                return 1;
-            }
-
-            @Override
-            public Object getArgument(int index) {
-                return index == 0 ? "2021-06-30" : null;
-            }
-        };
-
-        System.out.println( ( new DayOfMonthSqlFunction() ).apply(context) );
+        calendar.setTime( verifyArgumentsAndGetDate("dayofmonth", context) );
+        return calendar.get(Calendar.DAY_OF_MONTH);
     }
 }

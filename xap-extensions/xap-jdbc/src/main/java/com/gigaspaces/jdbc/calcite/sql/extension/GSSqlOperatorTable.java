@@ -5,6 +5,7 @@ import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlTypeFamily;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.ReflectiveSqlOperatorTable;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
@@ -59,4 +60,151 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                             OperandTypes.NUMERIC,
                             OperandTypes.family(SqlTypeFamily.NUMERIC, SqlTypeFamily.NUMERIC)),
                     SqlFunctionCategory.NUMERIC);
+
+    public static final SqlFunction TRUNC =
+            new SqlFunction(
+                    "TRUNC",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.DOUBLE,
+                    null,
+                    OperandTypes.or(
+                            OperandTypes.NUMERIC,
+                            OperandTypes.family(SqlTypeFamily.DECIMAL, SqlTypeFamily.NUMERIC)),
+                    SqlFunctionCategory.NUMERIC);
+
+    public static final SqlFunction ODBC_TIMESTAMP =
+            new NoParameterSqlFunction(
+                    "ODBC_TIMESTAMP", SqlTypeName.VARCHAR) {
+
+                @Override
+                public SqlSyntax getSyntax() {
+                    return SqlSyntax.FUNCTION;
+                }
+            };
+
+
+    public static final SqlFunction DAYNAME =
+            new SqlFunction(
+                    "DAYNAME",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.VARCHAR_4,
+                    null,
+                    OperandTypes.STRING,
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction DAYOFMONTH =
+            new SqlFunction(
+                    "DAYOFMONTH",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.VARCHAR_4,
+                    null,
+                    OperandTypes.STRING,
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction DAYOFWEEK =
+            new SqlFunction(
+                    "DAYOFWEEK",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.VARCHAR_4,
+                    null,
+                    OperandTypes.STRING,
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction DAYOFYEAR =
+            new SqlFunction(
+                    "DAYOFYEAR",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.VARCHAR_4,
+                    null,
+                    OperandTypes.STRING,
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction HOUR =
+            new SqlFunction(
+                    "HOUR",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.VARCHAR_4,
+                    null,
+                    OperandTypes.STRING,
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction MINUTE =
+            new SqlFunction(
+                    "MINUTE",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.VARCHAR_4,
+                    null,
+                    OperandTypes.STRING,
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction MONTH =
+            new SqlFunction(
+                    "MONTH",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.VARCHAR_4,
+                    null,
+                    OperandTypes.STRING,
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction MONTHNAME =
+            new SqlFunction(
+                    "MONTHNAME",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.VARCHAR_4,
+                    null,
+                    OperandTypes.STRING,
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction QUARTER =
+            new SqlFunction(
+                    "QUARTER",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.VARCHAR_4,
+                    null,
+                    OperandTypes.STRING,
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction SECOND =
+            new SqlFunction(
+                    "SECOND",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.VARCHAR_4,
+                    null,
+                    OperandTypes.STRING,
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction WEEK =
+            new SqlFunction(
+                    "WEEK",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.VARCHAR_4,
+                    null,
+                    OperandTypes.STRING,
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction YEAR =
+            new SqlFunction(
+                    "YEAR",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.VARCHAR_4,
+                    null,
+                    OperandTypes.STRING,
+                    SqlFunctionCategory.STRING);
+    /*
+        odbc_timestamp
+        dayname
+        dayofmonth
+        dayofweek
+        dayofyear
+        hour
+        minute
+        month
+        monthname
+        quarter
+        second
+        week
+        year
+    * */
+
+
 }

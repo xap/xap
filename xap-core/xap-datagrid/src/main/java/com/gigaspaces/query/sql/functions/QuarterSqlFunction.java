@@ -16,16 +16,19 @@
 
 package com.gigaspaces.query.sql.functions;
 
-import java.util.Calendar;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.IsoFields;
+import java.util.Date;
 
 /**
- * Returns day of week
+ * Returns quarter according to timestamp
  *
  * @author Evgeny Fisher
  * @since 16.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class DayOfWeekSqlFunction extends AbstractDateRelatedSqlFunction {
+public class QuarterSqlFunction extends AbstractDateRelatedSqlFunction {
 
     /**
      * @param context which contains one argument of type string.
@@ -33,8 +36,8 @@ public class DayOfWeekSqlFunction extends AbstractDateRelatedSqlFunction {
      */
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
-
-        calendar.setTime( verifyArgumentsAndGetDate("dayofweek", context) );
-        return calendar.get(Calendar.DAY_OF_WEEK);
+        Date date = verifyArgumentsAndGetDate("quarter", context);
+        LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return localDate.get(IsoFields.QUARTER_OF_YEAR);
     }
 }

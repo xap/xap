@@ -17,18 +17,17 @@
 package com.gigaspaces.query.sql.functions;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
 /**
- * Returns current date formatted
+ * Returns day name
  *
  * @author Evgeny Fisher
  * @since 16.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class DayNameSqlFunction extends SqlFunction {
+public class DayNameSqlFunction extends AbstractDateRelatedSqlFunction {
 
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEEE");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE");
 
     /**
      * @param context which contains one argument of type string.
@@ -37,10 +36,6 @@ public class DayNameSqlFunction extends SqlFunction {
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
 
-        return simpleDateFormat.format( new Date() );
-    }
-
-    public static void main( String[] args ){
-        System.out.println( ( new DayNameSqlFunction() ).apply(null) );
+        return dateFormat.format( verifyArgumentsAndGetDate("dayname", context)  );
     }
 }
