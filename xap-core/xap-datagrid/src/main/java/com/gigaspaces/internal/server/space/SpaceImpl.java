@@ -23,6 +23,7 @@ import com.gigaspaces.admin.quiesce.QuiesceState;
 import com.gigaspaces.admin.quiesce.QuiesceStateChangedEvent;
 import com.gigaspaces.annotation.SupportCodeChange;
 import com.gigaspaces.attribute_store.AttributeStore;
+import com.gigaspaces.attribute_store.SharedLock;
 import com.gigaspaces.client.ReadTakeByIdResult;
 import com.gigaspaces.client.ReadTakeByIdsException;
 import com.gigaspaces.client.WriteMultipleException;
@@ -84,6 +85,7 @@ import com.gigaspaces.internal.server.space.operations.SpaceOperationsExecutor;
 import com.gigaspaces.internal.server.space.operations.WriteEntriesResult;
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.server.space.quiesce.QuiesceHandler;
+import com.gigaspaces.internal.server.space.quiesce.WaitForDrainUtils;
 import com.gigaspaces.internal.server.space.recovery.RecoveryManager;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryHelper;
@@ -3318,11 +3320,17 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             _clusterFailureDetector = initClusterFailureDetector(_clusterPolicy);
             _engine = new SpaceEngine(this);
             if(attributeStore != null){
-                String persistent = attributeStore.get(ZNodePathFactory.space(_spaceName, "persistent"));
-                if(persistent == null){
-                    final String isPersistent = String.valueOf(_engine.isTieredStorage() || _engine.isBlobStorePersistent());
-                    attributeStore.set(ZNodePathFactory.space(_spaceName, "persistent"), isPersistent);
-                    attributeStore.set(ZNodePathFactory.processingUnit(_puName, "persistent"), isPersistent);
+                final String persistentPath = ZNodePathFactory.space(_spaceName, "persistent");
+                String persistent = attributeStore.get(persistentPath);
+                if(persistent == null) {
+                    try (final SharedLock lock = attributeStore.getSharedLockProvider().acquire(ZNodePathFactory.lockPersistentName(_puName), 1, TimeUnit.SECONDS)) {
+                        persistent = attributeStore.get(persistentPath);
+                        if (persistent == null) {
+                            final String isPersistent = String.valueOf(_engine.isTieredStorage() || _engine.isBlobStorePersistent());
+                            attributeStore.set(persistentPath, isPersistent);
+                            attributeStore.set(ZNodePathFactory.processingUnit(_puName, "persistent"), isPersistent);
+                        }
+                    }
                 }
             }
 
@@ -3997,6 +4005,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     public void demote(long maxSuspendTime, TimeUnit unit, SpaceContext sc) throws DemoteFailedException, RemoteException {
         assertAuthorizedForPrivilege(GridAuthority.GridPrivilege.MANAGE_PU, sc);
         _demoteHandler.demote(maxSuspendTime, unit);
+    }
+
+    public void waitForDrain(long timeoutMs, long minTimeToWait, boolean backupOnly, Logger logger) throws TimeoutException {
+        WaitForDrainUtils.waitForDrain(this, timeoutMs, minTimeToWait, backupOnly, logger != null ? logger : _logger);
     }
 
     public SuspendType addSpaceSuspendTypeListener(SuspendTypeChangedInternalListener listener) {

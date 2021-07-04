@@ -31,6 +31,10 @@ public class ZNodePathFactory {
         return path(LOCKS,PUS, name);
     }
 
+    public static String lockPersistentName(String puName) {
+        return path(LOCKS,PUS, puName+"/persistent");
+    }
+
     public static String processingUnit(String puName, String component) {
         return path(PUS, puName, component);
     }

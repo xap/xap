@@ -954,8 +954,7 @@ public class LeaseManager {
 
     public boolean waitForNoCycleOnQuiesce(long timeout)
     {
-        return
-                _leaseReaperDaemon.waitForNoCycleOnQuiesce(timeout);
+        return _leaseReaperDaemon.waitForNoCycleOnQuiesce(timeout);
     }
 
     private static String getExtendLeasePeriodDescription(boolean leaseExpired, boolean cancelLease) {
