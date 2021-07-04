@@ -2,10 +2,8 @@ package com.gigaspaces.jdbc.model.table;
 
 import com.gigaspaces.internal.transport.IEntryPacket;
 import com.gigaspaces.query.sql.functions.SqlFunction;
-import com.gigaspaces.query.sql.functions.SqlFunctionExecutionContext;
 import com.gigaspaces.query.sql.functions.SqlFunctionExecutionContextWithType;
 import com.j_spaces.jdbc.SQLFunctions;
-import org.apache.calcite.avatica.SqlType;
 
 import java.util.List;
 
