@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc.calcite;
 
 import com.gigaspaces.jdbc.calcite.parser.GSSqlParserFactoryWrapper;
 import com.google.common.collect.ImmutableList;
+import com.gigaspaces.jdbc.calcite.sql.extension.GSSqlOperatorTable;
 import com.gigaspaces.jdbc.calcite.pg.PgCalciteSchema;
 import com.j_spaces.core.IJSpace;
 import org.apache.calcite.avatica.util.Casing;
@@ -31,6 +32,7 @@ import org.apache.calcite.sql.fun.SqlLibrary;
 import org.apache.calcite.sql.fun.SqlLibraryOperatorTableFactory;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.calcite.sql.util.ChainedSqlOperatorTable;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -80,7 +82,10 @@ public class GSOptimizer {
             CONNECTION_CONFIG);
 
         validator = SqlValidatorUtil.newValidator(
-            SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(SqlLibrary.STANDARD, SqlLibrary.POSTGRESQL),
+                ChainedSqlOperatorTable.of(
+                        GSSqlOperatorTable.instance()
+                        , SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(SqlLibrary.STANDARD, SqlLibrary.POSTGRESQL)
+                ),
             catalogReader, typeFactory,
             SqlValidator.Config.DEFAULT.withSqlConformance( LENIENT ).withDefaultNullCollation(NullCollation.FIRST));
 

@@ -1,8 +1,7 @@
 package com.j_spaces.jdbc;
 
 import com.gigaspaces.query.sql.functions.*;
-import com.gigaspaces.query.sql.functions.extended.ChrSqlFunction;
-import com.gigaspaces.query.sql.functions.extended.CoalesceSqlFunction;
+import com.gigaspaces.query.sql.functions.extended.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,10 +21,15 @@ public class SQLFunctionsExtended {
         functions.put("CAST", new CastSqlFunction());
         functions.put("REPEAT", new RepeatSqlFunction());
 //        functions.put("SUBSTR", new SubstrSqlFunction());
-
         functions.put("CURRENT_DATE", new CurrentDateSqlFunction());
         functions.put("CURRENT_TIME", new CurrentTimeSqlFunction());
         functions.put("TRUNCATE", new TruncSqlFunction());
+        functions.put("LOG", new LogSqlFunction());
+        functions.put("LOG10", new Log10SqlFunction());
+        functions.put("LN", new LnSqlFunction());
+        functions.put("POWER", new PowerSqlFunction());
+        functions.put("RANDOM", new RandomSqlFunction());
+
     }
 
 
