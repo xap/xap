@@ -1,7 +1,5 @@
 package com.gigaspaces.sql.aggregatornode.netty.server;
 
-
-
 import com.gigaspaces.sql.aggregatornode.netty.server.output.ConsoleOutput;
 import com.gigaspaces.sql.aggregatornode.netty.server.output.Output;
 import org.junit.Assert;
@@ -11,7 +9,9 @@ import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class DumpUtils {
@@ -98,12 +98,6 @@ public class DumpUtils {
         return result;
     }
 
-    public static String getHeaderString(ResultSetMetaData metaData) throws SQLException {
-        StringJoiner sj = new StringJoiner(" | ", "| ", " |");
-        Arrays.stream(getHeader(metaData)).forEach(sj::add);
-        return sj.toString();
-    }
-
     public static String[] getHeader(ResultSetMetaData metaData) throws SQLException {
         int columnCount = metaData.getColumnCount();
         String[] result = new String[columnCount];
@@ -116,14 +110,6 @@ public class DumpUtils {
             result[i-1] = label;
         }
         return result;
-    }
-
-    public static String rowToString(Object[] rowValues) {
-        StringJoiner sj = new StringJoiner(" | ", "| ", " |");
-        for (Object rowValue : rowValues) {
-            sj.add(String.valueOf(rowValue));
-        }
-        return sj.toString();
     }
 
     public static Object[] getRow(ResultSet rs, ResultSetMetaData metaData) throws SQLException {
