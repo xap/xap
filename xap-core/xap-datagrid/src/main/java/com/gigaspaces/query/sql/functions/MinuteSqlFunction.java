@@ -19,13 +19,13 @@ package com.gigaspaces.query.sql.functions;
 import java.util.Calendar;
 
 /**
- * Returns day of week
+ * Returns minute according to timestamp
  *
  * @author Evgeny Fisher
  * @since 16.0.0
  */
 @com.gigaspaces.api.InternalApi
-public class DayOfWeekSqlFunction extends AbstractDateRelatedSqlFunction {
+public class MinuteSqlFunction extends AbstractDateRelatedSqlFunction {
 
     /**
      * @param context which contains one argument of type string.
@@ -33,8 +33,7 @@ public class DayOfWeekSqlFunction extends AbstractDateRelatedSqlFunction {
      */
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
-
-        calendar.setTime( verifyArgumentsAndGetDate("dayofweek", context) );
-        return calendar.get(Calendar.DAY_OF_WEEK);
+        calendar.setTime( verifyArgumentsAndGetDate("minute", context) );
+        return calendar.get(Calendar.MINUTE);
     }
 }

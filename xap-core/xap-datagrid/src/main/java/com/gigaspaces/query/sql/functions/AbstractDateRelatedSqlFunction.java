@@ -16,12 +16,15 @@
 
 package com.gigaspaces.query.sql.functions;
 
+import com.j_spaces.jdbc.QueryProcessor;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
- * Abstract date relatedFunctions class
+ * Abstract date and time related functions class
  *
  * @author Evgeny Fisher
  * @since 16.0.0
@@ -29,7 +32,9 @@ import java.util.Date;
 
 abstract class AbstractDateRelatedSqlFunction extends SqlFunction {
 
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd" );
+    private final String pattern = QueryProcessor.getDefaultConfig().getLocalDateTimeFormat();
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat( pattern );
+    protected final Calendar calendar = Calendar.getInstance();
 
     protected Date verifyArgumentsAndGetDate( String functionName, SqlFunctionExecutionContext context) {
         assertNumberOfArguments(1, context);
@@ -41,7 +46,7 @@ abstract class AbstractDateRelatedSqlFunction extends SqlFunction {
         try {
             date = dateFormat.parse( ( String )arg );
         } catch (ParseException e) {
-            throw new RuntimeException("Failed to parse: " + arg);
+            throw new RuntimeException("Failed to parse: " + arg + " using pattern [" + pattern + "]");
         }
         return date;
     }

@@ -16,7 +16,7 @@
 
 package com.gigaspaces.query.sql.functions;
 
-import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 /**
  * Returns day of year
@@ -27,31 +27,13 @@ import java.text.SimpleDateFormat;
 @com.gigaspaces.api.InternalApi
 public class DayOfYearSqlFunction extends AbstractDateRelatedSqlFunction {
 
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("D");
-
     /**
      * @param context which contains one argument of type string.
      * @return Returns the string context.getArgument(0) with all characters changed to uppercase.
      */
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
-        return simpleDateFormat.format( verifyArgumentsAndGetDate( "DayOfYear", context ) );
-    }
-
-    public static void main( String[] args ){
-
-        SqlFunctionExecutionContext context = new SqlFunctionExecutionContext() {
-            @Override
-            public int getNumberOfArguments() {
-                return 1;
-            }
-
-            @Override
-            public Object getArgument(int index) {
-                return index == 0 ? "2021-05-20" : null;
-            }
-        };
-
-        System.out.println( ( new DayOfYearSqlFunction() ).apply(context) );
+        calendar.setTime( verifyArgumentsAndGetDate("dayofyear", context) );
+        return calendar.get(Calendar.DAY_OF_YEAR);
     }
 }

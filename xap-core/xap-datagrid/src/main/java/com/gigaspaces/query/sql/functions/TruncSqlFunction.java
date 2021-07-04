@@ -83,29 +83,4 @@ public class TruncSqlFunction extends SqlFunction {
         decimalFormat.setMinimumFractionDigits( precision );
         return decimalFormat;
     }
-
-    public static void main( String[] args ){
-
-        SqlFunctionExecutionContext context = new SqlFunctionExecutionContext() {
-            @Override
-            public int getNumberOfArguments() {
-                return 2;
-            }
-
-            @Override
-            public Object getArgument(int index) {
-                if( index == 0 ) {
-                   return 123.991;
-                }
-                if( index == 1 ) {
-                    return -2;
-                }
-                else {
-                    return null;
-                }
-            }
-        };
-
-        System.out.println( ( new TruncSqlFunction() ).apply(context) );
-    }
 }

@@ -23,7 +23,22 @@ public class SQLFunctionsExtended {
 //        functions.put("SUBSTR", new SubstrSqlFunction());
         functions.put("CURRENT_DATE", new CurrentDateSqlFunction());
         functions.put("CURRENT_TIME", new CurrentTimeSqlFunction());
+        functions.put("ODBC_TIMESTAMP", new OdbcTimestampSqlFunction());
+        functions.put("DAYNAME", new DayNameSqlFunction());
+        functions.put("DAYOFMONTH", new DayOfMonthSqlFunction());
+        functions.put("DAYOFWEEK", new DayOfWeekSqlFunction());
+        functions.put("DAYOFYEAR", new DayOfYearSqlFunction());
+        functions.put("HOUR", new HourSqlFunction());
+        functions.put("MINUTE", new MinuteSqlFunction());
+        functions.put("MONTH", new MonthSqlFunction());
+        functions.put("MONTHNAME", new MonthNameSqlFunction());
+        functions.put("QUARTER", new QuarterSqlFunction());
+        functions.put("SECOND", new SecondSqlFunction());
+        functions.put("WEEK", new WeekSqlFunction());
+        functions.put("YEAR", new YearSqlFunction());
+
         functions.put("TRUNCATE", new TruncSqlFunction());
+        functions.put("TRUNC", new TruncSqlFunction());
         functions.put("LOG", new LogSqlFunction());
         functions.put("LOG10", new Log10SqlFunction());
         functions.put("LN", new LnSqlFunction());
