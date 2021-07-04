@@ -20,15 +20,15 @@ import com.gigaspaces.classloader.CustomURLClassLoader;
 import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.start.ClasspathBuilder;
 import net.jini.loader.ClassAnnotation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.function.Supplier;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The ServiceClassLoader overrides getURLs(), ensuring all classes that need to be annotated with
@@ -49,10 +49,12 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
     private final ClassAnnotator annotator;
 
     private boolean parentFirst = Boolean.parseBoolean(System.getProperty("com.gs.pu.classloader.parentFirst", "false"));
-    private boolean autoDetectSlf4JBinding = Boolean.parseBoolean(System.getProperty("com.gs.pu.classloader.auto-detect-slf4j", "true"));
+    private final boolean autoDetectSlf4JBinding = Boolean.parseBoolean(System.getProperty("com.gs.pu.classloader.auto-detect-slf4j", "true"));
+    private boolean slf4jBindingCheckRequired = autoDetectSlf4JBinding;
 
     private CodeChangeClassLoadersManager codeChangeClassLoadersManager;
     private final Set<String> systemClassExcludes = initSystemClassExcludes();
+    private final static String SLF4J_STATIC_LOGGER_BINDER_PATH = "org/slf4j/impl/StaticLoggerBinder.class";
 
     private static Set<String> initSystemClassExcludes() {
         Set<String> result = new LinkedHashSet<>();
@@ -288,10 +290,10 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
         if (name.equals("org.slf4j.bridge.SLF4JBridgeHandler")) {
             return true;
         }
-        if (autoDetectSlf4JBinding && name.startsWith("org.slf4j.")) {
+        if (slf4jBindingCheckRequired && name.startsWith("org.slf4j.")) {
             // This approach is derived from SLF4J's LoggerFactory.bind().
             // Note: this is valid for slf4j 1.7 and lower, but not for later versions: http://www.slf4j.org/faq.html#changesInVersion18
-            boolean hasSlf4jStaticLoggerBinder = this.findResource("org/slf4j/impl/StaticLoggerBinder.class") != null;
+            boolean hasSlf4jStaticLoggerBinder = this.findResource(SLF4J_STATIC_LOGGER_BINDER_PATH) != null;
             if (logger.isDebugEnabled())
                 logger.debug("autoDetectSlf4JBinding enabled: hasSlf4jStaticLoggerBinder = " + hasSlf4jStaticLoggerBinder + " (while loading class " + name +")");
             if (hasSlf4jStaticLoggerBinder) {
@@ -303,9 +305,23 @@ public class ServiceClassLoader extends CustomURLClassLoader implements ClassAnn
                         "org.apache.logging.log4j."     // Log4j2
                 ));
             }
-            autoDetectSlf4JBinding = false;
+            slf4jBindingCheckRequired = false;
         }
         return !matches(name, systemClassExcludes);
+    }
+
+    @Override
+    public Enumeration<URL> getResources(String name) throws IOException {
+        if (autoDetectSlf4JBinding && name.equals(SLF4J_STATIC_LOGGER_BINDER_PATH)) {
+            final URL resource = this.findResource(SLF4J_STATIC_LOGGER_BINDER_PATH);
+            if (logger.isTraceEnabled()) {
+                logger.debug("autoDetectSlf4JBinding enabled: resource loaded from service class loader");
+            }
+            if (resource != null)
+                return Collections.enumeration(Collections.singleton(resource));
+        }
+
+        return super.getResources(name);
     }
 
     protected static boolean matches(String className, Collection<String> patterns) {
