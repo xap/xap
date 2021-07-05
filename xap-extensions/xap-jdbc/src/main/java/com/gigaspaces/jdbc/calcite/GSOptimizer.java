@@ -19,6 +19,8 @@ import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.fun.SqlLibrary;
@@ -26,6 +28,7 @@ import org.apache.calcite.sql.fun.SqlLibraryOperatorTableFactory;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.util.ChainedSqlOperatorTable;
+import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -90,14 +93,14 @@ public class GSOptimizer {
     public SqlNode parse(String query) throws SqlParseException {
         SqlParser parser = createParser(query);
 
-        return parser.parseQuery();
+        return rewrite(parser.parseQuery());
     }
 
     public SqlNodeList parseMultiline(String query) {
         SqlParser parser = createParser(query);
 
         try {
-            return parser.parseStmtList();
+            return (SqlNodeList) rewrite(parser.parseStmtList());
         } catch (SqlParseException e) {
             throw new RuntimeException("Failed to parse the query.", e);
         }
@@ -155,5 +158,20 @@ public class GSOptimizer {
         res.add(ROOT_SCHEMA_NAME, new GSSchema(space));
         res.add(PgCalciteSchema.NAME, PgCalciteSchema.INSTANCE);
         return res;
+    }
+
+    private SqlNode rewrite(SqlNode ast) {
+        SqlShuttle shuttle = new SqlShuttle() {
+            @Override
+            public SqlNode visit(SqlCall call) {
+                String name = call.getOperator().getName();
+                if (name.equalsIgnoreCase("generate_series"))
+                    return SqlLiteral.createExactNumeric("0", call.getParserPosition());
+                else if (name.equalsIgnoreCase("pg_get_expr"))
+                    return SqlLiteral.createBinaryString("", call.getParserPosition());
+                return super.visit(call);
+            }
+        };
+        return ast.accept(shuttle);
     }
 }
