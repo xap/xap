@@ -92,4 +92,8 @@ public class GSTable extends AbstractTable {
     public String getName() {
         return name;
     }
+
+    public String getShortName() {
+        return this.typeDesc.getTypeSimpleName();
+    }
 }
