@@ -151,8 +151,8 @@ public class GSOptimizer {
     }
 
     private static CalciteSchema createSchema(IJSpace space) {
-        CalciteSchema res = CalciteSchema.createRootSchema(true, false);
-        res.add(ROOT_SCHEMA_NAME, new GSSchema(space));
+        CalciteSchema res = CalciteSchema.createRootSchema(true, false,
+                ROOT_SCHEMA_NAME, new GSSchema(space));
         res.add(PgCalciteSchema.NAME, PgCalciteSchema.INSTANCE);
         return res;
     }

@@ -118,6 +118,7 @@ public class PgCalciteTable extends AbstractTable {
                         'c',                                    // attalign
                         false,                                  // attnotnull
                         false,                                  // atthasdef
+                        ' ',                                    // attidentity
                         false,                                  // attisdropped
                         false,                                  // attislocal
                         0                                       // attinhcount
