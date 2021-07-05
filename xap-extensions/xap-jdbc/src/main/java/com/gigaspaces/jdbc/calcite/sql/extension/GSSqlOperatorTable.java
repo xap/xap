@@ -65,11 +65,9 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
             new SqlFunction(
                     "TRUNC",
                     SqlKind.OTHER_FUNCTION,
-                    ReturnTypes.DOUBLE,
+                    ReturnTypes.ARG0_NULLABLE,
                     null,
-                    OperandTypes.or(
-                            OperandTypes.NUMERIC,
-                            OperandTypes.family(SqlTypeFamily.DECIMAL, SqlTypeFamily.NUMERIC)),
+                    OperandTypes.NUMERIC_OPTIONAL_INTEGER,
                     SqlFunctionCategory.NUMERIC);
 
     public static final SqlFunction ODBC_TIMESTAMP =
@@ -190,21 +188,4 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     null,
                     OperandTypes.STRING,
                     SqlFunctionCategory.STRING);
-    /*
-        odbc_timestamp
-        dayname
-        dayofmonth
-        dayofweek
-        dayofyear
-        hour
-        minute
-        month
-        monthname
-        quarter
-        second
-        week
-        year
-    * */
-
-
 }
