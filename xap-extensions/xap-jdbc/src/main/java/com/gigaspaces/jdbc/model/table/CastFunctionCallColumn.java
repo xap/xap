@@ -8,10 +8,10 @@ import com.j_spaces.jdbc.SQLFunctions;
 import java.util.List;
 
 public class CastFunctionCallColumn extends FunctionCallColumn{
-    private String type;
+    private final String type;
 
     public CastFunctionCallColumn(List<IQueryColumn> params, String columnName, String functionName, String columnAlias, boolean isVisible, int columnOrdinal, String type) {
-        super(params, columnName, functionName, columnAlias, isVisible, columnOrdinal);
+        super(params, functionName, columnName, columnAlias, isVisible, columnOrdinal);
         this.type = type;
     }
 

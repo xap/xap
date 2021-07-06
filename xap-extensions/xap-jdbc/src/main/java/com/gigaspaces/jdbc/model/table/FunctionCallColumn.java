@@ -16,7 +16,7 @@ public class FunctionCallColumn implements IQueryColumn{
     protected final boolean isVisible;
     protected final int columnOrdinal;
 
-    public FunctionCallColumn(List<IQueryColumn> params, String columnName, String functionName, String columnAlias, boolean isVisible, int columnOrdinal) {
+    public FunctionCallColumn(List<IQueryColumn> params, String functionName, String columnName, String columnAlias, boolean isVisible, int columnOrdinal) {
         this.params = params;
         this.columnName = columnName;
         this.functionName = functionName;

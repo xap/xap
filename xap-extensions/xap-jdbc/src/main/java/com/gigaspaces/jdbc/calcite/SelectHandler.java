@@ -16,8 +16,8 @@ import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.*;
-import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlOperator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -105,26 +105,30 @@ public class SelectHandler extends RelShuttleImpl {
             for (RexLocalRef project : projectList) {
                 RexNode node = program.getExprList().get(project.getIndex());
                 if (node instanceof RexCall) {
-                    RexCall rexCall = (RexCall) node;
-                    SqlFunction sqlFunction = (SqlFunction) rexCall.op;
-                    List<IQueryColumn> params = new ArrayList();
-                    for (RexNode operand : rexCall.getOperands()) {
-                        if (operand.isA(SqlKind.LOCAL_REF)) {
-                            RexNode funcArgument = program.getExprList().get(((RexLocalRef) operand).getIndex());
-                            if (funcArgument.isA(SqlKind.LITERAL)) {
-                                RexLiteral literal = (RexLiteral) funcArgument;
-                                params.add(new LiteralColumn(CalciteUtils.getValue(literal)));
-                            }
-                        }
-
-                    }
-                    queryExecutor.addColumn(new FunctionCallColumn(params, null, sqlFunction.getName(), null, true, -1));
+                    FunctionCallColumn functionCallColumn = getFunctionCallColumn(program, (RexCall) node);
+                    queryExecutor.addColumn(functionCallColumn);
                 }
             }
         }
-        else{
-//            queryExecutor.addColumn(new LiteralColumn(gsValues.get));
+    }
+
+    private FunctionCallColumn getFunctionCallColumn(RexProgram program, RexCall rexCall) {
+        SqlOperator sqlFunction = rexCall.op;
+        List<IQueryColumn> params = new ArrayList<>();
+        for (RexNode operand : rexCall.getOperands()) {
+            if (operand.isA(SqlKind.LOCAL_REF)) {
+                RexNode funcArgument = program.getExprList().get(((RexLocalRef) operand).getIndex());
+                if (funcArgument.isA(SqlKind.LITERAL)) {
+                    RexLiteral literal = (RexLiteral) funcArgument;
+                    params.add(new LiteralColumn(CalciteUtils.getValue(literal)));
+                } else if (funcArgument instanceof RexCall) { //operator
+                    RexCall function= (RexCall) funcArgument;
+                    params.add(getFunctionCallColumn(program, function));
+                }
+            }
+
         }
+        return new FunctionCallColumn(params, sqlFunction.getName(), null, null, true, -1);
     }
 
     private void handleSort(GSSort sort) {

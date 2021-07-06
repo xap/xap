@@ -28,8 +28,8 @@ import com.gigaspaces.query.sql.functions.SqlFunctionExecutionContext;
 @com.gigaspaces.api.InternalApi
 public class RandomSqlFunction extends SqlFunction {
     /**
-     * @param context contains two arguments of either Long/Integer/Double.
-     * @return the remainder of context.getArgument(0) divided by context.getArgument(1).
+     * @param context contains 0 arguments.
+     * @return a double value with a positive sign, greater than or equal to 0.0 and less than 1.0
      */
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
