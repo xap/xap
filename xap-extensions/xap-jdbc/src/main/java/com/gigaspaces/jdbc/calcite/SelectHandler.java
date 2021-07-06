@@ -43,6 +43,7 @@ public class SelectHandler extends RelShuttleImpl {
         }
         else{
             handleCalc(childToCalc.get(scan), tableContainer);
+            childToCalc.remove(scan);
         }
         return result;
     }
@@ -71,10 +72,7 @@ public class SelectHandler extends RelShuttleImpl {
                 }
                 input =  input.getInput(0);
             }
-            childToCalc.put(input, calc); //replace the old value if exists.
-            //TODO: @sagiv use putIfAbsent handle calc above calc and fix failing OrderBy tests...
-            //TODO: suggestion fix:
-            //TODO: maybe in the visit(TableScan) / handleJoin method, remove the key when we handle it... need to try this.
+            childToCalc.putIfAbsent(input, calc);
         }
         RelNode result = super.visit(other);
         if(other instanceof GSJoin){
@@ -169,6 +167,7 @@ public class SelectHandler extends RelShuttleImpl {
         }
         else{
             handleCalcFromJoin(childToCalc.get(join));
+            childToCalc.remove(join);
         }
     }
 
