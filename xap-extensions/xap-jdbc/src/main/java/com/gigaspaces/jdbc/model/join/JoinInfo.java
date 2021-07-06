@@ -65,6 +65,10 @@ public class JoinInfo {
         return false;
     }
 
+    public void resetHasMatch() {
+        hasMatch = false;
+    }
+
     public enum JoinType {
         INNER, LEFT, RIGHT, FULL, SEMI;
 

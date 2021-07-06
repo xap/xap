@@ -69,6 +69,7 @@ public abstract class QueryResult {
             if(joinInfo.getJoinType().equals(JoinInfo.JoinType.SEMI) && joinInfo.isHasMatch()) {
                 if(getCursor().next()) {
                     joinedResult.reset();
+                    joinInfo.resetHasMatch();
                 }
                 else{
                     return false;
