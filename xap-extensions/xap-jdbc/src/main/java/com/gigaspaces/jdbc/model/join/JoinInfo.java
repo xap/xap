@@ -13,6 +13,7 @@ public class JoinInfo {
     private final IQueryColumn rightColumn;
     private final JoinType joinType;
     private Range range;
+    private boolean hasMatch;
 
     public JoinInfo(IQueryColumn leftColumn, IQueryColumn rightColumn, JoinType joinType) {
         this.leftColumn = leftColumn;
@@ -23,15 +24,23 @@ public class JoinInfo {
     public boolean checkJoinCondition(){
         Object rightValue = rightColumn.getCurrentValue();
         Object leftValue = leftColumn.getCurrentValue();
-        if(joinType.equals(JoinType.INNER)) {
-            return rightValue != null && leftValue != null && Objects.equals(leftValue, rightValue);
+        if(joinType.equals(JoinType.INNER) || joinType.equals(JoinType.SEMI)) {
+            hasMatch = rightValue != null && leftValue != null && Objects.equals(leftValue, rightValue);
+        } else if(range != null){
+            if(range.getPath().equals(rightColumn.getName())) {
+                hasMatch = range.getPredicate().execute(rightValue);
+            }
+            else {
+                hasMatch = range.getPredicate().execute(leftValue);
+            }
+        } else {
+            hasMatch = true;
         }
-        if(range != null){
-            if(range.getPath().equals(rightColumn.getName()))
-                return range.getPredicate().execute(rightValue);
-            return range.getPredicate().execute(leftValue);
-        }
-        return true;
+        return hasMatch;
+    }
+
+    public boolean isHasMatch() {
+        return hasMatch;
     }
 
     public IQueryColumn getLeftColumn() {
@@ -56,8 +65,12 @@ public class JoinInfo {
         return false;
     }
 
+    public void resetHasMatch() {
+        hasMatch = false;
+    }
+
     public enum JoinType {
-        INNER, LEFT, RIGHT, FULL;
+        INNER, LEFT, RIGHT, FULL, SEMI;
 
         public static JoinType getType(Join join){
             if(join.isLeft())
@@ -66,6 +79,9 @@ public class JoinInfo {
                 return RIGHT;
             if (join.isOuter() || join.isFull())
                 return FULL;
+            if(join.isSemi()) {
+                return SEMI;
+            }
             return INNER;
         }
 
@@ -79,6 +95,8 @@ public class JoinInfo {
                     return RIGHT;
                 case FULL:
                     return FULL;
+                case SEMI:
+                    return SEMI;
                 default:
                     throw new UnsupportedOperationException("Join of type " + joinRelType + " is not supported");
             }
@@ -92,6 +110,7 @@ public class JoinInfo {
                 case LEFT: return 2;
                 case RIGHT: return 3;
                 case FULL: return 4;
+                case SEMI: return 5;
                 default: throw new IllegalArgumentException("Unsupported join type: " + joinType);
             }
         }
@@ -103,6 +122,7 @@ public class JoinInfo {
                 case 2: return LEFT;
                 case 3: return RIGHT;
                 case 4: return FULL;
+                case 5: return SEMI;
                 default: throw new IllegalArgumentException("Unsupported join code: " + code);
             }
         }
