@@ -2,8 +2,10 @@ package com.gigaspaces.internal.server.space.quiesce;
 
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.j_spaces.core.filters.ReplicationStatistics;
+import net.jini.core.transaction.server.ServerTransaction;
 import org.slf4j.Logger;
 
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 public class WaitForDrainUtils {
@@ -12,6 +14,8 @@ public class WaitForDrainUtils {
         long start = System.currentTimeMillis();
         long remainingTime = timeoutMs;
 
+        logger.info("Starting 'waitForDrain' process, start = {}, timeout = {}",start, timeoutMs);
+
         try {
 
 
@@ -19,12 +23,20 @@ public class WaitForDrainUtils {
             remainingTime = tryWithinTimeout("Couldn't wait for drain - lease manager cycle timeout",
                     remainingTime, innerTimeout -> spaceImpl.getEngine().getLeaseManager().waitForNoCycleOnQuiesce(innerTimeout));
 
-            logger.info("Waiting for lease manager transactions to drain");
+            logger.info("Waiting for transactions to drain");
             remainingTime = tryWithinTimeout("Couldn't wait for drain - timeout while waiting for transactions", remainingTime,
                     innerTimeout -> {
                         try {
                             return spaceImpl.getEngine().getTransactionHandler().waitForActiveTransactions(innerTimeout);
                         } catch (InterruptedException e) {
+                            logger.warn("Not done waiting for transactions, {} remaining", spaceImpl.getEngine().getTransactionHandler().getXtnTable().size());
+                            if(logger.isTraceEnabled()){
+                                StringBuilder builder = new StringBuilder("Not done waiting for transactions:");
+                                for (Map.Entry<ServerTransaction, Long> entry : spaceImpl.getEngine().getTransactionHandler().getTimedXtns().entrySet()) {
+                                    builder.append("\n[ txn id ").append(entry.getKey().getMetaData().getTransactionUniqueId()).append(" timeout in ").append(System.currentTimeMillis() - entry.getValue()).append(" ms ]");
+                                }
+                                logger.trace(builder.toString());
+                            }
                             Thread.currentThread().interrupt();
                             return false;
                         }
@@ -44,7 +56,7 @@ public class WaitForDrainUtils {
                 }
             }
 
-            repetitiveTryWithinTimeout("Backup is not synced", remainingTime, () -> backupOnly ? isBackupSynced(spaceImpl) : isAllTargetSync(spaceImpl, logger));
+            repetitiveTryWithinTimeout(backupOnly ? "Backup is not synced" : "Some targets are not synced", remainingTime, () -> backupOnly ? isBackupSynced(spaceImpl) : isAllTargetSync(spaceImpl, logger));
         } catch (TimeoutException e){
             logger.warn("Caught TimeoutException while waiting for "+spaceImpl.getContainerName()+" to drain",e);
             throw e;

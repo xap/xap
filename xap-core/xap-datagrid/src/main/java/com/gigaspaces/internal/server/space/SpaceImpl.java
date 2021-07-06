@@ -3326,7 +3326,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                     try (final SharedLock lock = attributeStore.getSharedLockProvider().acquire(ZNodePathFactory.lockPersistentName(_puName), 1, TimeUnit.SECONDS)) {
                         persistent = attributeStore.get(persistentPath);
                         if (persistent == null) {
-                            final String isPersistent = String.valueOf(_engine.isTieredStorage() || _engine.isBlobStorePersistent());
+                            final String isPersistent = String.valueOf(_engine.isTieredStorage());
                             attributeStore.set(persistentPath, isPersistent);
                             attributeStore.set(ZNodePathFactory.processingUnit(_puName, "persistent"), isPersistent);
                         }

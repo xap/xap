@@ -315,7 +315,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
         _directProxy = spaceImpl.getSingleProxy();
 
         try {
-            initTieredStorageManager(spaceImpl);
+            initTieredStorageManager();
             final TypeDescFactory typeDescFactory = new TypeDescFactory(_directProxy);
             _typeManager = new SpaceTypeManager(typeDescFactory, _configReader, tieredStorageManager);
         } catch (IllegalAccessException | InstantiationException | ClassNotFoundException e) {
@@ -382,7 +382,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
     }
 
 
-    private void initTieredStorageManager(SpaceImpl space) throws RemoteException, IllegalAccessException, InstantiationException, ClassNotFoundException {
+    private void initTieredStorageManager() throws IllegalAccessException, InstantiationException, ClassNotFoundException {
         Object tieredStorage = this._clusterInfo.getCustomComponent(SPACE_CLUSTER_INFO_TIERED_STORAGE_COMPONENT_NAME);
         if(tieredStorage != null ){
             TieredStorageConfig storageConfig = (TieredStorageConfig) tieredStorage;
