@@ -7,7 +7,6 @@ import com.gigaspaces.jdbc.calcite.handlers.SingleTableProjectionHandler;
 import com.gigaspaces.jdbc.calcite.pg.PgCalciteTable;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.table.*;
-import com.gigaspaces.jdbc.model.table.*;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelFieldCollation;
@@ -56,6 +55,7 @@ public class SelectHandler extends RelShuttleImpl {
         }
         else{
             handleCalc(childToCalc.get(scan), tableContainer);
+            childToCalc.remove(scan); // visited, not needed anymore
         }
         return result;
     }
@@ -200,13 +200,18 @@ public class SelectHandler extends RelShuttleImpl {
         if(!childToCalc.containsKey(join)) { // it is SELECT *
             if(join.equals(root)
                     || ((root instanceof GSSort) && ((GSSort) root).getInput().equals(join))) { // root is GSSort and its child is join
-                for (TableContainer tableContainer : queryExecutor.getTables()) {
-                    queryExecutor.getVisibleColumns().addAll(tableContainer.getVisibleColumns());
+                if (join.isSemiJoin()) {
+                    queryExecutor.getVisibleColumns().addAll(leftContainer.getVisibleColumns());
+                } else {
+                    for (TableContainer tableContainer : queryExecutor.getTables()) {
+                        queryExecutor.getVisibleColumns().addAll(tableContainer.getVisibleColumns());
+                    }
                 }
             }
         }
         else{
             handleCalcFromJoin(childToCalc.get(join));
+            childToCalc.remove(join); // visited, not needed anymore
         }
     }
 
@@ -216,7 +221,7 @@ public class SelectHandler extends RelShuttleImpl {
         List<String> outputFields = program.getOutputRowType().getFieldNames();
         queryExecutor.addFieldCount(outputFields.size());
         new SingleTableProjectionHandler(program, tableContainer, other.equals(root)).project();
-        ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
+        ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields, tableContainer);
         if (program.getCondition() != null) {
             program.getCondition().accept(conditionHandler);
             for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : conditionHandler.getQTPMap().entrySet()) {

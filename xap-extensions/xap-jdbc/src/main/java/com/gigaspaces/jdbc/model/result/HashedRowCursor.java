@@ -30,7 +30,7 @@ public class HashedRowCursor implements Cursor<TableRow>{
         if(iterator == null){
             List<TableRow> match = hashMap.get(joinInfo.getLeftColumn().getCurrentValue());
             if(match == null) {
-                if(!joinInfo.getJoinType().equals(JoinInfo.JoinType.LEFT))
+                if(!(joinInfo.getJoinType().equals(JoinInfo.JoinType.LEFT) || joinInfo.getJoinType().equals(JoinInfo.JoinType.SEMI)))
                     return false;
                 match = SINGLE_NULL;
             }

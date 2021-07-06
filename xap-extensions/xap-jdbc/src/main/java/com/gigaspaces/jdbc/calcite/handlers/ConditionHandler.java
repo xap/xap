@@ -21,12 +21,23 @@ public class ConditionHandler extends RexShuttle {
     private final QueryExecutor queryExecutor;
     private final Map<TableContainer, QueryTemplatePacket> qtpMap;
     private final List<String> fields;
+    private final TableContainer tableContainer;
 
-    public ConditionHandler(RexProgram program, QueryExecutor queryExecutor, List<String> fields) {
+    public ConditionHandler(RexProgram program, QueryExecutor queryExecutor, List<String> inputFields) {
         this.program = program;
         this.queryExecutor = queryExecutor;
-        this.fields = fields;
+        this.fields = inputFields;
         this.qtpMap = new LinkedHashMap<>();
+        this.tableContainer = null;
+    }
+
+    public ConditionHandler(RexProgram program, QueryExecutor queryExecutor, List<String> inputFields,
+                            TableContainer tableContainer) {
+        this.program = program;
+        this.queryExecutor = queryExecutor;
+        this.fields = inputFields;
+        this.qtpMap = new LinkedHashMap<>();
+        this.tableContainer = tableContainer;
     }
 
     public Map<TableContainer, QueryTemplatePacket> getQTPMap() {
@@ -61,27 +72,26 @@ public class ConditionHandler extends RexShuttle {
     }
 
     private void handleRexCall(RexCall call){
-
         switch (call.getKind()) {
             case AND: {
-                ConditionHandler leftHandler = new ConditionHandler(program, queryExecutor, fields);
+                ConditionHandler leftHandler = new ConditionHandler(program, queryExecutor, fields, tableContainer);
                 RexNode leftOp = getNode((RexLocalRef) call.getOperands().get(0));
                 leftOp.accept(leftHandler);
                 for (int i = 1; i < call.getOperands().size(); i++) {
                     RexNode rightOp = getNode((RexLocalRef) call.getOperands().get(i));
-                    ConditionHandler rightHandler = new ConditionHandler(program, queryExecutor, fields);
+                    ConditionHandler rightHandler = new ConditionHandler(program, queryExecutor, fields, tableContainer);
                     rightOp.accept(rightHandler);
                     and(leftHandler, rightHandler);
                 }
                 break;
             }
             case OR: {
-                ConditionHandler leftHandler = new ConditionHandler(program, queryExecutor, fields);
+                ConditionHandler leftHandler = new ConditionHandler(program, queryExecutor, fields, tableContainer);
                 RexNode leftOp = getNode((RexLocalRef) call.getOperands().get(0));
                 leftOp.accept(leftHandler);
                 for (int i = 1; i < call.getOperands().size(); i++) {
                     RexNode rightOp = getNode((RexLocalRef) call.getOperands().get(i));
-                    ConditionHandler rightHandler = new ConditionHandler(program, queryExecutor, fields);
+                    ConditionHandler rightHandler = new ConditionHandler(program, queryExecutor, fields, tableContainer);
                     rightOp.accept(rightHandler);
                     or(leftHandler, rightHandler);
                 }
@@ -110,6 +120,37 @@ public class ConditionHandler extends RexShuttle {
         }
     }
 
+    private void handleNotRexCall(RexCall call){
+        switch (call.getKind()) {
+            case AND: {
+                ConditionHandler leftHandler = new ConditionHandler(program, queryExecutor, fields, tableContainer);
+                RexNode leftOp = getNode((RexLocalRef) call.getOperands().get(0));
+                leftHandler.handleSingleOperandsCall(leftOp, SqlKind.NOT);
+                for (int i = 1; i < call.getOperands().size(); i++) {
+                    RexNode rightOp = getNode((RexLocalRef) call.getOperands().get(i));
+                    ConditionHandler rightHandler = new ConditionHandler(program, queryExecutor, fields, tableContainer);
+                    rightHandler.handleSingleOperandsCall(rightOp, SqlKind.NOT);
+                    or(leftHandler, rightHandler);
+                }
+                break;
+            }
+            case OR: {
+                ConditionHandler leftHandler = new ConditionHandler(program, queryExecutor, fields, tableContainer);
+                RexNode leftOp = getNode((RexLocalRef) call.getOperands().get(0));
+                leftHandler.handleSingleOperandsCall(leftOp, SqlKind.NOT);
+                for (int i = 1; i < call.getOperands().size(); i++) {
+                    RexNode rightOp = getNode((RexLocalRef) call.getOperands().get(i));
+                    ConditionHandler rightHandler = new ConditionHandler(program, queryExecutor, fields, tableContainer);
+                    rightHandler.handleSingleOperandsCall(rightOp, SqlKind.NOT);
+                    and(leftHandler, rightHandler);
+                }
+                break;
+            }
+            default:
+                throw new UnsupportedOperationException(String.format("Queries with %s are not supported",call.getKind()));
+        }
+    }
+
     private void handleSingleOperandsCall(RexNode operand, SqlKind sqlKind){
         String column = null;
         Range range = null;
@@ -129,6 +170,14 @@ public class ConditionHandler extends RexShuttle {
                 leftOp = getNode((RexLocalRef) ((RexCall) operand).getOperands().get(0));
                 rightOp = getNode((RexLocalRef) ((RexCall) operand).getOperands().get(1));
                 handleTwoOperandsCall(leftOp, rightOp, operand.getKind(), SqlKind.NOT.equals(sqlKind));
+                return;
+            case OR:
+            case AND:
+                if (SqlKind.NOT.equals(sqlKind)) {
+                    handleNotRexCall((RexCall) operand);
+                } else {
+                    handleRexCall((RexCall) operand);
+                }
                 return;
             default:
                 throw new UnsupportedOperationException(String.format("Queries with %s are not supported",operand.getKind()));
@@ -168,6 +217,7 @@ public class ConditionHandler extends RexShuttle {
 
     private void handleTwoOperandsCall(RexNode leftOp, RexNode rightOp, SqlKind sqlKind, boolean isNot){
         String column = null;
+        boolean isRowNum = false;
         Object value = null;
         Range range = null;
         switch (leftOp.getKind()){
@@ -183,7 +233,7 @@ public class ConditionHandler extends RexShuttle {
                 value = queryExecutor.getPreparedValues()[((RexDynamicParam) leftOp).getIndex()];
                 break;
             case ROW_NUMBER:
-                column = "rowNum";
+                isRowNum = true;
                 break;
             default:
                 throw new UnsupportedOperationException(String.format("Queries with %s are not supported",sqlKind));
@@ -202,12 +252,12 @@ public class ConditionHandler extends RexShuttle {
                 value = queryExecutor.getPreparedValues()[((RexDynamicParam) rightOp).getIndex()];
                 break;
             case ROW_NUMBER:
-                column = "rowNum";
+                isRowNum = true;
                 break;
             default:
                 throw new UnsupportedOperationException(String.format("Queries with %s are not supported",sqlKind));
         }
-        if("rowNum".equals(column)) {
+        if(isRowNum) {
             handleRowNumber(sqlKind, value);
             return; //return and don't continue.
         }
@@ -273,6 +323,9 @@ public class ConditionHandler extends RexShuttle {
 
 
     private TableContainer getTableForColumn(String column){
+        if(tableContainer != null) {
+            return tableContainer;
+        }
         for (TableContainer table : queryExecutor.getTables()) {
             if (table.hasColumn(column)) {
                 return table;
