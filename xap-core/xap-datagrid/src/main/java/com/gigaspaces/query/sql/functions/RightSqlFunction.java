@@ -3,7 +3,21 @@ package com.gigaspaces.query.sql.functions;
 
 import static java.lang.Math.abs;
 
+/**
+ * Returns a substring of a given string starting from the right
+ *
+ *
+ * @author Tomer Shapira
+ * @since 16.0.0
+ */
+
+
 public class RightSqlFunction extends SqlFunction{
+
+    /**
+     * @param context contains one String argument and one Integer argument.
+     * @return if n > 0 the n last characters, else all characters but the first |n| charecters from t.
+     */
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
         assertNumberOfArguments(2, context);
@@ -19,7 +33,7 @@ public class RightSqlFunction extends SqlFunction{
             return "";
         }
         if (abs(num) > str.length()){
-            return str;
+            return num < 0 ? "" : str;
         }
         return num > 0 ? str.substring(str.length()-num) : str.substring(abs(num));
     }

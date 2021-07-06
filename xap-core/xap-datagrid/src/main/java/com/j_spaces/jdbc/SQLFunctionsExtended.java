@@ -20,7 +20,6 @@ public class SQLFunctionsExtended {
         functions.put("RIGHT", new RightSqlFunction());
         functions.put("CAST", new CastSqlFunction());
         functions.put("REPEAT", new RepeatSqlFunction());
-//        functions.put("SUBSTR", new SubstrSqlFunction());
         functions.put("CURRENT_DATE", new CurrentDateSqlFunction());
         functions.put("CURRENT_TIME", new CurrentTimeSqlFunction());
         functions.put("ODBC_TIMESTAMP", new OdbcTimestampSqlFunction());
@@ -44,6 +43,9 @@ public class SQLFunctionsExtended {
         functions.put("LN", new LnSqlFunction());
         functions.put("POWER", new PowerSqlFunction());
         functions.put("RANDOM", new RandomSqlFunction());
+        functions.put("STRPOS", new StrposFunction());
+        functions.put("SUBSTR", new SubstrSqlFunction());
+        functions.put("SUBSTRING", new SubstringSqlFunction());
 
     }
 

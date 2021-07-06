@@ -2,7 +2,19 @@ package com.gigaspaces.query.sql.functions;
 
 import static java.lang.Math.abs;
 
+/**
+ * Returns a substring of a given string starting from the left
+ *
+ *
+ * @author Tomer Shapira
+ * @since 16.0.0
+ */
+
 public class LeftSqlFunction extends SqlFunction{
+    /**
+     * @param context contains one String argument and one Integer argument.
+     * @return if n > 0 the n first characters, else all characters but the last |n| charecters from t.
+     */
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
         assertNumberOfArguments(2, context);
@@ -18,7 +30,7 @@ public class LeftSqlFunction extends SqlFunction{
             return "";
         }
         if (abs(num) > str.length()){
-            return str;
+            return num < 0 ? "" : str;
         }
         return num > 0 ? str.substring(0, num) : str.substring(0, str.length()-abs(num));
     }
