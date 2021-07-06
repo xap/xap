@@ -48,15 +48,6 @@ public class SelectHandler extends RelShuttleImpl {
         return result;
     }
 
-//    private GSCalc containsValue(RelNode GSRelNode) {
-//        for (Map.Entry<GSCalc, RelNode> gsCalcRelNodeEntry : childToCalc.entrySet()) {
-//            if(gsCalcRelNodeEntry.getValue().equals(GSRelNode)) {
-//                return gsCalcRelNodeEntry.getKey();
-//            }
-//        }
-//        return null;
-//    }
-
     @Override
     public RelNode visit(RelNode other) {
         if(root == null){
