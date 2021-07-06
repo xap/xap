@@ -52,6 +52,8 @@ public interface ResultSupplier{
 
     IQueryColumn getOrCreatePhysicalColumn(String physicalColumn) throws ColumnNotFoundException;
 
+    IQueryColumn getOrCreatePhysicalColumn(String physicalColumn, String alias) throws ColumnNotFoundException;
+
     void addAggregationColumn(AggregationColumn aggregationColumn);
 
     void addOrderColumn(OrderColumn orderColumn);

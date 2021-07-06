@@ -27,7 +27,7 @@ public class ProjectionHandler extends RexShuttle {
         final List<String> inputFields = program.getInputRowType().getFieldNames();
         final List<String> outputFields = program.getOutputRowType().getFieldNames();
         List<RexLocalRef> projects = program.getProjectList();
-        boolean hasProjections = resultSupplier.clearProjections();
+        resultSupplier.clearProjections();
         for (int i = 0; i < projects.size(); i++) {
             RexLocalRef localRef = projects.get(i);
             RexNode node = program.getExprList().get(localRef.getIndex());
@@ -35,20 +35,13 @@ public class ProjectionHandler extends RexShuttle {
                 RexInputRef inputRef = (RexInputRef) node;
                 String alias = outputFields.get(i);
                 String originalName = inputFields.get(inputRef.getIndex());
-                IQueryColumn physicalColumn;
-                if(hasProjections){
-                    physicalColumn = resultSupplier.getOrCreatePhysicalColumn(originalName);
-                }
-                else{
-                    physicalColumn = new PhysicalColumn(originalName, alias, resultSupplier);
-                }
+                IQueryColumn physicalColumn = resultSupplier.getOrCreatePhysicalColumn(originalName);
                 resultSupplier.addProjection(physicalColumn);
             }
             else if(node instanceof RexCall){
                 RexCall call = (RexCall) node;
                 switch (call.getKind()) {
                     case OTHER_FUNCTION:
-                        SqlFunction sqlFunction = (SqlFunction) call.op;
                         List<IQueryColumn> queryColumns = new ArrayList<>();
                         for (RexNode operand : call.getOperands()) {
                             if(operand.isA(SqlKind.LOCAL_REF)){

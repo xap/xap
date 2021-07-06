@@ -220,12 +220,17 @@ public class SingleResultSupplier implements ResultSupplier{
     }
 
     @Override
-    public IQueryColumn getOrCreatePhysicalColumn(String physicalColumn) throws ColumnNotFoundException{
+    public IQueryColumn getOrCreatePhysicalColumn(String physicalColumn) throws ColumnNotFoundException {
+        return getOrCreatePhysicalColumn(physicalColumn, null);
+    }
+
+    @Override
+    public IQueryColumn getOrCreatePhysicalColumn(String physicalColumn, String alias) throws ColumnNotFoundException{
         if (!physicalColumn.equalsIgnoreCase(UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(physicalColumn) == -1) {
             throw new ColumnNotFoundException("Could not find column with name [" + physicalColumn + "]");
         }
         if(!physicalColumns.containsKey(physicalColumn)){
-            physicalColumns.put(physicalColumn, new PhysicalColumn(physicalColumn, null, this));
+            physicalColumns.put(physicalColumn, new PhysicalColumn(physicalColumn, alias, this));
         }
         return physicalColumns.get(physicalColumn);
     }

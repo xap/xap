@@ -29,18 +29,12 @@ public class AggregateHandler {
 
     public void apply(GSAggregate gsAggregate, ResultSupplier resultSupplier){
         RelNode child = gsAggregate.getInput();
-        final boolean clearProjections = resultSupplier.clearProjections();
+        resultSupplier.clearProjections();
         List<String> fields = child.getRowType().getFieldNames();
         for (ImmutableBitSet groupSet : gsAggregate.groupSets) {
             groupSet.forEach(bit -> {
                 String field = fields.get(bit);
-                PhysicalColumn physicalColumn;
-                if(clearProjections){
-                    physicalColumn = (PhysicalColumn) resultSupplier.getOrCreatePhysicalColumn(field);
-                }
-                else{
-                    physicalColumn = new PhysicalColumn(field, null, resultSupplier);
-                }
+                PhysicalColumn physicalColumn = new PhysicalColumn(field, null, resultSupplier);
                 resultSupplier.addGroupByColumn(physicalColumn);
                 resultSupplier.addProjection(physicalColumn);
             });

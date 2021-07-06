@@ -62,7 +62,7 @@ public class JoinResultSupplier implements ResultSupplier {
             // TODO - create a complete temporary table from join result where each column can get its own current value
             // TODO = notice that checking of join condition will not work with the temp view
             if(checkJoinCondition()) {
-                queryResult.addRow(TableRowFactory.createTableRowFromSpecificColumns(getAllQueryColumns(), orderColumns, groupByColumns));
+                queryResult.addRow(TableRowFactory.createTableRowFromSpecificColumns(getProjectedColumns(), orderColumns, groupByColumns));
             }
         }
         return queryResult;
@@ -249,10 +249,14 @@ public class JoinResultSupplier implements ResultSupplier {
 
     @Override
     public List<IQueryColumn> getAllQueryColumns() {
-        if(allColumns.isEmpty()){
-            allColumns = Stream.concat(left.getAllQueryColumns().stream(), right.getAllQueryColumns().stream()).collect(Collectors.toList());
+//        if(allColumns.isEmpty()){
+//            allColumns = Stream.concat(left.getAllQueryColumns().stream(), right.getAllQueryColumns().stream()).collect(Collectors.toList());
+//        }
+//        return allColumns;
+        if(projectionColumns.isEmpty()){
+            projectionColumns = Stream.concat(left.getProjectedColumns().stream(), right.getProjectedColumns().stream()).collect(Collectors.toList());
         }
-        return allColumns;
+        return projectionColumns;
     }
 
     @Override
@@ -286,17 +290,23 @@ public class JoinResultSupplier implements ResultSupplier {
 
     @Override
     public void addProjection(IQueryColumn projection) {
-
+        this.projectionColumns.add(projection);
     }
 
     @Override
-    public IQueryColumn getOrCreatePhysicalColumn(String physicalColumn) {
+    public IQueryColumn getOrCreatePhysicalColumn(String physicalColumn) throws ColumnNotFoundException {
+        return getOrCreatePhysicalColumn(physicalColumn, null);
+    }
+
+    @Override
+    public IQueryColumn getOrCreatePhysicalColumn(String physicalColumn, String alias) {
         IQueryColumn result;
         try{
-            result =  left.getOrCreatePhysicalColumn(physicalColumn);
+            result =  left.getOrCreatePhysicalColumn(physicalColumn, alias);
         }catch (ColumnNotFoundException e){
-            result = right.getOrCreatePhysicalColumn(physicalColumn);
+            result = right.getOrCreatePhysicalColumn(physicalColumn, alias);
         }
+        physicalColumns.put(result.getName(), result);
         return result;
     }
 
