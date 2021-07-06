@@ -27,9 +27,10 @@ import com.gigaspaces.query.sql.functions.SqlFunctionExecutionContext;
  */
 @com.gigaspaces.api.InternalApi
 public class Log10SqlFunction extends SqlFunction {
+
     /**
-     * @param context contains two arguments of either Long/Integer/Double.
-     * @return the remainder of context.getArgument(0) divided by context.getArgument(1).
+     * @param context contains single argument of Number.
+     * @return the result of log10 of context.getArgument(0).
      */
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
@@ -37,8 +38,8 @@ public class Log10SqlFunction extends SqlFunction {
 
         Object logNumber = context.getArgument(0);
         if (!(logNumber instanceof Number)) {
-            throw new RuntimeException("Mod function - wrong arguments types, both arguments should be Number. First argument:[" + logNumber + "]");
+            throw new RuntimeException("Mod function - wrong arguments types, arguments should be Number. First argument:[" + logNumber + "]");
         }
-        return Math.log10(Double.parseDouble(String.valueOf(logNumber)));
+        return Math.log10(((Number) logNumber).doubleValue());
     }
 }

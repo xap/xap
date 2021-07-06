@@ -47,7 +47,7 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     SqlKind.OTHER_FUNCTION,
                     ReturnTypes.DOUBLE,
                     null,
-                    OperandTypes.or(OperandTypes.NILADIC, OperandTypes.NUMERIC),
+                    OperandTypes.NILADIC,
                     SqlFunctionCategory.NUMERIC);
 
     public static final SqlFunction LOG =

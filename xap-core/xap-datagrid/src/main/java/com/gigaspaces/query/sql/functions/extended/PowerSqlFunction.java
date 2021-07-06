@@ -27,19 +27,20 @@ import com.gigaspaces.query.sql.functions.SqlFunctionExecutionContext;
  */
 @com.gigaspaces.api.InternalApi
 public class PowerSqlFunction extends SqlFunction {
+
     /**
-     * @param context contains two arguments of either Long/Integer/Double.
-     * @return the remainder of context.getArgument(0) divided by context.getArgument(1).
+     * @param context contains two arguments of Number.
+     * @return the result of context.getArgument0(0) power context.getArgument(1).
      */
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
-        assertNumberOfArguments(1, 2, context);
+        assertNumberOfArguments(2, context);
 
         Object num = context.getArgument(0);
         Object power = context.getArgument(1);
         if (!(num instanceof Number) || !(power instanceof Number)) {
             throw new RuntimeException("Mod function - wrong arguments types, both arguments should be Number. First argument:[" + num + "]. Second argument:" + power + "].");
         }
-        return Math.pow(Double.parseDouble(String.valueOf(num)), Double.parseDouble(String.valueOf(power)));
+        return Math.pow(((Number) num).doubleValue(), ((Number) power).doubleValue());
     }
 }

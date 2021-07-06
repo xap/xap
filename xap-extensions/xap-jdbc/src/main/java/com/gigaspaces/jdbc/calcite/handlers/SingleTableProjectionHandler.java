@@ -1,6 +1,5 @@
 package com.gigaspaces.jdbc.calcite.handlers;
 
-import com.gigaspaces.jdbc.QueryExecutor;
 import com.gigaspaces.jdbc.model.table.*;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlFunction;
@@ -44,7 +43,7 @@ public class SingleTableProjectionHandler extends RexShuttle {
                     case OTHER_FUNCTION:
                         sqlFunction = (SqlFunction) call.op;
                         addQueryColumns(call, queryColumns);
-                        IQueryColumn functionCallColumn = new FunctionCallColumn(queryColumns, sqlFunction.toString(), sqlFunction.getName(), null, isRoot, -1);
+                        IQueryColumn functionCallColumn = new FunctionCallColumn(queryColumns, sqlFunction.getName(), sqlFunction.toString(), null, isRoot, -1);
                         if(isRoot)
                             tableContainer.getVisibleColumns().add(functionCallColumn);
                         else
