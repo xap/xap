@@ -3329,7 +3329,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                             final String isPersistent = String.valueOf(_engine.isTieredStorage() || _engine.isBlobStorePersistent());
                             attributeStore.set(persistentPath, isPersistent);
                             attributeStore.set(ZNodePathFactory.processingUnit(_puName, "persistent"), isPersistent);
-                            attributeStore.set(ZNodePathFactory.processingUnit(_puName, "spaceName"), _spaceName);
+                            attributeStore.set(ZNodePathFactory.processingUnit(_puName, "space-name"), _spaceName);
                         }
                     }
                 }

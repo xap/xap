@@ -7,25 +7,14 @@ public class PuMetaData {
     private String deployedAt;
     private String unDeployedAt;
     private boolean isPersistent;
-    Map<Integer, String> lastPrimaries; //todo- partition number
-    //todo- list of space instances and their ips
+    private Map<Integer, LastPrimary> lastPrimaryPerPartition;
+    private Map<String, String> spaceInstancesHosts;
     private String schema;
     private int numOfInstances;
     private int numOfBackups;
 
 
     public PuMetaData() {
-    }
-
-    public PuMetaData(String puName, String deployedAt, String unDeployedAt, boolean isPersistent, Map<Integer, String> lastPrimaries, String schema, int numOfInstances, int numOfBackups) {
-        this.puName = puName;
-        this.deployedAt = deployedAt;
-        this.unDeployedAt = unDeployedAt;
-        this.isPersistent = isPersistent;
-        this.lastPrimaries = lastPrimaries;
-        this.schema = schema;
-        this.numOfInstances = numOfInstances;
-        this.numOfBackups = numOfBackups;
     }
 
     public String getPuName() {
@@ -56,16 +45,24 @@ public class PuMetaData {
         return isPersistent;
     }
 
-    public void setIsPersistent(boolean isPersistent) {
-        this.isPersistent = isPersistent;
+    public Map<Integer, LastPrimary> getLastPrimaryPerPartition() {
+        return lastPrimaryPerPartition;
     }
 
-    public Map<Integer, String> getLastPrimaries() {
-        return lastPrimaries;
+    public void setLastPrimaryPerPartition(Map<Integer, LastPrimary> lastPrimaryPerPartition) {
+        this.lastPrimaryPerPartition = lastPrimaryPerPartition;
     }
 
-    public void setLastPrimaries(Map<Integer, String> lastPrimaries) {
-        this.lastPrimaries = lastPrimaries;
+    public void setPersistent(boolean persistent) {
+        isPersistent = persistent;
+    }
+
+    public Map<String, String> getSpaceInstancesHosts() {
+        return spaceInstancesHosts;
+    }
+
+    public void setSpaceInstancesHosts(Map<String, String> spaceInstancesHosts) {
+        this.spaceInstancesHosts = spaceInstancesHosts;
     }
 
     public String getSchema() {
