@@ -1,8 +1,7 @@
-package com.gigaspaces.jdbc.calcite.experimental;
+package com.gigaspaces.jdbc.calcite.experimental.handlers;
 
-import com.gigaspaces.jdbc.QueryExecutor;
+import com.gigaspaces.jdbc.calcite.experimental.ResultSupplier;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
-import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.gigaspaces.metadata.StorageType;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import com.j_spaces.jdbc.builder.UnionTemplatePacket;

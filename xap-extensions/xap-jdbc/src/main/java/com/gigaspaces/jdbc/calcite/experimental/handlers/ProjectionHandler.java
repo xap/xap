@@ -1,5 +1,6 @@
-package com.gigaspaces.jdbc.calcite.experimental;
+package com.gigaspaces.jdbc.calcite.experimental.handlers;
 
+import com.gigaspaces.jdbc.calcite.experimental.ResultSupplier;
 import com.gigaspaces.jdbc.calcite.experimental.model.IQueryColumn;
 import com.gigaspaces.jdbc.calcite.experimental.model.PhysicalColumn;
 
@@ -11,19 +12,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProjectionHandler extends RexShuttle {
-    private final RexProgram program;
-    private final ResultSupplier resultSupplier;
-    private final List<String> inputFields;
-    private final List<String> outputFields;
-
-    public ProjectionHandler(RexProgram program, ResultSupplier resultSupplier) {
-        this.program = program;
-        this.resultSupplier = resultSupplier;
-        this.inputFields = program.getInputRowType().getFieldNames();
-        this.outputFields = program.getOutputRowType().getFieldNames();
+    private static ProjectionHandler _instance;
+    public static ProjectionHandler instance(){
+        if( _instance == null){
+            _instance = new ProjectionHandler();
+        }
+        return _instance;
     }
 
-    public void project(){
+    private ProjectionHandler() {
+    }
+
+    public void project(RexProgram program, ResultSupplier resultSupplier){
+        final List<String> inputFields = program.getInputRowType().getFieldNames();
+        final List<String> outputFields = program.getOutputRowType().getFieldNames();
         List<RexLocalRef> projects = program.getProjectList();
         boolean hasProjections = resultSupplier.clearProjections();
         for (int i = 0; i < projects.size(); i++) {

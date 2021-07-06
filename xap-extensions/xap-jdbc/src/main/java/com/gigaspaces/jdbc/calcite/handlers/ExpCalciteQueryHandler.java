@@ -4,14 +4,13 @@ import com.gigaspaces.jdbc.calcite.CalciteDefaults;
 import com.gigaspaces.jdbc.calcite.GSOptimizer;
 import com.gigaspaces.jdbc.calcite.GSOptimizerValidationResult;
 import com.gigaspaces.jdbc.calcite.GSRelNode;
-import com.gigaspaces.jdbc.calcite.experimental.SelectHandler;
+import com.gigaspaces.jdbc.calcite.experimental.handlers.SelectHandler;
 import com.gigaspaces.jdbc.calcite.experimental.result.QueryResult;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.ResponsePacket;
 import org.apache.calcite.rel.externalize.RelWriterImpl;
 import org.apache.calcite.runtime.CalciteException;
-import org.apache.calcite.sql.SqlExplainLevel;
-import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.validate.SqlValidatorException;
 

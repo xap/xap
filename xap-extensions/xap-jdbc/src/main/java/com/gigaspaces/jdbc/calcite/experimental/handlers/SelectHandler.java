@@ -1,19 +1,21 @@
-package com.gigaspaces.jdbc.calcite.experimental;
+package com.gigaspaces.jdbc.calcite.experimental.handlers;
 
 import com.gigaspaces.jdbc.calcite.*;
+import com.gigaspaces.jdbc.calcite.experimental.JoinResultSupplier;
+import com.gigaspaces.jdbc.calcite.experimental.ResultSupplier;
+import com.gigaspaces.jdbc.calcite.experimental.SingleResultSupplier;
+import com.gigaspaces.jdbc.calcite.experimental.model.join.JoinInfo;
 import com.gigaspaces.jdbc.calcite.experimental.result.QueryResult;
 import com.gigaspaces.jdbc.model.QueryExecutionConfig;
-import com.gigaspaces.jdbc.model.table.ConcreteColumn;
-import com.gigaspaces.jdbc.model.table.OrderColumn;
-import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.core.IJSpace;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
-import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexProgram;
+import org.apache.calcite.sql.SqlKind;
 
 import java.sql.SQLException;
 import java.util.Map;
@@ -72,55 +74,39 @@ public class SelectHandler extends RelShuttleImpl {
                 tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
             }
         }
-        new ProjectionHandler(rexProgram, resultSupplier).project();
+        ProjectionHandler.instance().project(rexProgram, resultSupplier);
         stack.push(resultSupplier);
     }
 
     private void handleSort(GSSort sort) {
         ResultSupplier resultSupplier = stack.pop();
-        OrderByHandler orderByHandler = new OrderByHandler(resultSupplier, sort);
-        orderByHandler.apply();
+        OrderByHandler.instance().apply(resultSupplier, sort);
         stack.push(resultSupplier);
     }
 
     private void handleAggregate(GSAggregate gsAggregate) {
         ResultSupplier resultSupplier = stack.pop();
+        AggregateHandler.instance().apply(gsAggregate, resultSupplier);
         stack.push(resultSupplier);
     }
 
     private void handleJoin(GSJoin join) {
         ResultSupplier rightSupplier = stack.pop();
         ResultSupplier leftSupplier = stack.pop();
-        ResultSupplier joinResultSupplier = new JoinResultSupplier(leftSupplier, rightSupplier, space, preparedValues);
-        stack.push(joinResultSupplier);
-        /*RexCall rexCall = (RexCall) join.getCondition();
+        RexCall rexCall = (RexCall) join.getCondition();
         if(rexCall.getKind() != SqlKind.EQUALS){
             throw new UnsupportedOperationException("Only equal joins are supported");
         }
         int left = join.getLeft().getRowType().getFieldCount();
         int leftIndex = ((RexInputRef) rexCall.getOperands().get(0)).getIndex();
         int rightIndex = ((RexInputRef) rexCall.getOperands().get(1)).getIndex();
-        String lColumn = join.getLeft().getRowType().getFieldNames().get(leftIndex);
-        String rColumn = join.getRight().getRowType().getFieldNames().get(rightIndex - left);
-        IQueryColumn rightColumn = rightContainer.addQueryColumn(rColumn, null, false, -1);
-        IQueryColumn leftColumn = leftContainer.addQueryColumn(lColumn, null, false, -1);
-        rightContainer.setJoinInfo(new JoinInfo(leftColumn, rightColumn, JoinInfo.JoinType.getType(join.getJoinType())));
-        if (leftContainer.getJoinedTable() == null) {
-            if (!rightContainer.isJoined()) {
-                leftContainer.setJoinedTable(rightContainer);
-                rightContainer.setJoined(true);
-            }
-        }
-        if(!childToCalc.containsKey(join)) {
-            if(join.equals(root)) {
-                for (TableContainer tableContainer : queryExecutor.getTables()) {
-                    queryExecutor.getVisibleColumns().addAll(tableContainer.getVisibleColumns());
-                }
-            }
-        }
-        else{
-            handleCalc(childToCalc.get(join), join);
-        }*/
+        String leftColumn = join.getLeft().getRowType().getFieldNames().get(leftIndex);
+        String rightColumn = join.getRight().getRowType().getFieldNames().get(rightIndex - left);
+        rightSupplier.getOrCreatePhysicalColumn(rightColumn);
+        leftSupplier.getOrCreatePhysicalColumn(leftColumn);
+        final JoinInfo joinInfo = new JoinInfo(leftColumn, rightColumn, JoinInfo.JoinType.getType(join.getJoinType()));
+        ResultSupplier joinResultSupplier = new JoinResultSupplier(leftSupplier, rightSupplier, space, preparedValues, joinInfo, stack.empty());
+        stack.push(joinResultSupplier);
     }
 
 //    private void handleCalc(GSCalc other, TableContainer tableContainer) {
@@ -160,6 +146,9 @@ public class SelectHandler extends RelShuttleImpl {
 //    }
 
     public QueryResult execute() throws SQLException {
+        if(stack.size() != 1){
+            throw new SQLException("Error when traversing query call tree");
+        }
         return stack.pop().executeRead(config);
     }
 }

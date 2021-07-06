@@ -57,24 +57,7 @@ public abstract class QueryResult {
     }
 
     public boolean next() {
-        if (getSingleResultSupplier() == null || getSingleResultSupplier().getJoinedSupplier() == null) {
-            return getCursor().next();
-        }
-        QueryResult joinedResult = getSingleResultSupplier().getJoinedSupplier().getQueryResult();
-        if (joinedResult == null) {
-            return getCursor().next();
-        }
-        while (hasNext()) {
-            if (joinedResult.next()) {
-                return true;
-            }
-            if (getCursor().next()) {
-                joinedResult.reset();
-            } else {
-                return false;
-            }
-        }
-        return false;
+        return getCursor().next();
     }
 
     private boolean hasNext() {
@@ -89,13 +72,6 @@ public abstract class QueryResult {
 
     public void reset() {
         getCursor().reset();
-        if (getSingleResultSupplier() == null || getSingleResultSupplier().getJoinedSupplier() == null) {
-            return;
-        }
-        QueryResult joinedResult = getSingleResultSupplier().getJoinedSupplier().getQueryResult();
-        if (joinedResult != null) {
-            joinedResult.reset();
-        }
     }
 
     public Cursor<TableRow> getCursor() {

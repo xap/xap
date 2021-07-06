@@ -13,7 +13,7 @@ import com.j_spaces.jdbc.builder.range.Range;
 import java.sql.SQLException;
 import java.util.List;
 
-public interface ResultSupplier {
+public interface ResultSupplier{
     QueryResult executeRead(QueryExecutionConfig config) throws SQLException;
 
     Object[] getPreparedValues();
@@ -60,8 +60,6 @@ public interface ResultSupplier {
 
     Class<?> getReturnType(String columnName) throws SQLException;
 
-    ResultSupplier getJoinedSupplier();
-
     void setQueryTemplatePacket(QueryTemplatePacket queryTemplatePacket);
 
     List<AggregationColumn> getAggregationColumns();
@@ -69,4 +67,6 @@ public interface ResultSupplier {
     void addGroupByColumn(PhysicalColumn physicalColumn);
 
     boolean clearProjections();
+
+    boolean checkJoinCondition();
 }

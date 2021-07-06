@@ -20,7 +20,7 @@ public class HashedRowCursor implements Cursor<TableRow> {
     }
 
     private void init(List<TableRow> rows) {
-        IQueryColumn joinColumn = joinInfo.getRightColumn();
+        String joinColumn = joinInfo.getRightColumn();
         for (TableRow row : rows) {
             List<TableRow> rowsWithSameIndex = hashMap.computeIfAbsent(row.getPropertyValue(joinColumn), k -> new LinkedList<>());
             rowsWithSameIndex.add(row);
@@ -30,7 +30,7 @@ public class HashedRowCursor implements Cursor<TableRow> {
     @Override
     public boolean next() {
         if(iterator == null){
-            List<TableRow> match = hashMap.get(joinInfo.getLeftColumn().getCurrentValue());
+            List<TableRow> match = hashMap.get(getCurrent().getPropertyValue(joinInfo.getLeftColumn()));
             if(match == null) {
                 if(!joinInfo.getJoinType().equals(JoinInfo.JoinType.LEFT))
                     return false;

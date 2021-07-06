@@ -1,7 +1,6 @@
 package com.gigaspaces.jdbc.calcite.experimental.model.join;
 
 
-import com.gigaspaces.jdbc.calcite.experimental.model.IQueryColumn;
 import com.j_spaces.jdbc.builder.range.Range;
 import net.sf.jsqlparser.statement.select.Join;
 import org.apache.calcite.rel.core.JoinRelType;
@@ -10,36 +9,34 @@ import java.util.Objects;
 
 public class JoinInfo {
 
-    private final IQueryColumn leftColumn;
-    private final IQueryColumn rightColumn;
+    private final String leftColumn;
+    private final String rightColumn;
     private final JoinType joinType;
     private Range range;
 
-    public JoinInfo(IQueryColumn leftColumn, IQueryColumn rightColumn, JoinType joinType) {
+    public JoinInfo(String leftColumn, String rightColumn, JoinType joinType) {
         this.leftColumn = leftColumn;
         this.rightColumn = rightColumn;
         this.joinType = joinType;
     }
 
-    public boolean checkJoinCondition(){
-        Object rightValue = rightColumn.getCurrentValue();
-        Object leftValue = leftColumn.getCurrentValue();
+    public boolean checkJoinCondition(Object rightValue, Object leftValue){
         if(joinType.equals(JoinType.INNER)) {
             return rightValue != null && leftValue != null && Objects.equals(leftValue, rightValue);
         }
         if(range != null){
-            if(range.getPath().equals(rightColumn.getName()))
+            if(range.getPath().equals(rightColumn))
                 return range.getPredicate().execute(rightValue);
             return range.getPredicate().execute(leftValue);
         }
         return true;
     }
 
-    public IQueryColumn getLeftColumn() {
+    public String getLeftColumn() {
         return leftColumn;
     }
 
-    public IQueryColumn getRightColumn() {
+    public String getRightColumn() {
         return rightColumn;
     }
 
@@ -49,7 +46,7 @@ public class JoinInfo {
 
     public boolean insertRangeToJoinInfo(Range range){
         if(joinType.equals(JoinType.RIGHT) || joinType.equals(JoinType.LEFT)){
-            if(leftColumn.getName().equals(range.getPath()) || rightColumn.getName().equals(range.getPath())){
+            if(leftColumn.equals(range.getPath()) || rightColumn.equals(range.getPath())){
                 this.range = range;
                 return true;
             }

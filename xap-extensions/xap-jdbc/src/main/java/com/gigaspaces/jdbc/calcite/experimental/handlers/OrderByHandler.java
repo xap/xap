@@ -1,20 +1,24 @@
-package com.gigaspaces.jdbc.calcite.experimental;
+package com.gigaspaces.jdbc.calcite.experimental.handlers;
 
 import com.gigaspaces.jdbc.calcite.GSSort;
+import com.gigaspaces.jdbc.calcite.experimental.ResultSupplier;
 import com.gigaspaces.jdbc.calcite.experimental.model.IQueryColumn;
 import com.gigaspaces.jdbc.calcite.experimental.model.OrderColumn;
 import org.apache.calcite.rel.RelFieldCollation;
 
 public class OrderByHandler {
-    private final ResultSupplier resultSupplier;
-    private final GSSort gsSort;
-
-    public OrderByHandler(ResultSupplier resultSupplier, GSSort gsSort) {
-        this.resultSupplier = resultSupplier;
-        this.gsSort = gsSort;
+    private static OrderByHandler _instance;
+    public static OrderByHandler instance(){
+        if(_instance == null){
+            _instance = new OrderByHandler();
+        }
+        return _instance;
     }
 
-    public void apply() {
+    private OrderByHandler() {
+    }
+
+    public void apply(ResultSupplier resultSupplier, GSSort gsSort) {
         for (RelFieldCollation relCollation : gsSort.getCollation().getFieldCollations()) {
             int fieldIndex = relCollation.getFieldIndex();
             RelFieldCollation.Direction direction = relCollation.getDirection();

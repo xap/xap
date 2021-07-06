@@ -28,6 +28,8 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.gigaspaces.jdbc.calcite.experimental.model.IQueryColumn.UUID_COLUMN;
+
 public class SingleResultSupplier implements ResultSupplier{
     private final ITypeDesc typeDesc;
     private final IJSpace space;
@@ -42,6 +44,7 @@ public class SingleResultSupplier implements ResultSupplier{
     private final List<FunctionColumn> functionColumns = new ArrayList<>();
     private final Object[] preparedValues;
     private final List<PhysicalColumn> groupByColumns = new ArrayList<>();
+    private ResultSupplier joinedSupplier;
 
 
     public SingleResultSupplier(ITypeDesc typeDesc, IJSpace space, Object[] preparedValues) {
@@ -156,7 +159,7 @@ public class SingleResultSupplier implements ResultSupplier{
 
     @Override
     public boolean hasAggregationFunctions() {
-        return false;
+        return !aggregationColumns.isEmpty();
     }
 
     @Override
@@ -218,7 +221,7 @@ public class SingleResultSupplier implements ResultSupplier{
 
     @Override
     public IQueryColumn getOrCreatePhysicalColumn(String physicalColumn) throws ColumnNotFoundException{
-        if (!physicalColumn.equalsIgnoreCase(com.gigaspaces.jdbc.model.table.IQueryColumn.UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(physicalColumn) == -1) {
+        if (!physicalColumn.equalsIgnoreCase(UUID_COLUMN) && typeDesc.getFixedPropertyPositionIgnoreCase(physicalColumn) == -1) {
             throw new ColumnNotFoundException("Could not find column with name [" + physicalColumn + "]");
         }
         if(!physicalColumns.containsKey(physicalColumn)){
@@ -248,11 +251,6 @@ public class SingleResultSupplier implements ResultSupplier{
     }
 
     @Override
-    public ResultSupplier getJoinedSupplier() {
-        return null;
-    }
-
-    @Override
     public void setQueryTemplatePacket(QueryTemplatePacket queryTemplatePacket) {
         this.queryTemplatePacket = queryTemplatePacket;
     }
@@ -273,6 +271,11 @@ public class SingleResultSupplier implements ResultSupplier{
             return false;
         }
         projectionColumns.clear();
+        return true;
+    }
+
+    @Override
+    public boolean checkJoinCondition() {
         return true;
     }
 
