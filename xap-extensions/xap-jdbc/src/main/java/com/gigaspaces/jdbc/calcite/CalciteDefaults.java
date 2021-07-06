@@ -10,7 +10,7 @@ public class CalciteDefaults {
     public static final String DRIVER_VALUE = "calcite";
 
     public static final String SUPPORT_INEQUALITY = "com.gs.jdbc.v3.support.inequality";
-    public static final String SUPPORT_SEMICOLON_SEPARATOR = "com.gs.jdbc.v3.semicolon_separator";
+    public static final String SUPPORT_SEMICOLON_SEPARATOR = "com.gs.jdbc.v3.support.semicolon_separator";
 
 
     public static boolean isCalciteDriverPropertySet() {
