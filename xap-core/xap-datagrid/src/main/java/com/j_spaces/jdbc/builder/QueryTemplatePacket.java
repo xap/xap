@@ -185,14 +185,16 @@ public class QueryTemplatePacket extends ExternalTemplatePacket {
                 boolean addedRange = false;
                 if (propertyIndex != -1 || range.isUidsRange()) {
                     if (range.getFunctionCallDescription() == null) {
-                        range.toEntryPacket(this, propertyIndex);
-                        addedRange = true;
-                        if (!range.isRelevantForAllIndexValuesOptimization() || !_typeDesc.getPropertiesIndexTypes()[propertyIndex])
-                            _allIndexValuesQuery = false;
-                        if (possibleCompoundSegments != null && range.suitableAsCompoundIndexSegment()) {
-                            if (usedByRanges == null)
-                                usedByRanges = new HashMap<Range, IQueryIndexScanner>();
-                            usedByRanges.put(range, _dummyNullIndexScanner); //property range, no index scanner created
+                        if(!(range instanceof CompositeRange && ((CompositeRange) range).get_ranges().size() > 1)){
+                            range.toEntryPacket(this, propertyIndex);
+                            addedRange = true;
+                            if (!range.isRelevantForAllIndexValuesOptimization() || !_typeDesc.getPropertiesIndexTypes()[propertyIndex])
+                                _allIndexValuesQuery = false;
+                            if (possibleCompoundSegments != null && range.suitableAsCompoundIndexSegment()) {
+                                if (usedByRanges == null)
+                                    usedByRanges = new HashMap<Range, IQueryIndexScanner>();
+                                usedByRanges.put(range, _dummyNullIndexScanner); //property range, no index scanner created
+                            }
                         }
                     }
                     else

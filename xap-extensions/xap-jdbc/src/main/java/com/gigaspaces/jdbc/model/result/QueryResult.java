@@ -1,5 +1,6 @@
 package com.gigaspaces.jdbc.model.result;
 
+import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.table.IQueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.jdbc.ResultEntry;
@@ -64,6 +65,15 @@ public abstract class QueryResult {
             return getCursor().next();
         }
         while (hasNext()) {
+            JoinInfo joinInfo = getTableContainer().getJoinedTable().getJoinInfo();
+            if(joinInfo.getJoinType().equals(JoinInfo.JoinType.SEMI) && joinInfo.isHasMatch()) {
+                if(getCursor().next()) {
+                    joinedResult.reset();
+                }
+                else{
+                    return false;
+                }
+            }
             if (joinedResult.next()) {
                 return true;
             }

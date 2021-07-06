@@ -7,6 +7,7 @@ import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
@@ -47,6 +48,15 @@ public class SelectHandler extends RelShuttleImpl {
         return result;
     }
 
+//    private GSCalc containsValue(RelNode GSRelNode) {
+//        for (Map.Entry<GSCalc, RelNode> gsCalcRelNodeEntry : childToCalc.entrySet()) {
+//            if(gsCalcRelNodeEntry.getValue().equals(GSRelNode)) {
+//                return gsCalcRelNodeEntry.getKey();
+//            }
+//        }
+//        return null;
+//    }
+
     @Override
     public RelNode visit(RelNode other) {
         if(root == null){
@@ -62,7 +72,7 @@ public class SelectHandler extends RelShuttleImpl {
                 }
                 input =  input.getInput(0);
             }
-            childToCalc.putIfAbsent(input, calc);
+            childToCalc.put(input, calc); //replace the old value if exists.
         }
         RelNode result = super.visit(other);
         if(other instanceof GSJoin){
@@ -146,8 +156,12 @@ public class SelectHandler extends RelShuttleImpl {
         if(!childToCalc.containsKey(join)) { // it is SELECT *
             if(join.equals(root)
                     || ((root instanceof GSSort) && ((GSSort) root).getInput().equals(join))) { // root is GSSort and its child is join
-                for (TableContainer tableContainer : queryExecutor.getTables()) {
-                    queryExecutor.getVisibleColumns().addAll(tableContainer.getVisibleColumns());
+                if (join.getJoinType().equals(JoinRelType.SEMI)) {
+                    queryExecutor.getVisibleColumns().addAll(leftContainer.getVisibleColumns());
+                } else {
+                    for (TableContainer tableContainer : queryExecutor.getTables()) {
+                        queryExecutor.getVisibleColumns().addAll(tableContainer.getVisibleColumns());
+                    }
                 }
             }
         }
