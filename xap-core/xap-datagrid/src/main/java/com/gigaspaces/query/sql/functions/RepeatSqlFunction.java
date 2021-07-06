@@ -2,7 +2,18 @@ package com.gigaspaces.query.sql.functions;
 
 import java.util.Collections;
 
+/**
+ * Concats a string to itself n times
+ *
+ * @author Tomer Shapira
+ * @since 16.0.0
+ */
 public class RepeatSqlFunction extends SqlFunction {
+
+    /**
+     * @param context contains a string arguments to repeat, and an integer n that represents the times to repeats.
+     * @return the string that results from concatenating the string to itself n times.
+     */
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
         assertNumberOfArguments(2, context);

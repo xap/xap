@@ -61,6 +61,40 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                             OperandTypes.family(SqlTypeFamily.NUMERIC, SqlTypeFamily.NUMERIC)),
                     SqlFunctionCategory.NUMERIC);
 
+    public static final SqlFunction SUBSTR =
+            new SqlFunction(
+                    "SUBSTR",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.CHAR,
+                    null,
+                    OperandTypes.or(
+                            OperandTypes.family(SqlTypeFamily.CHARACTER, SqlTypeFamily.NUMERIC),
+                            OperandTypes.family(SqlTypeFamily.CHARACTER, SqlTypeFamily.NUMERIC, SqlTypeFamily.NUMERIC)),
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction STRPOS =
+            new SqlFunction(
+                    "STRPOS",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.INTEGER,
+                    null,
+                    OperandTypes.family(SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER),
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction SUBSTRING =
+            new SqlFunction(
+                    "SUBSTRING",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.CHAR,
+                    null,
+                    OperandTypes.or(
+                            OperandTypes.family(SqlTypeFamily.CHARACTER, SqlTypeFamily.INTEGER),
+                            OperandTypes.family(SqlTypeFamily.CHARACTER, SqlTypeFamily.INTEGER, SqlTypeFamily.INTEGER),
+                            OperandTypes.family(SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER),
+                            OperandTypes.family(SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER)),
+                    SqlFunctionCategory.STRING);
+
+
     public static final SqlFunction TRUNC =
             new SqlFunction(
                     "TRUNC",

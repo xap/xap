@@ -61,7 +61,9 @@ public abstract class SqlFunction {
     }
 
     protected boolean isWholeNumber(Object object){
-        return object instanceof Integer || object instanceof Long || object instanceof Short;
+        if(object instanceof Number)
+            return ((Number) object).doubleValue() == Math.ceil(((Number) object).doubleValue());
+        return false;
     }
 
     protected boolean isString(Object object){
