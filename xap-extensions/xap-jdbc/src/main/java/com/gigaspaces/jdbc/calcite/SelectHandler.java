@@ -7,7 +7,6 @@ import com.j_spaces.jdbc.builder.QueryTemplatePacket;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
@@ -156,7 +155,7 @@ public class SelectHandler extends RelShuttleImpl {
         if(!childToCalc.containsKey(join)) { // it is SELECT *
             if(join.equals(root)
                     || ((root instanceof GSSort) && ((GSSort) root).getInput().equals(join))) { // root is GSSort and its child is join
-                if (join.getJoinType().equals(JoinRelType.SEMI)) {
+                if (join.isSemiJoin()) {
                     queryExecutor.getVisibleColumns().addAll(leftContainer.getVisibleColumns());
                 } else {
                     for (TableContainer tableContainer : queryExecutor.getTables()) {
@@ -180,7 +179,8 @@ public class SelectHandler extends RelShuttleImpl {
             String originalName = inputFields.get(program.getSourceField(i));
             tableContainer.addQueryColumn(originalName, alias, true, 0);
         }
-        ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
+        ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor,
+                program.getInputRowType().getFieldList(), tableContainer);
         if (program.getCondition() != null) {
             program.getCondition().accept(conditionHandler);
             for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : conditionHandler.getQTPMap().entrySet()) {
@@ -198,7 +198,7 @@ public class SelectHandler extends RelShuttleImpl {
             queryExecutor.getVisibleColumns().add(qc);
         }
         if (program.getCondition() != null) {
-            ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
+            ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, program.getInputRowType().getFieldList());
             program.getCondition().accept(conditionHandler);
             for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : conditionHandler.getQTPMap().entrySet()) {
                 tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
