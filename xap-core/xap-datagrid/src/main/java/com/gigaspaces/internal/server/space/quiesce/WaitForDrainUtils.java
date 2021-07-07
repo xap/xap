@@ -67,16 +67,23 @@ public class WaitForDrainUtils {
                 }
             }
 
-            loggerToUse.info("[{}]: Waiting for "+(isDemote ? "backup" : "all targets " )+" replication to drain");
-            long startReplication = System.currentTimeMillis();
-            repetitiveTryWithinTimeout(isDemote ? "Backup is not synced" : "Some targets are not synced", remainingTime, () -> isDemote ? isBackupSynced(spaceImpl) : isAllTargetSync(spaceImpl, loggerToUse));
-            loggerToUse.info("[{}]: Replication drained, duration: "+(System.currentTimeMillis() - startReplication) +" ms",containerName);
+            if(hasReplication(spaceImpl)) {
+                loggerToUse.info("[{}]: Waiting for " + (isDemote ? "backup" : "all targets ") + " replication to drain", containerName);
+                long startReplication = System.currentTimeMillis();
+                repetitiveTryWithinTimeout(isDemote ? "Backup is not synced" : "Some targets are not synced", remainingTime, () -> isDemote ? isBackupSynced(spaceImpl) : isAllTargetSync(spaceImpl, loggerToUse));
+                loggerToUse.info("[{}]: Replication drained, duration: " + (System.currentTimeMillis() - startReplication) + " ms", containerName);
+            }
         } catch (TimeoutException e){
             loggerToUse.warn("[{}]: Caught TimeoutException while waiting for "+spaceImpl.getContainerName()+" to drain",e);
             throw e;
         }
     }
 
+
+    private static boolean hasReplication(SpaceImpl spaceImpl) {
+        return !spaceImpl.getEngine().getReplicationNode().getAdmin().getStatistics().getOutgoingReplication().getChannels().isEmpty();
+
+    }
     private static boolean isAllTargetSync(SpaceImpl spaceImpl, Logger loggerToUse) {
         ReplicationStatistics.OutgoingReplication outGoingReplication = spaceImpl.getEngine().getReplicationNode().getAdmin().getStatistics().getOutgoingReplication();
         long lastKeyInRedoLog = outGoingReplication.getLastKeyInRedoLog();
