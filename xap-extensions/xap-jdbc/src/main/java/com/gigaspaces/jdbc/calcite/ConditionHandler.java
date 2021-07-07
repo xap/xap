@@ -216,7 +216,7 @@ public class ConditionHandler extends RexShuttle {
     }
 
     private void handleTwoOperandsCall(RexNode leftOp, RexNode rightOp, SqlKind sqlKind, boolean isNot){
-        String  column = null;
+        String column = null;
         boolean isRowNum = false;
         Object value = null;
         Range range = null;
