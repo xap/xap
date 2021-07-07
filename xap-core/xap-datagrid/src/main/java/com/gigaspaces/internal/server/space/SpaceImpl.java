@@ -2684,7 +2684,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
     public void commitImpl(TransactionManager mgr, Object id,
                            int numOfParticipants, boolean supportsTwoPhaseReplication, OperationID operationID, boolean mayBeFromReplication) throws RemoteException,
             UnknownTransactionException {
-        beforeOperation(true, false /*checkQuiesceMode*/, null);
+        final boolean checkQuiesceMode = _quiesceHandler != null && _quiesceHandler.isUndeploy();
+        beforeOperation(true, checkQuiesceMode /*checkQuiesceMode*/, null);
 
         try {
             _engine.commit(mgr, createServerTransaction(mgr, id, numOfParticipants), supportsTwoPhaseReplication, operationID, mayBeFromReplication);
@@ -4007,8 +4008,8 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         _demoteHandler.demote(maxSuspendTime, unit);
     }
 
-    public void waitForDrain(long timeoutMs, long minTimeToWait, boolean backupOnly, Logger logger) throws TimeoutException {
-        WaitForDrainUtils.waitForDrain(this, timeoutMs, minTimeToWait, backupOnly, logger != null ? logger : _logger);
+    public void waitForDrain(long timeoutMs, long minTimeToWait, boolean isDemote, Logger logger) throws TimeoutException {
+        WaitForDrainUtils.waitForDrain(this, timeoutMs, minTimeToWait, isDemote, logger);
     }
 
     public SuspendType addSpaceSuspendTypeListener(SuspendTypeChangedInternalListener listener) {

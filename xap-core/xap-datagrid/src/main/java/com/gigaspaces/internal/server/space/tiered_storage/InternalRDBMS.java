@@ -1,5 +1,6 @@
 package com.gigaspaces.internal.server.space.tiered_storage;
 
+import com.gigaspaces.api.InternalApi;
 import com.gigaspaces.internal.metadata.ITypeDesc;
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
@@ -12,6 +13,7 @@ import com.j_spaces.core.sadapter.SAException;
 
 import java.io.IOException;
 
+@InternalApi
 public interface InternalRDBMS {
 
 
@@ -25,6 +27,8 @@ public interface InternalRDBMS {
      */
 
     boolean initialize(String spaceName, String fullMemberName, SpaceTypeManager typeManager, boolean isBackup) throws SAException;
+
+    void setLogger(String fullMemberName);
 
     long getDiskSize() throws SAException, IOException;
 

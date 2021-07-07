@@ -2,44 +2,55 @@ package com.gigaspaces.internal.server.space.quiesce;
 
 import com.gigaspaces.internal.server.space.SpaceImpl;
 import com.j_spaces.core.filters.ReplicationStatistics;
+import com.j_spaces.core.transaction.TransactionHandler;
 import net.jini.core.transaction.server.ServerTransaction;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 public class WaitForDrainUtils {
+    private static Logger logger = LoggerFactory.getLogger("com.gigaspaces.internal.server.space.quiesce.waitForDrain");
 
-    public static void waitForDrain(SpaceImpl spaceImpl, long timeoutMs, long minTimeToWait, boolean backupOnly, Logger logger) throws TimeoutException {
+    public static void waitForDrain(SpaceImpl spaceImpl, long timeoutMs, long minTimeToWait, boolean isDemote, Logger customLogger) throws TimeoutException {
+        final Logger loggerToUse = customLogger != null ? customLogger : logger;
+        final String containerName = spaceImpl.getContainerName();
         long start = System.currentTimeMillis();
         long remainingTime = timeoutMs;
 
-        logger.info("Starting 'waitForDrain' process, start = {}, timeout = {}",start, timeoutMs);
+        loggerToUse.info("[{}]: Starting 'waitForDrain' process, start = {}, timeout = {}",containerName, start, timeoutMs);
 
         try {
-
-
-            logger.info("Waiting for lease manager cycle to drain");
+            loggerToUse.info("[{}]: Waiting for lease manager cycle to drain",containerName);
             remainingTime = tryWithinTimeout("Couldn't wait for drain - lease manager cycle timeout",
                     remainingTime, innerTimeout -> spaceImpl.getEngine().getLeaseManager().waitForNoCycleOnQuiesce(innerTimeout));
 
-            logger.info("Waiting for transactions to drain");
+            loggerToUse.info("[{}]: Waiting for transactions to drain",containerName);
             remainingTime = tryWithinTimeout("Couldn't wait for drain - timeout while waiting for transactions", remainingTime,
                     innerTimeout -> {
+                        long startTxn = System.currentTimeMillis();
+                        final TransactionHandler handler = spaceImpl.getEngine().getTransactionHandler();
+                        boolean result;
                         try {
-                            return spaceImpl.getEngine().getTransactionHandler().waitForActiveTransactions(innerTimeout);
+                            result = isDemote ? handler.waitForActiveTransactions(innerTimeout) : handler.waitForFinalizingTransactions(innerTimeout);
                         } catch (InterruptedException e) {
-                            logger.warn("Not done waiting for transactions, {} remaining", spaceImpl.getEngine().getTransactionHandler().getXtnTable().size());
-                            if(logger.isTraceEnabled()){
+                            result = false;
+                            Thread.currentThread().interrupt();
+                        }
+                        if(!result){
+                            loggerToUse.warn("[{}]: Timeout elapsed while waiting for transactions to drain, remaining transactions: {} ",containerName, handler.getXtnTable().size());
+                            if(loggerToUse.isTraceEnabled()){
                                 StringBuilder builder = new StringBuilder("Not done waiting for transactions:");
-                                for (Map.Entry<ServerTransaction, Long> entry : spaceImpl.getEngine().getTransactionHandler().getTimedXtns().entrySet()) {
+                                for (Map.Entry<ServerTransaction, Long> entry : handler.getTimedXtns().entrySet()) {
                                     builder.append("\n[ txn id ").append(entry.getKey().getMetaData().getTransactionUniqueId()).append(" timeout in ").append(System.currentTimeMillis() - entry.getValue()).append(" ms ]");
                                 }
-                                logger.trace(builder.toString());
+                                loggerToUse.trace(builder.toString());
                             }
-                            Thread.currentThread().interrupt();
-                            return false;
+                        } else {
+                            loggerToUse.info("[{}]: All transactions were drained, duration: "+ (System.currentTimeMillis() - startTxn) +" ms",containerName);
                         }
+                        return result;
                     }
             );
 
@@ -47,7 +58,7 @@ public class WaitForDrainUtils {
             long currentDuration = System.currentTimeMillis() - start;
             if (currentDuration < minTimeToWait) {
                 long timeToSleep = minTimeToWait - currentDuration;
-                logger.info("Sleeping for [" + timeToSleep + "ms] to satisfy " + minTimeToWait);
+                loggerToUse.info("[{}]: Sleeping for [" + timeToSleep + "ms] to satisfy " + minTimeToWait,containerName);
                 try {
                     Thread.sleep(timeToSleep);
                 } catch (InterruptedException e) {
@@ -56,21 +67,27 @@ public class WaitForDrainUtils {
                 }
             }
 
-            repetitiveTryWithinTimeout(backupOnly ? "Backup is not synced" : "Some targets are not synced", remainingTime, () -> backupOnly ? isBackupSynced(spaceImpl) : isAllTargetSync(spaceImpl, logger));
+            loggerToUse.info("[{}]: Waiting for "+(isDemote ? "backup" : "all targets " )+" replication to drain");
+            long startReplication = System.currentTimeMillis();
+            repetitiveTryWithinTimeout(isDemote ? "Backup is not synced" : "Some targets are not synced", remainingTime, () -> isDemote ? isBackupSynced(spaceImpl) : isAllTargetSync(spaceImpl, loggerToUse));
+            loggerToUse.info("[{}]: Replication drained, duration: "+(System.currentTimeMillis() - startReplication) +" ms",containerName);
         } catch (TimeoutException e){
-            logger.warn("Caught TimeoutException while waiting for "+spaceImpl.getContainerName()+" to drain",e);
+            loggerToUse.warn("[{}]: Caught TimeoutException while waiting for "+spaceImpl.getContainerName()+" to drain",e);
             throw e;
         }
     }
 
-    private static boolean isAllTargetSync(SpaceImpl spaceImpl, Logger logger) {
-        logger.info("Waiting for all replication channels to drain");
+    private static boolean isAllTargetSync(SpaceImpl spaceImpl, Logger loggerToUse) {
         ReplicationStatistics.OutgoingReplication outGoingReplication = spaceImpl.getEngine().getReplicationNode().getAdmin().getStatistics().getOutgoingReplication();
         long lastKeyInRedoLog = outGoingReplication.getLastKeyInRedoLog();
-        logger.info("last key in redolog = "+lastKeyInRedoLog);
+        if(loggerToUse.isDebugEnabled()){
+            loggerToUse.debug("[{}]: last key in redolog = {}",spaceImpl.getContainerName(),lastKeyInRedoLog);
+        }
         boolean allSynced = true;
         for (ReplicationStatistics.OutgoingChannel channel : outGoingReplication.getChannels()) {
-            logger.info("channel "+channel.getTargetMemberName()+" last confirmed key = "+channel.getLastConfirmedKeyFromTarget());
+            if(loggerToUse.isDebugEnabled()){
+                loggerToUse.debug("[{}]: channel "+channel.getTargetMemberName()+" last confirmed key = "+channel.getLastConfirmedKeyFromTarget());
+            }
             allSynced = allSynced && channel.getLastConfirmedKeyFromTarget() == lastKeyInRedoLog;
         }
         return allSynced;

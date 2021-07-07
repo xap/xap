@@ -389,6 +389,7 @@ public class SpaceEngine implements ISpaceModeListener , IClusterInfoChangedList
             validateTieredStorage(storageConfig);
             String className = System.getProperty(TIERED_STORAGE_INTERNAL_RDBMS_CLASS_PROP, TIERED_STORAGE_INTERNAL_RDBMS_CLASS_DEFAULT);
             InternalRDBMS rdbms = ClassLoaderHelper.newInstance(className);
+            rdbms.setLogger(_fullSpaceName);
             InternalRDBMSManager internalRDBMSManager = new InternalRDBMSManager(rdbms);
             this.tieredStorageManager = new TieredStorageManagerImpl(storageConfig, internalRDBMSManager, _fullSpaceName);
         }

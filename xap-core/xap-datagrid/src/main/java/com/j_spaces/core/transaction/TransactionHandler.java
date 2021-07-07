@@ -20,6 +20,7 @@ import com.gigaspaces.internal.server.space.SpaceConfigReader;
 import com.gigaspaces.internal.server.space.SpaceEngine;
 import com.gigaspaces.internal.server.storage.IEntryHolder;
 import com.gigaspaces.internal.server.storage.ITemplateHolder;
+import com.gigaspaces.internal.utils.GsEnv;
 import com.gigaspaces.internal.version.PlatformLogicalVersion;
 import com.gigaspaces.lrmi.LRMIUtilities;
 import com.gigaspaces.time.SystemTime;
@@ -33,6 +34,7 @@ import com.j_spaces.kernel.SystemProperties;
 import com.sun.jini.mahalo.TxnMgrProxy;
 import net.jini.core.transaction.TransactionException;
 import net.jini.core.transaction.server.ServerTransaction;
+import org.slf4j.Logger;
 
 import java.rmi.RemoteException;
 import java.util.Map;
@@ -40,9 +42,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_UNUSED_TXN_DEFAULT;
 import static com.j_spaces.core.Constants.LeaseManager.LM_EXPIRATION_TIME_UNUSED_TXN_PROP;
@@ -89,6 +88,7 @@ public class TransactionHandler {
 
     //prepared 2PC xtns
     private final Map<ServerTransaction, Prepared2PCXtnInfo> _prepared2PCXtns = new ConcurrentHashMap<ServerTransaction, Prepared2PCXtnInfo>();
+    private static final int TXN_SETTLE_DURATION = GsEnv.propertyInt("com.gs.drain.transactions-settle-duration").get(7500);
 
     public TransactionHandler(SpaceConfigReader configReader, SpaceEngine engine) {
         _engine = engine;
@@ -519,6 +519,23 @@ public class TransactionHandler {
         long end = System.currentTimeMillis() + timeoutInMillis;
         while (System.currentTimeMillis() < end) {
             if (getXtnTable().isEmpty()) {
+                return true;
+            }
+            Thread.sleep(500);
+        }
+        return false;
+    }
+
+    public boolean waitForFinalizingTransactions(long timeoutInMillis) throws InterruptedException {
+        long end = System.currentTimeMillis() + timeoutInMillis;
+        if (getXtnTable().isEmpty()) {
+            return true;
+        }
+        Thread.sleep(TXN_SETTLE_DURATION);
+
+        while (System.currentTimeMillis() < end) {
+            final boolean hasFinalizing = getXtnTable().entrySet().stream().anyMatch(e -> e.getValue().getStatus().isFinalizing());
+            if(!hasFinalizing){
                 return true;
             }
             Thread.sleep(500);
