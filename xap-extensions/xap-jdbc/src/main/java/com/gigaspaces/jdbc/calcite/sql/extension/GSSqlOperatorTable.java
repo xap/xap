@@ -121,8 +121,8 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     SqlKind.OTHER_FUNCTION,
                     ReturnTypes.VARCHAR_4,
                     null,
-                    OperandTypes.STRING,
-                    SqlFunctionCategory.STRING);
+                    OperandTypes.or(OperandTypes.PERIOD_OR_DATETIME, OperandTypes.STRING),
+                    SqlFunctionCategory.TIMEDATE);
 
     public static final SqlFunction DAYOFMONTH =
             new SqlFunction(
@@ -130,8 +130,8 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     SqlKind.OTHER_FUNCTION,
                     ReturnTypes.VARCHAR_4,
                     null,
-                    OperandTypes.STRING,
-                    SqlFunctionCategory.STRING);
+                    OperandTypes.or(OperandTypes.PERIOD_OR_DATETIME, OperandTypes.STRING),
+                    SqlFunctionCategory.TIMEDATE);
 
     public static final SqlFunction DAYOFWEEK =
             new SqlFunction(
@@ -139,8 +139,8 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     SqlKind.OTHER_FUNCTION,
                     ReturnTypes.VARCHAR_4,
                     null,
-                    OperandTypes.STRING,
-                    SqlFunctionCategory.STRING);
+                    OperandTypes.or(OperandTypes.PERIOD_OR_DATETIME, OperandTypes.STRING),
+                    SqlFunctionCategory.TIMEDATE);
 
     public static final SqlFunction DAYOFYEAR =
             new SqlFunction(
@@ -148,8 +148,8 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     SqlKind.OTHER_FUNCTION,
                     ReturnTypes.VARCHAR_4,
                     null,
-                    OperandTypes.STRING,
-                    SqlFunctionCategory.STRING);
+                    OperandTypes.or(OperandTypes.PERIOD_OR_DATETIME, OperandTypes.STRING),
+                    SqlFunctionCategory.TIMEDATE);
 
     public static final SqlFunction HOUR =
             new SqlFunction(
@@ -157,8 +157,8 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     SqlKind.OTHER_FUNCTION,
                     ReturnTypes.VARCHAR_4,
                     null,
-                    OperandTypes.STRING,
-                    SqlFunctionCategory.STRING);
+                    OperandTypes.or(OperandTypes.PERIOD_OR_DATETIME, OperandTypes.STRING),
+                    SqlFunctionCategory.TIMEDATE);
 
     public static final SqlFunction MINUTE =
             new SqlFunction(
@@ -166,8 +166,8 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     SqlKind.OTHER_FUNCTION,
                     ReturnTypes.VARCHAR_4,
                     null,
-                    OperandTypes.STRING,
-                    SqlFunctionCategory.STRING);
+                    OperandTypes.or(OperandTypes.PERIOD_OR_DATETIME, OperandTypes.STRING),
+                    SqlFunctionCategory.TIMEDATE);
 
     public static final SqlFunction MONTH =
             new SqlFunction(
@@ -175,8 +175,8 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     SqlKind.OTHER_FUNCTION,
                     ReturnTypes.VARCHAR_4,
                     null,
-                    OperandTypes.STRING,
-                    SqlFunctionCategory.STRING);
+                    OperandTypes.or(OperandTypes.PERIOD_OR_DATETIME, OperandTypes.STRING),
+                    SqlFunctionCategory.TIMEDATE);
 
     public static final SqlFunction MONTHNAME =
             new SqlFunction(
@@ -184,8 +184,8 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     SqlKind.OTHER_FUNCTION,
                     ReturnTypes.VARCHAR_4,
                     null,
-                    OperandTypes.STRING,
-                    SqlFunctionCategory.STRING);
+                    OperandTypes.or(OperandTypes.PERIOD_OR_DATETIME, OperandTypes.STRING),
+                    SqlFunctionCategory.TIMEDATE);
 
     public static final SqlFunction QUARTER =
             new SqlFunction(
@@ -193,8 +193,8 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     SqlKind.OTHER_FUNCTION,
                     ReturnTypes.VARCHAR_4,
                     null,
-                    OperandTypes.STRING,
-                    SqlFunctionCategory.STRING);
+                    OperandTypes.or(OperandTypes.PERIOD_OR_DATETIME, OperandTypes.STRING),
+                    SqlFunctionCategory.TIMEDATE);
 
     public static final SqlFunction SECOND =
             new SqlFunction(
@@ -202,8 +202,8 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     SqlKind.OTHER_FUNCTION,
                     ReturnTypes.VARCHAR_4,
                     null,
-                    OperandTypes.STRING,
-                    SqlFunctionCategory.STRING);
+                    OperandTypes.or(OperandTypes.PERIOD_OR_DATETIME, OperandTypes.STRING),
+                    SqlFunctionCategory.TIMEDATE);
 
     public static final SqlFunction WEEK =
             new SqlFunction(
@@ -211,8 +211,8 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     SqlKind.OTHER_FUNCTION,
                     ReturnTypes.VARCHAR_4,
                     null,
-                    OperandTypes.STRING,
-                    SqlFunctionCategory.STRING);
+                    OperandTypes.or(OperandTypes.PERIOD_OR_DATETIME, OperandTypes.STRING),
+                    SqlFunctionCategory.TIMEDATE);
 
     public static final SqlFunction YEAR =
             new SqlFunction(
@@ -220,6 +220,6 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     SqlKind.OTHER_FUNCTION,
                     ReturnTypes.VARCHAR_4,
                     null,
-                    OperandTypes.STRING,
-                    SqlFunctionCategory.STRING);
+                    OperandTypes.or(OperandTypes.PERIOD_OR_DATETIME, OperandTypes.STRING),
+                    SqlFunctionCategory.TIMEDATE);
 }

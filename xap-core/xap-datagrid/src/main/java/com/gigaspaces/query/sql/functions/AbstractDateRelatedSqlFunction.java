@@ -20,6 +20,7 @@ import com.j_spaces.jdbc.QueryProcessor;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.*;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -39,15 +40,39 @@ abstract class AbstractDateRelatedSqlFunction extends SqlFunction {
     protected Date verifyArgumentsAndGetDate( String functionName, SqlFunctionExecutionContext context) {
         assertNumberOfArguments(1, context);
         Object arg = context.getArgument(0);
-        if (!(arg instanceof String)) {// fast fail
-            throw new RuntimeException( functionName + " function - wrong argument type, should be a String - : " + arg);
+        Date date = null;
+        if( arg instanceof String ) {
+            try {
+                date = dateFormat.parse((String) arg);
+            } catch (ParseException e) {
+                throw new RuntimeException("Failed to parse: " + arg + " using pattern [" + pattern + "]");
+            }
         }
-        Date date;
-        try {
-            date = dateFormat.parse( ( String )arg );
-        } catch (ParseException e) {
-            throw new RuntimeException("Failed to parse: " + arg + " using pattern [" + pattern + "]");
+        else if( arg instanceof java.sql.Time || arg instanceof java.sql.Timestamp || arg instanceof java.sql.Date ){
+            date = new Date( ((Date)arg).getTime() );
         }
+        else if( arg instanceof java.util.Date){
+            date = (Date)arg;
+        }
+        else if( arg instanceof LocalDate){
+            Instant instant = ((LocalDate)arg).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+            date = Date.from(instant);
+        }
+        else if( arg instanceof LocalTime){
+            Instant instant = ( ( LocalTime )arg ).atDate(LocalDate.now()).atZone(ZoneId.systemDefault()).toInstant();
+            date = Date.from(instant);
+        }
+        else if( arg instanceof LocalDateTime){
+            Instant instant = ((LocalDateTime)arg).atZone(ZoneId.systemDefault()).toInstant();
+            date = Date.from(instant);
+        }
+        else if( arg instanceof Instant){
+            date = Date.from((Instant)arg);
+        }
+        if( date == null ) {
+            throw new RuntimeException( functionName + " function - wrong argument type, must be either String or any of date/time supported types, provided type is " + arg.getClass().getName());
+        }
+
         return date;
     }
 }

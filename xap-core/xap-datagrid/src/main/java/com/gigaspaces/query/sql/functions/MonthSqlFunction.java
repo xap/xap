@@ -34,6 +34,6 @@ public class MonthSqlFunction extends AbstractDateRelatedSqlFunction {
     @Override
     public Object apply(SqlFunctionExecutionContext context) {
         calendar.setTime( verifyArgumentsAndGetDate("month", context) );
-        return calendar.get(Calendar.MONTH);
+        return calendar.get(Calendar.MONTH) + 1;
     }
 }
