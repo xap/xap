@@ -1,5 +1,8 @@
 package com.gigaspaces.jdbc.calcite.pg;
 
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelProtoDataType;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.util.Collection;
@@ -10,22 +13,34 @@ import java.util.Set;
 public class PgTypeUtils {
 
     private static final HashMap<Integer, PgTypeDescriptor> TYPE_ID_TO_TYPE;
+    private static final HashMap<String, PgTypeDescriptor> TYPE_NAME_TO_TYPE;
 
     static {
         TYPE_ID_TO_TYPE = new HashMap<>();
+        TYPE_NAME_TO_TYPE = new HashMap<>();
         Set<PgTypeDescriptor> typeSet = new HashSet<>();
         for (PgTypeDescriptor type : PgTypeDescriptor.ALL_DESCRIPTORS) {
             if (typeSet.add(type)) {
                 TYPE_ID_TO_TYPE.put(type.id, type);
+                TYPE_NAME_TO_TYPE.put(type.name, type);
 
                 if (type.arrayType != 0) {
                     PgTypeDescriptor arrayType = type.asArray();
                     if (typeSet.add(arrayType)) {
                         TYPE_ID_TO_TYPE.put(arrayType.id, arrayType);
+                        TYPE_NAME_TO_TYPE.put(arrayType.name, arrayType);
                     }
                 }
             }
         }
+    }
+
+    public static Set<String> getTypeNames() {
+        return TYPE_NAME_TO_TYPE.keySet();
+    }
+
+    public static PgTypeDescriptor getTypeByName(String typeName) {
+        return TYPE_NAME_TO_TYPE.getOrDefault(typeName, PgTypeDescriptor.UNKNOWN);
     }
 
     public static PgTypeDescriptor getTypeById(int id) {
@@ -132,5 +147,22 @@ public class PgTypeUtils {
         } else {
             return SqlTypeName.NULL;
         }
+    }
+
+    public static RelProtoDataType toRelProtoDataType(PgTypeDescriptor type) {
+        return ((factory) -> toRelDataType(type, factory));
+    }
+
+    public static RelDataType toRelDataType(PgTypeDescriptor type, RelDataTypeFactory factory) {
+        if (type.elementType != 0) {
+            return factory.createArrayType(toRelDataType(getTypeById(type.elementType), factory), -1);
+        }
+
+        SqlTypeName typeName = PgTypeUtils.toSqlTypeName(type);
+        if (typeName == SqlTypeName.OTHER) {
+            return factory.createUnknownType();
+        }
+
+        return factory.createSqlType(typeName);
     }
 }
