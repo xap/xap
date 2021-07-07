@@ -43,7 +43,7 @@ public class SelectHandler extends RelShuttleImpl {
         }
         else{
             handleCalc(childToCalc.get(scan), tableContainer);
-            childToCalc.remove(scan);
+            childToCalc.remove(scan); // visited, not needed anymore
         }
         return result;
     }
@@ -158,7 +158,7 @@ public class SelectHandler extends RelShuttleImpl {
         }
         else{
             handleCalcFromJoin(childToCalc.get(join));
-            childToCalc.remove(join);
+            childToCalc.remove(join); // visited, not needed anymore
         }
     }
 
@@ -172,8 +172,7 @@ public class SelectHandler extends RelShuttleImpl {
             String originalName = inputFields.get(program.getSourceField(i));
             tableContainer.addQueryColumn(originalName, alias, true, 0);
         }
-        ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor,
-                program.getInputRowType().getFieldList(), tableContainer);
+        ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields, tableContainer);
         if (program.getCondition() != null) {
             program.getCondition().accept(conditionHandler);
             for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : conditionHandler.getQTPMap().entrySet()) {
@@ -191,7 +190,7 @@ public class SelectHandler extends RelShuttleImpl {
             queryExecutor.getVisibleColumns().add(qc);
         }
         if (program.getCondition() != null) {
-            ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, program.getInputRowType().getFieldList());
+            ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);
             program.getCondition().accept(conditionHandler);
             for (Map.Entry<TableContainer, QueryTemplatePacket> tableContainerQueryTemplatePacketEntry : conditionHandler.getQTPMap().entrySet()) {
                 tableContainerQueryTemplatePacketEntry.getKey().setQueryTemplatePacket(tableContainerQueryTemplatePacketEntry.getValue());
