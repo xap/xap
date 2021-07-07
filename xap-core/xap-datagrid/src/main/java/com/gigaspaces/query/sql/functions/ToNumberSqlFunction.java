@@ -17,6 +17,8 @@
 package com.gigaspaces.query.sql.functions;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 
 /**
  * Built in conversion sql function to convert string type to Number.
@@ -26,6 +28,8 @@ import java.text.DecimalFormat;
  */
 @com.gigaspaces.api.InternalApi
 public class ToNumberSqlFunction extends SqlFunction {
+    public static final DecimalFormatSymbols DECIMAL_FORMAT_SYMBOLS = DecimalFormatSymbols.getInstance(Locale.ENGLISH);
+
     /**
      * @param context which contains an argument of type string and can have an additional format
      *                argument.
@@ -43,12 +47,12 @@ public class ToNumberSqlFunction extends SqlFunction {
             String str = String.valueOf(arg);
             if (format != null) { // with specific format
                 if (str.contains(".")) { //double
-                    DecimalFormat formatter = new DecimalFormat(String.valueOf(format));
+                    DecimalFormat formatter = new DecimalFormat(String.valueOf(format), DECIMAL_FORMAT_SYMBOLS);
                     double number = Double.parseDouble(String.valueOf(arg));
                     String numberFormatted = formatter.format(number);
                     return Double.parseDouble(numberFormatted);
                 } else { // int
-                    DecimalFormat formatter = new DecimalFormat(String.valueOf(format));
+                    DecimalFormat formatter = new DecimalFormat(String.valueOf(format), DECIMAL_FORMAT_SYMBOLS);
                     int number = Integer.parseInt(String.valueOf(arg));
                     String numberFormatted = formatter.format(number);
                     return Integer.parseInt(numberFormatted);
