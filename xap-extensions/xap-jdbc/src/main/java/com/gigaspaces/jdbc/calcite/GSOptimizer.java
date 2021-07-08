@@ -224,6 +224,14 @@ public class GSOptimizer {
         return res;
     }
 
+    /**
+     * PG uses parentheses in JOIN expression to indicate prefer join order,
+     * Calcite parser doesn't support this feature. The method rewrites original
+     * query expanding parentheses in JOIN expression and allows Calcite to choose
+     * join order by itself.
+     * @param src Original query.
+     * @return Rewritten query.
+     */
     private String expandParentheses(String src) {
         StringBuilder curr = new StringBuilder();
         StringBuilder temp = new StringBuilder();
