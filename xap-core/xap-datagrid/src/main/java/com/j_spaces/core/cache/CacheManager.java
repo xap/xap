@@ -42,6 +42,7 @@ import com.gigaspaces.internal.server.space.metadata.IServerTypeDescListener;
 import com.gigaspaces.internal.server.space.metadata.SpaceTypeManager;
 import com.gigaspaces.internal.server.space.metadata.TypeDataFactory;
 import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
+import com.gigaspaces.internal.server.space.recovery.direct_persistency.ConsistencyFile;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.IStorageConsistency;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.StorageConsistencyModes;
@@ -610,6 +611,10 @@ public class CacheManager extends AbstractCacheManager
 
         if(isTieredStorage()){
             loadDataFromDB = _engine.getSpaceImpl().isPrimary() &&  (_engine.getTieredStorageManager().RDBMSContainsData() || getStorageAdapter() != null);
+            if(!loadDataFromDB && _engine.getSpaceImpl().isPrimary()) {
+                ConsistencyFile consistency = new ConsistencyFile(_engine.getSpaceName(), _engine.getFullSpaceName());
+                consistency.setStorageState(StorageConsistencyModes.Consistent);
+            }
         }
 
         if (loadDataFromDB) {
@@ -946,6 +951,11 @@ public class CacheManager extends AbstractCacheManager
 
             //special first call to SA- SA will return all classes, not just fifo classes
             residentEntriesInitialLoad(context, configReader, initialLoadInfo);
+
+            // update consistency after finished initial load
+            ConsistencyFile consistency = new ConsistencyFile(_engine.getSpaceName(), _engine.getFullSpaceName());
+            consistency.setStorageState(StorageConsistencyModes.Consistent);
+
             if (isBlobStoreCachePolicy() && _persistentBlobStore && _engine.getSpaceImpl().isPrimary() && _entries.isEmpty()) {
                 //if persistent blobstore is empty try mirror if applicable
                 if (((IBlobStoreStorageAdapter) _storageAdapter).hasAnotherInitialLoadSource() && _logger.isInfoEnabled())

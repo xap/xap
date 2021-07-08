@@ -87,8 +87,10 @@ import com.gigaspaces.internal.server.space.operations.WriteEntryResult;
 import com.gigaspaces.internal.server.space.quiesce.QuiesceHandler;
 import com.gigaspaces.internal.server.space.quiesce.WaitForDrainUtils;
 import com.gigaspaces.internal.server.space.recovery.RecoveryManager;
+import com.gigaspaces.internal.server.space.recovery.direct_persistency.ConsistencyFile;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryException;
 import com.gigaspaces.internal.server.space.recovery.direct_persistency.DirectPersistencyRecoveryHelper;
+import com.gigaspaces.internal.server.space.recovery.direct_persistency.StorageConsistencyModes;
 import com.gigaspaces.internal.server.space.recovery.strategy.SpaceRecoverStrategy;
 import com.gigaspaces.internal.server.space.suspend.SuspendTypeChangedInternalListener;
 import com.gigaspaces.internal.server.space.tiered_storage.TieredStorageUtils;
@@ -1496,6 +1498,10 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
                     // mark backup as finished recovery
                     if (getDirectPersistencyRecoveryHelper() != null && isBackup()) {
                         getDirectPersistencyRecoveryHelper().setPendingBackupRecovery(false);
+                    }
+                    if (isBackup() &&  _engine.isTieredStorage()) {
+                        ConsistencyFile consistency = new ConsistencyFile(_engine.getSpaceName(), _engine.getFullSpaceName());
+                        consistency.setStorageState(StorageConsistencyModes.Consistent);
                     }
                     if (_logger.isInfoEnabled()) {
                         long duration = SystemTime.timeMillis() - syncStartTime;
