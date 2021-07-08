@@ -6,12 +6,24 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.TimeZone;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ServerBeanTest extends AbstractServerTest{
     @BeforeAll
     static void setUp() throws Exception {
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
+
+        Class.forName("org.postgresql.Driver");
+
+        gigaSpace = new GigaSpaceConfigurer(
+                new EmbeddedSpaceConfigurer(SPACE_NAME)
+                        .addProperty("space-config.QueryProcessor.datetime_format", "yyyy-MM-dd HH:mm:ss.SSS")
+        ).gigaSpace();
+
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS");
         java.util.Date date1 = simpleDateFormat.parse("10/09/2001 05:20:00.231");
         java.util.Date date2 = simpleDateFormat.parse("11/09/2001 10:20:00.250");
@@ -67,6 +79,66 @@ class ServerBeanTest extends AbstractServerTest{
             assertTrue(statement.execute());
 
             // TODO since runtime doesn't support dynamic parameters at now there is no results checking
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testDateTypes(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            final String qry = String.format("SELECT birthDate, birthTime, \"timestamp\" FROM \"%s\"", MyPojo.class.getName());
+            final PreparedStatement statement = conn.prepareStatement(qry);
+
+            assertTrue(statement.execute());
+
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS");
+            ArrayList<java.util.Date> dates = new ArrayList<>();
+            dates.add(simpleDateFormat.parse("10/09/2001 05:20:00.231"));
+            dates.add(simpleDateFormat.parse("11/09/2001 10:20:00.250"));
+            dates.add(simpleDateFormat.parse("12/09/2001 15:20:00.100"));
+            dates.add(simpleDateFormat.parse("13/09/2001 20:20:00.300"));
+
+            ResultSet res = statement.getResultSet();
+            for (int i = 0; i < 4; i++) {
+                assertTrue(res.next());
+                Date date = dates.get(i);
+                assertEquals(res.getTimestamp(1), new Timestamp(date.getTime()));
+                assertEquals(res.getTime(2).toString(), new Time(date.getTime()).toString());
+                assertEquals(res.getTimestamp(3), new Timestamp(date.getTime()));
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testTimeZone(boolean simple) throws Exception {
+        try (Connection conn = connect(simple)) {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS");
+
+            String qry = String.format("SELECT \"timestamp\" FROM \"%s\" where first_name = 'Adam'", MyPojo.class.getName());
+            try (PreparedStatement statement = conn.prepareStatement(qry)) {
+                assertTrue(statement.execute());
+                Date date = simpleDateFormat.parse("11/09/2001 10:20:00.250");
+
+                ResultSet res = statement.getResultSet();
+                assertTrue(res.next());
+                assertEquals(new Timestamp(date.getTime()), res.getTimestamp(1));
+            }
+
+            qry = "SET TimeZone='GMT-1'"; // PG uses posix timezones which are negated
+            try (PreparedStatement statement = conn.prepareStatement(qry)) {
+                assertEquals(1, statement.executeUpdate());
+            }
+
+            qry = String.format("SELECT \"timestamp\" FROM \"%s\" where first_name = 'Adam'", MyPojo.class.getName());
+            try (PreparedStatement statement = conn.prepareStatement(qry)) {
+                assertTrue(statement.execute());
+                Date date = simpleDateFormat.parse("11/09/2001 11:20:00.250");
+
+                ResultSet res = statement.getResultSet();
+                assertTrue(res.next());
+                assertEquals(new Timestamp(date.getTime()), res.getTimestamp(1));
+            }
         }
     }
 

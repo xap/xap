@@ -5,6 +5,7 @@ import com.gigaspaces.sql.aggregatornode.netty.exception.ProtocolException;
 import com.gigaspaces.sql.aggregatornode.netty.query.ColumnDescription;
 import com.gigaspaces.sql.aggregatornode.netty.query.ParameterDescription;
 import com.gigaspaces.sql.aggregatornode.netty.query.Session;
+import com.google.common.collect.ImmutableSet;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.collection.IntObjectHashMap;
 import org.apache.calcite.rel.type.RelDataType;
@@ -36,6 +37,14 @@ public class TypeUtils {
     public static final PgType PG_TYPE_TIMETZ = TypeTimeTZ.INSTANCE;
     public static final PgType PG_TYPE_NUMERIC = TypeNumeric.INSTANCE;
     public static final PgType PG_TYPE_CURSOR = TypeCursor.INSTANCE;
+
+    private static final Set<PgType> DATE_TIME_TYPES = ImmutableSet.of(
+        PG_TYPE_DATE,
+        PG_TYPE_TIME,
+        PG_TYPE_TIMESTAMP,
+        PG_TYPE_TIMESTAMPTZ,
+        PG_TYPE_TIMETZ
+    );
 
     private static final IntObjectHashMap<PgType> elementToArray;
     private static final IntObjectHashMap<PgType> typeIdToType;
@@ -145,6 +154,17 @@ public class TypeUtils {
             default:
                 return PG_TYPE_UNKNOWN;
         }
+    }
+
+    public static int formatCode(PgType type, int[] formatCodes, int idx) {
+        if (type.getElementType() != 0)
+            return formatCode(getType(type.getElementType()), formatCodes, idx);
+
+        // TODO implement binary serialization for date time types
+        if (DATE_TIME_TYPES.contains(type))
+            return 0; // at now only text formats implemented for date time types
+
+        return formatCodes.length == 1 ? formatCodes[0] : formatCodes[idx];
     }
 
     public static <T> T readParameter(Session session, ByteBuf dst, ParameterDescription desc, int format) throws ProtocolException {
