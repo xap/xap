@@ -367,4 +367,8 @@ public class ConcreteTableContainer extends TableContainer {
             return true;
         return joinInfo.checkJoinCondition();
     }
+
+    public ITypeDesc getTypeDesc() {
+        return typeDesc;
+    }
 }

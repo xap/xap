@@ -1,6 +1,9 @@
 package com.gigaspaces.jdbc.calcite.handlers;
 
 import org.apache.calcite.rex.RexLiteral;
+import org.apache.calcite.rex.RexNode;
+
+import java.math.BigDecimal;
 
 public class CalciteUtils {
 
@@ -33,5 +36,71 @@ public class CalciteUtils {
             default:
                 throw new UnsupportedOperationException("Unsupported type: " + literal.getType().getSqlTypeName());
         }
+    }
+
+
+    public static Class<?> getJavaType(RexNode rexNode) {
+        if (rexNode == null) {
+            return null;
+        }
+        switch (rexNode.getType().getSqlTypeName()) {
+            case BOOLEAN:
+                return Boolean.class;
+            case CHAR:
+            case VARCHAR:
+                return String.class;
+            case TINYINT:
+                return Byte.class;
+            case SMALLINT:
+                return Short.class;
+            case INTEGER:
+                return Integer.class;
+            case BIGINT:
+                return Long.class;
+            case FLOAT:
+                return Float.class;
+            case DOUBLE:
+                return Double.class;
+            case REAL:
+            case DECIMAL:
+                return BigDecimal.class;
+            case DATE:
+                return java.time.LocalDate.class;
+            case TIMESTAMP:
+                return java.time.LocalDateTime.class;
+            case TIME_WITH_LOCAL_TIME_ZONE:
+                return java.time.ZonedDateTime.class; // TODO: @sagiv validate.
+            case TIME:
+                return java.time.LocalTime.class;
+            default:
+                throw new UnsupportedOperationException("Unsupported type: " + rexNode.getType().getSqlTypeName());
+        }
+    }
+
+    public static Object castToNumberType(Object value, Class targetType) {
+        if (value == null) return null;
+
+        Number valueNum = (Number) value;
+
+        if (targetType == Integer.class || targetType == int.class) {
+            return valueNum.intValue();
+        }
+        if (targetType == Long.class || targetType == long.class) {
+            return valueNum.longValue();
+        }
+        if (targetType == Float.class || targetType == float.class) {
+            return valueNum.floatValue();
+        }
+        if (targetType == Byte.class || targetType == byte.class) {
+            return valueNum.byteValue();
+        }
+        if (targetType == Double.class || targetType == double.class) {
+            return valueNum.doubleValue();
+        }
+        if (targetType == Short.class || targetType == short.class) {
+            return valueNum.shortValue();
+        }
+
+        throw new IllegalArgumentException("Unexpected type, value = " + value + ", targetType = " + targetType);
     }
 }

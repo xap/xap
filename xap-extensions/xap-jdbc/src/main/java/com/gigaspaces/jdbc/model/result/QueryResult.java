@@ -1,6 +1,7 @@
 package com.gigaspaces.jdbc.model.result;
 
 import com.gigaspaces.jdbc.model.join.JoinInfo;
+import com.gigaspaces.jdbc.model.table.CaseColumn;
 import com.gigaspaces.jdbc.model.table.IQueryColumn;
 import com.gigaspaces.jdbc.model.table.TableContainer;
 import com.j_spaces.jdbc.ResultEntry;
@@ -187,5 +188,14 @@ public abstract class QueryResult {
             setRows( new ArrayList<>(tableRows.values()));
         }
 
+    }
+
+    public void addCaseColumnsToResults(List<CaseColumn> sqlCaseColumns) {
+        List<TableRow> newRows = new ArrayList<>();
+        for (TableRow row : getRows()) {
+            newRows.add(new TableRow(row, sqlCaseColumns));
+        }
+        setRows(newRows);
+        selectedColumns.addAll(sqlCaseColumns);
     }
 }

@@ -5,10 +5,7 @@ import com.gigaspaces.jdbc.model.result.LocalSingleRowQueryResult;
 import com.gigaspaces.jdbc.model.result.QueryResult;
 import com.gigaspaces.jdbc.model.result.TableRow;
 import com.gigaspaces.jdbc.model.result.TableRowFactory;
-import com.gigaspaces.jdbc.model.table.AggregationColumn;
-import com.gigaspaces.jdbc.model.table.FunctionCallColumn;
-import com.gigaspaces.jdbc.model.table.IQueryColumn;
-import com.gigaspaces.jdbc.model.table.TableContainer;
+import com.gigaspaces.jdbc.model.table.*;
 import com.j_spaces.core.IJSpace;
 
 import java.sql.SQLException;
@@ -24,6 +21,7 @@ public class QueryExecutor {
     private final Object[] preparedValues;
     private boolean isAllColumnsSelected = false;
     private final LinkedList<Integer> fieldCountList = new LinkedList<>();
+    private final List<CaseColumn> sqlCaseColumns = new ArrayList<>();
 
 
     public QueryExecutor(IJSpace space, QueryExecutionConfig config, Object[] preparedValues) {
@@ -48,7 +46,9 @@ public class QueryExecutor {
             }
         }
         if (tables.size() == 1) { //Simple Query
-            return tables.get(0).executeRead(config);
+            QueryResult queryResult = tables.get(0).executeRead(config);
+            queryResult.addCaseColumnsToResults(sqlCaseColumns);
+            return queryResult;
         }
         JoinQueryExecutor joinE = new JoinQueryExecutor(this);
         return joinE.execute();
@@ -146,5 +146,9 @@ public class QueryExecutor {
     public void addFieldCount(int size) {
         int columnCount = fieldCountList.isEmpty() ?  size: fieldCountList.getLast() + size;
         fieldCountList.add(columnCount);
+    }
+
+    public void addSqlCaseColumn(CaseColumn caseColumn) {
+        this.sqlCaseColumns.add(caseColumn);
     }
 }

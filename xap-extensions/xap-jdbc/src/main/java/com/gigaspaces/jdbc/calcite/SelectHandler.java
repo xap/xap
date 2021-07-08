@@ -220,7 +220,7 @@ public class SelectHandler extends RelShuttleImpl {
         List<String> inputFields = program.getInputRowType().getFieldNames();
         List<String> outputFields = program.getOutputRowType().getFieldNames();
         queryExecutor.addFieldCount(outputFields.size());
-        new SingleTableProjectionHandler(program, tableContainer, other.equals(root)).project();
+        new SingleTableProjectionHandler(program, tableContainer, other.equals(root), queryExecutor).project();
         ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields, tableContainer);
         if (program.getCondition() != null) {
             program.getCondition().accept(conditionHandler);

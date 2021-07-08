@@ -34,6 +34,25 @@ public class TableRow implements Comparable<TableRow> {
 
     }
 
+    public TableRow(TableRow tableRow, List<CaseColumn> caseColumns) {
+        int finalSize = tableRow.columns.length + caseColumns.size();
+        this.columns = new IQueryColumn[finalSize];
+        this.values = new Object[finalSize];
+        this.orderColumns = tableRow.orderColumns;
+        this.orderValues = tableRow.orderValues;
+        this.groupByColumns = tableRow.groupByColumns;
+        this.groupByValues = tableRow.groupByValues;
+        for (int i = 0; i < finalSize; i++) { //TODO: @sagiv need set the right column order!
+            if (i < tableRow.columns.length) {
+                this.columns[i] = tableRow.columns[i];
+                this.values[i] = tableRow.values[i];
+            } else {
+                this.columns[i] = caseColumns.get(i - tableRow.columns.length);
+                this.values[i] = ((CaseColumn) columns[i]).getValue(tableRow);
+            }
+        }
+    }
+
     TableRow(IEntryPacket entryPacket, ConcreteTableContainer tableContainer) {
         final List<OrderColumn> orderColumns = tableContainer.getOrderColumns();
         final List<ConcreteColumn> groupByColumns = tableContainer.getGroupByColumns();
