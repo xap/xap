@@ -17,4 +17,9 @@ public interface GSRelNode extends PhysicalNode {
     default Pair<RelTraitSet, List<RelTraitSet>> passThroughTraits(RelTraitSet required) {
         return null;
     }
+
+    @Override
+    default Pair<RelTraitSet, List<RelTraitSet>> deriveTraits(RelTraitSet childTraits, int childId) {
+        return null;
+    }
 }
