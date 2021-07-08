@@ -2,10 +2,7 @@ package com.gigaspaces.jdbc.calcite.handlers;
 
 import com.gigaspaces.jdbc.QueryExecutor;
 import com.gigaspaces.jdbc.exceptions.SQLExceptionWrapper;
-import com.gigaspaces.jdbc.model.table.CaseColumn;
-import com.gigaspaces.jdbc.model.table.CaseCondition;
-import com.gigaspaces.jdbc.model.table.ConcreteTableContainer;
-import com.gigaspaces.jdbc.model.table.TableContainer;
+import com.gigaspaces.jdbc.model.table.*;
 import com.j_spaces.jdbc.SQLUtil;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlKind;
@@ -126,7 +123,16 @@ public class CaseConditionHandler extends RexShuttle {
             throw new SQLExceptionWrapper(e);//throw as runtime.
         }
         assert value != null;
+        assert column != null;
+        Class<?> propertyType = null;
+        try {
+            propertyType = SQLUtil.getPropertyType(((ConcreteTableContainer) tableContainer).getTypeDesc(), column);
+        } catch (SQLException e) {
+            throw new SQLExceptionWrapper(e);//throw as runtime.
 
+        }
+        tableContainer.getInvisibleColumns().add(
+                new ConcreteColumn(column, propertyType, null, false, tableContainer, -1));
         sqlKind = isNot ? sqlKind.negateNullSafe() : sqlKind;
         switch (sqlKind) {
             case EQUALS:
