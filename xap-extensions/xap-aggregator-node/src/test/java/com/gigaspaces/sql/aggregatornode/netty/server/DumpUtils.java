@@ -80,11 +80,21 @@ public class DumpUtils {
     private static List<String> splitValues(String line) {
         List<String> result = new ArrayList<>();
         StringBuilder b = new StringBuilder();
+        boolean escaped = false;
+        boolean quoted = false;
         for (int i = 0; i < line.length(); i++) {
-            if (Character.isWhitespace(line.charAt(i)))
+            if ('\\' == line.charAt(i)) {
+                escaped = true;
+                continue;
+            }
+            if (!escaped && '\'' == line.charAt(i)) {
+                quoted = !quoted;
+                continue;
+            }
+            if (!quoted && Character.isWhitespace(line.charAt(i)))
                 continue;
 
-            if ('|' == line.charAt(i)) {
+            if (!escaped && '|' == line.charAt(i)) {
                 if (b.length() == 0)
                     continue;
                 result.add(b.toString());
@@ -94,6 +104,7 @@ public class DumpUtils {
             }
 
             b.append(line.charAt(i));
+            escaped = false;
         }
         return result;
     }
