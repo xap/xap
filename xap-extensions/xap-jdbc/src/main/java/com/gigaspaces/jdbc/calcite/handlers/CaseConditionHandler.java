@@ -43,7 +43,7 @@ public class CaseConditionHandler extends RexShuttle {
         return localRef;
     }
 
-    private ICaseCondition handleRexCall(RexCall call){
+    private void handleRexCall(RexCall call){
         for (int i = 0; i < call.getOperands().size(); i++) {
             RexNode operand = call.getOperands().get(i);
             if (operand.isA(SqlKind.LOCAL_REF)) {
@@ -87,6 +87,16 @@ public class CaseConditionHandler extends RexShuttle {
                         ((CompoundCaseCondition) caseCondition).addCompoundConditionCode(CompoundCaseCondition.CompoundConditionCode.AND);
                         handleRexCall((RexCall) rexNode);
                         break;
+                    case CASE:
+                        CaseColumn nestedCaseColumn = new CaseColumn(caseColumn.getName(), caseColumn.getReturnType()
+                                , caseColumn.getColumnOrdinal());
+                        CaseConditionHandler caseHandler = new CaseConditionHandler(program, queryExecutor, inputFields,
+                                tableContainer, nestedCaseColumn);
+                        caseHandler.handleRexCall((RexCall) rexNode);
+                        caseCondition.setResult(nestedCaseColumn);
+                        caseColumn.addCaseCondition(caseCondition);
+                        caseCondition = null;
+                        break;
                     default:
                         throw new UnsupportedOperationException("Wrong CASE condition kind [" + operand.getKind() + "]");
                 }
@@ -94,7 +104,6 @@ public class CaseConditionHandler extends RexShuttle {
                 throw new IllegalStateException("CASE operand kind should be LOCAL_REF but was [" + operand.getKind() + "]");
             }
         }
-        return caseCondition;
     }
 
     private SingleCaseCondition handleTwoOperandsCall(RexNode leftOp, RexNode rightOp, SqlKind sqlKind, boolean isNot){

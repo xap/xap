@@ -81,7 +81,11 @@ public class CaseColumn implements IQueryColumn{
     public Object getValue(TableRow tableRow) {
         for (ICaseCondition caseCondition : caseConditions) {
             if(caseCondition.check(tableRow)) {
-                return caseCondition.getResult();
+                Object result = caseCondition.getResult();
+                if(result instanceof CaseColumn) { //nested case
+                    return ((CaseColumn) result).getValue(tableRow);
+                }
+                return result;
             }
         }
         throw new IllegalStateException("should not arrive here");
