@@ -498,6 +498,10 @@ public class SystemProperties extends CommonSystemProperties {
      */
     public final static String JDBC_DRIVER_V3_ENABLED = "com.gs.jdbc-driver-v3.enabled";
 
+    public final static String JDBC_V3_DRIVER = "com.gs.jdbc.v3.driver";
+
+    public final static String JDBC_V3_DRIVER_CALCITE = "calcite";
+
     /**
      * System variable for enabling recording of all metrics tables to hsqldb
      */

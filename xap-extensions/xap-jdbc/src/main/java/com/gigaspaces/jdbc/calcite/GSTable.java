@@ -37,20 +37,22 @@ public class GSTable extends AbstractTable {
      * java.time.Instant -> TIMESTAMP WITH TIME ZONE
      */
     public static SqlTypeName mapToSqlType(Class<?> clazz) {
-        if (clazz == Short.class) {
+        if (clazz == Short.class || clazz == short.class) {
             return SqlTypeName.SMALLINT;
-        } else if (clazz == Integer.class) {
+        } else if (clazz == Character.class || clazz == char.class) {
+            return SqlTypeName.CHAR;
+        } else if (clazz == Integer.class || clazz == int.class) {
             return SqlTypeName.INTEGER;
-        } else if (clazz == Long.class) {
+        } else if (clazz == Long.class || clazz == long.class) {
             return SqlTypeName.BIGINT;
-        } else if (clazz == Float.class) {
+        } else if (clazz == Float.class || clazz == float.class) {
             return SqlTypeName.FLOAT;
-        } else if (clazz == Double.class) {
+        } else if (clazz == Double.class || clazz == double.class) {
             return SqlTypeName.DOUBLE;
+        } else if (clazz == Boolean.class || clazz == boolean.class) {
+            return SqlTypeName.BOOLEAN;
         } else if (clazz == BigDecimal.class) {
             return SqlTypeName.DECIMAL;
-        } else if (clazz == Boolean.class) {
-            return SqlTypeName.BOOLEAN;
         } else if (clazz == String.class) {
             return SqlTypeName.VARCHAR;
         } else if (clazz == java.sql.Date.class
@@ -68,6 +70,8 @@ public class GSTable extends AbstractTable {
                 || clazz == java.time.ZonedDateTime.class
                 || clazz == java.time.Instant.class) {
             return SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE;
+        } else if (clazz.isArray() ){
+            return SqlTypeName.ARRAY;
         } else if (CompoundSpaceId.class.isAssignableFrom(clazz)){
             return SqlTypeName.ANY;
         }
