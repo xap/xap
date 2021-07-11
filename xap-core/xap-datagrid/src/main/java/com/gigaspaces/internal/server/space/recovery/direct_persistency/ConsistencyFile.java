@@ -15,7 +15,6 @@ public class ConsistencyFile implements IStorageConsistency{
 
     public ConsistencyFile(String spaceName, String fullMemberName) throws SAException {
         File folder = SystemLocations.singleton().work("tiered-storage/" + spaceName).toFile();
-        System.out.println("folder is: " + folder.getAbsolutePath());
         if (!folder.exists()) {
             if (!folder.mkdirs()) {
                 throw new SAException("Failed to mkdir " + folder.getAbsolutePath());
@@ -33,7 +32,6 @@ public class ConsistencyFile implements IStorageConsistency{
     }
 
     public ConsistencyFile(String path){
-        System.out.println("path is: " + path);
         consistFile = new File(path);
         if(!consistFile.exists()) {
             try {
