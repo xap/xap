@@ -37,7 +37,7 @@ public class SingleTableProjectionHandler extends RexShuttle {
                 RexInputRef inputRef = (RexInputRef) node;
                 String alias = outputFields.get(i);
                 String originalName = inputFields.get(inputRef.getIndex());
-                tableContainer.addQueryColumn(originalName, alias, true, 0);
+                tableContainer.addQueryColumn(originalName, alias, true, i);
             }
             else if(node instanceof RexCall){
                 RexCall call = (RexCall) node;

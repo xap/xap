@@ -198,5 +198,6 @@ public abstract class QueryResult {
         }
         setRows(newRows);
         selectedColumns.addAll(sqlCaseColumns);
+        selectedColumns.sort(null);
     }
 }

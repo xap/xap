@@ -21,7 +21,7 @@ public class QueryExecutor {
     private final Object[] preparedValues;
     private boolean isAllColumnsSelected = false;
     private final LinkedList<Integer> fieldCountList = new LinkedList<>();
-    private final List<CaseColumn> sqlCaseColumns = new ArrayList<>();
+    private final List<CaseColumn> caseColumns = new ArrayList<>();
 
 
     public QueryExecutor(IJSpace space, QueryExecutionConfig config, Object[] preparedValues) {
@@ -47,7 +47,7 @@ public class QueryExecutor {
         }
         if (tables.size() == 1) { //Simple Query
             QueryResult queryResult = tables.get(0).executeRead(config);
-            queryResult.addCaseColumnsToResults(sqlCaseColumns);
+            queryResult.addCaseColumnsToResults(caseColumns);
             return queryResult;
         }
         JoinQueryExecutor joinE = new JoinQueryExecutor(this);
@@ -149,6 +149,6 @@ public class QueryExecutor {
     }
 
     public void addSqlCaseColumn(CaseColumn caseColumn) {
-        this.sqlCaseColumns.add(caseColumn);
+        this.caseColumns.add(caseColumn);
     }
 }
