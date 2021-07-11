@@ -1,8 +1,7 @@
 package com.gigaspaces.jdbc.model.result;
 
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
-import com.j_spaces.jdbc.builder.range.EqualValueRange;
-import com.j_spaces.jdbc.builder.range.SegmentRange;
+import com.j_spaces.jdbc.builder.range.*;
 
 import java.util.function.Predicate;
 
@@ -20,8 +19,8 @@ public class TempTableQTP extends QueryTemplatePacket {
          predicate = (tableRow) -> tableRow.getPropertyValue(range.getPath()).equals(range.getValue());
     }
 
-    public TempTableQTP(SegmentRange range) {
-        predicate = (tableRow) -> range.getPredicate().execute(tableRow.getPropertyValue(range.getPath()));
+    public TempTableQTP(Range range) {
+        predicate = (tableRow -> range.getPredicate().execute(tableRow.getPropertyValue(range.getPath())));
     }
 
     @Override

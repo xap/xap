@@ -136,7 +136,7 @@ public class OdbcMetadataQueryTest extends AbstractServerTest {
         checkQuery(SELECT_NULL);
     }
 
-    @Disabled("UnsupportedOperationException: Range: com.j_spaces.jdbc.builder.range.NotEqualValueRange")
+    @Disabled("UnsupportedOperationException: Not supported yet! (TempTableContainer.getJoinedTable)")
     @Test
     public void testSelectTables() throws Exception {
         checkQuery(SELECT_TABLES);
@@ -148,7 +148,7 @@ public class OdbcMetadataQueryTest extends AbstractServerTest {
         checkQuery(SELECT_ATTRIBUTES_1);
     }
 
-    @Disabled("UnsupportedOperationException: Range: com.j_spaces.jdbc.builder.range.NotEqualValueRange")
+    @Disabled("UnsupportedOperationException: Not supported yet! (TempTableContainer.getJoinedTable)")
     @Test
     public void testSelectAttributes2() throws Exception {
         checkQuery(SELECT_ATTRIBUTES_2);
@@ -160,7 +160,7 @@ public class OdbcMetadataQueryTest extends AbstractServerTest {
         checkQuery(SELECT_INDEXES);
     }
 
-    @Disabled("Could not find column with name [relnamespace] (column resolution issue in JOIN handler)")
+    @Disabled("Missing CASE support")
     @Test
     public void testSelectConstraints() throws Exception {
         checkQuery(SELECT_CONSTRAINTS);

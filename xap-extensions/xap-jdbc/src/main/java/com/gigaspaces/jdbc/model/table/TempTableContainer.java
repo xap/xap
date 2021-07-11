@@ -7,9 +7,7 @@ import com.gigaspaces.jdbc.model.QueryExecutionConfig;
 import com.gigaspaces.jdbc.model.join.JoinInfo;
 import com.gigaspaces.jdbc.model.result.*;
 import com.j_spaces.jdbc.builder.QueryTemplatePacket;
-import com.j_spaces.jdbc.builder.range.EqualValueRange;
-import com.j_spaces.jdbc.builder.range.Range;
-import com.j_spaces.jdbc.builder.range.SegmentRange;
+import com.j_spaces.jdbc.builder.range.*;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -142,8 +140,8 @@ public class TempTableContainer extends TableContainer {
         addQueryColumn(range.getPath(), null, false, -1);
         if (range instanceof EqualValueRange) {
             return new TempTableQTP((EqualValueRange) range);
-        } else if (range instanceof SegmentRange) {
-            return new TempTableQTP((SegmentRange) range);
+        } else if (range instanceof SegmentRange || range instanceof NotEqualValueRange || range instanceof RegexRange) {
+            return new TempTableQTP(range);
         } else {
             throw new UnsupportedOperationException("Range: " + range);
         }
