@@ -9,7 +9,6 @@ import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.config.NullCollation;
-import org.apache.calcite.config.NullCollation;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.plan.Contexts;
@@ -98,18 +97,38 @@ public class GSOptimizer {
     }
 
     public SqlNode parse(String query) throws SqlParseException {
-        SqlParser parser = createParser(query);
-
-        return parser.parseQuery();
+        SqlParseException ex = null;
+        while (true) {
+            try {
+                return createParser(query).parseQuery();
+            } catch (SqlParseException e) {
+                if (ex != null)
+                    throw ex;
+                try {
+                    query = expandParentheses(query);
+                } catch (Exception e1) {
+                    throw e;
+                }
+                ex = e;
+            }
+        }
     }
 
-    public SqlNodeList parseMultiline(String query) {
-        SqlParser parser = createParser(query);
-
-        try {
-            return parser.parseStmtList();
-        } catch (SqlParseException e) {
-            throw new RuntimeException("Failed to parse the query.", e);
+    public SqlNodeList parseMultiline(String query) throws SqlParseException {
+        SqlParseException ex = null;
+        while (true) {
+            try {
+                return createParser(query).parseStmtList();
+            } catch (SqlParseException e) {
+                if (ex != null)
+                    throw ex;
+                try {
+                    query = expandParentheses(query);
+                } catch (Exception e1) {
+                    throw e;
+                }
+                ex = e;
+            }
         }
     }
 
@@ -142,7 +161,6 @@ public class GSOptimizer {
                 .withExpand(false)
                 .build());
 
-        // TODO: Careful with RelRoot removal here - need to add the top-level project
         return relConverter.convertQuery(validatedAst, false, true);
     }
 
@@ -196,9 +214,108 @@ public class GSOptimizer {
     }
 
     private static CalciteSchema createSchema(IJSpace space) {
-        CalciteSchema res = CalciteSchema.createRootSchema(true, false);
-        res.add(ROOT_SCHEMA_NAME, new GSSchema(space));
+        CalciteSchema res = CalciteSchema.createRootSchema(true, false,
+                ROOT_SCHEMA_NAME, new GSSchema(space));
         res.add(PgCalciteSchema.NAME, PgCalciteSchema.INSTANCE);
         return res;
+    }
+
+    /**
+     * PG uses parentheses in JOIN expression to indicate prefer join order,
+     * Calcite parser doesn't support this feature. The method rewrites original
+     * query expanding parentheses in JOIN expression and allows Calcite to choose
+     * join order by itself.
+     * @param src Original query.
+     * @return Rewritten query.
+     */
+    private String expandParentheses(String src) {
+        StringBuilder curr = new StringBuilder();
+        StringBuilder temp = new StringBuilder();
+        String lastToken = "";
+        int offset = 0;
+        while (offset < src.length()) {
+            char c = src.charAt(offset);
+            if (c == '(') {
+                if (temp.length() > 0) {
+                    lastToken = temp.toString();
+                    temp.setLength(0);
+                    separate(curr).append(lastToken);
+                }
+                offset = expandParentheses(curr, src, offset + 1, lastToken);
+                continue;
+            } else if (c == ')')
+                throw new RuntimeException("Unexpected symbol ')' at col " + offset);
+            else if (Character.isWhitespace(c)) {
+                if (temp.length() > 0) {
+                    lastToken = temp.toString();
+                    temp.setLength(0);
+                    separate(curr).append(lastToken);
+                }
+                curr.append(c);
+            } else {
+                temp.append(c);
+            }
+            offset++;
+        }
+
+        if (temp.length() > 0)
+            separate(curr).append(temp);
+        return curr.toString();
+    }
+
+    private int expandParentheses(StringBuilder dst, String src, int offset, String lastToken) {
+        String lastToken0 = lastToken;
+        String firstToken = "";
+        StringBuilder curr = new StringBuilder();
+        StringBuilder temp = new StringBuilder();
+        while (offset < src.length()) {
+            char c = src.charAt(offset);
+            if (c == '(') {
+                if (temp.length() > 0) {
+                    lastToken0 = temp.toString();
+                    temp.setLength(0);
+                    if (firstToken.isEmpty())
+                        firstToken = lastToken0;
+                    separate(curr).append(lastToken0);
+                }
+                offset = expandParentheses(curr, src, offset + 1, lastToken0);
+                continue;
+            } else if (c == ')') {
+                if (temp.length() > 0) {
+                    lastToken0 = temp.toString();
+                    temp.setLength(0);
+                    if (firstToken.isEmpty())
+                        firstToken = lastToken0;
+                    separate(curr).append(lastToken0);
+                }
+                if (lastToken.equalsIgnoreCase("from") && !firstToken.equalsIgnoreCase("select")) {
+                    separate(dst).append(curr);
+                } else {
+                    dst.append('(').append(curr).append(')');
+                }
+                return offset + 1;
+            } else if (Character.isWhitespace(c)) {
+                if (temp.length() > 0) {
+                    lastToken0 = temp.toString();
+                    temp.setLength(0);
+                    if (firstToken.isEmpty())
+                        firstToken = lastToken0;
+                    separate(curr).append(lastToken0);
+                }
+                curr.append(c);
+            } else {
+                temp.append(c);
+            }
+            offset++;
+        }
+        throw new RuntimeException("Unexpected end of string");
+    }
+
+    private StringBuilder separate(StringBuilder curr) {
+        if (curr.length() == 0)
+            return curr;
+        if (Character.isWhitespace(curr.charAt(curr.length() - 1)))
+            return curr;
+        return curr.append(' ');
     }
 }

@@ -205,6 +205,7 @@ public class QueryProviderImpl implements QueryProvider {
                 type = TypeVarchar.INSTANCE;
                 break;
             }
+            case "max_identifier_length":
             case "statement_timeout":
             case "extra_float_digits": {
                 type = TypeInt4.INSTANCE;
@@ -255,6 +256,8 @@ public class QueryProviderImpl implements QueryProvider {
                 return new QueryPortal(this, name, statement, PortalCommand.SHOW, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{0}).iterator());
             case "extra_float_digits":
                 return new QueryPortal(this, name, statement, PortalCommand.SHOW, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{2}).iterator());
+            case "max_identifier_length":
+                return new QueryPortal(this, name, statement, PortalCommand.SHOW, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{63}).iterator());
             default:
                 return new QueryPortal(this, name, statement, PortalCommand.SHOW, EMPTY_INT_ARRAY, Collections::emptyIterator);
         }

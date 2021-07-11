@@ -93,7 +93,7 @@ public class PgTypeDescriptor {
     }
 
     public PgTypeDescriptor asArray() {
-        return new PgTypeDescriptor(arrayType, name + "_array", -1, 0, id);
+        return new PgTypeDescriptor(arrayType, name + "[]", -1, 0, id);
     }
 
     @Override

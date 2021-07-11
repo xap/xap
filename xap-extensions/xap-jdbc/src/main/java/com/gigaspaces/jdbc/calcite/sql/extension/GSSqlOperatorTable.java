@@ -222,4 +222,40 @@ public class GSSqlOperatorTable extends ReflectiveSqlOperatorTable {
                     null,
                     OperandTypes.or(OperandTypes.PERIOD_OR_DATETIME, OperandTypes.STRING),
                     SqlFunctionCategory.TIMEDATE);
+
+    public static final SqlFunction GENERATE_SERIES =
+            new SqlFunction(
+                    "GENERATE_SERIES",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.INTEGER,
+                    null,
+                    OperandTypes.family(SqlTypeFamily.ANY, SqlTypeFamily.ANY),
+                    SqlFunctionCategory.NUMERIC);
+
+    public static final SqlFunction PG_GET_EXPR =
+            new SqlFunction(
+                    "PG_GET_EXPR",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.VARCHAR_2000,
+                    null,
+                    OperandTypes.family(SqlTypeFamily.ANY, SqlTypeFamily.ANY),
+                    SqlFunctionCategory.STRING);
+
+    public static final SqlFunction ARRAY_LOWER =
+            new SqlFunction(
+                    "ARRAY_LOWER",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.INTEGER,
+                    null,
+                    OperandTypes.family(SqlTypeFamily.ANY, SqlTypeFamily.ANY),
+                    SqlFunctionCategory.NUMERIC);
+
+    public static final SqlFunction ARRAY_UPPER =
+            new SqlFunction(
+                    "ARRAY_UPPER",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.INTEGER,
+                    null,
+                    OperandTypes.family(SqlTypeFamily.ANY, SqlTypeFamily.ANY),
+                    SqlFunctionCategory.NUMERIC);
 }

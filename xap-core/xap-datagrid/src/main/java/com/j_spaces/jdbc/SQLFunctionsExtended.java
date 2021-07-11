@@ -47,8 +47,11 @@ public class SQLFunctionsExtended {
         functions.put("SUBSTR", new SubstrSqlFunction());
         functions.put("SUBSTRING", new SubstringSqlFunction());
 
+        functions.put("ARRAY_LOWER", new UnsupportedSqlFunction("ARRAY_LOWER"));
+        functions.put("ARRAY_UPPER", new UnsupportedSqlFunction("ARRAY_UPPER"));
+        functions.put("GENERATE_SERIES", new UnsupportedSqlFunction("GENERATE_SERIES"));
+        functions.put("PG_GET_EXPR", new PgGetExprSqlFunction());
     }
-
 
     public static Map<String, SqlFunction> getFunctions() {
         return functions;
