@@ -161,8 +161,10 @@ public class TypeUtils {
             return formatCode(getType(type.getElementType()), formatCodes, idx);
 
         // TODO implement binary serialization for date time types
-        if (DATE_TIME_TYPES.contains(type))
-            return 0; // at now only text formats implemented for date time types
+        if (DATE_TIME_TYPES.contains(type)) {
+            // Only text formats implemented for date time types
+            return 0;
+        }
 
         return formatCodes.length == 1 ? formatCodes[0] : formatCodes[idx];
     }

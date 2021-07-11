@@ -37,7 +37,6 @@ class QueryPortal<T> implements Portal<T> {
             List<ColumnDescription> newColumns = new ArrayList<>();
             for (int i = 0, rowDescColumnsSize = columns.size(); i < rowDescColumnsSize; i++) {
                 ColumnDescription c = columns.get(i);
-                int prefer = formatCodes.length == 1 ? formatCodes[0] : formatCodes[i];
                 int format = formatCode(c.getType(), formatCodes, i);
                 newColumns.add(new ColumnDescription(
                         c.getName(),

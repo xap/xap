@@ -3,6 +3,8 @@ package com.gigaspaces.sql.aggregatornode.netty.server;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.openspaces.core.GigaSpaceConfigurer;
+import org.openspaces.core.space.EmbeddedSpaceConfigurer;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -323,9 +325,9 @@ class ServerBeanTest extends AbstractServerTest{
             statement.getMoreResults();
             res = statement.getResultSet();
             expected = "" +
-"| COL1           |\n" +
-"| -------------- |\n" +
-"| READ_COMMITTED |\n";
+"| transaction_isolation |\n" +
+"| --------------------- |\n" +
+"| READ_COMMITTED        |\n";
             DumpUtils.checkResult(res, expected);
         }
     }
