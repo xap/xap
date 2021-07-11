@@ -25,8 +25,6 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexProgram;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.fun.SqlLibrary;
@@ -34,7 +32,6 @@ import org.apache.calcite.sql.fun.SqlLibraryOperatorTableFactory;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.util.ChainedSqlOperatorTable;
-import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -103,7 +100,7 @@ public class GSOptimizer {
         SqlParseException ex = null;
         while (true) {
             try {
-                return rewrite(createParser(query).parseQuery());
+                return createParser(query).parseQuery();
             } catch (SqlParseException e) {
                 if (ex != null)
                     throw ex;
@@ -121,7 +118,7 @@ public class GSOptimizer {
         SqlParseException ex = null;
         while (true) {
             try {
-                return (SqlNodeList) rewrite(createParser(query).parseStmtList());
+                return createParser(query).parseStmtList();
             } catch (SqlParseException e) {
                 if (ex != null)
                     throw ex;
@@ -164,7 +161,6 @@ public class GSOptimizer {
                 .withExpand(false)
                 .build());
 
-        // TODO: Careful with RelRoot removal here - need to add the top-level project
         return relConverter.convertQuery(validatedAst, false, true);
     }
 
@@ -321,20 +317,5 @@ public class GSOptimizer {
         if (Character.isWhitespace(curr.charAt(curr.length() - 1)))
             return curr;
         return curr.append(' ');
-    }
-
-    private SqlNode rewrite(SqlNode ast) {
-        SqlShuttle shuttle = new SqlShuttle() {
-            @Override
-            public SqlNode visit(SqlCall call) {
-                String name = call.getOperator().getName();
-                if (name.equalsIgnoreCase("generate_series"))
-                    return SqlLiteral.createExactNumeric("0", call.getParserPosition());
-                else if (name.equalsIgnoreCase("pg_get_expr"))
-                    return SqlLiteral.createBinaryString("", call.getParserPosition());
-                return super.visit(call);
-            }
-        };
-        return ast.accept(shuttle);
     }
 }
