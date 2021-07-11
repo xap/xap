@@ -16,7 +16,6 @@ public class CaseConditionHandler extends RexShuttle {
     private final List<String> inputFields;
     private final TableContainer tableContainer;
     private final CaseColumn caseColumn;
-    private ICaseCondition caseCondition = null;
 
 
     public CaseConditionHandler(RexProgram program, QueryExecutor queryExecutor, List<String> inputFields,
@@ -30,7 +29,7 @@ public class CaseConditionHandler extends RexShuttle {
 
     @Override
     public RexNode visitCall(RexCall call) {
-        handleRexCall(call);
+        handleRexCall(call, null);
         return call;
     }
 
@@ -43,7 +42,7 @@ public class CaseConditionHandler extends RexShuttle {
         return localRef;
     }
 
-    private void handleRexCall(RexCall call){
+    private void handleRexCall(RexCall call, ICaseCondition caseCondition){
         for (int i = 0; i < call.getOperands().size(); i++) {
             RexNode operand = call.getOperands().get(i);
             if (operand.isA(SqlKind.LOCAL_REF)) {
@@ -83,25 +82,25 @@ public class CaseConditionHandler extends RexShuttle {
                         }
                         break;
                     case OR:
-                        if (caseCondition == null || !(caseCondition instanceof CompoundCaseCondition)) {
+                        if (!(caseCondition instanceof CompoundCaseCondition)) {
                             caseCondition = new CompoundCaseCondition();
                         }
                         ((CompoundCaseCondition) caseCondition).addCompoundConditionCode(CompoundCaseCondition.CompoundConditionCode.OR);
-                        handleRexCall((RexCall) rexNode);
+                        handleRexCall((RexCall) rexNode, caseCondition);
                         break;
                     case AND:
-                        if (caseCondition == null || !(caseCondition instanceof CompoundCaseCondition)) {
+                        if (!(caseCondition instanceof CompoundCaseCondition)) {
                             caseCondition = new CompoundCaseCondition();
                         }
                         ((CompoundCaseCondition) caseCondition).addCompoundConditionCode(CompoundCaseCondition.CompoundConditionCode.AND);
-                        handleRexCall((RexCall) rexNode);
+                        handleRexCall((RexCall) rexNode, caseCondition);
                         break;
                     case CASE:
                         CaseColumn nestedCaseColumn = new CaseColumn(caseColumn.getName(), caseColumn.getReturnType()
                                 , caseColumn.getColumnOrdinal());
                         CaseConditionHandler caseHandler = new CaseConditionHandler(program, queryExecutor, inputFields,
                                 tableContainer, nestedCaseColumn);
-                        caseHandler.handleRexCall((RexCall) rexNode);
+                        caseHandler.handleRexCall((RexCall) rexNode, null);
                         caseCondition.setResult(nestedCaseColumn);
                         caseColumn.addCaseCondition(caseCondition);
                         caseCondition = null;

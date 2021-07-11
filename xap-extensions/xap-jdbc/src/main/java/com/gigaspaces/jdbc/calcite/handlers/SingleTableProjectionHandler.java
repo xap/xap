@@ -5,7 +5,6 @@ import com.gigaspaces.jdbc.model.table.*;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.fun.SqlCaseOperator;
 import org.apache.calcite.sql.fun.SqlCastFunction;
 
 import java.util.ArrayList;
@@ -63,13 +62,7 @@ public class SingleTableProjectionHandler extends RexShuttle {
                             tableContainer.getInvisibleColumns().add(functionCallColumn2);
                         break;
                     case CASE:
-                        SqlCaseOperator sqlCaseOperator = (SqlCaseOperator) call.getOperator(); //TODO: @sagiv needed
-                        //TODO: @sagiv what to do with the calcite temp name? for example EXP$x when we don't use alias?
-                        String columnName = outputFields.get(i);
-                        if(columnName.startsWith("EXPR$")) { //to be aligned to hsql.
-                            columnName = "C" + call.getOperands().size();
-                        }
-                        CaseColumn caseColumn = new CaseColumn(columnName, CalciteUtils.getJavaType(call), i);
+                        CaseColumn caseColumn = new CaseColumn(outputFields.get(i), CalciteUtils.getJavaType(call), i);
                         addCaseCondition(call, caseColumn);
                         queryExecutor.addSqlCaseColumn(caseColumn);
                         break;
@@ -105,8 +98,7 @@ public class SingleTableProjectionHandler extends RexShuttle {
     private void addCaseCondition(RexCall call, CaseColumn caseColumn) {
         CaseConditionHandler caseHandler = new CaseConditionHandler(program, queryExecutor, inputFields,
                 tableContainer, caseColumn);
-//        caseHandler.visitCall(call); //TODO: @sagiv use this?
-        call.accept(caseHandler);
+        caseHandler.visitCall(call);
     }
 
     public boolean isRoot(){

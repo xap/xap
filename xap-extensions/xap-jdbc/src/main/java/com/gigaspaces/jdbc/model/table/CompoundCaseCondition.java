@@ -17,7 +17,7 @@ public class CompoundCaseCondition implements ICaseCondition{
 
     @Override
     public boolean check(TableRow tableRow) {
-        //TODO: @sagiv think of better way without copy... maybe use stack instead 2 linkedList?
+        //TODO: @sagiv think of better way without copy... maybe use stack instead 2 linkedList, or Pair?
         LinkedList<CompoundConditionCode> conditionCodes1 = new LinkedList<>(conditionCodes);
         LinkedList<ICaseCondition> caseConditions1 = new LinkedList<>(caseConditions);
         while (!conditionCodes1.isEmpty()) {

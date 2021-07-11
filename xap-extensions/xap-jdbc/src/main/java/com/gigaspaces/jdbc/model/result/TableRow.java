@@ -42,7 +42,7 @@ public class TableRow implements Comparable<TableRow> {
         this.orderValues = tableRow.orderValues;
         this.groupByColumns = tableRow.groupByColumns;
         this.groupByValues = tableRow.groupByValues;
-        for (int i = 0; i < finalSize; i++) { //TODO: @sagiv need set the right column order!
+        for (int i = 0; i < finalSize; i++) {
             if (i < tableRow.columns.length) {
                 this.columns[i] = tableRow.columns[i];
                 this.values[i] = tableRow.values[i];
