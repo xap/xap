@@ -83,7 +83,11 @@ public class CaseColumn implements IQueryColumn{
             if(caseCondition.check(tableRow)) {
                 Object result = caseCondition.getResult();
                 if(result instanceof CaseColumn) { //nested case
+                    //TODO: sagiv handle it here or in 'caseCondition.getResult()' method.
                     return ((CaseColumn) result).getValue(tableRow);
+                } else if (result instanceof ConcreteColumn) { // column value
+                    //TODO: sagiv handle it here or in 'caseCondition.getResult()' method.
+                    return tableRow.getPropertyValue(((ConcreteColumn) result).getAlias());
                 }
                 return result;
             }

@@ -63,8 +63,13 @@ public class SingleTableProjectionHandler extends RexShuttle {
                             tableContainer.getInvisibleColumns().add(functionCallColumn2);
                         break;
                     case CASE:
-                        SqlCaseOperator sqlCaseOperator = (SqlCaseOperator) call.getOperator(); //TODO: @sagiv needed?
-                        CaseColumn caseColumn = new CaseColumn(outputFields.get(i), CalciteUtils.getJavaType(call), i);
+                        SqlCaseOperator sqlCaseOperator = (SqlCaseOperator) call.getOperator(); //TODO: @sagiv needed
+                        //TODO: @sagiv what to do with the calcite temp name? for example EXP$x when we don't use alias?
+                        String columnName = outputFields.get(i);
+                        if(columnName.startsWith("EXPR$")) { //to be aligned to hsql.
+                            columnName = "C" + call.getOperands().size();
+                        }
+                        CaseColumn caseColumn = new CaseColumn(columnName, CalciteUtils.getJavaType(call), i);
                         addCaseCondition(call, caseColumn);
                         queryExecutor.addSqlCaseColumn(caseColumn);
                         break;

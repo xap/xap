@@ -47,8 +47,17 @@ public class CaseConditionHandler extends RexShuttle {
         for (int i = 0; i < call.getOperands().size(); i++) {
             RexNode operand = call.getOperands().get(i);
             if (operand.isA(SqlKind.LOCAL_REF)) {
-                RexNode rexNode = program.getExprList().get(((RexLocalRef) operand).getIndex());
+                RexNode rexNode = getNode(((RexLocalRef) operand));
                 switch (rexNode.getKind()) {
+                    case INPUT_REF:
+                        String fieldName = inputFields.get(((RexInputRef) rexNode).getIndex());
+                        ConcreteColumn concreteColumn = new ConcreteColumn(fieldName, null, null, false, tableContainer,
+                                -1);
+                        tableContainer.getInvisibleColumns().add(concreteColumn);
+                        caseCondition.setResult(concreteColumn);
+                        caseColumn.addCaseCondition(caseCondition);
+                        caseCondition = null;
+                        break;
                     case LITERAL:
                         if(caseCondition != null) {
                             caseCondition.setResult(CalciteUtils.getValue((RexLiteral) rexNode));
@@ -65,8 +74,8 @@ public class CaseConditionHandler extends RexShuttle {
                     case LESS_THAN:
                     case LESS_THAN_OR_EQUAL:
                         List<RexNode> operands = ((RexCall) rexNode).getOperands();
-                        RexNode leftOp = program.getExprList().get(((RexLocalRef) operands.get(0)).getIndex());
-                        RexNode rightOp = program.getExprList().get(((RexLocalRef) operands.get(1)).getIndex());
+                        RexNode leftOp = getNode(((RexLocalRef) operands.get(0)));
+                        RexNode rightOp = getNode(((RexLocalRef) operands.get(1)));
                         if (caseCondition == null) {
                             caseCondition = handleTwoOperandsCall(leftOp, rightOp, rexNode.getKind(), false);
                         } else if (caseCondition instanceof CompoundCaseCondition) {
@@ -108,7 +117,7 @@ public class CaseConditionHandler extends RexShuttle {
 
     private SingleCaseCondition handleTwoOperandsCall(RexNode leftOp, RexNode rightOp, SqlKind sqlKind, boolean isNot){
         String column = null;
-        boolean isRowNum = false;
+        boolean isRowNum = false; //TODO: @sagiv needed?
         Object value = null;
         SingleCaseCondition singleCaseCondition = null;
         switch (leftOp.getKind()){
