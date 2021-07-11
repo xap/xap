@@ -12,7 +12,7 @@
 	<properties>
 		<muleTitle>mule-integration</muleTitle>
 		<muleVersion>3.7.0</muleVersion>
-        <junitVersion>4.12</junitVersion>
+        <junitVersion>4.13.1</junitVersion>
         <skipTests>true</skipTests>
     </properties>
 	<repositories>
