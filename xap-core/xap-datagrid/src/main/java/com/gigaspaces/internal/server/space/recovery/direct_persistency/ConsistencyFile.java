@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.Scanner;
 
 public class ConsistencyFile implements IStorageConsistency{
-    private final File consistFile;
+    public final File consistFile;
 
     public ConsistencyFile(String spaceName, String fullMemberName) throws SAException {
         File folder = SystemLocations.singleton().work("tiered-storage/" + spaceName).toFile();
