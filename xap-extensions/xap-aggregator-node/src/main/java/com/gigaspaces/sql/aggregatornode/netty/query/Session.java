@@ -1,6 +1,7 @@
 package com.gigaspaces.sql.aggregatornode.netty.query;
 
 import com.gigaspaces.internal.client.spaceproxy.ISpaceProxy;
+import com.gigaspaces.sql.aggregatornode.netty.utils.DateTimeUtils;
 import com.j_spaces.core.client.FinderException;
 import com.j_spaces.core.client.SpaceFinder;
 
@@ -17,6 +18,13 @@ public class Session implements Closeable {
     private String username = "";
     private String database = "";
     private ISpaceProxy space;
+    private DateTimeUtils dateTimeUtils;
+
+    public DateTimeUtils getDateTimeUtils() {
+        if (dateTimeUtils == null)
+            dateTimeUtils = new DateTimeUtils(this);
+        return dateTimeUtils;
+    }
 
     public Charset getCharset() {
         return charset;

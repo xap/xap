@@ -23,10 +23,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.gigaspaces.sql.aggregatornode.netty.utils.Constants.EMPTY_INT_ARRAY;
+import static com.gigaspaces.sql.aggregatornode.netty.utils.DateTimeUtils.convertTimeZone;
 import static java.util.Collections.singletonList;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class QueryProviderImpl implements QueryProvider {
+
+    private static final int DML_SINGLE_VALUE_MODIFIED = 1;
 
     private final CalciteQueryHandler handler;
 
@@ -219,7 +222,7 @@ public class QueryProviderImpl implements QueryProvider {
         }
 
         return new StatementDescription(ParametersDescription.EMPTY,
-                new RowDescription(singletonList(new ColumnDescription("COL1", type))));
+                new RowDescription(singletonList(new ColumnDescription(name, type))));
     }
 
     private Portal<?> preparePortal(Session session, String name, Statement statement, Object[] params, int[] formatCodes) throws ProtocolException {
@@ -280,7 +283,7 @@ public class QueryProviderImpl implements QueryProvider {
                     } catch (Exception e) {
                         throw new NonBreakingException(ErrorCodes.INVALID_PARAMETER_VALUE, literal.getParserPosition(), "Unknown charset");
                     }
-                    return 1;
+                    return DML_SINGLE_VALUE_MODIFIED;
                 };
 
                 return new DmlPortal<>(this, name, statement, PortalCommand.SET, op);
@@ -290,7 +293,17 @@ public class QueryProviderImpl implements QueryProvider {
                 String val = asString(literal);
                 ThrowingSupplier<Integer, ProtocolException> op = () -> {
                     session.setDateStyle(val.indexOf(',') < 0 ? val + ", MDY" : val);
-                    return 1;
+                    return DML_SINGLE_VALUE_MODIFIED;
+                };
+
+                return new DmlPortal<>(this, name, statement, PortalCommand.SET, op);
+            }
+
+            case "timezone" : {
+                String val = asString(literal);
+                ThrowingSupplier<Integer, ProtocolException> op = () -> {
+                    session.setTimeZone(TimeZone.getTimeZone(convertTimeZone(val)));
+                    return DML_SINGLE_VALUE_MODIFIED;
                 };
 
                 return new DmlPortal<>(this, name, statement, PortalCommand.SET, op);

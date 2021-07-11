@@ -21,6 +21,7 @@ import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.gigaspaces.sql.aggregatornode.netty.utils.Constants.*;
+import static com.gigaspaces.sql.aggregatornode.netty.utils.DateTimeUtils.convertTimeZone;
 
 public class MessageProcessor extends ChannelInboundHandlerAdapter {
     private static final AtomicInteger ID_COUNTER = new AtomicInteger();
@@ -386,7 +387,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
                         }
                         case "TimeZone": {
                             try {
-                                session.setTimeZone(TimeZone.getTimeZone(pgTimeZone(value)));
+                                session.setTimeZone(TimeZone.getTimeZone(convertTimeZone(value)));
                             } catch (Exception e) {
                                 log.warn("Unknown TimeZone: " + value, e);
                             }
@@ -439,7 +440,7 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
         writeParameterStatus(buf, "server_version", "8.2.23");
         writeParameterStatus(buf, "session_authorization", session.getUsername());
         writeParameterStatus(buf, "standard_conforming_strings", "off");
-        writeParameterStatus(buf, "TimeZone", pgTimeZone(session.getTimeZone().getID()));
+        writeParameterStatus(buf, "TimeZone", convertTimeZone(session.getTimeZone().getID()));
         writeParameterStatus(buf, "integer_datetimes", "on");
         writeBackendKeyData(buf);
         writeReadyForQuery(buf);
@@ -614,23 +615,5 @@ public class MessageProcessor extends ChannelInboundHandlerAdapter {
     private void writeString(ByteBuf msg, String value) {
         msg.writeCharSequence(value, session.getCharset());
         msg.writeByte(0); // null character
-    }
-
-    private static String pgTimeZone(String value) {
-        if (value.startsWith("GMT+")) {
-            return convertTimeZone(value, "GMT-");
-        } else if (value.startsWith("GMT-")) {
-            return convertTimeZone(value, "GMT+");
-        } else if (value.startsWith("UTC+")) {
-            return convertTimeZone(value, "UTC-");
-        } else if (value.startsWith("UTC-")) {
-            return convertTimeZone(value, "UTC+");
-        } else {
-            return value;
-        }
-    }
-
-    private static String convertTimeZone(String value, String prefix) {
-        return prefix + value.substring(4);
     }
 }
