@@ -8,7 +8,7 @@ import com.gigaspaces.jdbc.model.result.TableRowUtils;
 import java.sql.SQLException;
 import java.util.Objects;
 
-public class CaseCondition {
+public class SingleCaseCondition implements ICaseCondition{
 
     private final ConditionCode conditionCode;
     private final Object value;
@@ -17,18 +17,19 @@ public class CaseCondition {
     private Object result;
 
 
-    public CaseCondition(ConditionCode conditionCode, Object value, Class<?> valueType, String fieldName) {
+    public SingleCaseCondition(ConditionCode conditionCode, Object value, Class<?> valueType, String fieldName) {
         this.conditionCode = conditionCode;
         this.value = value;
         this.valueType = valueType;
         this.fieldName = fieldName;
     }
 
-    public CaseCondition(ConditionCode conditionCode, Object result) {
+    public SingleCaseCondition(ConditionCode conditionCode, Object result) {
         this(conditionCode, null, null, null);
         this.result = result;
     }
 
+    @Override
     public boolean check(TableRow tableRow) {
         if (conditionCode.equals(ConditionCode.DEFAULT)) {
             return true;
@@ -77,17 +78,14 @@ public class CaseCondition {
         return false;
     }
 
-
+    @Override
     public Object getResult() {
         return result;
     }
 
+    @Override
     public void setResult(Object result) {
         this.result = result;
-    }
-
-    public Class<?> getValueType() {
-        return valueType;
     }
 
     public enum ConditionCode {

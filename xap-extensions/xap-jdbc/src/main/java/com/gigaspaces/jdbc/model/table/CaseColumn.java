@@ -10,7 +10,7 @@ public class CaseColumn implements IQueryColumn{
     private final String columnName;
     private final Class<?> returnType;
     private final int columnOrdinal;
-    private final List<CaseCondition> caseConditions;
+    private final List<ICaseCondition> caseConditions;
 
     public CaseColumn(String columnName, Class<?> type, int columnOrdinal) {
         this.columnName = columnName;
@@ -74,12 +74,12 @@ public class CaseColumn implements IQueryColumn{
         return Integer.compare(this.getColumnOrdinal(), other.getColumnOrdinal());
     }
 
-    public void addCaseCondition(CaseCondition caseCondition) {
+    public void addCaseCondition(ICaseCondition caseCondition) {
         this.caseConditions.add(caseCondition);
     }
 
     public Object getValue(TableRow tableRow) {
-        for (CaseCondition caseCondition : caseConditions) {
+        for (ICaseCondition caseCondition : caseConditions) {
             if(caseCondition.check(tableRow)) {
                 return caseCondition.getResult();
             }
