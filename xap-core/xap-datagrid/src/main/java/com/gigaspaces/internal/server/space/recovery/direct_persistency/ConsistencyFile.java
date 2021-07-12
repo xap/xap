@@ -4,10 +4,7 @@ package com.gigaspaces.internal.server.space.recovery.direct_persistency;
 import com.gigaspaces.start.SystemLocations;
 import com.j_spaces.core.sadapter.SAException;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.Scanner;
 
 public class ConsistencyFile implements IStorageConsistency{

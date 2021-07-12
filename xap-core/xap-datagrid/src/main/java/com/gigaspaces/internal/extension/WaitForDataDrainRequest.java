@@ -11,24 +11,24 @@ public class WaitForDataDrainRequest implements SpaceRequestInfo {
 
     private long timeout;
     private long minTimeToWait;
-    private boolean backupOnly;
+    private boolean isDemote;
     private SpaceContext context;
 
     public WaitForDataDrainRequest() {
     }
 
-    public WaitForDataDrainRequest(long timeout, long minTimeToWait, boolean backupOnly) {
+    public WaitForDataDrainRequest(long timeout, long minTimeToWait, boolean isDemote) {
         this.timeout = timeout;
         this.minTimeToWait = minTimeToWait;
-        this.backupOnly = backupOnly;
+        this.isDemote = isDemote;
     }
 
     public long getTimeout() {
         return timeout;
     }
 
-    public boolean isBackupOnly() {
-        return backupOnly;
+    public boolean isDemote() {
+        return isDemote;
     }
 
     @Override
@@ -49,14 +49,14 @@ public class WaitForDataDrainRequest implements SpaceRequestInfo {
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeLong(timeout);
         out.writeLong(minTimeToWait);
-        out.writeBoolean(backupOnly);
+        out.writeBoolean(isDemote);
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         this.timeout = in.readLong();
         this.minTimeToWait = in.readLong();
-        this.backupOnly = in.readBoolean();
+        this.isDemote = in.readBoolean();
 
     }
 }

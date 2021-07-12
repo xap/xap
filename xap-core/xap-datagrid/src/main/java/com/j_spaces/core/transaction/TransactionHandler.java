@@ -517,6 +517,7 @@ public class TransactionHandler {
 
     public boolean waitForActiveTransactions(long timeoutInMillis) throws InterruptedException {
         long end = System.currentTimeMillis() + timeoutInMillis;
+        Thread.sleep(timeoutInMillis < TXN_SETTLE_DURATION ? timeoutInMillis / 2 : TXN_SETTLE_DURATION);
         while (System.currentTimeMillis() < end) {
             if (getXtnTable().isEmpty()) {
                 return true;

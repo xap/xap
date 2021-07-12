@@ -1721,14 +1721,14 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
             while (true){
                 Thread.sleep(1000);
                 i++;
-                lastPrimary = attributeStore.get(ZookeeperLastPrimaryHandler.toPath(_spaceName, String.valueOf(getPartitionIdOneBased())));
-                if(differentLastPrimaryExist(lastPrimary)){
-                    final String lastPrimaryMemberName = getMemberName(lastPrimary);
-                    if(lastPrimaryMemberName != null && isPrimary(lastPrimaryMemberName, i%30==0)){
+                String currentPrimary = attributeStore.get(ZookeeperLastPrimaryHandler.toPath(_spaceName, String.valueOf(getPartitionIdOneBased())));
+                if(differentLastPrimaryExist(currentPrimary)){
+                    final String primaryMemberName = getMemberName(currentPrimary);
+                    if(primaryMemberName != null && isPrimary(primaryMemberName, i%30==0)){
                         return;
                     }
                     if(i != 0 && i %30 == 0){
-                        _logger.warn("Failed to locate last primary [{}]", lastPrimaryMemberName);
+                        _logger.warn("Failed to locate last primary [{}]", primaryMemberName);
                     }
                 }
             }
@@ -3328,7 +3328,7 @@ public class SpaceImpl extends AbstractService implements IRemoteSpace, IInterna
         try {
             _clusterFailureDetector = initClusterFailureDetector(_clusterPolicy);
             _engine = new SpaceEngine(this);
-            if(attributeStore != null){
+            if(attributeStore != null && _engine.isTieredStorage()){
                 final String persistentPath = ZNodePathFactory.space(_spaceName, "persistent");
                 String persistent = attributeStore.get(persistentPath);
                 if(persistent == null) {

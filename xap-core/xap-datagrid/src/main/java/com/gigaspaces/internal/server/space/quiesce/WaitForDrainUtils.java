@@ -23,11 +23,11 @@ public class WaitForDrainUtils {
 
         try {
             loggerToUse.info("[{}]: Waiting for lease manager cycle to drain",containerName);
-            remainingTime = tryWithinTimeout("Couldn't wait for drain - lease manager cycle timeout",
+            remainingTime = tryWithinTimeout("Timed out while waiting for drain - lease manager cycle timeout",
                     remainingTime, innerTimeout -> spaceImpl.getEngine().getLeaseManager().waitForNoCycleOnQuiesce(innerTimeout));
 
             loggerToUse.info("[{}]: Waiting for transactions to drain",containerName);
-            remainingTime = tryWithinTimeout("Couldn't wait for drain - timeout while waiting for transactions", remainingTime,
+            remainingTime = tryWithinTimeout("Timed out while waiting for transactions to drain", remainingTime,
                     innerTimeout -> {
                         long startTxn = System.currentTimeMillis();
                         final TransactionHandler handler = spaceImpl.getEngine().getTransactionHandler();

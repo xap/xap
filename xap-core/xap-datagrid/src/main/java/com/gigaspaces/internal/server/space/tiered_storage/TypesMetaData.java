@@ -28,7 +28,10 @@ public class TypesMetaData {
         LongCounter counter = totalCounterMap.get(type);
         if(counter == null){
             counter = new LongCounter();
-            totalCounterMap.putIfAbsent(type, counter);
+            final LongCounter result = totalCounterMap.putIfAbsent(type, counter);
+            if(result != null){
+                counter = result;
+            }
         }
         return counter;
     }
@@ -37,7 +40,10 @@ public class TypesMetaData {
         LongCounter counter = ramCounterMap.get(type);
         if(!ramCounterMap.containsKey(type)){
             counter = new LongCounter();
-            ramCounterMap.putIfAbsent(type, counter);
+             LongCounter result = ramCounterMap.putIfAbsent(type, counter);
+             if(result != null){
+                 counter = result;
+             }
         }
         return counter;
     }
