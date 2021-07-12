@@ -37,7 +37,7 @@ public class CompoundCaseCondition implements ICaseCondition {
                 case OR:
                     return firstEvaluation || secondEvaluation;
                 default:
-                    throw new UnsupportedOperationException("unsupported compound condition code");
+                    throw new UnsupportedOperationException("unsupported compound condition code: " + obj);
             }
         } else if (obj instanceof ICaseCondition) {
             return ((ICaseCondition) obj).check(tableRow);

@@ -148,7 +148,7 @@ public class QueryExecutor {
         fieldCountList.add(columnCount);
     }
 
-    public void addSqlCaseColumn(CaseColumn caseColumn) {
+    public void addCaseColumn(CaseColumn caseColumn) {
         this.caseColumns.add(caseColumn);
     }
 }

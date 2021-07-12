@@ -142,7 +142,7 @@ public abstract class QueryResult {
             TableRow entry = getCurrent();
             int column = 0;
             for (int i = 0; i < columns; i++) {
-                fieldValues[row][column++] = entry.getPropertyValue(columnLabels[i]); //TODO: @sagiv try think on different way
+                fieldValues[row][column++] = entry.getPropertyValue(columnLabels[i]);
             }
 
             row++;
@@ -190,15 +190,15 @@ public abstract class QueryResult {
 
     }
 
-    public void addCaseColumnsToResults(List<CaseColumn> sqlCaseColumns) {
+    public void addCaseColumnsToResults(List<CaseColumn> caseColumns) {
         if (this instanceof ExplainPlanQueryResult) return;
-        if(sqlCaseColumns.isEmpty()) return;
+        if(caseColumns.isEmpty()) return;
         List<TableRow> newRows = new ArrayList<>();
         for (TableRow row : getRows()) {
-            newRows.add(new TableRow(row, sqlCaseColumns));
+            newRows.add(new TableRow(row, caseColumns));
         }
         setRows(newRows);
-        selectedColumns.addAll(sqlCaseColumns);
+        selectedColumns.addAll(caseColumns);
         selectedColumns.sort(null);
     }
 }

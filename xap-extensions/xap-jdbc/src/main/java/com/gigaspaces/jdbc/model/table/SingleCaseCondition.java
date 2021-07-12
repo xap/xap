@@ -37,12 +37,6 @@ public class SingleCaseCondition implements ICaseCondition{
             return false;
         }
         if (this.fieldName != null && tableRow != null) {
-//            Object fieldValue = null;
-//            if(Number.class.isAssignableFrom(valueType)) {
-//                fieldValue = CalciteUtils.castToNumberType(tableRow.getPropertyValue(this.fieldName), valueType);
-//            } else {
-//                fieldValue = (tableRow.getPropertyValue(this.fieldName));
-//            }
             Object fieldValue = null;
             try {
                 fieldValue = ObjectConverter.convert(tableRow.getPropertyValue(this.fieldName), valueType);
@@ -71,7 +65,7 @@ public class SingleCaseCondition implements ICaseCondition{
                 case GT:
                     return compareResult > 0;
                 default:
-                    throw new UnsupportedOperationException("unsupported condition code");
+                    throw new UnsupportedOperationException("unsupported condition code: " + conditionCode);
             }
         }
         return false;

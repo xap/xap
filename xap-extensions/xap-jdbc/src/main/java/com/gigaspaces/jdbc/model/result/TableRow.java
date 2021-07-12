@@ -154,6 +154,7 @@ public class TableRow implements Comparable<TableRow> {
         }
     }
 
+    @Deprecated //use getPropertyValue(String nameOrAlias) instead
     public Object getPropertyValue(int index) {
         return values[index];
     }

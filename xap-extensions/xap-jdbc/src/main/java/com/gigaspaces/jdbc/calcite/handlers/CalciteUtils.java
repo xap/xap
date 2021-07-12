@@ -76,31 +76,4 @@ public class CalciteUtils {
                 throw new UnsupportedOperationException("Unsupported type: " + rexNode.getType().getSqlTypeName());
         }
     }
-
-    public static Object castToNumberType(Object value, Class targetType) {
-        if (value == null) return null;
-
-        Number valueNum = (Number) value;
-
-        if (targetType == Integer.class || targetType == int.class) {
-            return valueNum.intValue();
-        }
-        if (targetType == Long.class || targetType == long.class) {
-            return valueNum.longValue();
-        }
-        if (targetType == Float.class || targetType == float.class) {
-            return valueNum.floatValue();
-        }
-        if (targetType == Byte.class || targetType == byte.class) {
-            return valueNum.byteValue();
-        }
-        if (targetType == Double.class || targetType == double.class) {
-            return valueNum.doubleValue();
-        }
-        if (targetType == Short.class || targetType == short.class) {
-            return valueNum.shortValue();
-        }
-
-        throw new IllegalArgumentException("Unexpected type, value = " + value + ", targetType = " + targetType);
-    }
 }

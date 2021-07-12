@@ -64,7 +64,7 @@ public class SingleTableProjectionHandler extends RexShuttle {
                     case CASE:
                         CaseColumn caseColumn = new CaseColumn(outputFields.get(i), CalciteUtils.getJavaType(call), i);
                         addCaseCondition(call, caseColumn);
-                        queryExecutor.addSqlCaseColumn(caseColumn);
+                        queryExecutor.addCaseColumn(caseColumn);
                         break;
                     default:
                         throw new UnsupportedOperationException("call of kind " + call.getKind() + " is not supported");
