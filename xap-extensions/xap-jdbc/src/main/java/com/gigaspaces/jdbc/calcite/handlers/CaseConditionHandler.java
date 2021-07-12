@@ -41,10 +41,9 @@ public class CaseConditionHandler extends RexShuttle {
                 switch (rexNode.getKind()) {
                     case INPUT_REF:
                         String fieldName = inputFields.get(((RexInputRef) rexNode).getIndex());
-                        ConcreteColumn concreteColumn = new ConcreteColumn(fieldName, null, null, false, tableContainer,
-                                -1);
-                        tableContainer.getInvisibleColumns().add(concreteColumn);
-                        caseCondition.setResult(concreteColumn);
+                        TableContainer tableForColumn = getTableForColumn(fieldName);
+                        IQueryColumn queryColumn = tableForColumn.addQueryColumn(fieldName, null, false, -1);
+                        caseCondition.setResult(queryColumn);
                         caseColumn.addCaseCondition(caseCondition);
                         caseCondition = null;
                         break;
@@ -153,23 +152,17 @@ public class CaseConditionHandler extends RexShuttle {
             return null; //return and don't continue.
         }
 
+        TableContainer tableForColumn = getTableForColumn(column);
         try {
-            value = SQLUtil.cast(((ConcreteTableContainer) tableContainer).getTypeDesc(), column, value, false);
+            value = SQLUtil.cast(((ConcreteTableContainer) tableForColumn).getTypeDesc(), column, value, false);
         } catch (SQLException e) {
             throw new SQLExceptionWrapper(e);//throw as runtime.
         }
         assert value != null;
         assert column != null;
-        Class<?> propertyType = null;
-        try {
-            propertyType = SQLUtil.getPropertyType(((ConcreteTableContainer) tableContainer).getTypeDesc(), column);
-        } catch (SQLException e) {
-            throw new SQLExceptionWrapper(e);//throw as runtime.
 
-        }
-        //TODO: @sagiv and if we use join? think of better solution?
-        tableContainer.getInvisibleColumns().add(
-                new ConcreteColumn(column, propertyType, null, false, tableContainer, -1));
+        tableForColumn.addQueryColumn(column, null, false, -1);
+
         sqlKind = isNot ? sqlKind.negateNullSafe() : sqlKind;
         switch (sqlKind) {
             case EQUALS:
@@ -216,6 +209,18 @@ public class CaseConditionHandler extends RexShuttle {
                         "[" + sqlKind + "]");
 
         }
+    }
+
+    private TableContainer getTableForColumn(String column){
+        if(tableContainer != null) {
+            return tableContainer;
+        }
+        for (TableContainer table : queryExecutor.getTables()) {
+            if (table.hasColumn(column)) {
+                return table;
+            }
+        }
+        throw new IllegalStateException("Could not find table for column [" + column + "]");
     }
 
     private RexNode getNode(RexLocalRef localRef){
