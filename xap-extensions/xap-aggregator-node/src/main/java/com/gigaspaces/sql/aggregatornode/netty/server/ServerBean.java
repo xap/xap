@@ -17,7 +17,7 @@ import javax.annotation.PreDestroy;
 
 public final class ServerBean implements AutoCloseable {
     static final boolean SSL = System.getProperty("ssl") != null;
-    static final int PORT = Integer.parseInt(System.getProperty("port", "5432"));
+    private int port = 5432;
 
     AuthenticationProvider authProvider;
 
@@ -26,6 +26,11 @@ public final class ServerBean implements AutoCloseable {
 
     public ServerBean() {
     }
+
+    public ServerBean(int port) {
+        this.port = port;
+    }
+
 
     @PostConstruct
     public void init() throws Exception {
@@ -52,7 +57,7 @@ public final class ServerBean implements AutoCloseable {
          });
 
         // Bind and start to accept incoming connections.
-        b.bind(PORT).sync().channel().closeFuture();
+        b.bind(port).sync().channel().closeFuture();
     }
 
     @PreDestroy

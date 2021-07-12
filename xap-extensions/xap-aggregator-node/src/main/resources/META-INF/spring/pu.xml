@@ -10,6 +10,7 @@
     <bean id="propertiesConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="properties">
             <props>
+                <prop key="port">5432</prop>
             </props>
         </property>
     </bean>
@@ -17,5 +18,6 @@
     <context:annotation-config/>
     <!-- Bootstrap service configuration -->
     <bean class="com.gigaspaces.sql.aggregatornode.netty.server.ServerBean">
+        <constructor-arg value="${port}"/>
     </bean>
 </beans>
