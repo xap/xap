@@ -33,15 +33,6 @@ public class CaseConditionHandler extends RexShuttle {
         return call;
     }
 
-    @Override
-    public RexNode visitLocalRef(RexLocalRef localRef) {
-        final RexNode node = getNode(localRef);
-        if (!(node instanceof  RexLocalRef)) {
-            node.accept(this);
-        }
-        return localRef;
-    }
-
     private void handleRexCall(RexCall call, ICaseCondition caseCondition){
         for (int i = 0; i < call.getOperands().size(); i++) {
             RexNode operand = call.getOperands().get(i);
@@ -61,7 +52,7 @@ public class CaseConditionHandler extends RexShuttle {
                         if(caseCondition != null) {
                             caseCondition.setResult(CalciteUtils.getValue((RexLiteral) rexNode));
                         } else {
-                            caseCondition = new SingleCaseCondition(SingleCaseCondition.ConditionCode.DEFAULT, CalciteUtils.getValue((RexLiteral) rexNode));
+                            caseCondition = new SingleCaseCondition(SingleCaseCondition.ConditionCode.DEFAULT_TRUE, CalciteUtils.getValue((RexLiteral) rexNode));
                         }
                         caseColumn.addCaseCondition(caseCondition);
                         caseCondition = null;

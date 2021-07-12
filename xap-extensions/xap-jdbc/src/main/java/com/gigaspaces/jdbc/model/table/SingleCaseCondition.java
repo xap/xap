@@ -31,8 +31,10 @@ public class SingleCaseCondition implements ICaseCondition{
 
     @Override
     public boolean check(TableRow tableRow) {
-        if (conditionCode.equals(ConditionCode.DEFAULT)) {
+        if (conditionCode.equals(ConditionCode.DEFAULT_TRUE)) {
             return true;
+        }else if (conditionCode.equals(ConditionCode.DEFAULT_FALSE)) {
+            return false;
         }
         if (this.fieldName != null && tableRow != null) {
 //            Object fieldValue = null;
@@ -51,13 +53,10 @@ public class SingleCaseCondition implements ICaseCondition{
             Comparable first = TableRowUtils.castToComparable(fieldValue);
             Comparable second = TableRowUtils.castToComparable(value);
             int compareResult;
-            if (first == null) { // nulls smallest by default?
-                compareResult = -1;
-            } else if (second == null) {
-                compareResult = 1;
-            } else {
-                compareResult = first.compareTo(second);
+            if (first == null || second == null) {
+                return false;
             }
+            compareResult = first.compareTo(second);
             switch (conditionCode) {
                 case EQ:
                     return Objects.equals(value, fieldValue);
@@ -89,12 +88,12 @@ public class SingleCaseCondition implements ICaseCondition{
     }
 
     public enum ConditionCode {
-        GT, LT, GE, LE, EQ, NE, DEFAULT
+        GT, LT, GE, LE, EQ, NE, DEFAULT_TRUE, DEFAULT_FALSE
     }
 
     @Override
     public String toString() {
-        if(conditionCode.equals(ConditionCode.DEFAULT)) {
+        if(conditionCode.equals(ConditionCode.DEFAULT_TRUE) || conditionCode.equals(ConditionCode.DEFAULT_FALSE)) {
             return conditionCode + " -> " + result;
         }
         return conditionCode + "(" + fieldName + "," + value + ") -> " + result;

@@ -27,16 +27,16 @@ public class CompoundCaseCondition implements ICaseCondition{
             switch (compoundConditionCode) {
                 case OR:
                     if (first.check(tableRow) || second.check(tableRow)) {
-                        caseConditions1.addLast(new EvaluatedCaseCondition(true, result));
+                        caseConditions1.addLast(new SingleCaseCondition(SingleCaseCondition.ConditionCode.DEFAULT_TRUE, result));
                     } else {
-                        caseConditions1.addLast(new EvaluatedCaseCondition(false, result));
+                        caseConditions1.addLast(new SingleCaseCondition(SingleCaseCondition.ConditionCode.DEFAULT_FALSE, result));
                     }
                     break;
                 case AND:
                     if (first.check(tableRow) && second.check(tableRow)) {
-                        caseConditions1.addLast(new EvaluatedCaseCondition(true, result));
+                        caseConditions1.addLast(new SingleCaseCondition(SingleCaseCondition.ConditionCode.DEFAULT_TRUE, result));
                     } else {
-                        caseConditions1.addLast(new EvaluatedCaseCondition(false, result));
+                        caseConditions1.addLast(new SingleCaseCondition(SingleCaseCondition.ConditionCode.DEFAULT_FALSE, result));
                     }
                     break;
                 default:
