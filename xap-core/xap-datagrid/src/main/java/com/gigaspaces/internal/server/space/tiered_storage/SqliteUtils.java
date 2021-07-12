@@ -475,6 +475,14 @@ public class SqliteUtils {
             } else {
                 SegmentRange querySegmentRange = (SegmentRange) queryValueRange;
                 SegmentRange criteriaSegmentRange = (SegmentRange) criteria;
+                if(criteriaSegmentRange.getMax() == querySegmentRange.getMax() && querySegmentRange.getMax() != null &&
+                        querySegmentRange.isIncludeMax() == criteriaSegmentRange.isIncludeMax()){
+                    return TemplateMatchTier.MATCH_HOT;
+                }
+                if(criteriaSegmentRange.getMin() == querySegmentRange.getMin() && querySegmentRange.getMin() != null &&
+                        querySegmentRange.isIncludeMin() == criteriaSegmentRange.isIncludeMin()){
+                    return TemplateMatchTier.MATCH_HOT;
+                }
                 if (querySegmentRange.getMin() != null && querySegmentRange.getMax() != null &&
                         criteria.getPredicate().execute(querySegmentRange.getMax()) && criteria.getPredicate().execute(querySegmentRange.getMin())) {
                     return TemplateMatchTier.MATCH_HOT;
@@ -605,7 +613,7 @@ public class SqliteUtils {
                         : new SegmentRange(path, null, true, (Comparable<?>) value, false);
             case TemplateMatchCodes.LE:
                 return entryData.getRangeValue(index) != null
-                        ? new SegmentRange(path, (Comparable<?>) entryData.getRangeValue(index), entryData.getRangeInclusion(index), (Comparable<?>) value, false)
+                        ? new SegmentRange(path, (Comparable<?>) entryData.getRangeValue(index), entryData.getRangeInclusion(index), (Comparable<?>) value, true)
                         : new SegmentRange(path, null, true, (Comparable<?>) value, true);
             case TemplateMatchCodes.GT:
                 return entryData.getRangeValue(index) != null
@@ -613,7 +621,7 @@ public class SqliteUtils {
                         : new SegmentRange(path, (Comparable<?>) value, false, null, false);
             case TemplateMatchCodes.GE:
                 return entryData.getRangeValue(index) != null
-                        ? new SegmentRange(path, (Comparable<?>) value, false, (Comparable<?>) entryData.getRangeValue(index), entryData.getRangeInclusion(index))
+                        ? new SegmentRange(path, (Comparable<?>) value, true, (Comparable<?>) entryData.getRangeValue(index), entryData.getRangeInclusion(index))
                         : new SegmentRange(path, (Comparable<?>) value, true, null, false);
             default:
                 throw new IllegalArgumentException("match codes with code " + matchCode);
