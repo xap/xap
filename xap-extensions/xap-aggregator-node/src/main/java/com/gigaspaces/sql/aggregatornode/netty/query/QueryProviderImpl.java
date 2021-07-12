@@ -30,6 +30,7 @@ import static java.util.Collections.singletonList;
 public class QueryProviderImpl implements QueryProvider {
 
     private static final int DML_SINGLE_VALUE_MODIFIED = 1;
+    private static final String SELECT_NULL_NULL_NULL = "SELECT NULL, NULL, NULL";
 
     private final CalciteQueryHandler handler;
 
@@ -235,12 +236,16 @@ public class QueryProviderImpl implements QueryProvider {
             return prepareSetOption(session, name, statement, (SqlSetOption) query);
         }
 
-        if (query.isA(SqlKind.QUERY)) {
-            return prepareQuery(session, name, statement, params, formatCodes, query);
-        }
-
         if (SqlUtil.isCallTo(query, SqlShowOption.OPERATOR)) {
             return prepareShowOption(session, name, statement, (SqlShowOption) query);
+        }
+
+        if (Objects.equals(SELECT_NULL_NULL_NULL, String.valueOf(query))) {
+            return new QueryPortal(this, name, statement, PortalCommand.SELECT, EMPTY_INT_ARRAY, () -> singletonList(new Object[]{null, null, null}).iterator());
+        }
+
+        if (query.isA(SqlKind.QUERY)) {
+            return prepareQuery(session, name, statement, params, formatCodes, query);
         }
 
         throw new NonBreakingException(ErrorCodes.UNSUPPORTED_FEATURE, "Unsupported query kind: " + query.getKind());

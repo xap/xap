@@ -130,7 +130,6 @@ public class OdbcMetadataQueryTest extends AbstractServerTest {
 
     // Queries executed while creating a datasource using UI.
 
-    @Disabled("No tables has been detected (backend cannot execute quries that doesn't reference tables")
     @Test
     public void testSelectNull() throws Exception {
         checkQuery(SELECT_NULL);
