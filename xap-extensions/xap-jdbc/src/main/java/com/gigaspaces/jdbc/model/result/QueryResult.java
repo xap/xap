@@ -142,7 +142,7 @@ public abstract class QueryResult {
             TableRow entry = getCurrent();
             int column = 0;
             for (int i = 0; i < columns; i++) {
-                fieldValues[row][column++] = entry.getPropertyValue(fieldNames[i]); //TODO: @sagiv try think on different way
+                fieldValues[row][column++] = entry.getPropertyValue(columnLabels[i]); //TODO: @sagiv try think on different way
             }
 
             row++;
