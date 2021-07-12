@@ -37,7 +37,7 @@ public class FunctionCallColumn implements IQueryColumn{
 
     @Override
     public String getAlias() {
-        return columnAlias;
+        return columnAlias == null ? getName() : columnAlias;
     }
 
     @Override

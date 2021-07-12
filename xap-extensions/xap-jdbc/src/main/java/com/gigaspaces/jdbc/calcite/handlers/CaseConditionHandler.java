@@ -119,10 +119,10 @@ public class CaseConditionHandler extends RexShuttle {
             case CAST:
                 return handleTwoOperandsCall(getNode((RexLocalRef) ((RexCall) leftOp).getOperands().get(0)), rightOp,
                         sqlKind, isNot);//return from recursion
-            case DYNAMIC_PARAM:
+            case DYNAMIC_PARAM://TODO: @sagiv needed?
                 value = queryExecutor.getPreparedValues()[((RexDynamicParam) leftOp).getIndex()];
                 break;
-            case ROW_NUMBER:
+            case ROW_NUMBER://TODO: @sagiv needed?
                 isRowNum = true;
                 break;
             default:

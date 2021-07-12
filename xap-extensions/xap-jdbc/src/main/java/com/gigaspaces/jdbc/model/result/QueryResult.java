@@ -192,6 +192,7 @@ public abstract class QueryResult {
 
     public void addCaseColumnsToResults(List<CaseColumn> sqlCaseColumns) {
         if (this instanceof ExplainPlanQueryResult) return;
+        if(sqlCaseColumns.isEmpty()) return;
         List<TableRow> newRows = new ArrayList<>();
         for (TableRow row : getRows()) {
             newRows.add(new TableRow(row, sqlCaseColumns));
