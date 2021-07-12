@@ -337,7 +337,9 @@ public class ConcreteTableContainer extends TableContainer {
 
     @Override
     public boolean hasColumn(String columnName) {
-        return allColumnNamesSorted.contains(columnName);
+        return getVisibleColumns().stream().map(IQueryColumn::getName).anyMatch(qcName -> Objects.equals(qcName,
+                columnName));
+//        return allColumnNamesSorted.contains(columnName);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.gigaspaces.jdbc.calcite;
 
 import com.gigaspaces.jdbc.QueryExecutor;
 import com.gigaspaces.jdbc.calcite.handlers.CalciteUtils;
+import com.gigaspaces.jdbc.calcite.handlers.CaseConditionHandler;
 import com.gigaspaces.jdbc.calcite.handlers.ConditionHandler;
 import com.gigaspaces.jdbc.calcite.handlers.SingleTableProjectionHandler;
 import com.gigaspaces.jdbc.calcite.pg.PgCalciteTable;
@@ -235,8 +236,25 @@ public class SelectHandler extends RelShuttleImpl {
         List<String> inputFields = program.getInputRowType().getFieldNames();
         List<String> outputFields = program.getOutputRowType().getFieldNames();
         for (int i = 0; i < outputFields.size(); i++) {
-            IQueryColumn qc = queryExecutor.getColumnByColumnIndex(program.getSourceField(i));
-            queryExecutor.getVisibleColumns().add(qc);
+            int sourceFieldIndex = program.getSourceField(i);
+            if (sourceFieldIndex == -1){
+                List<RexLocalRef> projects = program.getProjectList();
+                RexLocalRef localRef = projects.get(i);
+                RexNode node = program.getExprList().get(localRef.getIndex());
+                if(node.getKind().equals(SqlKind.CASE)) {
+                    RexCall call = (RexCall) node;
+                    CaseColumn caseColumn = new CaseColumn(outputFields.get(i), CalciteUtils.getJavaType(call), i);
+                    CaseConditionHandler caseHandler = new CaseConditionHandler(program, queryExecutor, inputFields,
+                            null, caseColumn);
+                    caseHandler.visitCall(call);
+                    queryExecutor.addCaseColumn(caseColumn);
+                } else {
+                    throw new IllegalStateException("Unexpected node kind expected SqlKind.CASE but was [" + node.getKind() + "]");
+                }
+            } else {
+                IQueryColumn qc = queryExecutor.getColumnByColumnIndex(sourceFieldIndex);
+                queryExecutor.getVisibleColumns().add(qc);
+            }
         }
         if (program.getCondition() != null) {
             ConditionHandler conditionHandler = new ConditionHandler(program, queryExecutor, inputFields);

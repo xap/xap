@@ -51,7 +51,9 @@ public class QueryExecutor {
             return queryResult;
         }
         JoinQueryExecutor joinE = new JoinQueryExecutor(this);
-        return joinE.execute();
+        QueryResult joinQueryResult = joinE.execute();
+        joinQueryResult.addCaseColumnsToResults(caseColumns);
+        return joinQueryResult;
     }
 
     private boolean hasOnlyFunctions() {
